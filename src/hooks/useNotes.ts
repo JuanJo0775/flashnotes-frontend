@@ -1,90 +1,71 @@
-'use client';
+// UBICACIÓN: src/hooks/useNotes.ts
+// ACCIÓN: REEMPLAZAR COMPLETO
 
-import { useEffect } from 'react';
-import { useNotesStore } from '@/store/notesStore';
+import { useState, useEffect, useCallback } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
+import type { Note, CreateNoteDto, UpdateNoteDto } from '@/types/note.types';
 
 export const useNotes = () => {
-    const {
-        notes,
-        setNotes,
-        isLoading,
-        setLoading,
-        error,
-        setError
-    } = useNotesStore();
+    const [notes, setNotes] = useState<Note[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const fetchNotes = async () => {
-        setLoading(true);
+    const fetchNotes = useCallback(async () => {
         try {
+            setIsLoading(true);
+            setError(null);
             const data = await notesApi.getAll();
             setNotes(data);
-            setError(null);
         } catch (err) {
+            console.error('Error fetching notes:', err);
             setError('Error al cargar las notas');
-            console.error(err);
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
-    };
+    }, []);
 
-    const createNote = async (title: string, content: string) => {
+    const createNote = async (noteData: CreateNoteDto): Promise<Note | null> => {
         try {
-            const newNote = await notesApi.create({ title, content });
-            setNotes([newNote, ...notes]);
+            setError(null);
+            const newNote = await notesApi.create(noteData);
+            setNotes(prev => [newNote, ...prev]);
             return newNote;
         } catch (err) {
+            console.error('Error creating note:', err);
             setError('Error al crear la nota');
-            throw err;
+            return null;
         }
     };
 
-    const updateNote = async (id: string, updates: { title?: string; content?: string }) => {
+    const updateNote = async (id: string, noteData: UpdateNoteDto): Promise<Note | null> => {
         try {
-            const updated = await notesApi.update(id, updates);
-            setNotes(notes.map(n => n._id === id ? updated : n));
-            return updated;
+            setError(null);
+            const updatedNote = await notesApi.update(id, noteData);
+            setNotes(prev => prev.map(n => n._id === id ? updatedNote : n));
+            return updatedNote;
         } catch (err) {
+            console.error('Error updating note:', err);
             setError('Error al actualizar la nota');
-            throw err;
+            return null;
         }
     };
 
-    const moveToTrash = async (id: string) => {
+    const deleteNote = async (id: string): Promise<boolean> => {
         try {
+            setError(null);
             await notesApi.moveToTrash(id);
-            setNotes(notes.filter(n => n._id !== id));
+            setNotes(prev => prev.filter(n => n._id !== id));
+            return true;
         } catch (err) {
-            setError('Error al mover a la papelera');
-            throw err;
-        }
-    };
-
-    const undo = async (id: string) => {
-        try {
-            const updated = await notesApi.undo(id);
-            setNotes(notes.map(n => n._id === id ? updated : n));
-            return updated;
-        } catch (err) {
-            setError('No hay cambios para deshacer');
-            throw err;
-        }
-    };
-
-    const redo = async (id: string) => {
-        try {
-            const updated = await notesApi.redo(id);
-            setNotes(notes.map(n => n._id === id ? updated : n));
-            return updated;
-        } catch (err) {
-            setError('No hay cambios para rehacer');
-            throw err;
+            console.error('Error deleting note:', err);
+            setError('Error al eliminar la nota');
+            return false;
         }
     };
 
     useEffect(() => {
         fetchNotes();
-    }, []);
+    }, [fetchNotes]);
 
     return {
         notes,
@@ -92,9 +73,7 @@ export const useNotes = () => {
         error,
         createNote,
         updateNote,
-        moveToTrash,
-        undo,
-        redo,
+        deleteNote,
         refetch: fetchNotes,
     };
 };

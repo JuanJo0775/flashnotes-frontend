@@ -1,4 +1,5 @@
-// src/lib/api/notes.api.ts
+// UBICACIÓN: src/lib/api/notes.api.ts
+// ACCIÓN: REEMPLAZAR COMPLETO
 
 import { apiClient } from './client';
 import type { Note, CreateNoteDto, UpdateNoteDto } from '@/types/note.types';
@@ -28,13 +29,13 @@ export const notesApi = {
         return data;
     },
 
-    // Eliminar nota (mover a papelera)
+    // Mover a papelera
     moveToTrash: async (id: string): Promise<void> => {
         await apiClient.post(`/notes/${id}/trash`);
     },
 
-    // Restaurar nota de la papelera
-    restore: async (id: string): Promise<Note> => {
+    // Restaurar de papelera
+    restoreFromTrash: async (id: string): Promise<Note> => {
         const { data } = await apiClient.post(`/notes/${id}/restore`);
         return data;
     },
@@ -50,27 +51,15 @@ export const notesApi = {
         return data;
     },
 
-    // UNDO: deshacer último cambio
+    // UNDO
     undo: async (id: string): Promise<Note> => {
         const { data } = await apiClient.post(`/notes/${id}/undo`);
         return data;
     },
 
-    // REDO: rehacer cambio
+    // REDO
     redo: async (id: string): Promise<Note> => {
         const { data } = await apiClient.post(`/notes/${id}/redo`);
-        return data;
-    },
-
-    // Obtener historial de versiones
-    getHistory: async (id: string): Promise<any[]> => {
-        const { data } = await apiClient.get(`/notes/${id}/history`);
-        return data;
-    },
-
-    // Restaurar a una versión específica
-    restoreVersion: async (id: string, versionIndex: number): Promise<Note> => {
-        const { data } = await apiClient.post(`/notes/${id}/history/${versionIndex}/restore`);
         return data;
     },
 };

@@ -1,9 +1,13 @@
+// UBICACIÓN: src/components/notes/TrashView.tsx
+// ACCIÓN: REEMPLAZAR COMPLETO (si existe) o CREAR
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import type { Note } from '@/types/note.types';
-import NoteCard from './NoteCard';
+import MetaTag from '@/components/ui/MetaTag';
+import { formatFileSize, formatRelativeTime } from '@/lib/utils/formatters';
 
 export default function TrashView() {
     const [trashedNotes, setTrashedNotes] = useState<Note[]>([]);
@@ -15,6 +19,7 @@ export default function TrashView() {
 
     const loadTrash = async () => {
         try {
+            setIsLoading(true);
             const notes = await notesApi.getTrash();
             setTrashedNotes(notes);
         } catch (error) {
@@ -26,7 +31,7 @@ export default function TrashView() {
 
     const handleRestore = async (id: string) => {
         try {
-            await notesApi.restore(id);
+            await notesApi.restoreFromTrash(id);
             await loadTrash();
         } catch (error) {
             console.error('Error restoring:', error);
@@ -67,9 +72,33 @@ export default function TrashView() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {trashedNotes.map((note) => (
-                        <div key={note._id} className="file-container">
-                            <NoteCard note={note} onClick={() => {}} />
-                            <div className="mt-4 flex gap-2">
+                        <div key={note._id} className="file-container p-4">
+                            {/* Título */}
+                            <div className="mono text-base font-medium mb-2 truncate">
+                                {note.title || 'Untitled.txt'}
+                            </div>
+
+                            {/* Preview */}
+                            <div className="mono text-xs text-meta leading-relaxed mb-3 h-16 overflow-hidden">
+                                {note.content?.slice(0, 120) || '(vacío)'}
+                                {note.content && note.content.length > 120 && '...'}
+                            </div>
+
+                            {/* Metadata */}
+                            <div className="flex items-center gap-2 flex-wrap mb-3">
+                                <MetaTag size="xs" variant="neutral">
+                                    {formatRelativeTime(note.updatedAt)}
+                                </MetaTag>
+                                <MetaTag size="xs" variant="neutral">
+                                    {formatFileSize(note.content?.length || 0)}
+                                </MetaTag>
+                                <MetaTag size="xs" variant="error">
+                                    [DELETED]
+                                </MetaTag>
+                            </div>
+
+                            {/* Acciones */}
+                            <div className="flex gap-2 pt-3 border-t border-t-dotted">
                                 <button
                                     onClick={() => handleRestore(note._id)}
                                     className="btn-terminal flex-1 text-xs"

@@ -1,17 +1,18 @@
-// src/components/notes/NoteEditor.tsx
+// UBICACIÓN: src/components/notes/NoteEditor.tsx
+// ACCIÓN: REEMPLAZAR COMPLETO
 
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import type { Note, UpdateNoteDto } from '@/types/note.types';
+import type { Note } from '@/types/note.types';
 import Cursor from '@/components/ui/Cursor';
 import MetaTag from '@/components/ui/MetaTag';
-import QuickActions from './QuickActions';
-import { formatFileSize, formatTime } from '@/lib/utils/formatters';
+import { formatFileSize, formatRelativeTime } from '@/lib/utils/formatters';
+import { notesApi } from '@/lib/api/notes.api';
 
 interface NoteEditorProps {
     note: Note;
-    onUpdate: (id: string, data: UpdateNoteDto) => Promise<Note>;
+    onUpdate: (id: string, data: { title?: string; content?: string }) => Promise<Note | null>;
     onBack: () => void;
 }
 
@@ -21,6 +22,8 @@ export default function NoteEditor({ note, onUpdate, onBack }: NoteEditorProps) 
     const [isSaving, setIsSaving] = useState(false);
     const [showCursor, setShowCursor] = useState(true);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
+    const [canUndo, setCanUndo] = useState(false);
+    const [canRedo, setCanRedo] = useState(false);
 
     const contentRef = useRef<HTMLTextAreaElement>(null);
     const saveTimeoutRef = useRef<NodeJS.Timeout>();
@@ -36,8 +39,13 @@ export default function NoteEditor({ note, onUpdate, onBack }: NoteEditorProps) 
         saveTimeoutRef.current = setTimeout(async () => {
             setIsSaving(true);
             try {
-                await onUpdate(note._id, { title, content });
-                setLastSaved(new Date());
+                const updated = await onUpdate(note._id, { title, content });
+                if (updated) {
+                    setLastSaved(new Date());
+                    // Actualizar estados de undo/redo si el backend los retorna
+                    setCanUndo((updated as any).versions?.length > 0);
+                    setCanRedo((updated as any).redoStack?.length > 0);
+                }
             } catch (error) {
                 console.error('Error saving:', error);
             } finally {
@@ -59,6 +67,49 @@ export default function NoteEditor({ note, onUpdate, onBack }: NoteEditorProps) 
         }
     }, []);
 
+    // Verificar estado de undo/redo al cargar
+    useEffect(() => {
+        setCanUndo((note as any).versions?.length > 0);
+        setCanRedo((note as any).redoStack?.length > 0);
+    }, [note]);
+
+    const handleUndo = async () => {
+        if (!canUndo) return;
+        try {
+            const updated = await notesApi.undo(note._id);
+            setTitle(updated.title);
+            setContent(updated.content);
+            setCanUndo((updated as any).versions?.length > 0);
+            setCanRedo((updated as any).redoStack?.length > 0);
+        } catch (error) {
+            console.error('Error undoing:', error);
+        }
+    };
+
+    const handleRedo = async () => {
+        if (!canRedo) return;
+        try {
+            const updated = await notesApi.redo(note._id);
+            setTitle(updated.title);
+            setContent(updated.content);
+            setCanUndo((updated as any).versions?.length > 0);
+            setCanRedo((updated as any).redoStack?.length > 0);
+        } catch (error) {
+            console.error('Error redoing:', error);
+        }
+    };
+
+    const handleTrash = async () => {
+        if (confirm('¿Mover esta nota a la papelera?')) {
+            try {
+                await notesApi.moveToTrash(note._id);
+                onBack();
+            } catch (error) {
+                console.error('Error moving to trash:', error);
+            }
+        }
+    };
+
     return (
         <div className="flex flex-col h-full">
             {/* Toolbar superior */}
@@ -73,14 +124,14 @@ export default function NoteEditor({ note, onUpdate, onBack }: NoteEditorProps) 
 
                     <div className="flex items-center gap-2">
                         {isSaving ? (
-                            <MetaTag variant="neutral">GUARDANDO...</MetaTag>
+                            <MetaTag variant="neutral" size="xs">GUARDANDO...</MetaTag>
                         ) : lastSaved ? (
-                            <MetaTag variant="success">
-                                GUARDADO {formatTime(lastSaved)}
+                            <MetaTag variant="success" size="xs">
+                                GUARDADO {formatRelativeTime(lastSaved)}
                             </MetaTag>
                         ) : null}
 
-                        <MetaTag variant="neutral">
+                        <MetaTag variant="neutral" size="xs">
                             {formatFileSize(content.length)}
                         </MetaTag>
                     </div>
@@ -118,11 +169,41 @@ export default function NoteEditor({ note, onUpdate, onBack }: NoteEditorProps) 
             </div>
 
             {/* Acciones rápidas */}
-            <QuickActions
-                noteId={note._id}
-                canUndo={false} // Implementar lógica de undo
-                canRedo={false} // Implementar lógica de redo
-            />
+            <div className="border-t border-t-primary bg-secondary p-4">
+                <div className="flex items-center justify-between">
+                    <div className="comment">ACCIONES_RÁPIDAS:</div>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleUndo}
+                            disabled={!canUndo}
+                            className="btn-terminal text-xs"
+                            title="Deshacer (Ctrl+Z)"
+                        >
+                            [↶] UNDO
+                        </button>
+
+                        <button
+                            onClick={handleRedo}
+                            disabled={!canRedo}
+                            className="btn-terminal text-xs"
+                            title="Rehacer (Ctrl+Y)"
+                        >
+                            [↷] REDO
+                        </button>
+
+                        <div className="border-l border-l-primary h-6 mx-2" />
+
+                        <button
+                            onClick={handleTrash}
+                            className="btn-terminal text-xs"
+                            title="Mover a papelera"
+                        >
+                            [🗑] TRASH
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

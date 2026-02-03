@@ -1,3 +1,6 @@
+// UBICACIÓN: src/app/page.tsx
+// ACCIÓN: REEMPLAZAR COMPLETO
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +9,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import StatusBar from '@/components/layout/StatusBar';
 import NoteEditor from '@/components/notes/NoteEditor';
 import NotesList from '@/components/notes/NotesList';
+import TrashView from '@/components/notes/TrashView';
 import { useNotes } from '@/hooks/useNotes';
 import { useLocalIdentity } from '@/hooks/useLocalIdentity';
 import type { Note } from '@/types/note.types';
@@ -16,7 +20,7 @@ export default function Home() {
     const [showFlash, setShowFlash] = useState(true);
 
     const { browserId } = useLocalIdentity();
-    const { notes, isLoading, error, createNote, updateNote, deleteNote } = useNotes();
+    const { notes, isLoading, error, createNote, updateNote, deleteNote, refetch } = useNotes();
 
     // Flash inicial al cargar
     useEffect(() => {
@@ -25,12 +29,19 @@ export default function Home() {
     }, []);
 
     const handleNewNote = async () => {
-        const newNote = await createNote({
-            title: 'Untitled.txt',
-            content: '',
-        });
-        setSelectedNote(newNote);
-        setCurrentView('editor');
+        try {
+            const newNote = await createNote({
+                title: 'Untitled.txt',
+                content: '',
+            });
+
+            if (newNote) {
+                setSelectedNote(newNote);
+                setCurrentView('editor');
+            }
+        } catch (error) {
+            console.error('Error creating note:', error);
+        }
     };
 
     const handleSelectNote = (note: Note) => {
@@ -41,6 +52,20 @@ export default function Home() {
     const handleBackToList = () => {
         setSelectedNote(null);
         setCurrentView('notes');
+        refetch(); // Recargar lista al volver
+    };
+
+    const handleUpdateNote = async (id: string, data: { title?: string; content?: string }) => {
+        try {
+            const updated = await updateNote(id, data);
+            if (updated) {
+                setSelectedNote(updated);
+            }
+            return updated;
+        } catch (error) {
+            console.error('Error updating note:', error);
+            throw error;
+        }
     };
 
     return (
@@ -73,7 +98,7 @@ export default function Home() {
                         {currentView === 'editor' && selectedNote ? (
                             <NoteEditor
                                 note={selectedNote}
-                                onUpdate={updateNote}
+                                onUpdate={handleUpdateNote}
                                 onBack={handleBackToList}
                             />
                         ) : currentView === 'notes' ? (
@@ -84,12 +109,7 @@ export default function Home() {
                                 onNewNote={handleNewNote}
                             />
                         ) : (
-                            <div className="p-8">
-                                <div className="comment">TRASH VIEW</div>
-                                <p className="mt-4 mono text-sm">
-                                    Esta vista mostrará las notas eliminadas.
-                                </p>
-                            </div>
+                            <TrashView />
                         )}
                     </main>
                 </div>
