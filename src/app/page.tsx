@@ -12,7 +12,8 @@ import NotesList from '@/components/notes/NotesList';
 import TrashView from '@/components/notes/TrashView';
 import { useNotes } from '@/hooks/useNotes';
 import { useLocalIdentity } from '@/hooks/useLocalIdentity';
-import type { Note } from '@/types/note.types';
+import { useUndoRedo } from '@/hooks/useUndoRedo';
+import type { Note } from '../types/note.types';
 
 export default function Home() {
     const [currentView, setCurrentView] = useState<'notes' | 'editor' | 'trash'>('notes');
@@ -20,7 +21,8 @@ export default function Home() {
     const [showFlash, setShowFlash] = useState(true);
 
     const { browserId } = useLocalIdentity();
-    const { notes, isLoading, error, createNote, updateNote, deleteNote, refetch } = useNotes();
+    const { notes, isLoading, error, createNote, updateNote, refreshNotes, refetch } = useNotes();
+    const { undo, redo } = useUndoRedo();
 
     // Flash inicial al cargar
     useEffect(() => {
@@ -52,7 +54,8 @@ export default function Home() {
     const handleBackToList = () => {
         setSelectedNote(null);
         setCurrentView('notes');
-        refetch(); // Recargar lista al volver
+        // usar refreshNotes si existe
+        (refetch || refreshNotes)();
     };
 
     const handleUpdateNote = async (id: string, data: { title?: string; content?: string }) => {
@@ -66,6 +69,25 @@ export default function Home() {
             console.error('Error updating note:', error);
             throw error;
         }
+    };
+
+    const handleUndo = async (id: string) => {
+        const updated = await undo(id);
+        if (updated) {
+            setSelectedNote(updated);
+            // sincronizar lista
+            (refetch || refreshNotes)();
+        }
+        return updated;
+    };
+
+    const handleRedo = async (id: string) => {
+        const updated = await redo(id);
+        if (updated) {
+            setSelectedNote(updated);
+            (refetch || refreshNotes)();
+        }
+        return updated;
     };
 
     return (
@@ -98,8 +120,10 @@ export default function Home() {
                         {currentView === 'editor' && selectedNote ? (
                             <NoteEditor
                                 note={selectedNote}
-                                onUpdate={handleUpdateNote}
+                                onSave={handleUpdateNote}
                                 onBack={handleBackToList}
+                                onUndo={handleUndo}
+                                onRedo={handleRedo}
                             />
                         ) : currentView === 'notes' ? (
                             <NotesList
