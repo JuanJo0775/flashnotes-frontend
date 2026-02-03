@@ -1,68 +1,98 @@
 // src/hooks/useUndoRedo.ts
-
 import { useState, useCallback } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
-import type { Note } from '@/types/note.types';
+import { getErrorMessage } from '@/lib/api/client';
+import { Note, NoteWithHistory } from '@/types/note.types';
 
 interface UseUndoRedoReturn {
     canUndo: boolean;
     canRedo: boolean;
-    undo: () => Promise<Note | null>;
-    redo: () => Promise<Note | null>;
     isProcessing: boolean;
+    error: string | null;
+
+    undo: (noteId: string) => Promise<Note | null>;
+    redo: (noteId: string) => Promise<Note | null>;
+    clearError: () => void;
 }
 
-export function useUndoRedo(noteId: string | null): UseUndoRedoReturn {
+export const useUndoRedo = (): UseUndoRedoReturn => {
     const [canUndo, setCanUndo] = useState(false);
     const [canRedo, setCanRedo] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const undo = useCallback(async (): Promise<Note | null> => {
-        if (!noteId || !canUndo) return null;
+    /**
+     * Actualiza los flags de undo/redo basado en la nota
+     */
+    const updateFlags = useCallback((note: Note) => {
+        const noteWithHistory = note as NoteWithHistory;
 
-        setIsProcessing(true);
+        setCanUndo(noteWithHistory.versions?.length > 0 || false);
+        setCanRedo(noteWithHistory.redoStack?.length > 0 || false);
+    }, []);
+
+    /**
+     * Deshace el último cambio
+     */
+    const undo = useCallback(async (noteId: string): Promise<Note | null> => {
         try {
+            setIsProcessing(true);
+            setError(null);
+
             const updatedNote = await notesApi.undo(noteId);
-            // Actualizar estados basados en la respuesta
-            setCanUndo(updatedNote.versions && updatedNote.versions.length > 0);
-            setCanRedo(updatedNote.redoStack && updatedNote.redoStack.length > 0);
+
+            // Actualizar flags
+            updateFlags(updatedNote);
+
             return updatedNote;
-        } catch (error) {
-            console.error('Error undoing:', error);
+        } catch (err) {
+            const message = getErrorMessage(err);
+            setError(message);
+            console.error('Error en undo:', err);
             return null;
         } finally {
             setIsProcessing(false);
         }
-    }, [noteId, canUndo]);
+    }, [updateFlags]);
 
-    const redo = useCallback(async (): Promise<Note | null> => {
-        if (!noteId || !canRedo) return null;
-
-        setIsProcessing(true);
+    /**
+     * Rehace el último cambio deshecho
+     */
+    const redo = useCallback(async (noteId: string): Promise<Note | null> => {
         try {
+            setIsProcessing(true);
+            setError(null);
+
             const updatedNote = await notesApi.redo(noteId);
-            setCanUndo(updatedNote.versions && updatedNote.versions.length > 0);
-            setCanRedo(updatedNote.redoStack && updatedNote.redoStack.length > 0);
+
+            // Actualizar flags
+            updateFlags(updatedNote);
+
             return updatedNote;
-        } catch (error) {
-            console.error('Error redoing:', error);
+        } catch (err) {
+            const message = getErrorMessage(err);
+            setError(message);
+            console.error('Error en redo:', err);
             return null;
         } finally {
             setIsProcessing(false);
         }
-    }, [noteId, canRedo]);
+    }, [updateFlags]);
 
-    // Actualizar estados cuando cambia la nota
-    const updateUndoRedoState = useCallback((note: Note) => {
-        setCanUndo((note as any).versions?.length > 0);
-        setCanRedo((note as any).redoStack?.length > 0);
+    /**
+     * Limpia el error
+     */
+    const clearError = useCallback(() => {
+        setError(null);
     }, []);
 
     return {
         canUndo,
         canRedo,
+        isProcessing,
+        error,
         undo,
         redo,
-        isProcessing,
+        clearError,
     };
-}
+};

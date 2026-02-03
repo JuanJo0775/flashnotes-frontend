@@ -1,51 +1,106 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+// src/hooks/useTrash.ts
+import { useState, useEffect, useCallback } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
-import type { Note } from '@/types/note.types';
+import { getErrorMessage } from '@/lib/api/client';
+import { Note } from '@/types/note.types';
 
-export const useTrash = () => {
+interface UseTrashReturn {
+    trashedNotes: Note[];
+    isLoading: boolean;
+    error: string | null;
+
+    restoreNote: (id: string) => Promise<boolean>;
+    deletePermanently: (id: string) => Promise<boolean>;
+    refreshTrash: () => Promise<void>;
+    clearError: () => void;
+}
+
+export const useTrash = (): UseTrashReturn => {
     const [trashedNotes, setTrashedNotes] = useState<Note[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchTrash = async () => {
-        setIsLoading(true);
+    /**
+     * Carga las notas en papelera
+     */
+    const loadTrash = useCallback(async () => {
         try {
-            const data = await notesApi.getTrash();
-            setTrashedNotes(data);
+            setIsLoading(true);
             setError(null);
+
+            const data = await notesApi.listTrash();
+            setTrashedNotes(data);
         } catch (err) {
-            setError('Error al cargar la papelera');
-            console.error(err);
+            const message = getErrorMessage(err);
+            setError(message);
+            console.error('Error cargando papelera:', err);
         } finally {
             setIsLoading(false);
         }
-    };
-
-    const restoreNote = async (id: string) => {
-        try {
-            await notesApi.restore(id);
-            setTrashedNotes(trashedNotes.filter(n => n._id !== id));
-        } catch (err) {
-            setError('Error al restaurar la nota');
-            throw err;
-        }
-    };
-
-    const deletePermanently = async (id: string) => {
-        try {
-            await notesApi.deletePermanently(id);
-            setTrashedNotes(trashedNotes.filter(n => n._id !== id));
-        } catch (err) {
-            setError('Error al eliminar permanentemente');
-            throw err;
-        }
-    };
-
-    useEffect(() => {
-        fetchTrash();
     }, []);
+
+    /**
+     * Restaura una nota desde la papelera
+     */
+    const restoreNote = useCallback(async (id: string): Promise<boolean> => {
+        try {
+            setError(null);
+
+            await notesApi.restore(id);
+
+            // Remover del estado local
+            setTrashedNotes((prev) => prev.filter((note) => note._id !== id));
+
+            return true;
+        } catch (err) {
+            const message = getErrorMessage(err);
+            setError(message);
+            console.error('Error restaurando nota:', err);
+            return false;
+        }
+    }, []);
+
+    /**
+     * Elimina permanentemente una nota
+     */
+    const deletePermanently = useCallback(async (id: string): Promise<boolean> => {
+        try {
+            setError(null);
+
+            await notesApi.deletePermanently(id);
+
+            // Remover del estado local
+            setTrashedNotes((prev) => prev.filter((note) => note._id !== id));
+
+            return true;
+        } catch (err) {
+            const message = getErrorMessage(err);
+            setError(message);
+            console.error('Error eliminando permanentemente:', err);
+            return false;
+        }
+    }, []);
+
+    /**
+     * Refresca la lista de papelera
+     */
+    const refreshTrash = useCallback(async () => {
+        await loadTrash();
+    }, [loadTrash]);
+
+    /**
+     * Limpia el error
+     */
+    const clearError = useCallback(() => {
+        setError(null);
+    }, []);
+
+    /**
+     * Carga inicial
+     */
+    useEffect(() => {
+        loadTrash();
+    }, [loadTrash]);
 
     return {
         trashedNotes,
@@ -53,6 +108,7 @@ export const useTrash = () => {
         error,
         restoreNote,
         deletePermanently,
-        refetch: fetchTrash,
+        refreshTrash,
+        clearError,
     };
 };

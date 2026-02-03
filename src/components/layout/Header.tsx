@@ -16,7 +16,7 @@ export default function Header({ currentView, onViewChange }: HeaderProps) {
     return (
         <header className="terminal-header">
             <div className="flex items-center gap-4">
-                <span className="pixel text-xl">[NOTES_OS v1.0]</span>
+                <span className="pixel text-xl">[FLASH-NOTES v1.0]</span>
             </div>
 
             <div className="flex items-center gap-4">

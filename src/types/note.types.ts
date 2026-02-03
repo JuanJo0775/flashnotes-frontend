@@ -1,20 +1,19 @@
-export interface Note {
-    _id: string;
+// src/types/note.types.ts (agregar al final)
+
+/**
+ * Versión histórica de una nota (estructura interna del backend)
+ */
+export interface NoteVersion {
     title: string;
     content: string;
-    createdAt: string;
-    updatedAt: string;
-    isDeleted: boolean;
+    editedAt: string;
 }
 
-export interface CreateNoteDto {
-    title: string;
-    content: string;
+/**
+ * Nota completa con historial (estructura real del backend)
+ */
+export interface NoteWithHistory extends Note {
+    versions: NoteVersion[];
+    redoStack: NoteVersion[];
+    editedAt: string;
 }
-
-export interface UpdateNoteDto {
-    title?: string;
-    content?: string;
-}
-
-export type NoteStatus = 'active' | 'deleted' | 'loading';

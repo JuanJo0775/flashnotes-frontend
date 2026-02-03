@@ -15,7 +15,7 @@ const vt323 = VT323({
 });
 
 export const metadata: Metadata = {
-    title: "NOTES_OS v1.0",
+    title: "FLASH-NOTES v1.0",
     description: "Tu cuaderno del momento, en este navegador",
 };
 
