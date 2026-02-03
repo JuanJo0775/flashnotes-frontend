@@ -5,7 +5,14 @@ import { useNotesStore } from '@/store/notesStore';
 import { notesApi } from '@/lib/api/notes.api';
 
 export const useNotes = () => {
-    const { notes, setNotes, isLoading, setLoading, error, setError } = useNotesStore();
+    const {
+        notes,
+        setNotes,
+        isLoading,
+        setLoading,
+        error,
+        setError
+    } = useNotesStore();
 
     const fetchNotes = async () => {
         setLoading(true);
@@ -43,12 +50,34 @@ export const useNotes = () => {
         }
     };
 
-    const deleteNote = async (id: string) => {
+    const moveToTrash = async (id: string) => {
         try {
-            await notesApi.delete(id);
+            await notesApi.moveToTrash(id);
             setNotes(notes.filter(n => n._id !== id));
         } catch (err) {
-            setError('Error al eliminar la nota');
+            setError('Error al mover a la papelera');
+            throw err;
+        }
+    };
+
+    const undo = async (id: string) => {
+        try {
+            const updated = await notesApi.undo(id);
+            setNotes(notes.map(n => n._id === id ? updated : n));
+            return updated;
+        } catch (err) {
+            setError('No hay cambios para deshacer');
+            throw err;
+        }
+    };
+
+    const redo = async (id: string) => {
+        try {
+            const updated = await notesApi.redo(id);
+            setNotes(notes.map(n => n._id === id ? updated : n));
+            return updated;
+        } catch (err) {
+            setError('No hay cambios para rehacer');
             throw err;
         }
     };
@@ -63,7 +92,9 @@ export const useNotes = () => {
         error,
         createNote,
         updateNote,
-        deleteNote,
+        moveToTrash,
+        undo,
+        redo,
         refetch: fetchNotes,
     };
 };

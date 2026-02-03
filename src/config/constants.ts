@@ -1,7 +1,6 @@
-export const APP_CONFIG = {
-    name: 'FlashNotes',
-    version: '1.0.0',
-    description: 'Tu cuaderno del momento, en este navegador',
+export const API_CONFIG = {
+    BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+    TIMEOUT: 10000,
 } as const;
 
 export const STORAGE_KEYS = {
@@ -10,13 +9,9 @@ export const STORAGE_KEYS = {
     LAST_SYNC: 'flashnotes_last_sync',
 } as const;
 
-export const API_CONFIG = {
-    BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
-    TIMEOUT: 10000,
-} as const;
-
-export const EDITOR_CONFIG = {
-    AUTO_SAVE_DELAY: 1000, // 1 segundo
-    MAX_UNDO_STEPS: 50,
-    DEBOUNCE_DELAY: 300,
+export const APP_CONSTANTS = {
+    AUTO_SAVE_DELAY: 500,
+    TOAST_DURATION: 3000,
+    MAX_TITLE_LENGTH: 200,
+    MAX_CONTENT_LENGTH: 100000,
 } as const;

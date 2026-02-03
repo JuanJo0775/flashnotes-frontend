@@ -1,0 +1,183 @@
+/* ============================================
+   ANIMACIONES ESTILO TERMINAL
+   ============================================ */
+
+/* Cursor parpadeante */
+@keyframes blink {
+    0%, 49% {
+        opacity: 1;
+    }
+    50%, 100% {
+        opacity: 0;
+    }
+}
+
+.cursor-blink {
+    animation: blink 1s step-end infinite;
+}
+
+.cursor-block {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: var(--text-primary);
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
+}
+
+/* Escritura typewriter */
+@keyframes typing {
+    from {
+        width: 0;
+    }
+    to {
+        width: 100%;
+    }
+}
+
+.typewriter {
+    overflow: hidden;
+    white-space: nowrap;
+    animation: typing 2s steps(40, end);
+}
+
+/* Barrido de pantalla */
+@keyframes sweep-horizontal {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.sweep-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-primary);
+    animation: sweep-horizontal 0.3s ease-out;
+    pointer-events: none;
+}
+
+/* Flash blanco de transición */
+@keyframes flash-white {
+    0%, 100% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.flash-transition {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-primary);
+    animation: flash-white 0.2s ease-out;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* Líneas de escaneo CRT */
+@keyframes scanline {
+    0% {
+        transform: translateY(-100%);
+    }
+    100% {
+        transform: translateY(100vh);
+    }
+}
+
+.scanline-effect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(
+            to bottom,
+            transparent,
+            rgba(0, 0, 0, 0.1),
+            transparent
+    );
+    animation: scanline 8s linear infinite;
+    pointer-events: none;
+    z-index: 10000;
+}
+
+/* Glitch effect */
+@keyframes glitch {
+    0%, 100% {
+        transform: translate(0);
+    }
+    20% {
+        transform: translate(-2px, 2px);
+    }
+    40% {
+        transform: translate(-2px, -2px);
+    }
+    60% {
+        transform: translate(2px, 2px);
+    }
+    80% {
+        transform: translate(2px, -2px);
+    }
+}
+
+.glitch {
+    animation: glitch 0.3s ease-in-out;
+}
+
+/* Fade in instantáneo (no suave) */
+@keyframes fade-in-instant {
+    0% {
+        opacity: 0;
+    }
+    1% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.fade-in-instant {
+    animation: fade-in-instant 0.1s step-end;
+}
+
+/* Selección invertida */
+.selection-invert {
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    transition: none;
+}
+
+/* Hover con borde punteado */
+.hover-dotted:hover {
+    outline: var(--line-normal) dotted var(--border-primary);
+    outline-offset: -2px;
+}
+
+/* Loading dots */
+@keyframes loading-dots {
+    0%, 20% {
+        content: '.';
+    }
+    40% {
+        content: '..';
+    }
+    60%, 100% {
+        content: '...';
+    }
+}
+
+.loading-dots::after {
+    content: '.';
+    animation: loading-dots 1.5s steps(3, end) infinite;
+}

@@ -1,0 +1,220 @@
+/* ============================================
+   COMPONENTES ESTILO TERMINAL
+   ============================================ */
+
+/* Header estilo OS */
+.terminal-header {
+    height: 40px;
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-medium);
+    border-bottom: var(--line-thick) solid var(--border-primary);
+    font-family: var(--font-pixel);
+    font-size: var(--text-lg);
+}
+
+/* Barra de estado inferior */
+.status-bar {
+    height: 32px;
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-medium);
+    border-top: var(--line-thick) solid var(--border-primary);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+}
+
+/* Contenedor de archivo */
+.file-container {
+    border: var(--line-normal) solid var(--border-primary);
+    background: var(--bg-tertiary);
+    padding: var(--space-medium);
+}
+
+/* Lista de archivos estilo directorio */
+.file-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-small);
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-small) var(--space-medium);
+    border: var(--line-thin) dotted var(--border-secondary);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    transition: none;
+}
+
+.file-item:hover {
+    border-style: solid;
+    border-color: var(--border-primary);
+    background: var(--text-primary);
+    color: var(--bg-primary);
+}
+
+/* Meta tags estilo sistema */
+.meta-tag {
+    display: inline-block;
+    padding: 2px 6px;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--text-meta);
+    border: var(--line-thin) solid var(--border-secondary);
+    background: var(--bg-secondary);
+    text-transform: uppercase;
+}
+
+.meta-tag.status-ok {
+    color: var(--accent-green);
+    border-color: var(--accent-green);
+}
+
+.meta-tag.status-error {
+    color: var(--accent-red);
+    border-color: var(--accent-red);
+}
+
+/* Barra de progreso ASCII */
+.progress-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-small);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+}
+
+.progress-fill {
+    display: flex;
+}
+
+.progress-segment {
+    width: 8px;
+    height: 12px;
+    background: var(--text-primary);
+    margin-right: 1px;
+}
+
+.progress-segment.empty {
+    background: transparent;
+    border: var(--line-thin) solid var(--border-secondary);
+}
+
+/* Divisores */
+.divider-horizontal {
+    height: var(--line-normal);
+    background: var(--border-primary);
+    margin: var(--space-medium) 0;
+}
+
+.divider-dashed {
+    height: var(--line-normal);
+    background-image: repeating-linear-gradient(
+            to right,
+            var(--border-primary) 0,
+            var(--border-primary) 4px,
+            transparent 4px,
+            transparent 8px
+    );
+    margin: var(--space-medium) 0;
+}
+
+/* Comentarios estilo código */
+.comment {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--text-meta);
+}
+
+.comment::before {
+    content: '// ';
+}
+
+/* Sección con encabezado */
+.section-header {
+    font-family: var(--font-pixel);
+    font-size: var(--text-lg);
+    text-transform: uppercase;
+    border-bottom: var(--line-thick) solid var(--border-primary);
+    padding-bottom: var(--space-small);
+    margin-bottom: var(--space-medium);
+}
+
+/* Botones estilo terminal */
+.btn-terminal {
+    padding: var(--space-small) var(--space-medium);
+    border: var(--line-normal) solid var(--border-primary);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: none;
+    text-transform: uppercase;
+}
+
+.btn-terminal:hover {
+    background: var(--text-primary);
+    color: var(--bg-primary);
+}
+
+.btn-terminal:active {
+    transform: translate(1px, 1px);
+}
+
+.btn-terminal[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-style: dotted;
+}
+
+.btn-terminal[disabled]:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+/* Input estilo terminal */
+.input-terminal {
+    width: 100%;
+    padding: var(--space-small) var(--space-medium);
+    border: var(--line-normal) solid var(--border-primary);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    outline: none;
+}
+
+.input-terminal:focus {
+    background: var(--bg-primary);
+    border-style: solid;
+    border-width: var(--line-thick);
+}
+
+/* Panel con título */
+.panel {
+    border: var(--line-normal) solid var(--border-primary);
+    background: var(--bg-tertiary);
+}
+
+.panel-title {
+    padding: var(--space-small) var(--space-medium);
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    font-family: var(--font-pixel);
+    font-size: var(--text-base);
+    border-bottom: var(--line-normal) solid var(--border-primary);
+}
+
+.panel-content {
+    padding: var(--space-medium);
+}

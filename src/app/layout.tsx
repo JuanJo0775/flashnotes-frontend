@@ -1,20 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { JetBrains_Mono, VT323 } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-    variable: "--font-geist-sans",
+const jetbrainsMono = JetBrains_Mono({
+    variable: "--font-mono",
     subsets: ["latin"],
+    weight: ["400", "500", "700"],
 });
 
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
+const vt323 = VT323({
+    variable: "--font-pixel",
     subsets: ["latin"],
+    weight: ["400"],
 });
 
 export const metadata: Metadata = {
-    title: "FlashNotes - Tu cuaderno del momento",
-    description: "Un espacio personal efímero-persistente por navegador",
+    title: "NOTES_OS v1.0",
+    description: "Tu cuaderno del momento, en este navegador",
 };
 
 export default function RootLayout({
@@ -24,9 +26,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="es">
-        <body
-            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
+        <body className={`${jetbrainsMono.variable} ${vt323.variable}`}>
         {children}
         </body>
         </html>

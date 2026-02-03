@@ -1,75 +1,107 @@
 'use client';
 
-import { useLocalIdentity } from '@/hooks/useLocalIdentity';
+import { useState, useEffect } from 'react';
+import Header from '@/components/layout/Header';
+import Sidebar from '@/components/layout/Sidebar';
+import StatusBar from '@/components/layout/StatusBar';
+import NoteEditor from '@/components/notes/NoteEditor';
+import NotesList from '@/components/notes/NotesList';
 import { useNotes } from '@/hooks/useNotes';
+import { useLocalIdentity } from '@/hooks/useLocalIdentity';
+import type { Note } from '@/types/note.types';
 
 export default function Home() {
-  const { browserId, isReady } = useLocalIdentity();
-  const { notes, isLoading, createNote } = useNotes();
+    const [currentView, setCurrentView] = useState<'notes' | 'editor' | 'trash'>('notes');
+    const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+    const [showFlash, setShowFlash] = useState(true);
 
-  if (!isReady) {
+    const { browserId } = useLocalIdentity();
+    const { notes, isLoading, error, createNote, updateNote, deleteNote } = useNotes();
+
+    // Flash inicial al cargar
+    useEffect(() => {
+        const timer = setTimeout(() => setShowFlash(false), 200);
+        return () => clearTimeout(timer);
+    }, []);
+
+    const handleNewNote = async () => {
+        const newNote = await createNote({
+            title: 'Untitled.txt',
+            content: '',
+        });
+        setSelectedNote(newNote);
+        setCurrentView('editor');
+    };
+
+    const handleSelectNote = (note: Note) => {
+        setSelectedNote(note);
+        setCurrentView('editor');
+    };
+
+    const handleBackToList = () => {
+        setSelectedNote(null);
+        setCurrentView('notes');
+    };
+
     return (
-        <div className="flex min-h-screen items-center justify-center">
-          <p>Inicializando tu cuaderno...</p>
-        </div>
+        <>
+            {/* Flash de transición */}
+            {showFlash && <div className="flash-transition" />}
+
+            {/* Efecto de líneas de escaneo CRT */}
+            <div className="scanline-effect" />
+
+            <div className="container-terminal">
+                {/* Header */}
+                <Header
+                    currentView={currentView}
+                    onViewChange={setCurrentView}
+                />
+
+                {/* Contenido principal */}
+                <div className="flex flex-1 overflow-hidden">
+                    {/* Sidebar */}
+                    <Sidebar
+                        notes={notes}
+                        onSelectNote={handleSelectNote}
+                        selectedNote={selectedNote}
+                        onNewNote={handleNewNote}
+                    />
+
+                    {/* Área de trabajo */}
+                    <main className="flex-1 overflow-auto border-l border-l-primary">
+                        {currentView === 'editor' && selectedNote ? (
+                            <NoteEditor
+                                note={selectedNote}
+                                onUpdate={updateNote}
+                                onBack={handleBackToList}
+                            />
+                        ) : currentView === 'notes' ? (
+                            <NotesList
+                                notes={notes}
+                                isLoading={isLoading}
+                                onSelectNote={handleSelectNote}
+                                onNewNote={handleNewNote}
+                            />
+                        ) : (
+                            <div className="p-8">
+                                <div className="comment">TRASH VIEW</div>
+                                <p className="mt-4 mono text-sm">
+                                    Esta vista mostrará las notas eliminadas.
+                                </p>
+                            </div>
+                        )}
+                    </main>
+                </div>
+
+                {/* Status bar */}
+                <StatusBar
+                    notesCount={notes.length}
+                    browserId={browserId}
+                    isLoading={isLoading}
+                    error={error}
+                />
+            </div>
+        </>
     );
-  }
-
-  const handleCreateNote = async () => {
-    try {
-      await createNote('Nueva nota', 'Escribe aquí...');
-    } catch (error) {
-      console.error('Error creando nota:', error);
-    }
-  };
-
-  return (
-      <div className="flex min-h-screen flex-col p-8">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold">FlashNotes</h1>
-          <p className="text-sm text-zinc-500 mt-2">
-            Tu cuaderno personal en este navegador
-          </p>
-          <p className="text-xs text-zinc-400 mt-1 font-mono">
-            ID: {browserId.substring(0, 8)}...
-          </p>
-        </header>
-
-        <div className="mb-4">
-          <button
-              onClick={handleCreateNote}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            + Nueva Nota
-          </button>
-        </div>
-
-        {isLoading ? (
-            <p>Cargando notas...</p>
-        ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {notes.map((note) => (
-                  <div
-                      key={note._id}
-                      className="p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg"
-                  >
-                    <h3 className="font-semibold mb-2">{note.title}</h3>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400 truncate">
-                      {note.content}
-                    </p>
-                    <p className="text-xs text-zinc-400 mt-2">
-                      {new Date(note.updatedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-              ))}
-            </div>
-        )}
-
-        {!isLoading && notes.length === 0 && (
-            <div className="text-center py-12 text-zinc-500">
-              <p>No hay notas aún. ¡Crea tu primera nota!</p>
-            </div>
-        )}
-      </div>
-  );
 }

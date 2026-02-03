@@ -1,3 +1,5 @@
+// src/lib/api/notes.api.ts
+
 import { apiClient } from './client';
 import type { Note, CreateNoteDto, UpdateNoteDto } from '@/types/note.types';
 
@@ -26,20 +28,49 @@ export const notesApi = {
         return data;
     },
 
-    // Eliminar nota (soft delete)
-    delete: async (id: string): Promise<void> => {
-        await apiClient.delete(`/notes/${id}`);
+    // Eliminar nota (mover a papelera)
+    moveToTrash: async (id: string): Promise<void> => {
+        await apiClient.post(`/notes/${id}/trash`);
     },
 
     // Restaurar nota de la papelera
     restore: async (id: string): Promise<Note> => {
-        const { data } = await apiClient.patch(`/notes/${id}/restore`);
+        const { data } = await apiClient.post(`/notes/${id}/restore`);
         return data;
+    },
+
+    // Eliminar permanentemente
+    deletePermanently: async (id: string): Promise<void> => {
+        await apiClient.delete(`/notes/${id}/permanent`);
     },
 
     // Obtener papelera
     getTrash: async (): Promise<Note[]> => {
         const { data } = await apiClient.get('/notes/trash');
+        return data;
+    },
+
+    // UNDO: deshacer último cambio
+    undo: async (id: string): Promise<Note> => {
+        const { data } = await apiClient.post(`/notes/${id}/undo`);
+        return data;
+    },
+
+    // REDO: rehacer cambio
+    redo: async (id: string): Promise<Note> => {
+        const { data } = await apiClient.post(`/notes/${id}/redo`);
+        return data;
+    },
+
+    // Obtener historial de versiones
+    getHistory: async (id: string): Promise<any[]> => {
+        const { data } = await apiClient.get(`/notes/${id}/history`);
+        return data;
+    },
+
+    // Restaurar a una versión específica
+    restoreVersion: async (id: string, versionIndex: number): Promise<Note> => {
+        const { data } = await apiClient.post(`/notes/${id}/history/${versionIndex}/restore`);
         return data;
     },
 };
