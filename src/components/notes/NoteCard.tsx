@@ -2,7 +2,7 @@
 
 'use client';
 
-import type { Note } from '@/types/note.types';
+import type { Note } from '../../types/note.types';
 import MetaTag from '@/components/ui/MetaTag';
 import { formatFileSize, formatTime } from '@/lib/utils/formatters';
 
@@ -34,7 +34,7 @@ export default function NoteCard({ note, onClick }: NoteCardProps) {
             {/* Metadata */}
             <div className="flex items-center gap-2 flex-wrap">
                 <MetaTag size="xs" variant="neutral">
-                    {formatTime(note.updatedAt)}
+                    {note.updatedAt ? formatTime(note.updatedAt) : '-'}
                 </MetaTag>
                 <MetaTag size="xs" variant="neutral">
                     {formatFileSize(note.content.length)}

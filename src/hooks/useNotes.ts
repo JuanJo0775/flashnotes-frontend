@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { getErrorMessage } from '@/lib/api/client';
-import { Note, CreateNoteDto, UpdateNoteDto } from '@/types/note.types';
+import { Note, CreateNoteDto, UpdateNoteDto } from '../types/note.types';
 
 interface UseNotesReturn {
     notes: Note[];
@@ -17,6 +17,9 @@ interface UseNotesReturn {
 
     // Utilidades
     clearError: () => void;
+
+    // Compatibilidad: alias
+    refetch?: () => Promise<void>;
 }
 
 export const useNotes = (): UseNotesReturn => {
@@ -137,6 +140,9 @@ export const useNotes = (): UseNotesReturn => {
         await loadNotes();
     }, [loadNotes]);
 
+    // Alias por compatibilidad: `refetch` es usado en algunos componentes
+    const refetch = refreshNotes;
+
     /**
      * Limpia el error actual
      */
@@ -160,5 +166,6 @@ export const useNotes = (): UseNotesReturn => {
         deleteNote,
         refreshNotes,
         clearError,
+        refetch,
     };
 };

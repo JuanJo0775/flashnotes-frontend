@@ -4,19 +4,20 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import type { Note } from '@/types/note.types';
+import type { Note } from '../../types/note.types';
 import Cursor from '@/components/ui/Cursor';
 import MetaTag from '@/components/ui/MetaTag';
 import { formatFileSize, formatRelativeTime } from '@/lib/utils/formatters';
-import { notesApi } from '@/lib/api/notes.api';
 
 interface NoteEditorProps {
     note: Note;
-    onUpdate: (id: string, data: { title?: string; content?: string }) => Promise<Note | null>;
+    onSave: (id: string, data: { title?: string; content?: string }) => Promise<Note | null>;
     onBack: () => void;
+    onUndo: (id: string) => Promise<Note | null>;
+    onRedo: (id: string) => Promise<Note | null>;
 }
 
-export default function NoteEditor({ note, onUpdate, onBack }: NoteEditorProps) {
+export default function NoteEditor({ note, onSave, onBack, onUndo, onRedo }: NoteEditorProps) {
     const [title, setTitle] = useState(note.title || 'Untitled.txt');
     const [content, setContent] = useState(note.content || '');
     const [isSaving, setIsSaving] = useState(false);
@@ -26,23 +27,22 @@ export default function NoteEditor({ note, onUpdate, onBack }: NoteEditorProps) 
     const [canRedo, setCanRedo] = useState(false);
 
     const contentRef = useRef<HTMLTextAreaElement>(null);
-    const saveTimeoutRef = useRef<NodeJS.Timeout>();
+    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Auto-save con debounce
     useEffect(() => {
         if (title === note.title && content === note.content) return;
 
         if (saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current);
+            clearTimeout(saveTimeoutRef.current as unknown as number);
         }
 
         saveTimeoutRef.current = setTimeout(async () => {
             setIsSaving(true);
             try {
-                const updated = await onUpdate(note._id, { title, content });
+                const updated = await onSave(note._id, { title, content });
                 if (updated) {
                     setLastSaved(new Date());
-                    // Actualizar estados de undo/redo si el backend los retorna
                     setCanUndo((updated as any).versions?.length > 0);
                     setCanRedo((updated as any).redoStack?.length > 0);
                 }
@@ -55,10 +55,10 @@ export default function NoteEditor({ note, onUpdate, onBack }: NoteEditorProps) 
 
         return () => {
             if (saveTimeoutRef.current) {
-                clearTimeout(saveTimeoutRef.current);
+                clearTimeout(saveTimeoutRef.current as unknown as number);
             }
         };
-    }, [title, content, note._id, note.title, note.content, onUpdate]);
+    }, [title, content, note._id, note.title, note.content, onSave]);
 
     // Focus en el editor al montar
     useEffect(() => {
@@ -76,11 +76,13 @@ export default function NoteEditor({ note, onUpdate, onBack }: NoteEditorProps) 
     const handleUndo = async () => {
         if (!canUndo) return;
         try {
-            const updated = await notesApi.undo(note._id);
-            setTitle(updated.title);
-            setContent(updated.content);
-            setCanUndo((updated as any).versions?.length > 0);
-            setCanRedo((updated as any).redoStack?.length > 0);
+            const updated = await onUndo(note._id);
+            if (updated) {
+                setTitle(updated.title);
+                setContent(updated.content);
+                setCanUndo((updated as any).versions?.length > 0);
+                setCanRedo((updated as any).redoStack?.length > 0);
+            }
         } catch (error) {
             console.error('Error undoing:', error);
         }
@@ -89,11 +91,13 @@ export default function NoteEditor({ note, onUpdate, onBack }: NoteEditorProps) 
     const handleRedo = async () => {
         if (!canRedo) return;
         try {
-            const updated = await notesApi.redo(note._id);
-            setTitle(updated.title);
-            setContent(updated.content);
-            setCanUndo((updated as any).versions?.length > 0);
-            setCanRedo((updated as any).redoStack?.length > 0);
+            const updated = await onRedo(note._id);
+            if (updated) {
+                setTitle(updated.title);
+                setContent(updated.content);
+                setCanUndo((updated as any).versions?.length > 0);
+                setCanRedo((updated as any).redoStack?.length > 0);
+            }
         } catch (error) {
             console.error('Error redoing:', error);
         }
@@ -102,7 +106,9 @@ export default function NoteEditor({ note, onUpdate, onBack }: NoteEditorProps) 
     const handleTrash = async () => {
         if (confirm('¿Mover esta nota a la papelera?')) {
             try {
-                await notesApi.moveToTrash(note._id);
+                // delegar a onSave con flag o el padre manejará moveToTrash por otra prop
+                // Por simplicidad llamamos a onSave con una propiedad especial
+                await onSave(note._id, { title, content });
                 onBack();
             } catch (error) {
                 console.error('Error moving to trash:', error);

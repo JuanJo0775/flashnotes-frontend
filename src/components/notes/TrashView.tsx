@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
-import type { Note } from '@/types/note.types';
+import type { Note } from '../../types/note.types';
 import MetaTag from '@/components/ui/MetaTag';
 import { formatFileSize, formatRelativeTime } from '@/lib/utils/formatters';
 
@@ -20,7 +20,7 @@ export default function TrashView() {
     const loadTrash = async () => {
         try {
             setIsLoading(true);
-            const notes = await notesApi.getTrash();
+            const notes = await notesApi.listTrash();
             setTrashedNotes(notes);
         } catch (error) {
             console.error('Error loading trash:', error);
@@ -31,7 +31,7 @@ export default function TrashView() {
 
     const handleRestore = async (id: string) => {
         try {
-            await notesApi.restoreFromTrash(id);
+            await notesApi.restore(id);
             await loadTrash();
         } catch (error) {
             console.error('Error restoring:', error);
@@ -87,7 +87,7 @@ export default function TrashView() {
                             {/* Metadata */}
                             <div className="flex items-center gap-2 flex-wrap mb-3">
                                 <MetaTag size="xs" variant="neutral">
-                                    {formatRelativeTime(note.updatedAt)}
+                                    {note.updatedAt ? formatRelativeTime(note.updatedAt) : '-'}
                                 </MetaTag>
                                 <MetaTag size="xs" variant="neutral">
                                     {formatFileSize(note.content?.length || 0)}
