@@ -1,6 +1,7 @@
 // src/lib/api/notes.api.ts
 import { apiClient } from './client';
 import { Note, CreateNoteDto, UpdateNoteDto } from '@/types/note.types';
+import { isValidObjectId } from '@/lib/utils/validators';
 
 /**
  * Interfaz de respuesta del backend
@@ -35,7 +36,13 @@ class NotesApi {
             throw new Error('Respuesta del servidor inválida');
         }
 
-        return response.data.data;
+        // Asegurar que el backend devolvió un _id válido
+        const note = response.data.data;
+        if (!isValidObjectId(note._id)) {
+            throw new Error('ID de servidor inválido');
+        }
+
+        return note;
     }
 
     /**
@@ -57,7 +64,15 @@ class NotesApi {
      * Actualiza una nota existente
      */
     async update(id: string, data: UpdateNoteDto): Promise<Note> {
-        const response = await apiClient.patch<ApiResponse<Note>>(`${this.basePath}/${id}`, data);
+        const url = `${this.basePath}/${id}`;
+        console.debug(`[NotesApi.update] Sending PATCH request`, {
+            id,
+            url,
+            data,
+            timestamp: new Date().toISOString()
+        });
+
+        const response = await apiClient.patch<ApiResponse<Note>>(url, data);
 
         if (!response.data.success) {
             throw new Error(response.data.message || 'Error actualizando nota');
@@ -111,7 +126,13 @@ class NotesApi {
      * Lista notas en la papelera
      */
     async listTrash(): Promise<Note[]> {
-        const response = await apiClient.get<ApiResponse<Note[]>>(`${this.basePath}/trash`);
+        const url = `${this.basePath}/trash`;
+        console.debug(`[NotesApi.listTrash] Sending GET request`, {
+            url,
+            timestamp: new Date().toISOString()
+        });
+
+        const response = await apiClient.get<ApiResponse<Note[]>>(url);
 
         if (!response.data.success) {
             throw new Error(response.data.message || 'Error cargando papelera');
@@ -125,7 +146,14 @@ class NotesApi {
      * Mueve una nota a la papelera
      */
     async moveToTrash(id: string): Promise<Note> {
-        const response = await apiClient.patch<ApiResponse<Note>>(`${this.basePath}/${id}/trash`);
+        const url = `${this.basePath}/${id}/trash`;
+        console.debug(`[NotesApi.moveToTrash] Sending PATCH request`, {
+            id,
+            url,
+            timestamp: new Date().toISOString()
+        });
+
+        const response = await apiClient.patch<ApiResponse<Note>>(url);
 
         if (!response.data.success) {
             throw new Error(response.data.message || 'Error moviendo nota a papelera');
@@ -161,14 +189,11 @@ class NotesApi {
      * Elimina permanentemente una nota (solo si está en papelera)
      */
     async deletePermanently(id: string): Promise<void> {
-        const response = await apiClient.delete(`${this.basePath}/${id}/permanent`);
+        const response = await apiClient.delete<ApiResponse<void>>(`${this.basePath}/${id}/permanent`);
 
-        // 204 No Content no devuelve success/data, solo headers
-        if (response.status !== 204) {
-            const data = response.data as ApiResponse<void>;
-            if (!data.success) {
-                throw new Error(data.message || 'Error eliminando nota');
-            }
+        // Ahora el backend devuelve 200 con body
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Error eliminando nota');
         }
     }
 }

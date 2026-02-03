@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { getErrorMessage } from '@/lib/api/client';
 import { Note } from '@/types/note.types';
+import { isValidObjectId } from '@/lib/utils/validators';
 
 interface UseTrashReturn {
     trashedNotes: Note[];
@@ -46,6 +47,10 @@ export const useTrash = (): UseTrashReturn => {
         try {
             setError(null);
 
+            if (!isValidObjectId(id)) {
+                throw new Error('ID inválido para restaurar nota');
+            }
+
             await notesApi.restore(id);
 
             // Remover del estado local
@@ -66,6 +71,10 @@ export const useTrash = (): UseTrashReturn => {
     const deletePermanently = useCallback(async (id: string): Promise<boolean> => {
         try {
             setError(null);
+
+            if (!isValidObjectId(id)) {
+                throw new Error('ID inválido para eliminar permanentemente');
+            }
 
             await notesApi.deletePermanently(id);
 

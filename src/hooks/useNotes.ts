@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { getErrorMessage } from '@/lib/api/client';
 import { Note, CreateNoteDto, UpdateNoteDto } from '../types/note.types';
+import { isValidObjectId } from '@/lib/utils/validators';
 
 interface UseNotesReturn {
     notes: Note[];
@@ -54,18 +55,32 @@ export const useNotes = (): UseNotesReturn => {
         try {
             setError(null);
 
-            // Validación del lado del cliente
-            if (!data.title.trim()) {
-                throw new Error('El título no puede estar vacío');
+            // VALIDACIÓN: Título no puede estar vacío
+            if (!data.title || !data.title.trim()) {
+                const msg = 'El título no puede estar vacío';
+                setError(msg);
+                console.error(msg);
+                return null;
             }
 
-            if (!data.content.trim()) {
-                throw new Error('El contenido no puede estar vacío');
+            // VALIDACIÓN: Título no debe exceder límite
+            if (data.title.length > 100) {
+                const msg = 'El título no puede superar 100 caracteres';
+                setError(msg);
+                return null;
             }
 
+            // Permitir contenido vacío en la creación
+
+            // Siempre llamar al backend y usar la respuesta del servidor
             const newNote = await notesApi.create(data);
 
-            // Actualizar estado: agregar al inicio
+            // Validar que el backend devolvió un _id válido
+            if (!isValidObjectId(newNote._id)) {
+                throw new Error('La nota no fue creada correctamente en el servidor');
+            }
+
+            // Actualizar estado: agregar al inicio usando exactamente el objeto devuelto
             setNotes((prev) => [newNote, ...prev]);
 
             return newNote;
@@ -79,6 +94,7 @@ export const useNotes = (): UseNotesReturn => {
 
     /**
      * Actualiza una nota existente
+     * Validación ANTES de enviar al backend
      */
     const updateNote = useCallback(async (
         id: string,
@@ -87,15 +103,22 @@ export const useNotes = (): UseNotesReturn => {
         try {
             setError(null);
 
-            // Validación básica
+            // VALIDACIÓN: ID debe ser válido
+            if (!id || !isValidObjectId(id)) {
+                const msg = 'ID inválido para actualizar nota';
+                setError(msg);
+                console.error(msg);
+                return null;
+            }
+
+            // VALIDACIÓN: si se actualiza título, no puede estar vacío
             if (data.title !== undefined && !data.title.trim()) {
-                throw new Error('El título no puede estar vacío');
+                const msg = 'El título no puede estar vacío';
+                setError(msg);
+                return null;
             }
 
-            if (data.content !== undefined && !data.content.trim()) {
-                throw new Error('El contenido no puede estar vacío');
-            }
-
+            // Llamar al backend
             const updatedNote = await notesApi.update(id, data);
 
             // Actualizar estado: reemplazar la nota
@@ -113,11 +136,20 @@ export const useNotes = (): UseNotesReturn => {
     }, []);
 
     /**
-     * Mueve una nota a la papelera
+     * Mueve una nota a la papelera (soft delete)
+     * Validación ANTES de enviar al backend
      */
     const deleteNote = useCallback(async (id: string): Promise<boolean> => {
         try {
             setError(null);
+
+            // VALIDACIÓN: ID debe ser válido
+            if (!id || !isValidObjectId(id)) {
+                const msg = 'ID inválido para eliminar nota';
+                setError(msg);
+                console.error(msg);
+                return false;
+            }
 
             await notesApi.moveToTrash(id);
 

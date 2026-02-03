@@ -3,20 +3,18 @@
 'use client';
 
 import ProgressBar from '@/components/ui/ProgressBar';
+import { APP_CONSTANTS } from '@/config/constants';
 
 interface StatusBarProps {
     notesCount: number;
-    browserId: string;
     isLoading: boolean;
     error: string | null;
 }
 
-export default function StatusBar({ notesCount, browserId, isLoading, error }: StatusBarProps) {
-    // Simular uso de memoria basado en cantidad de notas
-    const memoryUsed = Math.min(100, notesCount * 10 + 20);
-    const maxMemory = 100;
-
-    const shortId = browserId.slice(0, 8);
+export default function StatusBar({ notesCount, isLoading, error }: StatusBarProps) {
+    // memory ahora es solo un contador de archivos activos (no bytes)
+    const maxFiles = APP_CONSTANTS.MAX_FILES || 10;
+    const memoryPercent = Math.round(Math.min(100, (notesCount / maxFiles) * 100));
 
     return (
         <footer className="status-bar">
@@ -30,7 +28,7 @@ export default function StatusBar({ notesCount, browserId, isLoading, error }: S
                 )}
 
                 <span className="text-meta">
-                    SESSION: {shortId}
+                    SESSION: ANON
                 </span>
             </div>
 
@@ -38,13 +36,13 @@ export default function StatusBar({ notesCount, browserId, isLoading, error }: S
                 <span>FILES: {notesCount}</span>
 
                 <ProgressBar
-                    current={memoryUsed}
-                    max={maxMemory}
-                    label="MEMORY"
-                    unit="g"
+                    current={memoryPercent}
+                    max={100}
+                    label="FILES"
+                    unit="%"
                 />
 
-                <span className="text-meta">60%</span>
+                <span className="text-meta">{memoryPercent}%</span>
             </div>
         </footer>
     );

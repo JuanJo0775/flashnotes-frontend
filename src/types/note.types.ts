@@ -9,9 +9,11 @@ export interface Note {
     content: string;
     createdAt?: string;
     updatedAt?: string;
-    // campos opcionales que puede devolver el backend
     editedAt?: string;
     isDeleted?: boolean;
+    // Historial de cambios (versiones anteriores)
+    versions?: NoteVersion[];
+    redoStack?: NoteVersion[];
 }
 
 export interface CreateNoteDto {
@@ -39,5 +41,4 @@ export interface NoteVersion {
 export interface NoteWithHistory extends Note {
     versions: NoteVersion[];
     redoStack: NoteVersion[];
-    editedAt: string;
 }

@@ -8,6 +8,7 @@ import type { Note } from '../../types/note.types';
 import Cursor from '@/components/ui/Cursor';
 import MetaTag from '@/components/ui/MetaTag';
 import { formatFileSize, formatRelativeTime } from '@/lib/utils/formatters';
+import { isValidObjectId } from '@/lib/utils/validators';
 
 interface NoteEditorProps {
     note: Note;
@@ -15,39 +16,102 @@ interface NoteEditorProps {
     onBack: () => void;
     onUndo: (id: string) => Promise<Note | null>;
     onRedo: (id: string) => Promise<Note | null>;
+    onMoveToTrash: (id: string) => Promise<boolean>;
 }
 
-export default function NoteEditor({ note, onSave, onBack, onUndo, onRedo }: NoteEditorProps) {
-    const [title, setTitle] = useState(note.title || 'Untitled.txt');
+export default function NoteEditor(props: NoteEditorProps) {
+    const { note, onSave, onBack, onUndo, onRedo, onMoveToTrash } = props;
+    // Inicializar con valores de la nota; título por defecto 'Nueva nota'
+    const [title, setTitle] = useState(note.title || 'Nueva nota');
     const [content, setContent] = useState(note.content || '');
     const [isSaving, setIsSaving] = useState(false);
     const [showCursor, setShowCursor] = useState(true);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
     const [canUndo, setCanUndo] = useState(false);
     const [canRedo, setCanRedo] = useState(false);
+    const [lastServerUpdatedAt, setLastServerUpdatedAt] = useState<string | undefined>(note.updatedAt);
+    const [conflictDialog, setConflictDialog] = useState(false);
 
     const contentRef = useRef<HTMLTextAreaElement>(null);
-    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Sincronizar estado local cuando cambie la nota (p. ej. al crear y abrir)
+    // TAMBIÉN detectar si hubo cambios externos (conflict detection)
+    useEffect(() => {
+        // Detectar si la nota cambió por fuera (otra pestaña, etc)
+        const hasExternalChanges = lastServerUpdatedAt && 
+                                   note.updatedAt && 
+                                   lastServerUpdatedAt !== note.updatedAt;
+
+        if (hasExternalChanges) {
+            // Mostrar dialog de conflicto
+            setConflictDialog(true);
+        } else {
+            // Sincronizar valores de la prop
+            setTitle(note.title || 'Nueva nota');
+            setContent(note.content || '');
+            setCanUndo((note as any).versions?.length > 0);
+            setCanRedo((note as any).redoStack?.length > 0);
+            setLastServerUpdatedAt(note.updatedAt);
+        }
+    }, [note, lastServerUpdatedAt]);
 
     // Auto-save con debounce
     useEffect(() => {
-        if (title === note.title && content === note.content) return;
+        // No guardar si la nota no está persistida
+        if (!isValidObjectId(note._id)) {
+            console.debug('[NoteEditor] Skipping autosave: invalid or missing note ID', {
+                noteId: note._id
+            });
+            return;
+        }
+
+        // Comparar con la nota actual (prop) para evitar guardar si no hay cambios reales
+        if (title === (note.title || 'Nueva nota') && content === (note.content || '')) {
+            console.debug('[NoteEditor] Skipping autosave: no changes detected', {
+                noteId: note._id
+            });
+            return;
+        }
 
         if (saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current as unknown as number);
+            clearTimeout(saveTimeoutRef.current);
         }
 
         saveTimeoutRef.current = setTimeout(async () => {
             setIsSaving(true);
             try {
+                // Protección adicional: no llamar onSave si no hay id válido
+                if (!isValidObjectId(note._id)) {
+                    console.warn('[NoteEditor] Cannot save: invalid note ID at save time', {
+                        noteId: note._id
+                    });
+                    return;
+                }
+
+                console.debug('[NoteEditor] Initiating autosave', {
+                    noteId: note._id,
+                    titleLength: title.length,
+                    contentLength: content.length
+                });
+
                 const updated = await onSave(note._id, { title, content });
                 if (updated) {
+                    // Usar exclusivamente la nota retornada por el backend para mantener sincronía
+                    setTitle(updated.title || 'Nueva nota');
+                    setContent(updated.content || '');
                     setLastSaved(new Date());
+                    setLastServerUpdatedAt(updated.updatedAt); // Actualizar timestamp del servidor
                     setCanUndo((updated as any).versions?.length > 0);
                     setCanRedo((updated as any).redoStack?.length > 0);
+                    console.debug('[NoteEditor] Autosave successful', {
+                        noteId: updated._id
+                    });
                 }
             } catch (error) {
-                console.error('Error saving:', error);
+                console.error('[NoteEditor] Error saving:', error, {
+                    noteId: note._id
+                });
             } finally {
                 setIsSaving(false);
             }
@@ -55,10 +119,10 @@ export default function NoteEditor({ note, onSave, onBack, onUndo, onRedo }: Not
 
         return () => {
             if (saveTimeoutRef.current) {
-                clearTimeout(saveTimeoutRef.current as unknown as number);
+                clearTimeout(saveTimeoutRef.current);
             }
         };
-    }, [title, content, note._id, note.title, note.content, onSave]);
+    }, [title, content, note, onSave]);
 
     // Focus en el editor al montar
     useEffect(() => {
@@ -67,14 +131,9 @@ export default function NoteEditor({ note, onSave, onBack, onUndo, onRedo }: Not
         }
     }, []);
 
-    // Verificar estado de undo/redo al cargar
-    useEffect(() => {
-        setCanUndo((note as any).versions?.length > 0);
-        setCanRedo((note as any).redoStack?.length > 0);
-    }, [note]);
-
     const handleUndo = async () => {
         if (!canUndo) return;
+        if (!isValidObjectId(note._id)) return; // no operar si no está persistida
         try {
             const updated = await onUndo(note._id);
             if (updated) {
@@ -90,6 +149,7 @@ export default function NoteEditor({ note, onSave, onBack, onUndo, onRedo }: Not
 
     const handleRedo = async () => {
         if (!canRedo) return;
+        if (!isValidObjectId(note._id)) return; // no operar si no está persistida
         try {
             const updated = await onRedo(note._id);
             if (updated) {
@@ -104,12 +164,13 @@ export default function NoteEditor({ note, onSave, onBack, onUndo, onRedo }: Not
     };
 
     const handleTrash = async () => {
+        if (!isValidObjectId(note._id)) return; // no operar si no está persistida
         if (confirm('¿Mover esta nota a la papelera?')) {
             try {
-                // delegar a onSave con flag o el padre manejará moveToTrash por otra prop
-                // Por simplicidad llamamos a onSave con una propiedad especial
-                await onSave(note._id, { title, content });
-                onBack();
+                const success = await onMoveToTrash(note._id);
+                if (success) {
+                    onBack();
+                }
             } catch (error) {
                 console.error('Error moving to trash:', error);
             }
@@ -118,6 +179,45 @@ export default function NoteEditor({ note, onSave, onBack, onUndo, onRedo }: Not
 
     return (
         <div className="flex flex-col h-full">
+            {/* Dialog de conflicto si la nota cambió externamente */}
+            {conflictDialog && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-secondary border-2 border-primary p-6 max-w-md">
+                        <h2 className="text-lg font-pixel mb-4 text-yellow-400">
+                            ⚠ CONFLICTO DETECTADO
+                        </h2>
+                        <p className="mono text-sm mb-4 text-gray-200">
+                            Esta nota fue modificada desde otro lugar. 
+                            ¿Descartas tus cambios locales y usas la versión del servidor?
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => {
+                                    // Descartar cambios locales y usar servidor
+                                    setTitle(note.title || 'Nueva nota');
+                                    setContent(note.content || '');
+                                    setLastServerUpdatedAt(note.updatedAt);
+                                    setConflictDialog(false);
+                                }}
+                                className="btn-terminal flex-1 text-xs"
+                            >
+                                [✓] USAR SERVIDOR
+                            </button>
+                            <button
+                                onClick={() => {
+                                    // Mantener cambios locales y ignorar conflicto
+                                    setLastServerUpdatedAt(note.updatedAt);
+                                    setConflictDialog(false);
+                                }}
+                                className="btn-terminal flex-1 text-xs"
+                            >
+                                [!] MANTENER MÍOS
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Toolbar superior */}
             <div className="border-b border-b-primary bg-secondary p-4">
                 <div className="flex items-center justify-between mb-3">

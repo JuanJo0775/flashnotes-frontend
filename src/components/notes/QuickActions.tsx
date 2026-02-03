@@ -8,6 +8,7 @@ interface QuickActionsProps {
     canRedo: boolean;
     onUndo?: () => void;
     onRedo?: () => void;
+    onMoveToTrash?: (id: string) => void;
 }
 
 export default function QuickActions({
@@ -15,7 +16,8 @@ export default function QuickActions({
                                          canUndo,
                                          canRedo,
                                          onUndo,
-                                         onRedo
+                                         onRedo,
+                                         onMoveToTrash
                                      }: QuickActionsProps) {
     return (
         <div className="border-t border-t-primary bg-secondary p-4">
@@ -51,8 +53,10 @@ export default function QuickActions({
                     </button>
 
                     <button
+                        onClick={() => onMoveToTrash && onMoveToTrash(noteId)}
                         className="btn-terminal text-xs"
                         title="Mover a papelera"
+                        disabled={!noteId}
                     >
                         [🗑] TRASH
                     </button>

@@ -3,38 +3,29 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
-import { notesApi } from '@/lib/api/notes.api';
-import type { Note } from '../../types/note.types';
+import { useState } from 'react';
+import { useTrash } from '@/hooks/useTrash';
 import MetaTag from '@/components/ui/MetaTag';
 import { formatFileSize, formatRelativeTime } from '@/lib/utils/formatters';
 
 export default function TrashView() {
-    const [trashedNotes, setTrashedNotes] = useState<Note[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const {
+        trashedNotes,
+        isLoading,
+        error,
+        restoreNote,
+        deletePermanently,
+        clearError,
+    } = useTrash();
 
-    useEffect(() => {
-        loadTrash();
-    }, []);
-
-    const loadTrash = async () => {
-        try {
-            setIsLoading(true);
-            const notes = await notesApi.listTrash();
-            setTrashedNotes(notes);
-        } catch (error) {
-            console.error('Error loading trash:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const [isRestoring, setIsRestoring] = useState<string | null>(null);
 
     const handleRestore = async (id: string) => {
-        try {
-            await notesApi.restore(id);
-            await loadTrash();
-        } catch (error) {
-            console.error('Error restoring:', error);
+        setIsRestoring(id);
+        const success = await restoreNote(id);
+        if (success) {
+            setIsRestoring(null);
         }
     };
 
@@ -43,11 +34,10 @@ export default function TrashView() {
             return;
         }
 
-        try {
-            await notesApi.deletePermanently(id);
-            await loadTrash();
-        } catch (error) {
-            console.error('Error deleting:', error);
+        setIsDeleting(id);
+        const success = await deletePermanently(id);
+        if (success) {
+            setIsDeleting(null);
         }
     };
 
@@ -64,6 +54,19 @@ export default function TrashView() {
             <div className="section-header">
                 PAPELERA
             </div>
+
+            {/* Error message si hay */}
+            {error && (
+                <div className="bg-red-900 bg-opacity-20 border border-red-500 text-red-300 px-4 py-3 rounded mb-4 flex justify-between items-center">
+                    <span className="mono text-sm">{error}</span>
+                    <button
+                        onClick={clearError}
+                        className="text-red-300 hover:text-red-200"
+                    >
+                        [X]
+                    </button>
+                </div>
+            )}
 
             {trashedNotes.length === 0 ? (
                 <div className="text-center text-meta mono py-8">
@@ -101,15 +104,19 @@ export default function TrashView() {
                             <div className="flex gap-2 pt-3 border-t border-t-dotted">
                                 <button
                                     onClick={() => handleRestore(note._id)}
-                                    className="btn-terminal flex-1 text-xs"
+                                    disabled={isRestoring === note._id}
+                                    className="btn-terminal flex-1 text-xs disabled:opacity-50"
                                 >
-                                    [↶] RESTAURAR
+                                    {isRestoring === note._id ? '[...] ' : '[↶] '}
+                                    RESTAURAR
                                 </button>
                                 <button
                                     onClick={() => handleDeletePermanently(note._id)}
-                                    className="btn-terminal flex-1 text-xs"
+                                    disabled={isDeleting === note._id}
+                                    className="btn-terminal flex-1 text-xs disabled:opacity-50"
                                 >
-                                    [X] ELIMINAR
+                                    {isDeleting === note._id ? '[...] ' : '[X] '}
+                                    ELIMINAR
                                 </button>
                             </div>
                         </div>

@@ -11,20 +11,30 @@ interface SidebarProps {
     onSelectNote: (note: Note) => void;
     selectedNote: Note | null;
     onNewNote: () => void;
+    onOpenTrash?: () => void; // nuevo prop opcional para abrir papelera
 }
 
-export default function Sidebar({ notes, onSelectNote, selectedNote, onNewNote }: SidebarProps) {
+export default function Sidebar({ notes, onSelectNote, selectedNote, onNewNote, onOpenTrash }: SidebarProps) {
     return (
         <aside className="w-80 border-r border-r-primary bg-tertiary flex flex-col">
             {/* Header del sidebar */}
             <div className="border-b border-b-primary p-4">
                 <div className="comment mb-3">SELECCIONAR_ARCHIVO:</div>
-                <button
-                    onClick={onNewNote}
-                    className="btn-terminal w-full"
-                >
-                    [+] NUEVO_ARCHIVO
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={onNewNote}
+                        className="btn-terminal w-full"
+                    >
+                        [+] NUEVA NOTA
+                    </button>
+                    <button
+                        onClick={() => onOpenTrash && onOpenTrash()}
+                        className="btn-terminal"
+                        title="Abrir papelera"
+                    >
+                        [-] DELE
+                    </button>
+                </div>
             </div>
 
             {/* Lista de archivos */}

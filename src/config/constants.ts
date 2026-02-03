@@ -14,4 +14,5 @@ export const APP_CONSTANTS = {
     TOAST_DURATION: 3000,
     MAX_TITLE_LENGTH: 200,
     MAX_CONTENT_LENGTH: 100000,
+    MAX_FILES: 100, // número máximo lógico de archivos para la barra de estado (ajustable)
 } as const;

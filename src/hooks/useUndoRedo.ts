@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { getErrorMessage } from '@/lib/api/client';
 import { Note, NoteWithHistory } from '@/types/note.types';
+import { isValidObjectId } from '@/lib/utils/validators';
 
 interface UseUndoRedoReturn {
     canUndo: boolean;
@@ -39,6 +40,10 @@ export const useUndoRedo = (): UseUndoRedoReturn => {
             setIsProcessing(true);
             setError(null);
 
+            if (!isValidObjectId(noteId)) {
+                throw new Error('ID inválido para undo');
+            }
+
             const updatedNote = await notesApi.undo(noteId);
 
             // Actualizar flags
@@ -62,6 +67,10 @@ export const useUndoRedo = (): UseUndoRedoReturn => {
         try {
             setIsProcessing(true);
             setError(null);
+
+            if (!isValidObjectId(noteId)) {
+                throw new Error('ID inválido para redo');
+            }
 
             const updatedNote = await notesApi.redo(noteId);
 
