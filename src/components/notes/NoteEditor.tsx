@@ -4,11 +4,13 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import DOMPurify from 'isomorphic-dompurify';
 import type { Note } from '../../types/note.types';
 import Cursor from '@/components/ui/Cursor';
 import MetaTag from '@/components/ui/MetaTag';
 import { formatFileSize, formatRelativeTime } from '@/lib/utils/formatters';
 import { isValidObjectId } from '@/lib/utils/validators';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
 interface NoteEditorProps {
     note: Note;
@@ -21,6 +23,8 @@ interface NoteEditorProps {
 
 export default function NoteEditor(props: NoteEditorProps) {
     const { note, onSave, onBack, onUndo, onRedo, onMoveToTrash } = props;
+    const { isFullyOperational } = useNetworkStatus();
+    
     // Inicializar con valores de la nota; título por defecto 'Nueva nota'
     const [title, setTitle] = useState(note.title || 'Nueva nota');
     const [content, setContent] = useState(note.content || '');
@@ -31,10 +35,13 @@ export default function NoteEditor(props: NoteEditorProps) {
     const [canRedo, setCanRedo] = useState(false);
     const [lastServerUpdatedAt, setLastServerUpdatedAt] = useState<string | undefined>(note.updatedAt);
     const [conflictDialog, setConflictDialog] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false); // Lock para evitar race condition
+    const [showTrashConfirm, setShowTrashConfirm] = useState(false); // Modal de confirmación trash
 
     const contentRef = useRef<HTMLTextAreaElement>(null);
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const suppressConflictRef = useRef(false);
+    const autoSaveResumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Sincronizar estado local cuando cambie la nota (p. ej. al crear y abrir)
     // TAMBIÉN detectar si hubo cambios externos (conflict detection)
@@ -70,6 +77,18 @@ export default function NoteEditor(props: NoteEditorProps) {
 
     // Auto-save con debounce
     useEffect(() => {
+        // No guardar si está sincronizando (undo/redo en curso)
+        if (isSyncing) {
+            console.debug('[NoteEditor] Skipping autosave: sync in progress (undo/redo)');
+            return;
+        }
+
+        // SECURITY: No guardar si no hay conexión de red o backend no disponible
+        if (!isFullyOperational) {
+            console.debug('[NoteEditor] Skipping autosave: network or backend unavailable');
+            return;
+        }
+
         // No guardar si la nota no está persistida
         if (!isValidObjectId(note._id)) {
             console.debug('[NoteEditor] Skipping autosave: invalid or missing note ID', {
@@ -101,13 +120,26 @@ export default function NoteEditor(props: NoteEditorProps) {
                     return;
                 }
 
-                console.debug('[NoteEditor] Initiating autosave', {
-                    noteId: note._id,
-                    titleLength: title.length,
-                    contentLength: content.length
+                // SECURITY: Sanitizar contenido antes de enviar (defensa en profundidad)
+                const sanitizedTitle = DOMPurify.sanitize(title, {
+                    ALLOWED_TAGS: [],
+                    ALLOWED_ATTR: []
+                });
+                const sanitizedContent = DOMPurify.sanitize(content, {
+                    ALLOWED_TAGS: [],
+                    ALLOWED_ATTR: []
                 });
 
-                const updated = await onSave(note._id, { title, content });
+                console.debug('[NoteEditor] Initiating autosave', {
+                    noteId: note._id,
+                    titleLength: sanitizedTitle.length,
+                    contentLength: sanitizedContent.length
+                });
+
+                const updated = await onSave(note._id, { 
+                    title: sanitizedTitle, 
+                    content: sanitizedContent 
+                });
                 if (updated) {
                     // Usar exclusivamente la nota retornada por el backend para mantener sincronía
                     setTitle(updated.title || 'Nueva nota');
@@ -134,7 +166,7 @@ export default function NoteEditor(props: NoteEditorProps) {
                 clearTimeout(saveTimeoutRef.current);
             }
         };
-    }, [title, content, note, onSave]);
+    }, [title, content, note, onSave, isSyncing, isFullyOperational]);
 
     // Focus en el editor al montar
     useEffect(() => {
@@ -143,9 +175,32 @@ export default function NoteEditor(props: NoteEditorProps) {
         }
     }, []);
 
+    /**
+     * Pausa el auto-save estableciendo isSyncing en true
+     * Se usa antes de undo/redo para evitar race condition
+     */
+    const pauseAutoSave = () => {
+        setIsSyncing(true);
+    };
+
+    /**
+     * Reanuda el auto-save después de 500ms
+     * Garantiza que undo/redo + respuesta del servidor finalicen antes de permitir auto-save
+     */
+    const resumeAutoSave = () => {
+        if (autoSaveResumeTimeoutRef.current) {
+            clearTimeout(autoSaveResumeTimeoutRef.current);
+        }
+        autoSaveResumeTimeoutRef.current = setTimeout(() => {
+            setIsSyncing(false);
+        }, 500);
+    };
+
     const handleUndo = async () => {
         if (!canUndo) return;
         if (!isValidObjectId(note._id)) return; // no operar si no está persistida
+        
+        pauseAutoSave(); // ⏸️ Pausar auto-save para evitar race condition
         try {
             suppressConflictRef.current = true;
             const updated = await onUndo(note._id);
@@ -159,12 +214,16 @@ export default function NoteEditor(props: NoteEditorProps) {
             }
         } catch (error) {
             console.error('Error undoing:', error);
+        } finally {
+            resumeAutoSave(); // ▶️ Reanudar después de 500ms
         }
     };
 
     const handleRedo = async () => {
         if (!canRedo) return;
         if (!isValidObjectId(note._id)) return; // no operar si no está persistida
+        
+        pauseAutoSave(); // ⏸️ Pausar auto-save para evitar race condition
         try {
             suppressConflictRef.current = true;
             const updated = await onRedo(note._id);
@@ -178,25 +237,59 @@ export default function NoteEditor(props: NoteEditorProps) {
             }
         } catch (error) {
             console.error('Error redoing:', error);
+        } finally {
+            resumeAutoSave(); // ▶️ Reanudar después de 500ms
         }
     };
 
     const handleTrash = async () => {
         if (!isValidObjectId(note._id)) return; // no operar si no está persistida
-        if (confirm('¿Mover esta nota a la papelera?')) {
-            try {
-                const success = await onMoveToTrash(note._id);
-                if (success) {
-                    onBack();
-                }
-            } catch (error) {
-                console.error('Error moving to trash:', error);
+        setShowTrashConfirm(true); // Abrir modal de confirmación
+    };
+
+    const handleTrashConfirm = async () => {
+        try {
+            const success = await onMoveToTrash(note._id);
+            if (success) {
+                setShowTrashConfirm(false);
+                onBack();
             }
+        } catch (error) {
+            console.error('Error moving to trash:', error);
+            setShowTrashConfirm(false);
         }
     };
 
     return (
         <div className="flex flex-col h-full">
+            {/* Modal de confirmación para mover a papelera */}
+            {showTrashConfirm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-secondary border-2 border-primary p-6 max-w-md">
+                        <h2 className="text-lg font-pixel mb-4 text-yellow-400">
+                            ⚠ MOVER A PAPELERA
+                        </h2>
+                        <p className="mono text-sm mb-6 text-gray-200">
+                            ¿Mover esta nota a la papelera? Esta acción puede revertirse desde la papelera.
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleTrashConfirm}
+                                className="btn-terminal flex-1 text-xs"
+                            >
+                                [✓] ACEPTAR
+                            </button>
+                            <button
+                                onClick={() => setShowTrashConfirm(false)}
+                                className="btn-terminal flex-1 text-xs"
+                            >
+                                [✗] CANCELAR
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Dialog de conflicto si la nota cambió externamente */}
             {conflictDialog && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

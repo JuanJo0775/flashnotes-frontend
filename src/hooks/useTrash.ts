@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { getErrorMessage } from '@/lib/api/client';
 import { Note } from '@/types/note.types';
-import { isValidObjectId } from '@/lib/utils/validators';
+import { withIdValidation } from '@/lib/utils/validators';
 
 interface UseTrashReturn {
     trashedNotes: Note[];
@@ -42,16 +42,14 @@ export const useTrash = (): UseTrashReturn => {
 
     /**
      * Restaura una nota desde la papelera
+     * Usa withIdValidation para validación centralizada
      */
     const restoreNote = useCallback(async (id: string): Promise<boolean> => {
         try {
             setError(null);
 
-            if (!isValidObjectId(id)) {
-                throw new Error('ID inválido para restaurar nota');
-            }
-
-            await notesApi.restore(id);
+            // Usar wrapper centralizado para validación de ID
+            await withIdValidation(id, () => notesApi.restore(id));
 
             // Remover del estado local
             setTrashedNotes((prev) => prev.filter((note) => note._id !== id));
@@ -67,16 +65,14 @@ export const useTrash = (): UseTrashReturn => {
 
     /**
      * Elimina permanentemente una nota
+     * Usa withIdValidation para validación centralizada
      */
     const deletePermanently = useCallback(async (id: string): Promise<boolean> => {
         try {
             setError(null);
 
-            if (!isValidObjectId(id)) {
-                throw new Error('ID inválido para eliminar permanentemente');
-            }
-
-            await notesApi.deletePermanently(id);
+            // Usar wrapper centralizado para validación de ID
+            await withIdValidation(id, () => notesApi.deletePermanently(id));
 
             // Remover del estado local
             setTrashedNotes((prev) => prev.filter((note) => note._id !== id));

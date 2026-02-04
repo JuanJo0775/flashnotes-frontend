@@ -114,24 +114,26 @@
 /* Glitch effect */
 @keyframes glitch {
     0%, 100% {
-        transform: translate(0);
+        transform: translate3d(0, 0, 0);
     }
     20% {
-        transform: translate(-2px, 2px);
+        transform: translate3d(-2px, 2px, 0);
     }
     40% {
-        transform: translate(-2px, -2px);
+        transform: translate3d(-2px, -2px, 0);
     }
     60% {
-        transform: translate(2px, 2px);
+        transform: translate3d(2px, 2px, 0);
     }
     80% {
-        transform: translate(2px, -2px);
+        transform: translate3d(2px, -2px, 0);
     }
 }
 
 .glitch {
+    will-change: transform;
     animation: glitch 0.3s ease-in-out;
+    /* Forzar aceleración por GPU: translate3d con Z=0 */
 }
 
 /* Fade in instantáneo (no suave) */

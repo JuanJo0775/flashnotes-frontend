@@ -1,18 +1,8 @@
 // src/lib/api/notes.api.ts
 import { apiClient } from './client';
 import { Note, CreateNoteDto, UpdateNoteDto } from '@/types/note.types';
+import type { ApiResponse, PaginatedResponse, PaginationMetadata } from '@/types/api.types';
 import { isValidObjectId } from '@/lib/utils/validators';
-
-/**
- * Interfaz de respuesta del backend
- */
-interface ApiResponse<T> {
-    success: boolean;
-    data?: T;
-    error?: string;
-    message?: string;
-    statusCode: number;
-}
 
 /**
  * API de Notas - Refleja EXACTAMENTE las rutas del backend
@@ -48,14 +38,29 @@ class NotesApi {
     /**
      * GET /api/notes
      * Lista todas las notas activas (no eliminadas)
+     * Soporta paginación opcional: ?page=1&limit=20
      */
-    async listActive(): Promise<Note[]> {
-        const response = await apiClient.get<ApiResponse<Note[]>>(this.basePath);
+    async listActive(page?: number, limit?: number): Promise<Note[] | { notes: Note[]; pagination: PaginationMetadata }> {
+        const params = new URLSearchParams();
+        if (page !== undefined) params.append('page', page.toString());
+        if (limit !== undefined) params.append('limit', limit.toString());
+
+        const url = params.toString() ? `${this.basePath}?${params.toString()}` : this.basePath;
+        const response = await apiClient.get<PaginatedResponse<Note>>(url);
 
         if (!response.data.success) {
             throw new Error(response.data.message || 'Error cargando notas');
         }
 
+        // Si hay paginación en la respuesta, retornar con metadata
+        if (response.data.pagination) {
+            return {
+                notes: response.data.data || [],
+                pagination: response.data.pagination
+            };
+        }
+
+        // Sin paginación, retornar solo el array (compatible hacia atrás)
         return response.data.data || [];
     }
 
@@ -86,11 +91,11 @@ class NotesApi {
     }
 
     /**
-     * POST /api/notes/:id/undo
+     * PATCH /api/notes/:id/undo
      * Deshace el último cambio en una nota
      */
     async undo(id: string): Promise<Note> {
-        const response = await apiClient.post<ApiResponse<Note>>(`${this.basePath}/${id}/undo`);
+        const response = await apiClient.patch<ApiResponse<Note>>(`${this.basePath}/${id}/undo`);
 
         if (!response.data.success) {
             throw new Error(response.data.message || 'Error deshaciendo cambio');
@@ -104,11 +109,11 @@ class NotesApi {
     }
 
     /**
-     * POST /api/notes/:id/redo
+     * PATCH /api/notes/:id/redo
      * Rehace el último cambio deshecho
      */
     async redo(id: string): Promise<Note> {
-        const response = await apiClient.post<ApiResponse<Note>>(`${this.basePath}/${id}/redo`);
+        const response = await apiClient.patch<ApiResponse<Note>>(`${this.basePath}/${id}/redo`);
 
         if (!response.data.success) {
             throw new Error(response.data.message || 'Error rehaciendo cambio');
@@ -124,20 +129,34 @@ class NotesApi {
     /**
      * GET /api/notes/trash
      * Lista notas en la papelera
+     * Soporta paginación opcional: ?page=1&limit=20
      */
-    async listTrash(): Promise<Note[]> {
-        const url = `${this.basePath}/trash`;
+    async listTrash(page?: number, limit?: number): Promise<Note[] | { notes: Note[]; pagination: PaginationMetadata }> {
+        const params = new URLSearchParams();
+        if (page !== undefined) params.append('page', page.toString());
+        if (limit !== undefined) params.append('limit', limit.toString());
+
+        const url = params.toString() ? `${this.basePath}/trash?${params.toString()}` : `${this.basePath}/trash`;
         console.debug(`[NotesApi.listTrash] Sending GET request`, {
             url,
             timestamp: new Date().toISOString()
         });
 
-        const response = await apiClient.get<ApiResponse<Note[]>>(url);
+        const response = await apiClient.get<PaginatedResponse<Note>>(url);
 
         if (!response.data.success) {
             throw new Error(response.data.message || 'Error cargando papelera');
         }
 
+        // Si hay paginación en la respuesta, retornar con metadata
+        if (response.data.pagination) {
+            return {
+                notes: response.data.data || [],
+                pagination: response.data.pagination
+            };
+        }
+
+        // Sin paginación, retornar solo el array (compatible hacia atrás)
         return response.data.data || [];
     }
 

@@ -6,9 +6,9 @@
  */
 export function formatDate(date: Date | string): string {
     const d = typeof date === 'string' ? new Date(date) : date;
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
     return `${year}.${month}.${day}`;
 }
 
@@ -17,9 +17,9 @@ export function formatDate(date: Date | string): string {
  */
 export function formatTime(date: Date | string): string {
     const d = typeof date === 'string' ? new Date(date) : date;
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    const seconds = String(d.getSeconds()).padStart(2, '0');
+    const hours = String(d.getUTCHours()).padStart(2, '0');
+    const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(d.getUTCSeconds()).padStart(2, '0');
     return `${hours}:${minutes}:${seconds}`;
 }
 
@@ -67,7 +67,10 @@ export function formatRelativeTime(date: Date | string): string {
  */
 export function truncateText(text: string, maxLength: number): string {
     if (text.length <= maxLength) return text;
-    return text.slice(0, maxLength) + '...';
+    // Calcular cuántos caracteres podemos mostrar antes del ellipsis
+    // Asegurar que siempre haya al menos 1 carácter antes del ellipsis si el texto es truncado
+    const charsBeforeEllipsis = Math.max(1, maxLength - 3);
+    return text.slice(0, charsBeforeEllipsis) + '...';
 }
 
 /**

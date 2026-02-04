@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { getErrorMessage } from '@/lib/api/client';
 import { Note, NoteWithHistory } from '@/types/note.types';
-import { isValidObjectId } from '@/lib/utils/validators';
+import { withIdValidation } from '@/lib/utils/validators';
 
 interface UseUndoRedoReturn {
     canUndo: boolean;
@@ -34,17 +34,22 @@ export const useUndoRedo = (): UseUndoRedoReturn => {
 
     /**
      * Deshace el último cambio
+     * Guard: retorna null si ya hay una operación en curso
+     * Valida el ID usando withIdValidation
      */
     const undo = useCallback(async (noteId: string): Promise<Note | null> => {
+        // ⏹️ Guard clause: prevenir múltiples requests concurrentes
+        if (isProcessing) {
+            console.debug('[useUndoRedo] Undo already in progress, ignoring duplicate request');
+            return null;
+        }
+
         try {
             setIsProcessing(true);
             setError(null);
 
-            if (!isValidObjectId(noteId)) {
-                throw new Error('ID inválido para undo');
-            }
-
-            const updatedNote = await notesApi.undo(noteId);
+            // Usar wrapper centralizado para validación de ID
+            const updatedNote = await withIdValidation(noteId, () => notesApi.undo(noteId));
 
             // Actualizar flags
             updateFlags(updatedNote);
@@ -58,21 +63,26 @@ export const useUndoRedo = (): UseUndoRedoReturn => {
         } finally {
             setIsProcessing(false);
         }
-    }, [updateFlags]);
+    }, [updateFlags, isProcessing]);
 
     /**
      * Rehace el último cambio deshecho
+     * Guard: retorna null si ya hay una operación en curso
+     * Valida el ID usando withIdValidation
      */
     const redo = useCallback(async (noteId: string): Promise<Note | null> => {
+        // ⏹️ Guard clause: prevenir múltiples requests concurrentes
+        if (isProcessing) {
+            console.debug('[useUndoRedo] Redo already in progress, ignoring duplicate request');
+            return null;
+        }
+
         try {
             setIsProcessing(true);
             setError(null);
 
-            if (!isValidObjectId(noteId)) {
-                throw new Error('ID inválido para redo');
-            }
-
-            const updatedNote = await notesApi.redo(noteId);
+            // Usar wrapper centralizado para validación de ID
+            const updatedNote = await withIdValidation(noteId, () => notesApi.redo(noteId));
 
             // Actualizar flags
             updateFlags(updatedNote);
@@ -86,7 +96,7 @@ export const useUndoRedo = (): UseUndoRedoReturn => {
         } finally {
             setIsProcessing(false);
         }
-    }, [updateFlags]);
+    }, [updateFlags, isProcessing]);
 
     /**
      * Limpia el error

@@ -3,7 +3,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { getErrorMessage } from '@/lib/api/client';
 import { Note, CreateNoteDto, UpdateNoteDto } from '../types/note.types';
-import { isValidObjectId } from '@/lib/utils/validators';
+import { 
+    isValidObjectId, 
+    validateTitle, 
+    validateContent,
+    withIdValidation 
+} from '@/lib/utils/validators';
 
 interface UseNotesReturn {
     notes: Note[];
@@ -37,11 +42,21 @@ export const useNotes = (): UseNotesReturn => {
             setError(null);
 
             const data = await notesApi.listActive();
-            setNotes(data);
+            
+            // Manejar respuesta con o sin paginación
+            if (Array.isArray(data)) {
+                setNotes(data);
+            } else if (data && 'notes' in data) {
+                setNotes(data.notes);
+            } else {
+                setNotes([]);
+            }
         } catch (err) {
             const message = getErrorMessage(err);
             setError(message);
             console.error('Error cargando notas:', err);
+            // Asegurar que notes siempre sea un array incluso en error
+            setNotes([]);
         } finally {
             setIsLoading(false);
         }
@@ -49,28 +64,25 @@ export const useNotes = (): UseNotesReturn => {
 
     /**
      * Crea una nueva nota
-     * Validación ANTES de enviar al backend
+     * Validación ANTES de enviar al backend usando validators centralizados
      */
     const createNote = useCallback(async (data: CreateNoteDto): Promise<Note | null> => {
         try {
             setError(null);
 
-            // VALIDACIÓN: Título no puede estar vacío
-            if (!data.title || !data.title.trim()) {
-                const msg = 'El título no puede estar vacío';
-                setError(msg);
-                console.error(msg);
+            // VALIDACIÓN: Validar título usando función centralizada
+            const titleValidation = validateTitle(data.title);
+            if (!titleValidation.valid) {
+                setError(titleValidation.error || 'Título inválido');
                 return null;
             }
 
-            // VALIDACIÓN: Título no debe exceder límite
-            if (data.title.length > 100) {
-                const msg = 'El título no puede superar 100 caracteres';
-                setError(msg);
+            // VALIDACIÓN: Validar contenido
+            const contentValidation = validateContent(data.content || '');
+            if (!contentValidation.valid) {
+                setError(contentValidation.error || 'Contenido inválido');
                 return null;
             }
-
-            // Permitir contenido vacío en la creación
 
             // Siempre llamar al backend y usar la respuesta del servidor
             const newNote = await notesApi.create(data);
@@ -94,7 +106,7 @@ export const useNotes = (): UseNotesReturn => {
 
     /**
      * Actualiza una nota existente
-     * Validación ANTES de enviar al backend
+     * Validación ANTES de enviar al backend usando validators centralizados y withIdValidation
      */
     const updateNote = useCallback(async (
         id: string,
@@ -111,15 +123,26 @@ export const useNotes = (): UseNotesReturn => {
                 return null;
             }
 
-            // VALIDACIÓN: si se actualiza título, no puede estar vacío
-            if (data.title !== undefined && !data.title.trim()) {
-                const msg = 'El título no puede estar vacío';
-                setError(msg);
-                return null;
+            // VALIDACIÓN: si se actualiza título, validar usando función centralizada
+            if (data.title !== undefined) {
+                const titleValidation = validateTitle(data.title);
+                if (!titleValidation.valid) {
+                    setError(titleValidation.error || 'Título inválido');
+                    return null;
+                }
             }
 
-            // Llamar al backend
-            const updatedNote = await notesApi.update(id, data);
+            // VALIDACIÓN: si se actualiza contenido, validar
+            if (data.content !== undefined) {
+                const contentValidation = validateContent(data.content);
+                if (!contentValidation.valid) {
+                    setError(contentValidation.error || 'Contenido inválido');
+                    return null;
+                }
+            }
+
+            // Llamar al backend con validación de ID
+            const updatedNote = await withIdValidation(id, () => notesApi.update(id, data));
 
             // Actualizar estado: reemplazar la nota
             setNotes((prev) =>
@@ -137,21 +160,14 @@ export const useNotes = (): UseNotesReturn => {
 
     /**
      * Mueve una nota a la papelera (soft delete)
-     * Validación ANTES de enviar al backend
+     * Usa withIdValidation para validación centralizada
      */
     const deleteNote = useCallback(async (id: string): Promise<boolean> => {
         try {
             setError(null);
 
-            // VALIDACIÓN: ID debe ser válido
-            if (!id || !isValidObjectId(id)) {
-                const msg = 'ID inválido para eliminar nota';
-                setError(msg);
-                console.error(msg);
-                return false;
-            }
-
-            await notesApi.moveToTrash(id);
+            // Usar wrapper centralizado para validación de ID
+            await withIdValidation(id, () => notesApi.moveToTrash(id));
 
             // Remover del estado local
             setNotes((prev) => prev.filter((note) => note._id !== id));

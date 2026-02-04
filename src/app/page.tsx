@@ -13,6 +13,7 @@ import TrashView from '@/components/notes/TrashView';
 import { useNotes } from '@/hooks/useNotes';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { useSessionValidation } from '@/hooks/useSessionValidation';
+import { initializeCsrfToken } from '@/lib/api/client';
 import type { Note } from '../types/note.types';
 import { isValidObjectId } from '@/lib/utils/validators';
 
@@ -23,6 +24,13 @@ export default function Home() {
     const { notes, isLoading, error, createNote, updateNote, deleteNote, refreshNotes, refetch } = useNotes();
     const { undo, redo } = useUndoRedo();
     const { sessionStatus, showSessionWarning, dismissWarning, reloadPage } = useSessionValidation();
+
+    // SECURITY: Inicializar token CSRF al cargar
+    useEffect(() => {
+        initializeCsrfToken().catch(err => {
+            console.error('Failed to initialize CSRF token:', err);
+        });
+    }, []);
 
     // Flash inicial al cargar
     useEffect(() => {
