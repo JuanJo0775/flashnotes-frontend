@@ -105,6 +105,8 @@ export default function TrashView() {
                                 <button
                                     onClick={() => handleRestore(note._id)}
                                     disabled={isRestoring === note._id}
+                                    aria-label={isRestoring === note._id ? `Restaurando ${note.title || 'nota'}` : `Restaurar ${note.title || 'nota'}`}
+                                    aria-busy={isRestoring === note._id}
                                     className="btn-terminal flex-1 text-xs disabled:opacity-50"
                                 >
                                     {isRestoring === note._id ? '[...] ' : '[↶] '}
@@ -113,6 +115,8 @@ export default function TrashView() {
                                 <button
                                     onClick={() => handleDeletePermanently(note._id)}
                                     disabled={isDeleting === note._id}
+                                    aria-label={isDeleting === note._id ? `Eliminando permanentemente ${note.title || 'nota'}` : `Eliminar permanentemente ${note.title || 'nota'}`}
+                                    aria-busy={isDeleting === note._id}
                                     className="btn-terminal flex-1 text-xs disabled:opacity-50"
                                 >
                                     {isDeleting === note._id ? '[...] ' : '[X] '}

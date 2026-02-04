@@ -14,7 +14,7 @@
 
   --text-primary: #000000;      /* Negro puro */
   --text-secondary: #2a2a2a;    /* Negro suave */
-  --text-meta: #505050;         /* Gris para metadata */
+  --text-meta: #3a3a3a;         /* Gris para metadata - WCAG AAA compliant */
 
   --border-primary: #000000;    /* Líneas negras */
   --border-secondary: #404040;  /* Líneas grises */
@@ -223,4 +223,17 @@ h1, h2, h3, h4, h5, h6 {
 
 .uppercase {
   text-transform: uppercase;
+}
+
+/* Screen reader only - oculto visualmente pero accesible */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }

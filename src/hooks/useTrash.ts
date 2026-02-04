@@ -30,10 +30,19 @@ export const useTrash = (): UseTrashReturn => {
             setError(null);
 
             const data = await notesApi.listTrash();
-            setTrashedNotes(data);
+            
+            // ✅ MANEJAR AMBOS CASOS: array directo o objeto con paginación
+            if (Array.isArray(data)) {
+                setTrashedNotes(data);
+            } else if (data && typeof data === 'object' && 'notes' in data) {
+                setTrashedNotes(Array.isArray(data.notes) ? data.notes : []);
+            } else {
+                setTrashedNotes([]);
+            }
         } catch (err) {
             const message = getErrorMessage(err);
             setError(message);
+            setTrashedNotes([]); // ✅ GARANTIZAR ARRAY EN ERROR
             console.error('Error cargando papelera:', err);
         } finally {
             setIsLoading(false);

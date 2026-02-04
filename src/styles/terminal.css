@@ -167,6 +167,11 @@
     color: var(--bg-primary);
 }
 
+.btn-terminal:focus-visible {
+    outline: 2px solid var(--text-primary);
+    outline-offset: 2px;
+}
+
 .btn-terminal:active {
     transform: translate(1px, 1px);
 }
@@ -198,6 +203,11 @@
     background: var(--bg-primary);
     border-style: solid;
     border-width: var(--line-thick);
+}
+
+.input-terminal:focus-visible {
+    outline: 2px solid var(--text-primary);
+    outline-offset: -2px;
 }
 
 /* Panel con título */

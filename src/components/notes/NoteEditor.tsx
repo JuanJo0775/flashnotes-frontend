@@ -356,12 +356,17 @@ export default function NoteEditor(props: NoteEditorProps) {
 
                 {/* Título editable */}
                 <div className="comment mb-2">EDITOR_CORE:</div>
+                <label htmlFor="note-title-input" className="sr-only">
+                    Título de la nota
+                </label>
                 <input
+                    id="note-title-input"
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="input-terminal w-full font-pixel text-lg"
                     placeholder="Nombre_del_archivo.txt"
+                    aria-label="Título de la nota"
                 />
             </div>
 
@@ -370,7 +375,11 @@ export default function NoteEditor(props: NoteEditorProps) {
                 <div className="p-6 h-full flex items-start">
                     <span className="mono text-meta mr-2 select-none">&gt;</span>
                     <div className="flex-1 relative">
+                        <label htmlFor="note-content-textarea" className="sr-only">
+                            Contenido de la nota
+                        </label>
                         <textarea
+                            id="note-content-textarea"
                             ref={contentRef}
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
@@ -379,6 +388,7 @@ export default function NoteEditor(props: NoteEditorProps) {
                             className="w-full h-full resize-none bg-transparent border-none outline-none mono text-base leading-relaxed"
                             placeholder="El usuario comienza a escribir aquí..."
                             style={{ minHeight: 'calc(100vh - 250px)' }}
+                            aria-label="Contenido de la nota"
                         />
                         {showCursor && <Cursor />}
                     </div>
@@ -394,6 +404,8 @@ export default function NoteEditor(props: NoteEditorProps) {
                         <button
                             onClick={handleUndo}
                             disabled={!canUndo}
+                            aria-label={canUndo ? "Deshacer último cambio (Ctrl+Z)" : "No hay cambios para deshacer"}
+                            aria-disabled={!canUndo}
                             className="btn-terminal text-xs"
                             title="Deshacer (Ctrl+Z)"
                         >
@@ -403,6 +415,8 @@ export default function NoteEditor(props: NoteEditorProps) {
                         <button
                             onClick={handleRedo}
                             disabled={!canRedo}
+                            aria-label={canRedo ? "Rehacer último cambio deshecho (Ctrl+Y)" : "No hay cambios para rehacer"}
+                            aria-disabled={!canRedo}
                             className="btn-terminal text-xs"
                             title="Rehacer (Ctrl+Y)"
                         >
@@ -413,6 +427,7 @@ export default function NoteEditor(props: NoteEditorProps) {
 
                         <button
                             onClick={handleTrash}
+                            aria-label="Mover nota a la papelera"
                             className="btn-terminal text-xs"
                             title="Mover a papelera"
                         >

@@ -8,6 +8,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     children: ReactNode;
     variant?: 'default' | 'inverted';
     size?: 'sm' | 'md' | 'lg';
+    isLoading?: boolean;
+    ariaLabel?: string;
 }
 
 export default function Button({
@@ -15,6 +17,9 @@ export default function Button({
                                    variant = 'default',
                                    size = 'md',
                                    className = '',
+                                   isLoading = false,
+                                   ariaLabel,
+                                   disabled,
                                    ...props
                                }: ButtonProps) {
     const sizeClasses = {
@@ -28,12 +33,18 @@ export default function Button({
         inverted: 'btn-terminal inverted',
     };
 
+    const isDisabled = disabled || isLoading;
+
     return (
         <button
             className={`${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+            disabled={isDisabled}
+            aria-label={ariaLabel}
+            aria-busy={isLoading}
+            aria-disabled={isDisabled}
             {...props}
         >
-            {children}
+            {isLoading ? '[...] ' : ''}{children}
         </button>
     );
 }

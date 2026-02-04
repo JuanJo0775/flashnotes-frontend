@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface TypewriterTextProps {
     text: string;
@@ -17,7 +17,20 @@ export default function TypewriterText({
                                        }: TypewriterTextProps) {
     const [displayedText, setDisplayedText] = useState('');
     const [currentIndex, setCurrentIndex] = useState(0);
+    const onCompleteRef = useRef(onComplete);
 
+    // ✅ Actualizar ref sin causar re-render
+    useEffect(() => {
+        onCompleteRef.current = onComplete;
+    }, [onComplete]);
+
+    // ✅ Resetear estado cuando cambie el texto
+    useEffect(() => {
+        setDisplayedText('');
+        setCurrentIndex(0);
+    }, [text]);
+
+    // ✅ Animación sin onComplete en dependencias
     useEffect(() => {
         if (currentIndex < text.length) {
             const timeout = setTimeout(() => {
@@ -26,10 +39,15 @@ export default function TypewriterText({
             }, speed);
 
             return () => clearTimeout(timeout);
-        } else if (onComplete) {
-            onComplete();
         }
-    }, [currentIndex, text, speed, onComplete]);
+    }, [currentIndex, text, speed]);
+
+    // ✅ Ejecutar onComplete cuando se complete
+    useEffect(() => {
+        if (currentIndex >= text.length && currentIndex > 0 && onCompleteRef.current) {
+            onCompleteRef.current();
+        }
+    }, [currentIndex, text.length]);
 
     return (
         <span className="mono">

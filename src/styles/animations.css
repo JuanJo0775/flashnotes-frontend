@@ -133,7 +133,9 @@
 .glitch {
     will-change: transform;
     animation: glitch 0.3s ease-in-out;
-    /* Forzar aceleración por GPU: translate3d con Z=0 */
+    /* Forzar aceleración por GPU con translate3d y backface-visibility */
+    backface-visibility: hidden;
+    transform: translateZ(0);
 }
 
 /* Fade in instantáneo (no suave) */
