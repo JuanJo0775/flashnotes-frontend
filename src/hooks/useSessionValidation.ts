@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { apiClient } from '@/lib/api/client';
 
 /**
  * Hook para detectar cambios de sesión en el navegador
@@ -20,10 +22,7 @@ export const useSessionValidation = (onSessionChanged?: () => void) => {
             try {
                 // Hacer un pequeño request para verificar que la sesión siga activa
                 // Si el servidor devuelve un error de sesión inválida, significa que cambió
-                const response = await fetch('/api/notes', {
-                    method: 'GET',
-                    credentials: 'include', // Incluir cookies
-                });
+                const response = await apiClient.get('/notes');
 
                 if (response.status === 401 || response.status === 403) {
                     // Sesión expiró o no es válida
@@ -36,8 +35,17 @@ export const useSessionValidation = (onSessionChanged?: () => void) => {
                     setSessionStatus('valid');
                 }
             } catch (error) {
-                console.error('Error checking session:', error);
-                setSessionStatus('unknown');
+                const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+                if (status === 401 || status === 403) {
+                    setSessionStatus('expired');
+                    setShowSessionWarning(true);
+                    if (onSessionChanged) {
+                        onSessionChanged();
+                    }
+                } else {
+                    console.error('Error checking session:', error);
+                    setSessionStatus('unknown');
+                }
             }
         };
 

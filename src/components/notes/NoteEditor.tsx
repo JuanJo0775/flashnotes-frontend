@@ -34,13 +34,25 @@ export default function NoteEditor(props: NoteEditorProps) {
 
     const contentRef = useRef<HTMLTextAreaElement>(null);
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const suppressConflictRef = useRef(false);
 
     // Sincronizar estado local cuando cambie la nota (p. ej. al crear y abrir)
     // TAMBIÉN detectar si hubo cambios externos (conflict detection)
     useEffect(() => {
+        if (suppressConflictRef.current) {
+            suppressConflictRef.current = false;
+            setTitle(note.title || 'Nueva nota');
+            setContent(note.content || '');
+            setCanUndo((note as any).versions?.length > 0);
+            setCanRedo((note as any).redoStack?.length > 0);
+            setLastServerUpdatedAt(note.updatedAt);
+            setConflictDialog(false);
+            return;
+        }
+
         // Detectar si la nota cambió por fuera (otra pestaña, etc)
-        const hasExternalChanges = lastServerUpdatedAt && 
-                                   note.updatedAt && 
+        const hasExternalChanges = lastServerUpdatedAt &&
+                                   note.updatedAt &&
                                    lastServerUpdatedAt !== note.updatedAt;
 
         if (hasExternalChanges) {
@@ -135,12 +147,15 @@ export default function NoteEditor(props: NoteEditorProps) {
         if (!canUndo) return;
         if (!isValidObjectId(note._id)) return; // no operar si no está persistida
         try {
+            suppressConflictRef.current = true;
             const updated = await onUndo(note._id);
             if (updated) {
                 setTitle(updated.title);
                 setContent(updated.content);
                 setCanUndo((updated as any).versions?.length > 0);
                 setCanRedo((updated as any).redoStack?.length > 0);
+                setLastServerUpdatedAt(updated.updatedAt);
+                setConflictDialog(false);
             }
         } catch (error) {
             console.error('Error undoing:', error);
@@ -151,12 +166,15 @@ export default function NoteEditor(props: NoteEditorProps) {
         if (!canRedo) return;
         if (!isValidObjectId(note._id)) return; // no operar si no está persistida
         try {
+            suppressConflictRef.current = true;
             const updated = await onRedo(note._id);
             if (updated) {
                 setTitle(updated.title);
                 setContent(updated.content);
                 setCanUndo((updated as any).versions?.length > 0);
                 setCanRedo((updated as any).redoStack?.length > 0);
+                setLastServerUpdatedAt(updated.updatedAt);
+                setConflictDialog(false);
             }
         } catch (error) {
             console.error('Error redoing:', error);
