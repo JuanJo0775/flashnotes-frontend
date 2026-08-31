@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FlashNotes · Frontend
 
-## Getting Started
+Interfaz de FlashNotes. Next.js 16 (App Router) + Tailwind v4 + TypeScript.
+Estética de sistema operativo de terminal: cemento y tinta, monoespaciada,
+sin curvas.
 
-First, run the development server:
+## Arrancar
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local
+npm run dev              # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Necesita el backend corriendo en `http://localhost:5000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Verificar
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint             # ESLint sobre src y tests
+npm run typecheck        # TypeScript sin emitir
+npm test                 # 58 tests
+npm run build            # build de producción
+```
 
-## Learn More
+## Estructura
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/              Rutas del App Router y estilos globales
+├── components/
+│   ├── layout/       Cabecera, barra lateral, barra de estado
+│   ├── notes/        Lista, ficha, editor, papelera
+│   ├── ui/           Piezas reutilizables (MetaTag, ProgressBar, ConfirmDialog)
+│   └── effects/      Efectos de la estética terminal
+├── hooks/            Estado y comunicación con la API
+├── lib/
+│   ├── api/          Cliente HTTP (client.ts) y capa de API (notes.api.ts)
+│   └── utils/        Formateadores y validadores
+├── config/           Entorno y límites (espejo de los del backend)
+├── styles/           Componentes y animaciones de la estética terminal
+└── types/            Tipos compartidos
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Dónde va cada cosa:** los componentes pintan y reciben props; no llaman a la
+API. Los hooks tienen el estado y hablan con `lib/api`. Si un componente importa
+`notes.api`, algo se torció.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Documentación
 
-## Deploy on Vercel
+- [docs/DISENO.md](docs/DISENO.md) — sistema de diseño: tokens, tipografía,
+  vocabulario visual y las reglas que no se saltan
+- [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md) — puesta en producción
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Dos trampas que ya costaron caro
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**1. Los estilos propios se importan dentro de capas de cascada.**
+
+```css
+@import "../styles/terminal.css" layer(components);
+```
+
+En Tailwind v4 las utilidades viven en `@layer utilities`, y el CSS sin capa gana
+siempre al CSS con capa, sin importar la especificidad. Con el reset fuera de
+capas, `* { padding: 0 }` anulaba todas las utilidades de espaciado: `p-4`
+calculaba `0px` en toda la aplicación.
+
+**2. Ninguna clase inventada.** Si escribís `bg-secondary` o `text-meta`, tiene
+que existir el token en el bloque `@theme` de `globals.css`. Había unas 30 clases
+sin definir repartidas por el JSX que no pintaban nada.
+
+## Variables de entorno
+
+| Variable                     | Por defecto                     |
+| ---------------------------- | ------------------------------- |
+| `NEXT_PUBLIC_API_URL`        | `http://localhost:5000/api`     |
