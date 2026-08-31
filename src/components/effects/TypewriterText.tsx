@@ -1,58 +1,44 @@
 // src/components/effects/TypewriterText.tsx
-
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 interface TypewriterTextProps {
     text: string;
-    speed?: number; // ms por carácter
-    onComplete?: () => void;
+    /** Milisegundos por carácter. */
+    speed?: number;
 }
 
-export default function TypewriterText({
-                                           text,
-                                           speed = 50,
-                                           onComplete
-                                       }: TypewriterTextProps) {
-    const [displayedText, setDisplayedText] = useState('');
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const onCompleteRef = useRef(onComplete);
+/**
+ * Escribe el texto carácter a carácter.
+ *
+ * El progreso se guarda junto al texto al que pertenece (`{ text, count }`), así
+ * que al cambiar el texto no hace falta ningún efecto que reinicie el contador:
+ * el render simplemente ignora un progreso que es de otro texto. La versión
+ * anterior encadenaba tres efectos —avanzar, reiniciar y avisar del final— y
+ * cada cambio provocaba una cascada de renders.
+ */
+export default function TypewriterText({ text, speed = 45 }: TypewriterTextProps) {
+    const [progress, setProgress] = useState({ text, count: 0 });
 
-    // ✅ Actualizar ref sin causar re-render
     useEffect(() => {
-        onCompleteRef.current = onComplete;
-    }, [onComplete]);
+        let count = 0;
+        const id = setInterval(() => {
+            count += 1;
+            setProgress({ text, count });
+            if (count >= text.length) clearInterval(id);
+        }, speed);
 
-    // ✅ Resetear estado cuando cambie el texto
-    useEffect(() => {
-        setDisplayedText('');
-        setCurrentIndex(0);
-    }, [text]);
+        return () => clearInterval(id);
+    }, [text, speed]);
 
-    // ✅ Animación sin onComplete en dependencias
-    useEffect(() => {
-        if (currentIndex < text.length) {
-            const timeout = setTimeout(() => {
-                setDisplayedText((prev) => prev + text[currentIndex]);
-                setCurrentIndex((prev) => prev + 1);
-            }, speed);
-
-            return () => clearTimeout(timeout);
-        }
-    }, [currentIndex, text, speed]);
-
-    // ✅ Ejecutar onComplete cuando se complete
-    useEffect(() => {
-        if (currentIndex >= text.length && currentIndex > 0 && onCompleteRef.current) {
-            onCompleteRef.current();
-        }
-    }, [currentIndex, text.length]);
+    const count = progress.text === text ? progress.count : 0;
+    const done = count >= text.length;
 
     return (
         <span className="mono">
-            {displayedText}
-            {currentIndex < text.length && <span className="cursor-blink">█</span>}
+            {text.slice(0, count)}
+            {!done && <span className="cursor-block" aria-hidden="true" />}
         </span>
     );
 }

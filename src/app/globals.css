@@ -1,239 +1,276 @@
 @import "tailwindcss";
-@import "../styles/terminal.css";
-@import "../styles/animations.css";
 
-/* ============================================
-   VARIABLES GLOBALES - TEMA TERMINAL
-   ============================================ */
+/* Los estilos propios se importan DENTRO de capas de cascada.
+   Esto no es cosmético: en Tailwind v4 todas las utilidades viven en
+   `@layer utilities`, y el CSS sin capa gana siempre al CSS con capa, sin
+   importar la especificidad ni el orden. Con el reset fuera de capas, el
+   `* { padding: 0 }` de más abajo anulaba TODAS las utilidades de espaciado
+   de Tailwind: `p-4` calculaba 0px en toda la aplicación. */
+@import "../styles/terminal.css" layer(components);
+@import "../styles/animations.css" layer(components);
 
-:root {
-  /* Colores base - Cemento y negro */
-  --bg-primary: #e8e8e8;        /* Fondo cemento claro */
-  --bg-secondary: #d0d0d0;      /* Cemento medio */
-  --bg-tertiary: #f5f5f5;       /* Casi blanco */
+/* ============================================================
+   TOKENS
 
-  --text-primary: #000000;      /* Negro puro */
-  --text-secondary: #2a2a2a;    /* Negro suave */
-  --text-meta: #3a3a3a;         /* Gris para metadata - WCAG AAA compliant */
+   Las variables ya existían, pero nunca se conectaron con Tailwind: no hay
+   tailwind.config ni había bloque @theme. Por eso `bg-secondary`, `text-meta`,
+   `font-pixel` y `border-l-primary` estaban escritas por todo el JSX sin pintar
+   absolutamente nada — la barra lateral salía sin fondo y el título del editor
+   nunca usaba la tipografía de píxeles.
 
-  --border-primary: #000000;    /* Líneas negras */
-  --border-secondary: #404040;  /* Líneas grises */
+   @theme las expone como utilidades reales de Tailwind v4.
+   ============================================================ */
 
-  /* Acentos sutiles */
-  --accent-green: #1a5c1a;      /* Verde oscuro */
-  --accent-red: #5c1a1a;        /* Rojo oscuro */
-  --accent-active: #000000;     /* Negro para hover */
+@theme {
+  /* --- Superficies: gama cemento --- */
+  --color-primary: #e6e4de;        /* lienzo */
+  --color-secondary: #d5d2c9;      /* barras y paneles */
+  --color-tertiary: #f2f0eb;       /* papel: listas y editor */
+  --color-ink: #12110d;            /* tinta */
 
-  /* Sistema de líneas */
-  --line-thin: 0.5px;
-  --line-normal: 1px;
-  --line-thick: 2px;
+  /* --- Texto --- */
+  --color-body: #12110d;
+  --color-soft: #2b2a24;
+  --color-meta: #5f5c51;           /* metadatos; 6.1:1 sobre --color-tertiary */
+  --color-inverse: #f2f0eb;        /* texto sobre tinta */
 
-  /* Espaciado ortogonal */
-  --space-unit: 8px;
-  --space-small: 4px;
-  --space-medium: 16px;
-  --space-large: 24px;
+  /* --- Líneas --- */
+  --color-line: #12110d;
+  --color-line-soft: #a8a49a;
 
-  /* Fuentes */
-  --font-mono: 'IBM Plex Mono', 'JetBrains Mono', 'Courier New', monospace;
-  --font-pixel: 'VT323', monospace;
+  /* --- Semántica de estado --- */
+  --color-ok: #2f5d2a;
+  --color-warn: #8a5a06;
+  --color-danger: #8c2118;
 
-  /* Tamaños de fuente */
-  --text-xs: 10px;
+  /* Velo de los diálogos. Es un token propio y no una mezcla con --color-ink
+     porque en tema oscuro la tinta es CLARA: usarla como velo aclaraba la
+     página en vez de atenuarla. */
+  --color-scrim: rgb(18 17 13 / 0.55);
+
+  /* --- Escala tipográfica --- */
+  --text-2xs: 10px;
+  --text-xs: 11px;
   --text-sm: 12px;
   --text-base: 14px;
   --text-lg: 16px;
   --text-xl: 20px;
-  --text-2xl: 24px;
+  --text-2xl: 26px;
+  --text-3xl: 34px;
+
+  /* --- Retícula: todo múltiplo de 4 --- */
+  --spacing: 4px;
 }
 
-/* ============================================
-   RESET Y BASE
-   ============================================ */
+/* ------------------------------------------------------------
+   Tipografía
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+   Va en un :root normal, no en @theme, por dos motivos:
+
+   1. Un `var()` sin valor de respaldo que apunte a una propiedad no definida
+      invalida toda la declaración. --font-jetbrains la crea next/font en el
+      elemento que lleva su clase, así que sin el respaldo --font-mono quedaba
+      inválida en :root y TODA la app caía a la sans-serif del sistema.
+   2. Tailwind v4 poda las variables de @theme que no consume ninguna utilidad,
+      y acá se usan desde CSS propio, no desde clases.
+   ------------------------------------------------------------ */
+
+:root {
+  --font-mono: var(--font-jetbrains, "JetBrains Mono"), ui-monospace, "Courier New", monospace;
+  --font-pixel: var(--font-vt323, "VT323"), ui-monospace, monospace;
 }
 
-html,
-body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
+/* ============================================================
+   TEMA OSCURO
+
+   La referencia visual es papel claro, pero la app se pasa horas abierta.
+   El modo oscuro conserva el mismo lenguaje —barras invertidas, líneas,
+   sin curvas— con el contraste dado vuelta: cuarto oscuro en vez de cemento.
+
+   Sólo se redefinen tokens, nunca componentes: por eso todo el sistema cambia
+   de tema sin duplicar una sola regla.
+   ============================================================ */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-primary: #121110;
+    --color-secondary: #1c1b19;
+    --color-tertiary: #191816;
+    --color-ink: #e8e5dc;
+
+    --color-body: #e8e5dc;
+    --color-soft: #cbc7bc;
+    --color-meta: #918d80;
+    --color-inverse: #121110;
+
+    --color-line: #e8e5dc;
+    --color-line-soft: #4a4740;
+
+    --color-ok: #8fbc85;
+    --color-warn: #d3a740;
+    --color-danger: #e08272;
+
+    --color-scrim: rgb(0 0 0 / 0.72);
+  }
 }
 
-body {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: var(--text-base);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+:root[data-theme="dark"] {
+  --color-primary: #121110;
+  --color-secondary: #1c1b19;
+  --color-tertiary: #191816;
+  --color-ink: #e8e5dc;
+
+  --color-body: #e8e5dc;
+  --color-soft: #cbc7bc;
+  --color-meta: #918d80;
+  --color-inverse: #121110;
+
+  --color-line: #e8e5dc;
+  --color-line-soft: #4a4740;
+
+  --color-ok: #8fbc85;
+  --color-warn: #d3a740;
+  --color-danger: #e08272;
+
+  --color-scrim: rgb(0 0 0 / 0.72);
 }
 
-/* ============================================
-   TIPOGRAFÍA
-   ============================================ */
+/* ============================================================
+   BASE
+   ============================================================ */
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-pixel);
-  font-weight: normal;
-  letter-spacing: 0.5px;
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background: var(--color-primary);
+    color: var(--color-body);
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-pixel);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+
+  /* Sin esquinas redondeadas: es una decisión del diseño, no un accidente.
+     Antes se imponía con `* { border-radius: 0 !important }`, un martillo que
+     ningún componente podía sobrescribir. Un selector normal en la capa base
+     basta, y deja la puerta abierta a una excepción puntual. */
+  button,
+  input,
+  textarea,
+  select,
+  dialog {
+    border-radius: 0;
+  }
+
+  /* --- Grano de papel ---
+     La referencia tiene textura. Se pinta como una capa fija por encima del
+     fondo para que el scroll no la obligue a repintarse, y el ruido es un SVG
+     en línea: no hay archivo que descargar. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* --- Selección y foco ---
+     El foco visible es obligatorio: la app se maneja con teclado (Ctrl+N,
+     Ctrl+Z, Escape) y sin un anillo claro no se sabe dónde estás. */
+  ::selection {
+    background: var(--color-ink);
+    color: var(--color-inverse);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-line);
+    outline-offset: 2px;
+  }
+
+  /* --- Scrollbars --- */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-secondary);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line-soft);
+    border: 2px solid var(--color-secondary);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-line);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-soft) var(--color-secondary);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
-.mono {
-  font-family: var(--font-mono);
-}
+/* ============================================================
+   COMPONENTES DE BASE
+   ============================================================ */
 
-.pixel {
-  font-family: var(--font-pixel);
-}
+@layer components {
+  .mono  { font-family: var(--font-mono); }
+  .pixel { font-family: var(--font-pixel); letter-spacing: 0.02em; }
 
-/* ============================================
-   BORDES Y LÍNEAS
-   ============================================ */
+  .container-terminal {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
 
-.border-solid {
-  border: var(--line-normal) solid var(--border-primary);
-}
-
-.border-dashed {
-  border: var(--line-normal) dashed var(--border-secondary);
-}
-
-.border-dotted {
-  border: var(--line-thin) dotted var(--border-secondary);
-}
-
-.border-t {
-  border-top: var(--line-normal) solid var(--border-primary);
-}
-
-.border-b {
-  border-bottom: var(--line-normal) solid var(--border-primary);
-}
-
-.border-l {
-  border-left: var(--line-normal) solid var(--border-primary);
-}
-
-.border-r {
-  border-right: var(--line-normal) solid var(--border-primary);
-}
-
-/* ============================================
-   LAYOUT ORTOGONAL
-   ============================================ */
-
-.container-terminal {
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.grid-terminal {
-  display: grid;
-  grid-gap: 0;
-}
-
-/* Sin border-radius en ningún lado */
-* {
-  border-radius: 0 !important;
-}
-
-/* ============================================
-   ESTADOS INTERACTIVOS
-   ============================================ */
-
-.hoverable {
-  transition: none;
-  cursor: pointer;
-}
-
-.hoverable:hover {
-  background: var(--text-primary);
-  color: var(--bg-primary);
-}
-
-.inverted {
-  background: var(--text-primary);
-  color: var(--bg-primary);
-}
-
-/* ============================================
-   SCROLLBARS PERSONALIZADOS
-   ============================================ */
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
-  border: var(--line-thin) solid var(--border-primary);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--text-primary);
-  border: var(--line-thin) solid var(--border-primary);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
-}
-
-/* ============================================
-   EDITOR DE TEXTO
-   ============================================ */
-
-.editor-content {
-  outline: none;
-  min-height: 200px;
-  font-family: var(--font-mono);
-  line-height: 1.6;
-  padding: var(--space-medium);
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-.editor-content:focus {
-  outline: none;
-  background: var(--bg-tertiary);
-}
-
-/* ============================================
-   UTILIDADES
-   ============================================ */
-
-.no-select {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-}
-
-.text-shadow-none {
-  text-shadow: none;
-}
-
-.uppercase {
-  text-transform: uppercase;
-}
-
-/* Screen reader only - oculto visualmente pero accesible */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border-width: 0;
+  }
 }

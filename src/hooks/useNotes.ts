@@ -1,219 +1,206 @@
 // src/hooks/useNotes.ts
-import { useState, useEffect, useCallback } from 'react';
+'use client';
+
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { getErrorMessage } from '@/lib/api/client';
-import { Note, CreateNoteDto, UpdateNoteDto } from '../types/note.types';
-import { 
-    isValidObjectId, 
-    validateTitle, 
-    validateContent,
-    withIdValidation 
-} from '@/lib/utils/validators';
+import type { Note, CreateNoteDto, UpdateNoteDto } from '@/types/note.types';
+import { isValidObjectId, validateTitle, validateContent } from '@/lib/utils/validators';
+
+/** Cuántas notas se piden por página. */
+const PAGE_SIZE = 50;
 
 interface UseNotesReturn {
     notes: Note[];
     isLoading: boolean;
+    /** Hay más páginas por cargar en el servidor. */
+    hasMore: boolean;
+    /** Se está cargando la siguiente página. */
+    isLoadingMore: boolean;
+    /** Total de notas en el servidor, no sólo las cargadas. */
+    total: number;
     error: string | null;
 
-    // Acciones
     createNote: (data: CreateNoteDto) => Promise<Note | null>;
     updateNote: (id: string, data: UpdateNoteDto) => Promise<Note | null>;
-    deleteNote: (id: string) => Promise<boolean>;
+    moveToTrash: (id: string) => Promise<boolean>;
+    loadMore: () => Promise<void>;
     refreshNotes: () => Promise<void>;
-
-    // Utilidades
     clearError: () => void;
-
-    // Compatibilidad: alias
-    refetch?: () => Promise<void>;
 }
 
 export const useNotes = (): UseNotesReturn => {
     const [notes, setNotes] = useState<Note[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [page, setPage] = useState(1);
+    const [total, setTotal] = useState(0);
+    const [hasMore, setHasMore] = useState(false);
 
-    /**
-     * Carga inicial de notas
-     */
-    const loadNotes = useCallback(async () => {
+    // Evita que dos cargas simultáneas se pisen (p. ej. montaje + "cargar más").
+    const loadingRef = useRef(false);
+
+    const loadFirstPage = useCallback(async () => {
+        if (loadingRef.current) return;
+        loadingRef.current = true;
+
         try {
             setIsLoading(true);
             setError(null);
 
-            const data = await notesApi.listActive();
-            
-            // Manejar respuesta con o sin paginación
-            if (Array.isArray(data)) {
-                setNotes(data);
-            } else if (data && 'notes' in data) {
-                setNotes(data.notes);
-            } else {
-                setNotes([]);
-            }
+            const { notes: fetched, pagination } = await notesApi.listActive(1, PAGE_SIZE);
+
+            setNotes(fetched);
+            setPage(1);
+            setTotal(pagination?.total ?? fetched.length);
+            setHasMore(pagination ? pagination.page < pagination.pages : false);
         } catch (err) {
-            const message = getErrorMessage(err);
-            setError(message);
-            console.error('Error cargando notas:', err);
-            // Asegurar que notes siempre sea un array incluso en error
+            setError(getErrorMessage(err));
             setNotes([]);
+            setHasMore(false);
         } finally {
             setIsLoading(false);
+            loadingRef.current = false;
         }
     }, []);
 
     /**
-     * Crea una nueva nota
-     * Validación ANTES de enviar al backend usando validators centralizados
+     * Carga la siguiente página y la añade al final.
+     *
+     * El backend siempre paginó, pero el cliente nunca mandaba `page`, así que
+     * a partir de la nota 21 las notas existían y no había forma de verlas.
      */
-    const createNote = useCallback(async (data: CreateNoteDto): Promise<Note | null> => {
+    const loadMore = useCallback(async () => {
+        if (loadingRef.current || !hasMore) return;
+        loadingRef.current = true;
+
+        const nextPage = page + 1;
+
         try {
+            setIsLoadingMore(true);
             setError(null);
 
-            // VALIDACIÓN: Validar título usando función centralizada
-            const titleValidation = validateTitle(data.title);
-            if (!titleValidation.valid) {
-                setError(titleValidation.error || 'Título inválido');
-                return null;
-            }
-
-            // VALIDACIÓN: Validar contenido
-            const contentValidation = validateContent(data.content || '');
-            if (!contentValidation.valid) {
-                setError(contentValidation.error || 'Contenido inválido');
-                return null;
-            }
-
-            // Siempre llamar al backend y usar la respuesta del servidor
-            const newNote = await notesApi.create(data);
-
-            // Validar que el backend devolvió un _id válido
-            if (!isValidObjectId(newNote._id)) {
-                throw new Error('La nota no fue creada correctamente en el servidor');
-            }
-
-            // Actualizar estado: agregar al inicio usando exactamente el objeto devuelto
-            setNotes((prev) => [newNote, ...prev]);
-
-            return newNote;
-        } catch (err) {
-            const message = getErrorMessage(err);
-            setError(message);
-            console.error('Error creando nota:', err);
-            return null;
-        }
-    }, []);
-
-    /**
-     * Actualiza una nota existente
-     * Validación ANTES de enviar al backend usando validators centralizados y withIdValidation
-     */
-    const updateNote = useCallback(async (
-        id: string,
-        data: UpdateNoteDto
-    ): Promise<Note | null> => {
-        try {
-            setError(null);
-
-            // VALIDACIÓN: ID debe ser válido
-            if (!id || !isValidObjectId(id)) {
-                const msg = 'ID inválido para actualizar nota';
-                setError(msg);
-                console.error(msg);
-                return null;
-            }
-
-            // VALIDACIÓN: si se actualiza título, validar usando función centralizada
-            if (data.title !== undefined) {
-                const titleValidation = validateTitle(data.title);
-                if (!titleValidation.valid) {
-                    setError(titleValidation.error || 'Título inválido');
-                    return null;
-                }
-            }
-
-            // VALIDACIÓN: si se actualiza contenido, validar
-            if (data.content !== undefined) {
-                const contentValidation = validateContent(data.content);
-                if (!contentValidation.valid) {
-                    setError(contentValidation.error || 'Contenido inválido');
-                    return null;
-                }
-            }
-
-            // Llamar al backend con validación de ID
-            const updatedNote = await withIdValidation(id, () => notesApi.update(id, data));
-
-            // Actualizar estado: reemplazar la nota
-            setNotes((prev) =>
-                prev.map((note) => (note._id === id ? updatedNote : note))
+            const { notes: fetched, pagination } = await notesApi.listActive(
+                nextPage,
+                PAGE_SIZE
             );
 
-            return updatedNote;
+            setNotes((prev) => {
+                const seen = new Set(prev.map((n) => n._id));
+                return [...prev, ...fetched.filter((n) => !seen.has(n._id))];
+            });
+            setPage(nextPage);
+            setTotal(pagination?.total ?? total);
+            setHasMore(pagination ? pagination.page < pagination.pages : false);
         } catch (err) {
-            const message = getErrorMessage(err);
-            setError(message);
-            console.error('Error actualizando nota:', err);
+            setError(getErrorMessage(err));
+        } finally {
+            setIsLoadingMore(false);
+            loadingRef.current = false;
+        }
+    }, [hasMore, page, total]);
+
+    const createNote = useCallback(async (data: CreateNoteDto): Promise<Note | null> => {
+        setError(null);
+
+        const titleCheck = validateTitle(data.title);
+        if (!titleCheck.valid) {
+            setError(titleCheck.error ?? 'Título inválido');
+            return null;
+        }
+
+        const contentCheck = validateContent(data.content ?? '');
+        if (!contentCheck.valid) {
+            setError(contentCheck.error ?? 'Contenido inválido');
+            return null;
+        }
+
+        try {
+            const newNote = await notesApi.create(data);
+            setNotes((prev) => [newNote, ...prev]);
+            setTotal((t) => t + 1);
+            return newNote;
+        } catch (err) {
+            setError(getErrorMessage(err));
             return null;
         }
     }, []);
 
-    /**
-     * Mueve una nota a la papelera (soft delete)
-     * Usa withIdValidation para validación centralizada
-     */
-    const deleteNote = useCallback(async (id: string): Promise<boolean> => {
-        try {
+    const updateNote = useCallback(
+        async (id: string, data: UpdateNoteDto): Promise<Note | null> => {
             setError(null);
 
-            // Usar wrapper centralizado para validación de ID
-            await withIdValidation(id, () => notesApi.moveToTrash(id));
+            if (!isValidObjectId(id)) {
+                setError('ID inválido para actualizar la nota');
+                return null;
+            }
 
-            // Remover del estado local
-            setNotes((prev) => prev.filter((note) => note._id !== id));
+            if (data.title !== undefined) {
+                const titleCheck = validateTitle(data.title);
+                if (!titleCheck.valid) {
+                    setError(titleCheck.error ?? 'Título inválido');
+                    return null;
+                }
+            }
 
+            if (data.content !== undefined) {
+                const contentCheck = validateContent(data.content);
+                if (!contentCheck.valid) {
+                    setError(contentCheck.error ?? 'Contenido inválido');
+                    return null;
+                }
+            }
+
+            try {
+                const updated = await notesApi.update(id, data);
+                setNotes((prev) => prev.map((n) => (n._id === id ? updated : n)));
+                return updated;
+            } catch (err) {
+                setError(getErrorMessage(err));
+                return null;
+            }
+        },
+        []
+    );
+
+    const moveToTrash = useCallback(async (id: string): Promise<boolean> => {
+        setError(null);
+
+        if (!isValidObjectId(id)) {
+            setError('ID inválido para mover la nota a la papelera');
+            return false;
+        }
+
+        try {
+            await notesApi.moveToTrash(id);
+            setNotes((prev) => prev.filter((n) => n._id !== id));
+            setTotal((t) => Math.max(0, t - 1));
             return true;
         } catch (err) {
-            const message = getErrorMessage(err);
-            setError(message);
-            console.error('Error eliminando nota:', err);
+            setError(getErrorMessage(err));
             return false;
         }
     }, []);
 
-    /**
-     * Refresca la lista de notas
-     */
-    const refreshNotes = useCallback(async () => {
-        await loadNotes();
-    }, [loadNotes]);
+    const clearError = useCallback(() => setError(null), []);
 
-    // Alias por compatibilidad: `refetch` es usado en algunos componentes
-    const refetch = refreshNotes;
-
-    /**
-     * Limpia el error actual
-     */
-    const clearError = useCallback(() => {
-        setError(null);
-    }, []);
-
-    /**
-     * Carga inicial
-     */
     useEffect(() => {
-        loadNotes();
-    }, [loadNotes]);
+        void loadFirstPage();
+    }, [loadFirstPage]);
 
     return {
         notes,
         isLoading,
+        isLoadingMore,
+        hasMore,
+        total,
         error,
         createNote,
         updateNote,
-        deleteNote,
-        refreshNotes,
+        moveToTrash,
+        loadMore,
+        refreshNotes: loadFirstPage,
         clearError,
-        refetch,
     };
 };

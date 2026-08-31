@@ -1,117 +1,71 @@
 // src/hooks/useUndoRedo.ts
-import { useState, useCallback } from 'react';
+'use client';
+
+import { useCallback, useRef, useState } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { getErrorMessage } from '@/lib/api/client';
-import { Note, NoteWithHistory } from '@/types/note.types';
-import { withIdValidation } from '@/lib/utils/validators';
+import type { Note } from '@/types/note.types';
+import { isValidObjectId } from '@/lib/utils/validators';
 
 interface UseUndoRedoReturn {
-    canUndo: boolean;
-    canRedo: boolean;
     isProcessing: boolean;
     error: string | null;
-
     undo: (noteId: string) => Promise<Note | null>;
     redo: (noteId: string) => Promise<Note | null>;
     clearError: () => void;
 }
 
+/**
+ * Deshacer y rehacer contra el historial del servidor.
+ *
+ * El guard contra peticiones concurrentes usa una ref y no el estado: con
+ * `isProcessing` en las dependencias del useCallback, dos clics en el mismo
+ * ciclo de render leían el valor viejo (false) y ambos salían a la red.
+ */
 export const useUndoRedo = (): UseUndoRedoReturn => {
-    const [canUndo, setCanUndo] = useState(false);
-    const [canRedo, setCanRedo] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const inFlightRef = useRef(false);
 
-    /**
-     * Actualiza los flags de undo/redo basado en la nota
-     */
-    const updateFlags = useCallback((note: Note) => {
-        const noteWithHistory = note as NoteWithHistory;
+    const run = useCallback(
+        async (
+            noteId: string,
+            operation: (id: string) => Promise<Note>
+        ): Promise<Note | null> => {
+            if (inFlightRef.current) return null;
+            if (!isValidObjectId(noteId)) {
+                setError('ID inválido para esta operación');
+                return null;
+            }
 
-        setCanUndo(noteWithHistory.versions?.length > 0 || false);
-        setCanRedo(noteWithHistory.redoStack?.length > 0 || false);
-    }, []);
-
-    /**
-     * Deshace el último cambio
-     * Guard: retorna null si ya hay una operación en curso
-     * Valida el ID usando withIdValidation
-     */
-    const undo = useCallback(async (noteId: string): Promise<Note | null> => {
-        // ⏹️ Guard clause: prevenir múltiples requests concurrentes
-        if (isProcessing) {
-            console.debug('[useUndoRedo] Undo already in progress, ignoring duplicate request');
-            return null;
-        }
-
-        try {
+            inFlightRef.current = true;
             setIsProcessing(true);
             setError(null);
 
-            // Usar wrapper centralizado para validación de ID
-            const updatedNote = await withIdValidation(noteId, () => notesApi.undo(noteId));
+            try {
+                return await operation(noteId);
+            } catch (err) {
+                setError(getErrorMessage(err));
+                return null;
+            } finally {
+                inFlightRef.current = false;
+                setIsProcessing(false);
+            }
+        },
+        []
+    );
 
-            // Actualizar flags
-            updateFlags(updatedNote);
+    const undo = useCallback(
+        (noteId: string) => run(noteId, (id) => notesApi.undo(id)),
+        [run]
+    );
 
-            return updatedNote;
-        } catch (err) {
-            const message = getErrorMessage(err);
-            setError(message);
-            console.error('Error en undo:', err);
-            return null;
-        } finally {
-            setIsProcessing(false);
-        }
-    }, [updateFlags, isProcessing]);
+    const redo = useCallback(
+        (noteId: string) => run(noteId, (id) => notesApi.redo(id)),
+        [run]
+    );
 
-    /**
-     * Rehace el último cambio deshecho
-     * Guard: retorna null si ya hay una operación en curso
-     * Valida el ID usando withIdValidation
-     */
-    const redo = useCallback(async (noteId: string): Promise<Note | null> => {
-        // ⏹️ Guard clause: prevenir múltiples requests concurrentes
-        if (isProcessing) {
-            console.debug('[useUndoRedo] Redo already in progress, ignoring duplicate request');
-            return null;
-        }
+    const clearError = useCallback(() => setError(null), []);
 
-        try {
-            setIsProcessing(true);
-            setError(null);
-
-            // Usar wrapper centralizado para validación de ID
-            const updatedNote = await withIdValidation(noteId, () => notesApi.redo(noteId));
-
-            // Actualizar flags
-            updateFlags(updatedNote);
-
-            return updatedNote;
-        } catch (err) {
-            const message = getErrorMessage(err);
-            setError(message);
-            console.error('Error en redo:', err);
-            return null;
-        } finally {
-            setIsProcessing(false);
-        }
-    }, [updateFlags, isProcessing]);
-
-    /**
-     * Limpia el error
-     */
-    const clearError = useCallback(() => {
-        setError(null);
-    }, []);
-
-    return {
-        canUndo,
-        canRedo,
-        isProcessing,
-        error,
-        undo,
-        redo,
-        clearError,
-    };
+    return { isProcessing, error, undo, redo, clearError };
 };

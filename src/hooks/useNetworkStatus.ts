@@ -1,103 +1,137 @@
 // src/hooks/useNetworkStatus.ts
+'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useSyncExternalStore } from 'react';
 import { apiClient } from '@/lib/api/client';
 
 /**
- * Hook para detectar estado de conexión a Internet y backend
- * 
- * Detecta:
- * - window.online/offline events (conexión de red)
- * - Polling a /api/health cada 30s para verificar backend disponible
- * - Fallos de requests API
- * 
- * @returns {object} Estado de conexión y funciones de control
+ * Estado de conectividad, compartido por TODA la app.
+ *
+ * Antes esto era un hook con `useState` + `setInterval` dentro. Como lo usaban
+ * dos componentes a la vez (StatusBar y NoteEditor), había dos sondeos
+ * independientes al backend, cada uno con su propio estado. Entre eso y el
+ * heartbeat de sesión, la app consumía casi todo su propio límite de peticiones
+ * sin que el usuario hiciera nada, y terminaba autobloqueándose con 429.
+ *
+ * Ahora hay un único sondeo a nivel de módulo y los componentes se suscriben
+ * con useSyncExternalStore: da igual cuántos lo usen.
  */
-export function useNetworkStatus() {
-    const [isOnline, setIsOnline] = useState<boolean>(
-        typeof window !== 'undefined' ? window.navigator.onLine : true
-    );
-    const [backendReachable, setBackendReachable] = useState<boolean>(true);
-    const [lastChecked, setLastChecked] = useState<Date>(new Date());
 
-    /**
-     * Verifica si el backend está disponible
-     */
-    const checkBackendHealth = useCallback(async () => {
-        try {
-            const response = await apiClient.get('/health', {
-                timeout: 5000, // 5s timeout
-            });
-            
-            const isHealthy = response.data?.success === true;
-            setBackendReachable(isHealthy);
-            setLastChecked(new Date());
-            
-            return isHealthy;
-        } catch (error) {
-            console.warn('[useNetworkStatus] Backend health check failed:', error);
-            setBackendReachable(false);
-            setLastChecked(new Date());
-            return false;
-        }
-    }, []);
+const POLL_INTERVAL_MS = 60_000;
+const HEALTH_TIMEOUT_MS = 5_000;
 
-    /**
-     * Handler para cambio de conexión online/offline
-     */
-    useEffect(() => {
-        const handleOnline = () => {
-            console.log('[useNetworkStatus] Network connection restored');
-            setIsOnline(true);
-            // Verificar backend inmediatamente cuando la red vuelve
-            checkBackendHealth();
-        };
+export interface NetworkStatus {
+    /** El navegador cree tener red. */
+    isOnline: boolean;
+    /** El backend respondió al último health check. */
+    backendReachable: boolean;
+    /** Ambas cosas: se puede guardar con confianza. */
+    isFullyOperational: boolean;
+    /** Todavía no se completó la primera comprobación. */
+    isChecking: boolean;
+}
 
-        const handleOffline = () => {
-            console.warn('[useNetworkStatus] Network connection lost');
-            setIsOnline(false);
-            setBackendReachable(false);
-        };
+let state: NetworkStatus = {
+    isOnline: true,
+    backendReachable: true,
+    isFullyOperational: true,
+    isChecking: true,
+};
 
-        // Registrar listeners
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
+const listeners = new Set<() => void>();
+let subscriberCount = 0;
+let intervalId: ReturnType<typeof setInterval> | null = null;
+let inFlight = false;
 
-        // Cleanup
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, [checkBackendHealth]);
-
-    /**
-     * Polling periódico al backend cada 30s
-     */
-    useEffect(() => {
-        // Check inicial
-        checkBackendHealth();
-
-        // Polling cada 30s
-        const intervalId = setInterval(() => {
-            // Solo hacer polling si la red está online
-            if (isOnline) {
-                checkBackendHealth();
-            }
-        }, 30000); // 30s
-
-        return () => clearInterval(intervalId);
-    }, [isOnline, checkBackendHealth]);
-
-    /**
-     * Determina si el sistema está completamente operativo
-     */
-    const isFullyOperational = isOnline && backendReachable;
-
-    return {
-        isOnline,           // Red del navegador disponible
-        backendReachable,   // Backend responde a health checks
-        isFullyOperational, // Ambos están OK
-        lastChecked,        // Timestamp del último check
-        checkBackendHealth, // Función para forzar un check manual
+function setState(next: Partial<Omit<NetworkStatus, 'isFullyOperational'>>) {
+    const merged = { ...state, ...next };
+    const resolved: NetworkStatus = {
+        ...merged,
+        isFullyOperational: merged.isOnline && merged.backendReachable,
     };
+
+    const unchanged =
+        resolved.isOnline === state.isOnline &&
+        resolved.backendReachable === state.backendReachable &&
+        resolved.isChecking === state.isChecking;
+
+    if (unchanged) return;
+
+    state = resolved;
+    listeners.forEach((l) => l());
+}
+
+/**
+ * Comprueba si el backend responde. Expuesta para forzar una comprobación
+ * después de un fallo, sin esperar al siguiente ciclo.
+ */
+export async function checkBackendHealth(): Promise<boolean> {
+    if (inFlight) return state.backendReachable;
+    inFlight = true;
+
+    try {
+        const res = await apiClient.get('/health', { timeout: HEALTH_TIMEOUT_MS });
+        const healthy = res.data?.success === true;
+        setState({ backendReachable: healthy, isChecking: false });
+        return healthy;
+    } catch {
+        setState({ backendReachable: false, isChecking: false });
+        return false;
+    } finally {
+        inFlight = false;
+    }
+}
+
+function handleOnline() {
+    setState({ isOnline: true });
+    void checkBackendHealth();
+}
+
+function handleOffline() {
+    setState({ isOnline: false, backendReachable: false, isChecking: false });
+}
+
+function start() {
+    setState({ isOnline: navigator.onLine });
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    void checkBackendHealth();
+    intervalId = setInterval(() => {
+        if (state.isOnline) void checkBackendHealth();
+    }, POLL_INTERVAL_MS);
+}
+
+function stop() {
+    window.removeEventListener('online', handleOnline);
+    window.removeEventListener('offline', handleOffline);
+    if (intervalId) clearInterval(intervalId);
+    intervalId = null;
+}
+
+function subscribe(listener: () => void) {
+    listeners.add(listener);
+    if (++subscriberCount === 1) start();
+
+    return () => {
+        listeners.delete(listener);
+        if (--subscriberCount === 0) stop();
+    };
+}
+
+const getSnapshot = () => state;
+
+// En el render del servidor no hay red que comprobar: se asume operativo para
+// que el marcado del servidor y el del cliente coincidan.
+const SERVER_SNAPSHOT: NetworkStatus = {
+    isOnline: true,
+    backendReachable: true,
+    isFullyOperational: true,
+    isChecking: true,
+};
+const getServerSnapshot = () => SERVER_SNAPSHOT;
+
+export function useNetworkStatus(): NetworkStatus {
+    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

@@ -1,16 +1,29 @@
-// UBICACIÓN: src/components/notes/NoteEditor.tsx
-// ACCIÓN: REEMPLAZAR COMPLETO
-
+// src/components/notes/NoteEditor.tsx
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import DOMPurify from 'isomorphic-dompurify';
-import type { Note } from '../../types/note.types';
-import Cursor from '@/components/ui/Cursor';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Note, SaveState } from '@/types/note.types';
 import MetaTag from '@/components/ui/MetaTag';
-import { formatFileSize, formatRelativeTime } from '@/lib/utils/formatters';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { formatFileSize } from '@/lib/utils/formatters';
 import { isValidObjectId } from '@/lib/utils/validators';
+import { LIMITS } from '@/config/limits';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+
+/**
+ * Cadencia del auto-guardado.
+ *
+ * Eran 1000 ms, y como el backend crea un punto de historial por cada PATCH con
+ * cambios, veinte segundos de escritura llenaban las 20 ranuras de historial con
+ * estados separados por un segundo: "deshacer" retrocedía un segundo en vez de
+ * un cambio, y la versión de hace cinco minutos ya se había perdido.
+ *
+ * 2,5 s agrupa una ráfaga de tecleo en un solo punto de historial. Además se
+ * fuerza el guardado al salir del campo y al cerrar el editor, así que subir el
+ * intervalo no significa perder trabajo.
+ */
+const AUTOSAVE_DELAY_MS = 2500;
 
 interface NoteEditorProps {
     note: Note;
@@ -19,421 +32,314 @@ interface NoteEditorProps {
     onUndo: (id: string) => Promise<Note | null>;
     onRedo: (id: string) => Promise<Note | null>;
     onMoveToTrash: (id: string) => Promise<boolean>;
+    onSaveStateChange: (state: SaveState) => void;
 }
 
-export default function NoteEditor(props: NoteEditorProps) {
-    const { note, onSave, onBack, onUndo, onRedo, onMoveToTrash } = props;
+export default function NoteEditor({
+    note,
+    onSave,
+    onBack,
+    onUndo,
+    onRedo,
+    onMoveToTrash,
+    onSaveStateChange,
+}: NoteEditorProps) {
     const { isFullyOperational } = useNetworkStatus();
-    
-    // Inicializar con valores de la nota; título por defecto 'Nueva nota'
-    const [title, setTitle] = useState(note.title || 'Nueva nota');
-    const [content, setContent] = useState(note.content || '');
-    const [isSaving, setIsSaving] = useState(false);
-    const [showCursor, setShowCursor] = useState(true);
-    const [lastSaved, setLastSaved] = useState<Date | null>(null);
-    const [canUndo, setCanUndo] = useState(false);
-    const [canRedo, setCanRedo] = useState(false);
-    const [lastServerUpdatedAt, setLastServerUpdatedAt] = useState<string | undefined>(note.updatedAt);
-    const [conflictDialog, setConflictDialog] = useState(false);
-    const [isSyncing, setIsSyncing] = useState(false); // Lock para evitar race condition
-    const [showTrashConfirm, setShowTrashConfirm] = useState(false); // Modal de confirmación trash
+
+    const [title, setTitle] = useState(note.title);
+    const [content, setContent] = useState(note.content);
+    const [saveState, setSaveState] = useState<SaveState>('idle');
+    const [canUndo, setCanUndo] = useState(Boolean(note.versions?.length));
+    const [canRedo, setCanRedo] = useState(Boolean(note.redoStack?.length));
+    const [showTrashConfirm, setShowTrashConfirm] = useState(false);
+    const [isTrashing, setIsTrashing] = useState(false);
 
     const contentRef = useRef<HTMLTextAreaElement>(null);
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const suppressConflictRef = useRef(false);
-    const autoSaveResumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Sincronizar estado local cuando cambie la nota (p. ej. al crear y abrir)
-    // TAMBIÉN detectar si hubo cambios externos (conflict detection)
+    // Qué se envió al servidor por última vez. Es lo que decide si hay cambios
+    // pendientes, sin necesidad de comparar contra la prop `note` (que cambia
+    // de identidad en cada render del padre).
+    const savedRef = useRef({ title: note.title, content: note.content });
+
+    // Borrador actual, accesible desde callbacks sin recrearlos en cada tecla.
+    // Se sincroniza en un efecto: escribir en una ref durante el render rompe
+    // el render concurrente de React.
+    const draftRef = useRef({ title: note.title, content: note.content });
     useEffect(() => {
-        if (suppressConflictRef.current) {
-            suppressConflictRef.current = false;
-            setTitle(note.title || 'Nueva nota');
-            setContent(note.content || '');
-            setCanUndo((note as any).versions?.length > 0);
-            setCanRedo((note as any).redoStack?.length > 0);
-            setLastServerUpdatedAt(note.updatedAt);
-            setConflictDialog(false);
-            return;
-        }
+        draftRef.current = { title, content };
+    }, [title, content]);
 
-        // Detectar si la nota cambió por fuera (otra pestaña, etc)
-        const hasExternalChanges = lastServerUpdatedAt &&
-                                   note.updatedAt &&
-                                   lastServerUpdatedAt !== note.updatedAt;
+    // El editor está montado para esta nota concreta: si cambia la nota
+    // seleccionada, el padre lo remonta con `key`, así que no hace falta ningún
+    // efecto de sincronización. El efecto anterior (que dependía de `note` y de
+    // su propio estado) era el que disparaba los falsos "conflicto detectado".
+    const noteId = note._id;
 
-        if (hasExternalChanges) {
-            // Mostrar dialog de conflicto
-            setConflictDialog(true);
-        } else {
-            // Sincronizar valores de la prop
-            setTitle(note.title || 'Nueva nota');
-            setContent(note.content || '');
-            setCanUndo((note as any).versions?.length > 0);
-            setCanRedo((note as any).redoStack?.length > 0);
-            setLastServerUpdatedAt(note.updatedAt);
-        }
-    }, [note, lastServerUpdatedAt]);
-
-    // Auto-save con debounce
-    useEffect(() => {
-        // No guardar si está sincronizando (undo/redo en curso)
-        if (isSyncing) {
-            console.debug('[NoteEditor] Skipping autosave: sync in progress (undo/redo)');
-            return;
-        }
-
-        // SECURITY: No guardar si no hay conexión de red o backend no disponible
-        if (!isFullyOperational) {
-            console.debug('[NoteEditor] Skipping autosave: network or backend unavailable');
-            return;
-        }
-
-        // No guardar si la nota no está persistida
-        if (!isValidObjectId(note._id)) {
-            console.debug('[NoteEditor] Skipping autosave: invalid or missing note ID', {
-                noteId: note._id
-            });
-            return;
-        }
-
-        // Comparar con la nota actual (prop) para evitar guardar si no hay cambios reales
-        if (title === (note.title || 'Nueva nota') && content === (note.content || '')) {
-            console.debug('[NoteEditor] Skipping autosave: no changes detected', {
-                noteId: note._id
-            });
-            return;
-        }
-
-        if (saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current);
-        }
-
-        saveTimeoutRef.current = setTimeout(async () => {
-            setIsSaving(true);
-            try {
-                // Protección adicional: no llamar onSave si no hay id válido
-                if (!isValidObjectId(note._id)) {
-                    console.warn('[NoteEditor] Cannot save: invalid note ID at save time', {
-                        noteId: note._id
-                    });
-                    return;
-                }
-
-                // SECURITY: Sanitizar contenido antes de enviar (defensa en profundidad)
-                const sanitizedTitle = DOMPurify.sanitize(title, {
-                    ALLOWED_TAGS: [],
-                    ALLOWED_ATTR: []
-                });
-                const sanitizedContent = DOMPurify.sanitize(content, {
-                    ALLOWED_TAGS: [],
-                    ALLOWED_ATTR: []
-                });
-
-                console.debug('[NoteEditor] Initiating autosave', {
-                    noteId: note._id,
-                    titleLength: sanitizedTitle.length,
-                    contentLength: sanitizedContent.length
-                });
-
-                const updated = await onSave(note._id, { 
-                    title: sanitizedTitle, 
-                    content: sanitizedContent 
-                });
-                if (updated) {
-                    // Usar exclusivamente la nota retornada por el backend para mantener sincronía
-                    setTitle(updated.title || 'Nueva nota');
-                    setContent(updated.content || '');
-                    setLastSaved(new Date());
-                    setLastServerUpdatedAt(updated.updatedAt); // Actualizar timestamp del servidor
-                    setCanUndo((updated as any).versions?.length > 0);
-                    setCanRedo((updated as any).redoStack?.length > 0);
-                    console.debug('[NoteEditor] Autosave successful', {
-                        noteId: updated._id
-                    });
-                }
-            } catch (error) {
-                console.error('[NoteEditor] Error saving:', error, {
-                    noteId: note._id
-                });
-            } finally {
-                setIsSaving(false);
-            }
-        }, 1000);
-
-        return () => {
-            if (saveTimeoutRef.current) {
-                clearTimeout(saveTimeoutRef.current);
-            }
-        };
-    }, [title, content, note, onSave, isSyncing, isFullyOperational]);
-
-    // Focus en el editor al montar
-    useEffect(() => {
-        if (contentRef.current) {
-            contentRef.current.focus();
-        }
+    const applyServerNote = useCallback((updated: Note) => {
+        savedRef.current = { title: updated.title, content: updated.content };
+        setCanUndo(Boolean(updated.versions?.length));
+        setCanRedo(Boolean(updated.redoStack?.length));
     }, []);
 
-    /**
-     * Pausa el auto-save estableciendo isSyncing en true
-     * Se usa antes de undo/redo para evitar race condition
-     */
-    const pauseAutoSave = () => {
-        setIsSyncing(true);
-    };
+    const reportState = useCallback(
+        (state: SaveState) => {
+            setSaveState(state);
+            onSaveStateChange(state);
+        },
+        [onSaveStateChange]
+    );
 
     /**
-     * Reanuda el auto-save después de 500ms
-     * Garantiza que undo/redo + respuesta del servidor finalicen antes de permitir auto-save
+     * Envía los cambios pendientes.
+     *
+     * A diferencia de la versión anterior, NO reescribe el textarea con la
+     * respuesta del servidor. Antes hacía setContent(updated.content), así que
+     * si seguías tecleando durante el viaje de ida y vuelta tus pulsaciones se
+     * descartaban y el cursor saltaba. Mientras el editor está abierto, el
+     * textarea es la fuente de verdad; del servidor sólo se toman los flags de
+     * historial.
      */
-    const resumeAutoSave = () => {
-        if (autoSaveResumeTimeoutRef.current) {
-            clearTimeout(autoSaveResumeTimeoutRef.current);
-        }
-        autoSaveResumeTimeoutRef.current = setTimeout(() => {
-            setIsSyncing(false);
-        }, 500);
-    };
+    const flush = useCallback(async () => {
+        if (!isValidObjectId(noteId)) return;
 
-    const handleUndo = async () => {
-        if (!canUndo) return;
-        if (!isValidObjectId(note._id)) return; // no operar si no está persistida
-        
-        pauseAutoSave(); // ⏸️ Pausar auto-save para evitar race condition
-        try {
-            suppressConflictRef.current = true;
-            const updated = await onUndo(note._id);
-            if (updated) {
-                setTitle(updated.title);
-                setContent(updated.content);
-                setCanUndo((updated as any).versions?.length > 0);
-                setCanRedo((updated as any).redoStack?.length > 0);
-                setLastServerUpdatedAt(updated.updatedAt);
-                setConflictDialog(false);
-            }
-        } catch (error) {
-            console.error('Error undoing:', error);
-        } finally {
-            resumeAutoSave(); // ▶️ Reanudar después de 500ms
-        }
-    };
+        const draft = draftRef.current;
+        const saved = savedRef.current;
 
-    const handleRedo = async () => {
-        if (!canRedo) return;
-        if (!isValidObjectId(note._id)) return; // no operar si no está persistida
-        
-        pauseAutoSave(); // ⏸️ Pausar auto-save para evitar race condition
-        try {
-            suppressConflictRef.current = true;
-            const updated = await onRedo(note._id);
-            if (updated) {
-                setTitle(updated.title);
-                setContent(updated.content);
-                setCanUndo((updated as any).versions?.length > 0);
-                setCanRedo((updated as any).redoStack?.length > 0);
-                setLastServerUpdatedAt(updated.updatedAt);
-                setConflictDialog(false);
-            }
-        } catch (error) {
-            console.error('Error redoing:', error);
-        } finally {
-            resumeAutoSave(); // ▶️ Reanudar después de 500ms
-        }
-    };
+        const payload: { title?: string; content?: string } = {};
+        if (draft.title !== saved.title) payload.title = draft.title;
+        if (draft.content !== saved.content) payload.content = draft.content;
 
-    const handleTrash = async () => {
-        if (!isValidObjectId(note._id)) return; // no operar si no está persistida
-        setShowTrashConfirm(true); // Abrir modal de confirmación
-    };
+        if (Object.keys(payload).length === 0) return;
 
-    const handleTrashConfirm = async () => {
-        try {
-            const success = await onMoveToTrash(note._id);
-            if (success) {
-                setShowTrashConfirm(false);
-                onBack();
-            }
-        } catch (error) {
-            console.error('Error moving to trash:', error);
-            setShowTrashConfirm(false);
+        // Sin red no se intenta: se avisa y se reintenta al volver la conexión.
+        if (!isFullyOperational) {
+            reportState('error');
+            return;
         }
-    };
+
+        reportState('saving');
+
+        const updated = await onSave(noteId, payload);
+
+        if (updated) {
+            applyServerNote(updated);
+            reportState('saved');
+        } else {
+            // useNotes ya publicó el mensaje concreto en el estado de error.
+            reportState('error');
+        }
+    }, [noteId, isFullyOperational, onSave, applyServerNote, reportState]);
+
+    // Auto-guardado con debounce sobre el borrador.
+    useEffect(() => {
+        const saved = savedRef.current;
+        if (title === saved.title && content === saved.content) return;
+
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = setTimeout(() => void flush(), AUTOSAVE_DELAY_MS);
+
+        return () => {
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        };
+    }, [title, content, flush]);
+
+    // Guardar lo pendiente al desmontar (volver a la lista, cambiar de nota).
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+            void flush();
+        };
+    }, [flush]);
+
+    // Reintentar cuando la conexión VUELVE, no mientras haya un error.
+    //
+    // Depender de `saveState` acá creaba un bucle: el reintento ponía el estado
+    // en 'saving', luego en 'error', el efecto volvía a dispararse por el cambio
+    // de estado y reintentaba otra vez, sin parar. Sólo interesa el flanco de
+    // subida de la conectividad, así que se compara contra el valor anterior.
+    const wasOperationalRef = useRef(isFullyOperational);
+    useEffect(() => {
+        const recovered = isFullyOperational && !wasOperationalRef.current;
+        wasOperationalRef.current = isFullyOperational;
+
+        // flush() sincroniza con un sistema externo (la API) y sólo publica el
+        // estado resultante: es el caso que la regla contempla como válido, pero
+        // no puede verlo a través de la llamada.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (recovered) void flush();
+    }, [isFullyOperational, flush]);
+
+    useEffect(() => {
+        contentRef.current?.focus();
+    }, []);
+
+    const runHistoryAction = useCallback(
+        async (action: (id: string) => Promise<Note | null>) => {
+            if (!isValidObjectId(noteId)) return;
+
+            // Se vacía lo pendiente ANTES de tocar el historial: si no, el
+            // auto-guardado en vuelo pisaba el resultado del undo/redo.
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+            await flush();
+
+            const updated = await action(noteId);
+            if (!updated) return;
+
+            setTitle(updated.title);
+            setContent(updated.content);
+            applyServerNote(updated);
+            reportState('saved');
+        },
+        [noteId, flush, applyServerNote, reportState]
+    );
+
+    const handleUndo = useCallback(() => {
+        if (canUndo) void runHistoryAction(onUndo);
+    }, [canUndo, runHistoryAction, onUndo]);
+
+    const handleRedo = useCallback(() => {
+        if (canRedo) void runHistoryAction(onRedo);
+    }, [canRedo, runHistoryAction, onRedo]);
+
+    const handleTrashConfirm = useCallback(async () => {
+        setIsTrashing(true);
+
+        // Se cancela lo pendiente: la nota se va a la papelera, guardarla antes
+        // sólo crearía un punto de historial inútil.
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        savedRef.current = draftRef.current;
+
+        const moved = await onMoveToTrash(noteId);
+        setIsTrashing(false);
+        setShowTrashConfirm(false);
+
+        if (moved) onBack();
+    }, [noteId, onMoveToTrash, onBack]);
+
+    useKeyboardShortcuts({
+        onSave: () => void flush(),
+        onUndo: handleUndo,
+        onRedo: handleRedo,
+    });
+
+    const overContentLimit = content.length > LIMITS.CONTENT_MAX;
 
     return (
         <div className="flex flex-col h-full">
-            {/* Modal de confirmación para mover a papelera */}
-            {showTrashConfirm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-secondary border-2 border-primary p-6 max-w-md">
-                        <h2 className="text-lg font-pixel mb-4 text-yellow-400">
-                            ⚠ MOVER A PAPELERA
-                        </h2>
-                        <p className="mono text-sm mb-6 text-gray-200">
-                            ¿Mover esta nota a la papelera? Esta acción puede revertirse desde la papelera.
-                        </p>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={handleTrashConfirm}
-                                className="btn-terminal flex-1 text-xs"
-                            >
-                                [✓] ACEPTAR
-                            </button>
-                            <button
-                                onClick={() => setShowTrashConfirm(false)}
-                                className="btn-terminal flex-1 text-xs"
-                            >
-                                [✗] CANCELAR
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmDialog
+                open={showTrashConfirm}
+                title="⚠ Mover a papelera"
+                message="La nota se moverá a la papelera. Podés restaurarla desde ahí."
+                confirmLabel="[✓] Mover"
+                busy={isTrashing}
+                onConfirm={handleTrashConfirm}
+                onCancel={() => setShowTrashConfirm(false)}
+            />
 
-            {/* Dialog de conflicto si la nota cambió externamente */}
-            {conflictDialog && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-secondary border-2 border-primary p-6 max-w-md">
-                        <h2 className="text-lg font-pixel mb-4 text-yellow-400">
-                            ⚠ CONFLICTO DETECTADO
-                        </h2>
-                        <p className="mono text-sm mb-4 text-gray-200">
-                            Esta nota fue modificada desde otro lugar. 
-                            ¿Descartas tus cambios locales y usas la versión del servidor?
-                        </p>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => {
-                                    // Descartar cambios locales y usar servidor
-                                    setTitle(note.title || 'Nueva nota');
-                                    setContent(note.content || '');
-                                    setLastServerUpdatedAt(note.updatedAt);
-                                    setConflictDialog(false);
-                                }}
-                                className="btn-terminal flex-1 text-xs"
-                            >
-                                [✓] USAR SERVIDOR
-                            </button>
-                            <button
-                                onClick={() => {
-                                    // Mantener cambios locales y ignorar conflicto
-                                    setLastServerUpdatedAt(note.updatedAt);
-                                    setConflictDialog(false);
-                                }}
-                                className="btn-terminal flex-1 text-xs"
-                            >
-                                [!] MANTENER MÍOS
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Toolbar superior */}
-            <div className="border-b border-b-primary bg-secondary p-4">
-                <div className="flex items-center justify-between mb-3">
-                    <button
-                        onClick={onBack}
-                        className="btn-terminal text-xs"
-                    >
-                        [←] VOLVER
+            {/* --- Barra superior --- */}
+            <div className="border-b border-line bg-secondary p-4 flex flex-col gap-3 shrink-0">
+                <div className="flex items-center justify-between gap-4">
+                    <button type="button" onClick={onBack} className="btn-terminal">
+                        [←] Volver
                     </button>
 
                     <div className="flex items-center gap-2">
-                        {isSaving ? (
-                            <MetaTag variant="neutral" size="xs">GUARDANDO...</MetaTag>
-                        ) : lastSaved ? (
-                            <MetaTag variant="success" size="xs">
-                                GUARDADO {formatRelativeTime(lastSaved)}
-                            </MetaTag>
-                        ) : null}
-
-                        <MetaTag variant="neutral" size="xs">
+                        {saveState === 'saving' && (
+                            <MetaTag variant="neutral">Guardando…</MetaTag>
+                        )}
+                        {saveState === 'saved' && (
+                            <MetaTag variant="success">Guardado</MetaTag>
+                        )}
+                        {saveState === 'error' && (
+                            <MetaTag variant="error">Sin guardar</MetaTag>
+                        )}
+                        <MetaTag variant={overContentLimit ? 'error' : 'neutral'}>
                             {formatFileSize(content.length)}
                         </MetaTag>
                     </div>
                 </div>
 
-                {/* Título editable */}
-                <div className="comment mb-2">EDITOR_CORE:</div>
-                <label htmlFor="note-title-input" className="sr-only">
-                    Título de la nota
-                </label>
-                <input
-                    id="note-title-input"
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="input-terminal w-full font-pixel text-lg"
-                    placeholder="Nombre_del_archivo.txt"
-                    aria-label="Título de la nota"
-                />
-            </div>
-
-            {/* Área de edición */}
-            <div className="flex-1 overflow-hidden relative bg-tertiary">
-                <div className="p-6 h-full flex items-start">
-                    <span className="mono text-meta mr-2 select-none">&gt;</span>
-                    <div className="flex-1 relative">
-                        <label htmlFor="note-content-textarea" className="sr-only">
-                            Contenido de la nota
-                        </label>
-                        <textarea
-                            id="note-content-textarea"
-                            ref={contentRef}
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            onFocus={() => setShowCursor(true)}
-                            onBlur={() => setShowCursor(false)}
-                            className="w-full h-full resize-none bg-transparent border-none outline-none mono text-base leading-relaxed"
-                            placeholder="El usuario comienza a escribir aquí..."
-                            style={{ minHeight: 'calc(100vh - 250px)' }}
-                            aria-label="Contenido de la nota"
-                        />
-                        {showCursor && <Cursor />}
-                    </div>
+                <div className="flex flex-col gap-2">
+                    <label htmlFor="note-title-input" className="comment">
+                        Editor_core
+                    </label>
+                    <input
+                        id="note-title-input"
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        onBlur={() => void flush()}
+                        maxLength={LIMITS.TITLE_MAX}
+                        className="input-terminal pixel text-xl"
+                        placeholder="Nombre_del_archivo.txt"
+                    />
                 </div>
             </div>
 
-            {/* Acciones rápidas */}
-            <div className="border-t border-t-primary bg-secondary p-4">
-                <div className="flex items-center justify-between">
-                    <div className="comment">ACCIONES_RÁPIDAS:</div>
+            {/* --- Área de escritura --- */}
+            <div className="flex-1 min-h-0 bg-tertiary">
+                <div className="h-full flex items-start gap-2 p-6">
+                    <span className="mono text-meta select-none pt-px" aria-hidden="true">
+                        &gt;
+                    </span>
+                    <label htmlFor="note-content-textarea" className="sr-only">
+                        Contenido de la nota
+                    </label>
+                    <textarea
+                        id="note-content-textarea"
+                        ref={contentRef}
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        onBlur={() => void flush()}
+                        className="flex-1 h-full resize-none bg-transparent border-none outline-none mono text-base leading-relaxed"
+                        placeholder="El usuario comienza a escribir aquí…"
+                        spellCheck={false}
+                    />
+                </div>
+            </div>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={handleUndo}
-                            disabled={!canUndo}
-                            aria-label={canUndo ? "Deshacer último cambio (Ctrl+Z)" : "No hay cambios para deshacer"}
-                            aria-disabled={!canUndo}
-                            className="btn-terminal text-xs"
-                            title="Deshacer (Ctrl+Z)"
-                        >
-                            [↶] UNDO
-                        </button>
+            {overContentLimit && (
+                <p className="notice shrink-0" role="alert">
+                    <span>
+                        La nota supera los {LIMITS.CONTENT_MAX.toLocaleString('es')}{' '}
+                        caracteres y no se puede guardar. Recortá{' '}
+                        {(content.length - LIMITS.CONTENT_MAX).toLocaleString('es')}.
+                    </span>
+                </p>
+            )}
 
-                        <button
-                            onClick={handleRedo}
-                            disabled={!canRedo}
-                            aria-label={canRedo ? "Rehacer último cambio deshecho (Ctrl+Y)" : "No hay cambios para rehacer"}
-                            aria-disabled={!canRedo}
-                            className="btn-terminal text-xs"
-                            title="Rehacer (Ctrl+Y)"
-                        >
-                            [↷] REDO
-                        </button>
+            {/* --- Acciones --- */}
+            <div className="panel-footer justify-between">
+                <span className="comment">Acciones_rápidas</span>
 
-                        <div className="border-l border-l-primary h-6 mx-2" />
-
-                        <button
-                            onClick={handleTrash}
-                            aria-label="Mover nota a la papelera"
-                            className="btn-terminal text-xs"
-                            title="Mover a papelera"
-                        >
-                            [🗑] TRASH
-                        </button>
-                    </div>
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={handleUndo}
+                        disabled={!canUndo}
+                        className="btn-terminal"
+                        title="Deshacer (Ctrl+Z)"
+                    >
+                        [↶] Undo
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleRedo}
+                        disabled={!canRedo}
+                        className="btn-terminal"
+                        title="Rehacer (Ctrl+Y)"
+                    >
+                        [↷] Redo
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setShowTrashConfirm(true)}
+                        className="btn-terminal"
+                        title="Mover a papelera"
+                    >
+                        [🗑] Papelera
+                    </button>
                 </div>
             </div>
         </div>

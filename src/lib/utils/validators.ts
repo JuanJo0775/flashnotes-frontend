@@ -1,20 +1,31 @@
 // src/lib/utils/validators.ts
 
+import {
+    LIMITS,
+    FORBIDDEN_TITLE_CONTROL,
+    FORBIDDEN_TITLE_MARKUP,
+} from '@/config/limits';
+
+export interface ValidationResult {
+    valid: boolean;
+    error?: string;
+}
+
 /**
  * Valida si un valor es un ObjectId de MongoDB (24 hex)
  */
-export function isValidObjectId(id: unknown): boolean {
+export function isValidObjectId(id: unknown): id is string {
     return typeof id === 'string' && /^[a-fA-F0-9]{24}$/.test(id);
 }
 
 /**
- * Valida el formato del título de una nota
- * - No puede estar vacío o contener solo espacios
- * - Máximo 100 caracteres
- * - Permite: letras, números, espacios, puntuación segura
- * - Rechaza: HTML, caracteres de control, secuencias peligrosas
+ * Valida el título de una nota con las MISMAS reglas que el backend.
+ *
+ * La versión anterior usaba una lista blanca de puntuación distinta de la del
+ * servidor: el cliente aceptaba `¿Qué tal?` y `Gastos 100€`, el servidor los
+ * rechazaba con 400, y el usuario veía un error sin explicación.
  */
-export function validateTitle(title: unknown): { valid: boolean; error?: string } {
+export function validateTitle(title: unknown): ValidationResult {
     if (typeof title !== 'string') {
         return { valid: false, error: 'El título debe ser un texto' };
     }
@@ -25,72 +36,63 @@ export function validateTitle(title: unknown): { valid: boolean; error?: string 
         return { valid: false, error: 'El título no puede estar vacío' };
     }
 
-    if (trimmed.length > 100) {
-        return { valid: false, error: 'El título no puede superar 100 caracteres' };
+    if (trimmed.length > LIMITS.TITLE_MAX) {
+        return {
+            valid: false,
+            error: `El título no puede superar ${LIMITS.TITLE_MAX} caracteres`,
+        };
     }
 
-    // Regex Unicode: letras, números, espacios, puntuación segura
-    const titleRegex = /^[\p{L}\p{N}\s\-.,!?¿¡'"()&*+/=\[\]{}@#$€£¥%^~`|\\:;«»„“„”…–—~]{1,100}$/u;
+    if (FORBIDDEN_TITLE_CONTROL.test(trimmed)) {
+        return { valid: false, error: 'El título no puede tener saltos de línea' };
+    }
 
-    if (!titleRegex.test(trimmed)) {
-        return { valid: false, error: 'El título contiene caracteres inválidos' };
+    if (FORBIDDEN_TITLE_MARKUP.test(trimmed)) {
+        return { valid: false, error: 'El título no puede contener < ni >' };
     }
 
     return { valid: true };
 }
 
 /**
- * Valida el contenido de una nota
- * - Máximo 10,000 caracteres
- * - Puede estar vacío
+ * Valida el contenido de una nota. Puede estar vacío; sólo se acota el tamaño.
  */
-export function validateContent(content: unknown): { valid: boolean; error?: string } {
+export function validateContent(content: unknown): ValidationResult {
     if (typeof content !== 'string') {
         return { valid: false, error: 'El contenido debe ser un texto' };
     }
 
-    if (content.length > 10000) {
-        return { valid: false, error: 'El contenido no puede superar 10,000 caracteres' };
+    if (content.length > LIMITS.CONTENT_MAX) {
+        return {
+            valid: false,
+            error: `El contenido no puede superar ${LIMITS.CONTENT_MAX.toLocaleString('es')} caracteres`,
+        };
     }
 
     return { valid: true };
 }
 
 /**
- * Wrapper reutilizable para ejecutar operaciones que requieren validación de ID
- * 
- * @param id - ID de MongoDB a validar
- * @param operation - Función asincrónica a ejecutar si el ID es válido
- * @returns Promesa con el resultado de la operación o null si la validación falla
- * 
- * @example
- * const result = await withIdValidation(noteId, () => notesApi.undo(noteId));
+ * Ejecuta una operación sólo si el ID es un ObjectId válido.
+ *
+ * Lanza si el ID no sirve y propaga el error de la operación: nunca devuelve
+ * null. La firma anterior decía `Promise<T | null>`, que no describía lo que el
+ * cuerpo hace y era la causa de los tres errores de TypeScript que impedían
+ * compilar el proyecto.
  */
 export async function withIdValidation<T>(
     id: string,
     operation: () => Promise<T>
-): Promise<T | null> {
+): Promise<T> {
     if (!isValidObjectId(id)) {
-        const error = new Error('ID inválido para esta operación');
-        console.error('[withIdValidation]', error);
-        throw error;
+        throw new Error('ID inválido para esta operación');
     }
 
-    try {
-        return await operation();
-    } catch (error) {
-        console.error('[withIdValidation] Operation failed:', error);
-        throw error;
-    }
+    return operation();
 }
 
 /**
- * Sanitiza y valida un objeto de entrada
- * Elimina campos no permitidos y valida el contenido
- * 
- * @param data - Datos a sanitizar
- * @param allowedFields - Campos permitidos
- * @returns Datos sanitizados
+ * Copia sólo los campos permitidos de un objeto de entrada, recortando strings.
  */
 export function sanitizeInput<T extends Record<string, unknown>>(
     data: unknown,
@@ -100,14 +102,17 @@ export function sanitizeInput<T extends Record<string, unknown>>(
         return {};
     }
 
+    const source = data as Record<string, unknown>;
     const sanitized: Partial<T> = {};
 
     for (const field of allowedFields) {
-        if (field in data) {
-            const value = (data as Record<string, unknown>)[field as string];
-            // Aplicar trim si es string
-            sanitized[field] = typeof value === 'string' ? value.trim() : value;
-        }
+        const key = field as string;
+        if (!(key in source)) continue;
+
+        const value = source[key];
+        sanitized[field] = (
+            typeof value === 'string' ? value.trim() : value
+        ) as T[keyof T];
     }
 
     return sanitized;

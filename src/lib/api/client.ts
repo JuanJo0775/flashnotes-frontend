@@ -1,191 +1,88 @@
 // src/lib/api/client.ts
-import axios, { AxiosInstance, AxiosError, AxiosResponse } from 'axios';
+import axios, {
+    AxiosError,
+    AxiosInstance,
+    AxiosResponse,
+    InternalAxiosRequestConfig,
+} from 'axios';
 import { env } from '@/config/env';
 import type { ApiResponse } from '@/types/api.types';
 
-/**
- * Variable global para almacenar el token CSRF
- * SECURITY: Se obtiene del endpoint /api/csrf-token
- */
+/** Token CSRF vigente, obtenido de /api/csrf-token al arrancar la app. */
 let csrfToken: string | null = null;
 
-/**
- * Cliente HTTP base para comunicarse con el backend
- * Configurado con la URL base desde variables de entorno
- */
 export const apiClient: AxiosInstance = axios.create({
     baseURL: env.API_URL,
     timeout: 10000,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    withCredentials: true, // Enviar cookies con cada request
+    headers: { 'Content-Type': 'application/json' },
+    withCredentials: true, // manda la cookie de sesión en cada petición
 });
 
 /**
- * Función para obtener y almacenar el token CSRF
- * SECURITY: Debe llamarse al inicializar la aplicación
+ * Pide el token CSRF y lo guarda. Se llama una vez al montar la app.
  */
 export const initializeCsrfToken = async (): Promise<string | null> => {
     try {
-        const response = await apiClient.get('/csrf-token');
-        const data = response.data as ApiResponse<{ csrfToken: string }>;
-        
-        if (data.success && data.data?.csrfToken) {
-            csrfToken = data.data.csrfToken;
-            return csrfToken;
+        const response = await apiClient.get<ApiResponse<{ csrfToken: string }>>(
+            '/csrf-token'
+        );
+        const token = response.data?.data?.csrfToken;
+
+        if (response.data.success && token) {
+            csrfToken = token;
+            return token;
         }
-    } catch (error) {
-        console.warn('Failed to initialize CSRF token:', error);
+    } catch {
+        // Sin token, las escrituras fallarán con 403 y el error se mostrará
+        // en la interfaz. No hay nada que hacer acá.
     }
     return null;
 };
 
-/**
- * Obtener el token CSRF actual
- */
 export const getCsrfToken = (): string | null => csrfToken;
 
-/**
- * Establecer token CSRF manualmente
- */
-export const setCsrfToken = (token: string): void => {
-    csrfToken = token;
-};
+const WRITE_METHODS = ['post', 'patch', 'put', 'delete'];
 
-/**
- * Interceptor de requests para agregar token CSRF
- * SECURITY: Se incluye en todas las requests de escritura (POST, PATCH, PUT, DELETE)
- */
-apiClient.interceptors.request.use((config) => {
-    if (csrfToken && ['post', 'patch', 'put', 'delete'].includes(config.method?.toLowerCase() || '')) {
-        config.headers['X-CSRF-Token'] = csrfToken;
+apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+    const method = config.method?.toLowerCase() ?? '';
+    if (csrfToken && WRITE_METHODS.includes(method)) {
+        config.headers.set('X-CSRF-Token', csrfToken);
     }
     return config;
-}, (error) => {
-    return Promise.reject(error);
 });
 
 /**
- * Map para rastrear intentos de retry por request
- * Usa el config object como clave para asociar reintentos a requests específicos
- */
-const retryMap = new WeakMap<Record<string, unknown>, number>();
-
-/**
- * Configuración de reintentos con exponential backoff
+ * Reintentos con backoff exponencial.
+ *
+ * 429 quedó FUERA de la lista a propósito: reintentar una petición que el
+ * servidor rechazó por exceso de peticiones consume más presupuesto del mismo
+ * límite que acaba de agotarse. Si llega un 429, se respeta y se informa.
  */
 const RETRY_CONFIG = {
-    maxRetries: 3,
-    retryableStatuses: [429, 503], // Too Many Requests, Service Unavailable
-    initialDelayMs: 2000, // 2 segundos para el primer reintento
+    maxRetries: 2,
+    retryableStatuses: [502, 503, 504],
+    initialDelayMs: 1000,
 };
 
-/**
- * Calcula el delay con exponential backoff: 2s, 4s, 8s, etc.
- */
-function getBackoffDelay(retryCount: number): number {
-    return RETRY_CONFIG.initialDelayMs * Math.pow(2, retryCount - 1);
-}
+type RetryableConfig = InternalAxiosRequestConfig & { _retryCount?: number };
 
-/**
- * Interceptor de respuestas para validar contrato y manejo centralizado de errores
- * Incluye reintentos automáticos con exponential backoff para errores temporales
- */
+const backoffDelay = (attempt: number) =>
+    RETRY_CONFIG.initialDelayMs * 2 ** (attempt - 1);
+
 apiClient.interceptors.response.use(
-    (response: AxiosResponse) => {
-        // Limpiar contador de reintentos en caso de éxito
-        if (response.config && response.config.data) {
-            retryMap.delete(response.config as any);
-        }
-
-        // Validar que la respuesta siga el formato esperado
-        const data = response.data as ApiResponse<unknown>;
-
-        // 204 No Content es válido pero sin cuerpo
-        if (response.status === 204) {
-            return response;
-        }
-
-        // Validar estructura mínima
-        if (!('success' in data) || !('statusCode' in data)) {
-            console.warn('Backend response does not match contract', {
-                url: response.config.url,
-                data,
-            });
-        }
-
-        return response;
-    },
+    (response: AxiosResponse) => response,
     async (error: AxiosError) => {
-        const config = error.config as any;
+        const config = error.config as RetryableConfig | undefined;
+        const status = error.response?.status;
 
-        // Si no hay config o es una request de reintentos fallidos, rechazar inmediatamente
-        if (!config) {
-            console.error('API Error (no config):', {
-                status: error.response?.status,
-                message: error.message,
-            });
-            return Promise.reject(error);
-        }
+        if (config && status && RETRY_CONFIG.retryableStatuses.includes(status)) {
+            const attempt = (config._retryCount ?? 0) + 1;
 
-        // Contar reintentos actuales para este request
-        const currentRetry = retryMap.get(config) || 0;
-        const shouldRetry =
-            currentRetry < RETRY_CONFIG.maxRetries &&
-            error.response &&
-            RETRY_CONFIG.retryableStatuses.includes(error.response.status);
-
-        if (shouldRetry) {
-            const nextRetry = currentRetry + 1;
-            retryMap.set(config, nextRetry);
-
-            const delay = getBackoffDelay(nextRetry);
-            console.warn(
-                `[Retry ${nextRetry}/${RETRY_CONFIG.maxRetries}] ` +
-                `${error.config?.method?.toUpperCase()} ${error.config?.url} ` +
-                `(status ${error.response?.status}) - esperando ${delay}ms...`
-            );
-
-            // Esperar el tiempo calculado
-            await new Promise((resolve) => setTimeout(resolve, delay));
-
-            // Reintentar la request
-            return apiClient.request(config);
-        }
-
-        // Log detallado de errores que no se pueden reintentar
-        const responseData = error.response?.data as any;
-        const errorDetails = {
-            url: error.config?.url,
-            method: error.config?.method?.toUpperCase(),
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            message: error.message,
-            retryAttempts: currentRetry,
-        };
-        
-        // Si no hay response.data, es probable un error de CORS o red
-        if (!error.response?.data) {
-            console.error('🔴 API Error (CORS/Red):', {
-                ...errorDetails,
-                hint: 'El servidor no respondió o CORS bloqueó la respuesta. Verifica que el backend esté corriendo y CORS configurado correctamente.'
-            });
-        } else {
-            // Extraer mensaje legible del formato estándar de API
-            const backendMessage = responseData?.message || responseData?.error || 'Sin mensaje del servidor';
-            const backendError = responseData?.error || 'UNKNOWN_ERROR';
-            const backendDetails = responseData?.details;
-            
-            console.error(
-                `🔴 API Error [${error.response.status}]:`,
-                '\n  URL:', `${errorDetails.method} ${errorDetails.url}`,
-                '\n  Backend Error:', backendError,
-                '\n  Backend Message:', backendMessage,
-                backendDetails ? '\n  Details:' : '', backendDetails || '',
-                '\n  Raw Response:', JSON.stringify(responseData, null, 2),
-                '\n  Axios Message:', error.message
-            );
+            if (attempt <= RETRY_CONFIG.maxRetries) {
+                config._retryCount = attempt;
+                await new Promise((r) => setTimeout(r, backoffDelay(attempt)));
+                return apiClient.request(config);
+            }
         }
 
         return Promise.reject(error);
@@ -193,29 +90,35 @@ apiClient.interceptors.response.use(
 );
 
 /**
- * Helper para extraer mensaje de error de respuestas de API
- * Compatible con el nuevo formato estándar
+ * Traduce cualquier error a un mensaje en español que se le pueda enseñar a
+ * una persona: qué pasó y, cuando se puede, qué hacer.
  */
 export const getErrorMessage = (error: unknown): string => {
     if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
         const data = error.response?.data as ApiResponse<unknown> | undefined;
 
-        // Si la respuesta tiene nuestro formato estándar
-        if (data && 'message' in data && data.message) {
-            return data.message as string;
+        if (!error.response) {
+            return 'No se pudo contactar el servidor. Revisá que el backend esté corriendo.';
         }
 
-        // Fallback a error code
-        if (data && 'error' in data && data.error) {
-            return `Error: ${data.error}`;
+        if (status === 429) {
+            return 'Demasiadas peticiones seguidas. Esperá un momento y volvé a intentar.';
         }
 
-        // Mensaje genérico del error HTTP
-        if (error.response?.statusText) {
-            return error.response.statusText;
+        if (status === 403 && data?.error === 'INVALID_CSRF_TOKEN') {
+            return 'Tu sesión de seguridad expiró. Recargá la página.';
         }
 
-        return error.message || 'Error de conexión';
+        if (data?.details?.length) {
+            return data.details.join('. ');
+        }
+
+        if (data?.message) {
+            return data.message;
+        }
+
+        return `Error ${status ?? ''}`.trim();
     }
 
     if (error instanceof Error) {

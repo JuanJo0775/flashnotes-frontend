@@ -1,4 +1,6 @@
 // src/hooks/useTrash.ts
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { getErrorMessage } from '@/lib/api/client';
@@ -29,21 +31,12 @@ export const useTrash = (): UseTrashReturn => {
             setIsLoading(true);
             setError(null);
 
-            const data = await notesApi.listTrash();
-            
-            // ✅ MANEJAR AMBOS CASOS: array directo o objeto con paginación
-            if (Array.isArray(data)) {
-                setTrashedNotes(data);
-            } else if (data && typeof data === 'object' && 'notes' in data) {
-                setTrashedNotes(Array.isArray(data.notes) ? data.notes : []);
-            } else {
-                setTrashedNotes([]);
-            }
+            const { notes } = await notesApi.listTrash(1, 100);
+            setTrashedNotes(notes);
         } catch (err) {
             const message = getErrorMessage(err);
             setError(message);
-            setTrashedNotes([]); // ✅ GARANTIZAR ARRAY EN ERROR
-            console.error('Error cargando papelera:', err);
+            setTrashedNotes([]);
         } finally {
             setIsLoading(false);
         }
@@ -67,7 +60,6 @@ export const useTrash = (): UseTrashReturn => {
         } catch (err) {
             const message = getErrorMessage(err);
             setError(message);
-            console.error('Error restaurando nota:', err);
             return false;
         }
     }, []);
@@ -90,7 +82,6 @@ export const useTrash = (): UseTrashReturn => {
         } catch (err) {
             const message = getErrorMessage(err);
             setError(message);
-            console.error('Error eliminando permanentemente:', err);
             return false;
         }
     }, []);
@@ -113,7 +104,7 @@ export const useTrash = (): UseTrashReturn => {
      * Carga inicial
      */
     useEffect(() => {
-        loadTrash();
+        void loadTrash();
     }, [loadTrash]);
 
     return {
