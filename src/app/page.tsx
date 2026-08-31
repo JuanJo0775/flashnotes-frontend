@@ -1,9 +1,7 @@
-// UBICACIÓN: src/app/page.tsx
-// ACCIÓN: REEMPLAZAR COMPLETO
-
+// src/app/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import StatusBar from '@/components/layout/StatusBar';
@@ -12,194 +10,149 @@ import NotesList from '@/components/notes/NotesList';
 import TrashView from '@/components/notes/TrashView';
 import { useNotes } from '@/hooks/useNotes';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
-import { useSessionValidation } from '@/hooks/useSessionValidation';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { initializeCsrfToken } from '@/lib/api/client';
-import type { Note } from '../types/note.types';
-import { isValidObjectId } from '@/lib/utils/validators';
+import type { Note, SaveState, View } from '@/types/note.types';
 
 export default function Home() {
-    const [currentView, setCurrentView] = useState<'notes' | 'editor' | 'trash'>('notes');
+    const [view, setView] = useState<View>('notes');
     const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+    const [saveState, setSaveState] = useState<SaveState>('idle');
     const [showFlash, setShowFlash] = useState(true);
-    const { notes, isLoading, error, createNote, updateNote, deleteNote, refreshNotes, refetch } = useNotes();
-    const { undo, redo } = useUndoRedo();
-    const { sessionStatus, showSessionWarning, dismissWarning, reloadPage } = useSessionValidation();
 
-    // SECURITY: Inicializar token CSRF al cargar
+    const {
+        notes,
+        isLoading,
+        isLoadingMore,
+        hasMore,
+        total,
+        error,
+        createNote,
+        updateNote,
+        moveToTrash,
+        loadMore,
+        refreshNotes,
+    } = useNotes();
+
+    const { undo, redo, error: historyError } = useUndoRedo();
+
     useEffect(() => {
-        initializeCsrfToken().catch(err => {
-            console.error('Failed to initialize CSRF token:', err);
-        });
+        void initializeCsrfToken();
     }, []);
 
-    // Flash inicial al cargar
     useEffect(() => {
-        const timer = setTimeout(() => setShowFlash(false), 200);
-        return () => clearTimeout(timer);
+        const t = setTimeout(() => setShowFlash(false), 240);
+        return () => clearTimeout(t);
     }, []);
 
-    const handleNewNote = async () => {
-        try {
-            const newNote = await createNote({
-                title: 'Nueva nota',
-                content: '',
-            });
-
-            // Asegurarse de usar únicamente la nota retornada por el backend
-            if (newNote && isValidObjectId(newNote._id)) {
-                setSelectedNote(newNote);
-                setCurrentView('editor');
-            } else {
-                console.error('La nota no fue creada correctamente en el backend:', newNote);
-            }
-        } catch (error) {
-            console.error('Error creating note:', error);
+    const handleNewNote = useCallback(async () => {
+        const newNote = await createNote({ title: 'Nueva nota', content: '' });
+        if (newNote) {
+            setSelectedNote(newNote);
+            setSaveState('idle');
+            setView('editor');
         }
-    };
+    }, [createNote]);
 
-    const handleSelectNote = (note: Note) => {
+    const handleSelectNote = useCallback((note: Note) => {
         setSelectedNote(note);
-        setCurrentView('editor');
-    };
+        setSaveState('idle');
+        setView('editor');
+    }, []);
 
-    const handleBackToList = () => {
+    const handleBackToList = useCallback(() => {
         setSelectedNote(null);
-        setCurrentView('notes');
-        // usar refreshNotes si existe
-        (refetch || refreshNotes)();
-    };
+        setSaveState('idle');
+        setView('notes');
+        void refreshNotes();
+    }, [refreshNotes]);
 
-    const handleUpdateNote = async (id: string, data: { title?: string; content?: string }) => {
-        try {
-            const updated = await updateNote(id, data);
-            if (updated && isValidObjectId(updated._id)) {
-                setSelectedNote(updated);
-            }
-            return updated;
-        } catch (error) {
-            console.error('Error updating note:', error);
-            throw error;
-        }
-    };
-
-    const handleUndo = async (id: string) => {
-        const updated = await undo(id);
-        if (updated) {
-            setSelectedNote(updated);
-            // sincronizar lista
-            (refetch || refreshNotes)();
-        }
-        return updated;
-    };
-
-    const handleRedo = async (id: string) => {
-        const updated = await redo(id);
-        if (updated) {
-            setSelectedNote(updated);
-            (refetch || refreshNotes)();
-        }
-        return updated;
-    };
-
-    const handleMoveToTrash = async (id: string) => {
-        if (!isValidObjectId(id)) {
-            console.error('Intentando mover a papelera una nota sin id válido:', id);
-            return false;
-        }
-
-        const success = await deleteNote(id);
-        if (success) {
+    const handleViewChange = useCallback(
+        (next: View) => {
             setSelectedNote(null);
-            setCurrentView('notes');
-        }
-        return success;
-    };
+            setSaveState('idle');
+            setView(next);
+            if (next === 'notes') void refreshNotes();
+        },
+        [refreshNotes]
+    );
+
+    const handleMoveToTrash = useCallback(
+        async (id: string) => {
+            const ok = await moveToTrash(id);
+            if (ok) {
+                setSelectedNote(null);
+                setView('notes');
+            }
+            return ok;
+        },
+        [moveToTrash]
+    );
+
+    // Ctrl+N funciona en cualquier vista. Los atajos del editor (Ctrl+S, Ctrl+Z,
+    // Ctrl+Y) los registra el propio NoteEditor, que es quien tiene el borrador.
+    useKeyboardShortcuts({ onNewNote: () => void handleNewNote() });
+
+    const isEditing = view === 'editor' && selectedNote !== null;
 
     return (
         <>
-            {/* Flash de transición */}
             {showFlash && <div className="flash-transition" />}
+            <div className="scanline-effect" aria-hidden="true" />
 
-            {/* Efecto de líneas de escaneo CRT */}
-            <div className="scanline-effect" />
+            <div className="container-terminal">
+                <Header currentView={view} onViewChange={handleViewChange} />
 
-            {/* Warning de sesión expirada o cambio */}
-            {showSessionWarning && (
-                <div className="fixed top-0 left-0 right-0 z-40 bg-red-900 bg-opacity-90 border-b-2 border-red-500 p-4">
-                    <div className="max-w-4xl mx-auto flex items-center justify-between">
-                        <div>
-                            <p className="mono text-red-300 font-bold">
-                                ⚠ SESIÓN INVÁLIDA O EXPIRADA
-                            </p>
-                            <p className="mono text-xs text-red-200 mt-1">
-                                Tu sesión ha cambiado. Por favor, recarga la página para continuar.
-                            </p>
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={dismissWarning}
-                                className="btn-terminal text-xs"
-                            >
-                                [X] DESCARTAR
-                            </button>
-                            <button
-                                onClick={reloadPage}
-                                className="btn-terminal text-xs bg-red-900"
-                            >
-                                [↻] RECARGAR
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <div className="container-terminal" style={{ paddingTop: showSessionWarning ? '80px' : '0' }}>
-                {/* Header */}
-                <Header
-                    currentView={currentView}
-                    onViewChange={setCurrentView}
-                />
-
-                {/* Contenido principal */}
-                <div className="flex flex-1 overflow-hidden">
-                    {/* Sidebar */}
+                <div className="flex flex-1 min-h-0">
                     <Sidebar
                         notes={notes}
-                        onSelectNote={handleSelectNote}
                         selectedNote={selectedNote}
+                        total={total}
+                        hasMore={hasMore}
+                        isLoadingMore={isLoadingMore}
+                        onSelectNote={handleSelectNote}
                         onNewNote={handleNewNote}
-                        onOpenTrash={() => setCurrentView('trash')}
+                        onLoadMore={loadMore}
                     />
 
-                    {/* Área de trabajo */}
-                    <main className="flex-1 overflow-auto border-l border-l-primary">
-                        {currentView === 'editor' && selectedNote ? (
+                    <main className="flex-1 min-w-0 overflow-y-auto">
+                        {isEditing ? (
                             <NoteEditor
+                                // `key` remonta el editor al cambiar de nota, así
+                                // que su estado local arranca limpio y no hace
+                                // falta un efecto de sincronización — que era el
+                                // que disparaba los falsos avisos de conflicto.
+                                key={selectedNote._id}
                                 note={selectedNote}
-                                onSave={handleUpdateNote}
+                                onSave={updateNote}
                                 onBack={handleBackToList}
-                                onUndo={handleUndo}
-                                onRedo={handleRedo}
+                                onUndo={undo}
+                                onRedo={redo}
                                 onMoveToTrash={handleMoveToTrash}
+                                onSaveStateChange={setSaveState}
                             />
-                        ) : currentView === 'notes' ? (
+                        ) : view === 'trash' ? (
+                            <TrashView />
+                        ) : (
                             <NotesList
                                 notes={notes}
                                 isLoading={isLoading}
+                                hasMore={hasMore}
+                                isLoadingMore={isLoadingMore}
+                                total={total}
                                 onSelectNote={handleSelectNote}
                                 onNewNote={handleNewNote}
+                                onLoadMore={loadMore}
                             />
-                        ) : (
-                            <TrashView />
                         )}
                     </main>
                 </div>
 
-                {/* Status bar */}
                 <StatusBar
-                    notesCount={notes.length}
+                    notesCount={total}
                     isLoading={isLoading}
-                    error={error}
+                    error={error ?? historyError}
+                    saveState={saveState}
                 />
             </div>
         </>

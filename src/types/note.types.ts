@@ -42,3 +42,11 @@ export interface NoteWithHistory extends Note {
     versions: NoteVersion[];
     redoStack: NoteVersion[];
 }
+/**
+ * Vistas de nivel superior de la app.
+ * El editor es una sub-vista de las notas, no una pestaña propia.
+ */
+export type View = 'notes' | 'editor' | 'trash';
+
+/** Estado del guardado automático, tal y como se le muestra al usuario. */
+export type SaveState = 'idle' | 'saving' | 'saved' | 'error';

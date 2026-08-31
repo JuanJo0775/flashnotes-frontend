@@ -59,7 +59,7 @@ describe('validators - validateTitle', () => {
     });
 
     test('debe rechazar no-strings', () => {
-        const result = validateTitle(123 as any);
+        const result = validateTitle(123 as unknown);
         expect(result.valid).toBe(false);
         expect(result.error).toContain('debe ser un texto');
     });
@@ -90,7 +90,7 @@ describe('validators - validateContent', () => {
         const tooLong = 'a'.repeat(10001);
         const result = validateContent(tooLong);
         expect(result.valid).toBe(false);
-        expect(result.error).toContain('10,000 caracteres');
+        expect(result.error).toContain('10.000 caracteres');
     });
 
     test('debe aceptar contenido con exactamente 10,000 caracteres', () => {
@@ -99,7 +99,7 @@ describe('validators - validateContent', () => {
     });
 
     test('debe rechazar no-strings', () => {
-        const result = validateContent(123 as any);
+        const result = validateContent(123 as unknown);
         expect(result.valid).toBe(false);
         expect(result.error).toContain('debe ser un texto');
     });

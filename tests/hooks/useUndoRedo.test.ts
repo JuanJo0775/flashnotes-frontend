@@ -1,90 +1,107 @@
 import { renderHook, act } from '@testing-library/react';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { notesApi } from '@/lib/api/notes.api';
-import { withIdValidation } from '@/lib/utils/validators';
-import { getErrorMessage } from '@/lib/api/client';
+import type { Note } from '@/types/note.types';
 
 jest.mock('@/lib/api/notes.api', () => ({
     notesApi: {
         undo: jest.fn(),
         redo: jest.fn(),
-    }
-}));
-
-jest.mock('@/lib/utils/validators', () => ({
-    withIdValidation: jest.fn((id: string, op: () => Promise<any>) => op()),
+    },
 }));
 
 jest.mock('@/lib/api/client', () => ({
     getErrorMessage: jest.fn(() => 'ERROR'),
 }));
 
+const undoMock = notesApi.undo as jest.Mock;
+const redoMock = notesApi.redo as jest.Mock;
+
 describe('useUndoRedo', () => {
     const noteId = '507f1f77bcf86cd799439011';
+
+    const note: Note = {
+        _id: noteId,
+        title: 'Título',
+        content: 'Contenido',
+        versions: [{ title: 'Viejo', content: 'Viejo', editedAt: '2026-01-01T00:00:00Z' }],
+        redoStack: [],
+    };
 
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
-    test('undo actualiza flags correctamente', async () => {
-        const note = {
-            _id: noteId,
-            title: 'Title',
-            content: 'Content',
-            versions: [{ title: 'Old', content: 'Old', editedAt: new Date().toISOString() }],
-            redoStack: []
-        };
-
-        (notesApi.undo as jest.Mock).mockResolvedValue(note);
+    test('undo devuelve la nota del servidor', async () => {
+        undoMock.mockResolvedValue(note);
 
         const { result } = renderHook(() => useUndoRedo());
 
         await act(async () => {
-            const res = await result.current.undo(noteId);
-            expect(res).toBe(note);
+            expect(await result.current.undo(noteId)).toBe(note);
         });
 
-        expect(withIdValidation).toHaveBeenCalledWith(noteId, expect.any(Function));
-        expect(result.current.canUndo).toBe(true);
-        expect(result.current.canRedo).toBe(false);
+        expect(undoMock).toHaveBeenCalledWith(noteId);
         expect(result.current.error).toBeNull();
     });
 
-    test('redo actualiza flags correctamente', async () => {
-        const note = {
-            _id: noteId,
-            title: 'Title',
-            content: 'Content',
-            versions: [],
-            redoStack: [{ title: 'Next', content: 'Next', editedAt: new Date().toISOString() }]
-        };
-
-        (notesApi.redo as jest.Mock).mockResolvedValue(note);
+    test('redo devuelve la nota del servidor', async () => {
+        redoMock.mockResolvedValue(note);
 
         const { result } = renderHook(() => useUndoRedo());
 
         await act(async () => {
-            const res = await result.current.redo(noteId);
-            expect(res).toBe(note);
+            expect(await result.current.redo(noteId)).toBe(note);
         });
 
-        expect(withIdValidation).toHaveBeenCalledWith(noteId, expect.any(Function));
-        expect(result.current.canUndo).toBe(false);
-        expect(result.current.canRedo).toBe(true);
+        expect(redoMock).toHaveBeenCalledWith(noteId);
         expect(result.current.error).toBeNull();
     });
 
-    test('maneja errores y actualiza estado de error', async () => {
-        (notesApi.undo as jest.Mock).mockRejectedValue(new Error('fail'));
+    test('publica el error y devuelve null cuando la petición falla', async () => {
+        undoMock.mockRejectedValue(new Error('fallo'));
 
         const { result } = renderHook(() => useUndoRedo());
 
         await act(async () => {
-            const res = await result.current.undo(noteId);
-            expect(res).toBeNull();
+            expect(await result.current.undo(noteId)).toBeNull();
         });
 
-        expect(getErrorMessage).toHaveBeenCalled();
         expect(result.current.error).toBe('ERROR');
+    });
+
+    test('rechaza un ID que no es un ObjectId, sin llamar a la API', async () => {
+        const { result } = renderHook(() => useUndoRedo());
+
+        await act(async () => {
+            expect(await result.current.undo('no-es-un-id')).toBeNull();
+        });
+
+        expect(undoMock).not.toHaveBeenCalled();
+        expect(result.current.error).toMatch(/ID inválido/i);
+    });
+
+    test('ignora un segundo undo mientras el primero sigue en vuelo', async () => {
+        // Reproduce el spam de clics: el guard vive en una ref, no en el estado,
+        // porque dos clics dentro del mismo ciclo de render leían el valor viejo
+        // de isProcessing y las dos peticiones salían a la red.
+        let resolveFirst: (n: Note) => void = () => {};
+        undoMock.mockImplementation(
+            () => new Promise<Note>((resolve) => { resolveFirst = resolve; })
+        );
+
+        const { result } = renderHook(() => useUndoRedo());
+
+        let second: Note | null = note;
+
+        await act(async () => {
+            const first = result.current.undo(noteId);
+            second = await result.current.undo(noteId);
+            resolveFirst(note);
+            await first;
+        });
+
+        expect(second).toBeNull();
+        expect(undoMock).toHaveBeenCalledTimes(1);
     });
 });

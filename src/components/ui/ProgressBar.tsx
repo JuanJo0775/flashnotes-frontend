@@ -1,42 +1,43 @@
 // src/components/ui/ProgressBar.tsx
-
 'use client';
 
 interface ProgressBarProps {
-    current: number;
-    max: number;
-    label?: string;
-    unit?: string;
+    /** Porcentaje de llenado, de 0 a 100. */
+    value: number;
     segments?: number;
+    label?: string;
 }
 
+/**
+ * Barra de progreso ASCII, como la de la referencia: ▮▮▮▮▮▯▯▯▯▯
+ * Hereda el color del contenedor, así que funciona igual dentro de una barra
+ * invertida que sobre el lienzo.
+ */
 export default function ProgressBar({
-                                        current,
-                                        max,
-                                        label,
-                                        unit = '',
-                                        segments = 10
-                                    }: ProgressBarProps) {
-    const percentage = Math.min(100, Math.max(0, (current / max) * 100));
-    const filledSegments = Math.round((percentage / 100) * segments);
+    value,
+    segments = 10,
+    label,
+}: ProgressBarProps) {
+    const clamped = Math.min(100, Math.max(0, value));
+    const filled = Math.round((clamped / 100) * segments);
 
     return (
-        <div className="progress-bar">
-            {label && <span className="text-xs">{label}:</span>}
-
-            <div className="progress-fill">
-                {Array.from({ length: segments }).map((_, i) => (
-                    <div
+        <div
+            className="progress-bar"
+            role="progressbar"
+            aria-valuenow={clamped}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={label ?? 'Capacidad'}
+        >
+            {label && <span>{label}:</span>}
+            <span className="progress-fill" aria-hidden="true">
+                {Array.from({ length: segments }, (_, i) => (
+                    <span
                         key={i}
-                        className={`progress-segment ${
-                            i < filledSegments ? '' : 'empty'
-                        }`}
+                        className={`progress-segment${i < filled ? '' : ' empty'}`}
                     />
                 ))}
-            </div>
-
-            <span className="text-xs">
-                {current}/{max}{unit}
             </span>
         </div>
     );

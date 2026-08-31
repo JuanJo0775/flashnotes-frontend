@@ -1,16 +1,23 @@
-// jest.setup.ts - Configuración y setup global de Jest
+// jest.setup.ts
 import '@testing-library/jest-dom';
 
-// Mock de navigator.onLine si no está disponible
-Object.defineProperty(global.navigator, 'onLine', {
-    writable: true,
-    value: true,
-});
+// jsdom no implementa los métodos modales de <dialog>. ConfirmDialog usa
+// showModal()/close(), así que se rellenan con una versión mínima que sí
+// refleja el estado en la propiedad `open`, que es lo que consultan los tests.
+if (typeof HTMLDialogElement !== 'undefined') {
+    if (!HTMLDialogElement.prototype.showModal) {
+        HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+            this.open = true;
+        };
+    }
+    if (!HTMLDialogElement.prototype.close) {
+        HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+            this.open = false;
+            this.dispatchEvent(new Event('close'));
+        };
+    }
+}
 
-// Mock de eventos del navegador
-global.addEventListener = jest.fn();
-global.removeEventListener = jest.fn();
-
-// Suprimir logs de console durante tests (opcional)
-jest.spyOn(console, 'debug').mockImplementation(() => {});
-jest.spyOn(console, 'warn').mockImplementation(() => {});
+// NOTA: aquí se mockeaban global.addEventListener y removeEventListener con
+// jest.fn(). Eso impedía que cualquier componente registrara listeners reales
+// en los tests, y era parte de por qué la suite de NoteEditor fallaba.

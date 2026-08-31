@@ -1,10 +1,11 @@
 // src/components/notes/NoteCard.tsx
-
 'use client';
 
-import type { Note } from '../../types/note.types';
+import type { Note } from '@/types/note.types';
 import MetaTag from '@/components/ui/MetaTag';
-import { formatFileSize, formatTime } from '@/lib/utils/formatters';
+import { formatFileSize, formatRelativeTime } from '@/lib/utils/formatters';
+
+const PREVIEW_LENGTH = 140;
 
 interface NoteCardProps {
     note: Note;
@@ -12,42 +13,30 @@ interface NoteCardProps {
 }
 
 export default function NoteCard({ note, onClick }: NoteCardProps) {
-    const preview = note.content.slice(0, 120);
-    const hasMore = note.content.length > 120;
+    const preview = note.content.slice(0, PREVIEW_LENGTH);
+    const truncated = note.content.length > PREVIEW_LENGTH;
 
     return (
-        <button
-            onClick={onClick}
-            className="file-container text-left hover-dotted w-full p-4 transition-none"
-        >
-            {/* Título */}
-            <div className="mono text-base font-medium mb-2 truncate">
-                {note.title || 'Untitled.txt'}
-            </div>
+        <button type="button" onClick={onClick} className="file-container text-left">
+            <span className="block mono text-base font-medium truncate mb-2">
+                {note.title || 'Sin_titulo.txt'}
+            </span>
 
-            {/* Preview del contenido */}
-            <div className="mono text-xs text-meta leading-relaxed mb-3 h-16 overflow-hidden">
+            <span className="block mono text-xs dim leading-relaxed mb-3 h-14 overflow-hidden whitespace-pre-wrap">
                 {preview || '(vacío)'}
-                {hasMore && '...'}
-            </div>
+                {truncated && '…'}
+            </span>
 
-            {/* Metadata */}
-            <div className="flex items-center gap-2 flex-wrap">
-                <MetaTag size="xs" variant="neutral">
-                    {note.updatedAt ? formatTime(note.updatedAt) : '-'}
+            <span className="flex items-center gap-2 flex-wrap">
+                <MetaTag>
+                    {note.updatedAt ? formatRelativeTime(note.updatedAt) : '—'}
                 </MetaTag>
-                <MetaTag size="xs" variant="neutral">
-                    {formatFileSize(note.content.length)}
-                </MetaTag>
-                <MetaTag size="xs" variant="success">
-                    [SYNCED]
-                </MetaTag>
-            </div>
+                <MetaTag>{formatFileSize(note.content.length)}</MetaTag>
+            </span>
 
-            {/* Borde inferior */}
-            <div className="mt-3 pt-2 border-t border-t-dotted flex justify-end">
-                <span className="text-xs mono text-meta">[OPEN →]</span>
-            </div>
+            <span className="flex justify-end mt-3 pt-2 border-t border-line-soft text-2xs mono dim uppercase tracking-wider">
+                [Abrir →]
+            </span>
         </button>
     );
 }
