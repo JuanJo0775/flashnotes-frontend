@@ -16,6 +16,8 @@ import PhantomError from '@/components/effects/PhantomError';
 import SystemLockout from '@/components/effects/SystemLockout';
 import PongOverlay from '@/components/effects/PongOverlay';
 import DeadPage from '@/components/effects/DeadPage';
+import CollectionView from '@/components/notes/CollectionView';
+import { splitCollectibles, markCollectible } from '@/lib/system/collectibles';
 import { LOCKOUT_BOOT_ATTR } from '@/config/lockout';
 import { useNotes } from '@/hooks/useNotes';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
@@ -211,6 +213,22 @@ export default function Home() {
         return () => clearTimeout(id);
     }, []);
 
+    /**
+     * Las piezas viven en la misma colección del backend que tus notas —no hay
+     * otro sitio— pero se separan acá: no son notas y no se tratan como notas.
+     * La marca vive en el navegador porque el backend no se toca para un efecto.
+     */
+    const { notes: misNotas, collectibles } = splitCollectibles(notes);
+
+    /** `//keep` crea la pieza y la marca. Así no pisa la nota donde estabas. */
+    const guardarPieza = useCallback(
+        async (title: string, content: string) => {
+            const creada = await createNote({ title, content });
+            if (creada) markCollectible(creada._id);
+        },
+        [createNote]
+    );
+
     const isEditing = view === 'editor' && selectedNote !== null;
 
     return (
@@ -240,13 +258,17 @@ export default function Home() {
                     currentView={view}
                     onViewChange={handleViewChange}
                     onCollapse={() => setCollapse(registerCollapse())}
+                    collectionCount={collectibles.length}
                 />
 
                 <div className="flex flex-1 min-h-0">
+                    {/* Las piezas NO salen en la barra lateral: no son notas y
+                        no se abren en el editor. Filtrarlas sólo de la lista
+                        principal las dejaba asomando por el lado. */}
                     <Sidebar
-                        notes={notes}
+                        notes={misNotas}
                         selectedNote={selectedNote}
-                        total={total}
+                        total={total - collectibles.length}
                         hasMore={hasMore}
                         isLoadingMore={isLoadingMore}
                         onSelectNote={handleSelectNote}
@@ -275,16 +297,19 @@ export default function Home() {
                                 onCollapse={() => setCollapse(registerCollapse())}
                                 onPlayPong={() => setPlayingPong(true)}
                                 onKillPage={() => setDead(true)}
+                                onKeepArt={guardarPieza}
                             />
                         ) : view === 'trash' ? (
                             <TrashView />
+                        ) : view === 'collection' ? (
+                            <CollectionView pieces={collectibles} />
                         ) : (
                             <NotesList
-                                notes={notes}
+                                notes={misNotas}
                                 isLoading={isLoading}
                                 hasMore={hasMore}
                                 isLoadingMore={isLoadingMore}
-                                total={total}
+                                total={total - collectibles.length}
                                 onSelectNote={handleSelectNote}
                                 onNewNote={handleNewNote}
                                 onLoadMore={loadMore}
@@ -294,7 +319,7 @@ export default function Home() {
                 </div>
 
                 <StatusBar
-                    notesCount={total}
+                    notesCount={total - collectibles.length}
                     isLoading={isLoading}
                     error={error ?? historyError}
                     saveState={saveState}

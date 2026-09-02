@@ -64,6 +64,7 @@ herramientas.
 | Tres clics en la hora | [§20 El reloj esconde algo](#20--el-reloj-esconde-algo) |
 | `//hi` y enseguida `//whoareu` | [§21 La conversación se agota](#21--la-conversación-se-agota) |
 | `//reset` | [§22 Empezar de cero](#22--empezar-de-cero) |
+| Guardar una pieza con `//keep` | [§23 La colección](#23--la-colección) |
 
 ---
 
@@ -1628,14 +1629,29 @@ se descifra con una tabla que cualquiera puede buscar.
 
 # 21 · La conversación se agota
 
-`//whoareu`, y sólo **justo después de un `//hi`**. Fuera de esa ventana el
-comando no existe: no se niega, no está.
+Dos preguntas, y sólo **justo después de un `//hi`**:
 
-| Veces | Qué contesta |
+| | |
 | --- | --- |
-| 1 | `ESTOY BIEN. UN POCO OCUPADO.` |
-| 2 | `OCUPADO.` |
-| 3 | `COMANDO DESCONOCIDO: WHOAREU. PROBÁ //help.` |
+| `//whoareu` | quién sos |
+| `//howareu` | cómo estás |
+
+Fuera de esa ventana no existen: no se niegan, no están.
+
+**Comparten una sola cuenta.** Alternarlas no engaña a nadie —que es lo que haría
+alguien buscándole la vuelta— y que no funcione es la gracia.
+
+`//whoareu` es **el espejo de `//whoami`**. Allá le preguntás quién sos vos y te
+contesta que no puede saberlo: la cookie es `httpOnly` y sos este navegador y
+nada más. Acá le preguntás quién es ella, y sí lo sabe: *la que guarda lo que
+usted escribe.* **La máquina se conoce mejor a sí misma que a vos**, y eso dice
+todo lo que hay que decir de esta app.
+
+| Veces | `//whoareu` | `//howareu` |
+| --- | --- | --- |
+| 1 | `LA QUE GUARDA LO QUE USTED ESCRIBE. NADA MÁS.` | `ESTOY BIEN. UN POCO OCUPADA.` |
+| 2 | `YA SE LO DIJE.` | `OCUPADA.` |
+| 3 | `COMANDO DESCONOCIDO` | `COMANDO DESCONOCIDO` |
 
 Es la escalada de `//hi` pero **en horizontal**: allá se cansa de que la saluden,
 acá de que le pregunten. Y la salida es mejor que un desplante — el comando no se
@@ -1687,6 +1703,52 @@ del proyecto. Dos tests lo fijan.
 
 Tampoco toca si apagaste los efectos: eso es una preferencia tuya, no una parte
 del juego que se gane.
+
+---
+
+# 23 · La colección
+
+`//keep` no escribe el dibujo en la nota abierta: **crea una pieza**. Y una pieza
+no es una nota.
+
+```
+[NOTAS]   [PAPELERA]   [★ COLECCIÓN 3]
+```
+
+### Se llaman por lo que son
+
+`TERMINAL · 3/8`, no «Nueva nota». Es una **ficha de catálogo**: dice qué pieza es
+y cuántas hay. El número es su sitio en la colección, no el orden en que la
+encontraste.
+
+### Y no se tratan como notas
+
+No las escribiste, no se editan y no tienen por qué estorbar entre tus archivos:
+
+- **Fuera de la lista de notas y de la barra lateral.** Filtrarlas sólo de la
+  lista principal las dejaba asomando por el lado.
+- **Fuera del recuento.** Cinco archivos siguen siendo cinco archivos.
+- **No se abren en el editor** ni llevan tamaño en bytes, ni fecha, ni `[ABRIR]`.
+  Se ven, que es lo único que se hace con una colección.
+- **Enteras, sin recortar.** Una pieza cortada a tres líneas no es una pieza, es
+  una nota con un dibujo dentro — justo lo que esta vista existe para no ser.
+
+### La pestaña no está hasta que la ganás
+
+Sin ninguna pieza, `[★ COLECCIÓN]` **ni aparece**. Enseñarla vacía anunciaría que
+hay una colección que llenar, y encontrar la primera pieza es parte de lo que se
+descubre.
+
+### ⚠ La marca vive en el navegador
+
+El backend no sabe que una nota es una pieza, y no va a saberlo: **no se toca el
+backend para un efecto** (REGLAS · B4). Un campo nuevo en el modelo, una
+migración y un endpoint por un huevo de pascua es exactamente el cambio que esa
+regla existe para frenar.
+
+El precio, dicho claro: **abrir la app desde otro navegador enseña las piezas como
+notas normales.** Lo mismo que ya pasa con la colección de `//art` y con los
+marcadores del pong — todo el juego es de este navegador.
 
 ---
 

@@ -261,6 +261,22 @@ export function canKeep(): boolean {
     return readFound().size > 0;
 }
 
+/**
+ * Cómo se llama la pieza guardada.
+ *
+ * `POLILLA · 1/8`, no «Nueva nota». El número es su sitio en la colección, no el
+ * orden en que la encontraste: es una ficha de catálogo, y una ficha dice qué
+ * pieza es y cuántas hay.
+ */
+export function noteTitle(piece: ArtPiece, lang: Lang): string {
+    const i = ART.findIndex((a) => a.id === piece.id) + 1;
+    // El pie lleva el nombre y una coletilla («POLILLA · HALLADA EN…»); para el
+    // título basta el nombre, que es lo que se lee en una lista estrecha.
+    const nombre = piece.caption[lang].split(' · ')[0];
+
+    return `${nombre} · ${i}/${ART_TOTAL}`;
+}
+
 /** Cómo queda la pieza al guardarla en una nota. */
 export function asNote(piece: ArtPiece, lang: Lang): string {
     return [piece.art, '', `-- ${piece.caption[lang]}`].join('\n');

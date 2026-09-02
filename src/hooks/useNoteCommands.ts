@@ -9,7 +9,7 @@ import { formatFileSize, formatTime } from '@/lib/utils/formatters';
 import {
     isCommandLine,
     isGreetingLine,
-    isWhoAreYouLine,
+    isChatLine,
     run as runCommand,
     type CommandContext,
     type ReplyRow,
@@ -18,7 +18,7 @@ import {
     getSystemState,
     markSecretFound,
     registerGreeting,
-    registerWhoAreYou,
+    registerChat,
     registerKick,
     kickCount,
     resetEverything,
@@ -68,6 +68,8 @@ interface UseNoteCommandsOptions {
     onWriteNote: (text: string) => void;
     /** Insististe hasta que te echó tres veces: la página se queda muerta. */
     onKillPage: () => void;
+    /** `//keep`: guarda la pieza en la colección, no entre tus notas. */
+    onKeepArt: (title: string, text: string) => void;
 }
 
 interface UseNoteCommandsReturn {
@@ -108,6 +110,7 @@ export function useNoteCommands({
     onLeaveNote,
     onWriteNote,
     onKillPage,
+    onKeepArt,
 }: UseNoteCommandsOptions): UseNoteCommandsReturn {
     const [response, setResponse] = useState<string | null>(null);
     const [rows, setRows] = useState<ReplyRow[] | null>(null);
@@ -133,7 +136,7 @@ export function useNoteCommands({
                 // van, incluida ésta. Cuenta aunque el comando no sea `//hi`
                 // sólo si lo es — ver abajo.
                 greetings: 0,
-                whoareu: 0,
+                chat: 0,
                 kicks: 0,
             };
 
@@ -141,8 +144,8 @@ export function useNoteCommands({
             // cada comando haría que teclear `//help` seis veces te echara.
             if (isGreetingLine(content)) ctx.greetings = registerGreeting();
             // La conversación sólo existe justo después de un saludo. Fuera de
-            // ahí `registerWhoAreYou` devuelve 0 y el comando no existe.
-            if (isWhoAreYouLine(content)) ctx.whoareu = registerWhoAreYou();
+            // ahí `registerChat` devuelve 0 y los comandos no existen.
+            if (isChatLine(content)) ctx.chat = registerChat();
 
             // La cuenta de expulsiones se lee ANTES de resolver, porque decide
             // si esta vez te echa o si ya no hay a dónde echarte.
@@ -183,6 +186,9 @@ export function useNoteCommands({
                     registerKick();
                     onKillPage();
                     break;
+                case 'keep-art':
+                    onKeepArt(result.effect.title, result.effect.text);
+                    break;
                 case 'time-drift':
                     startDrift(Date.now());
                     break;
@@ -217,6 +223,7 @@ export function useNoteCommands({
             onLeaveNote,
             onWriteNote,
             onKillPage,
+            onKeepArt,
         ]
     );
 

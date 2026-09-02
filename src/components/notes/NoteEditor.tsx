@@ -56,6 +56,8 @@ interface NoteEditorProps {
     onPlayPong?: () => void;
     /** Insististe hasta que te echó tres veces. */
     onKillPage?: () => void;
+    /** `//keep`: guarda la pieza en la colección. */
+    onKeepArt?: (title: string, text: string) => void;
 }
 
 export default function NoteEditor({
@@ -72,6 +74,7 @@ export default function NoteEditor({
     onCollapse,
     onPlayPong,
     onKillPage,
+    onKeepArt,
 }: NoteEditorProps) {
     const { isFullyOperational } = useNetworkStatus();
     const t = useT();
@@ -147,6 +150,7 @@ export default function NoteEditor({
         // nota en blanco —el comando ES todo el contenido— así que no pisa nada.
         onWriteNote: setContent,
         onKillPage: onKillPage ?? noop,
+        onKeepArt: onKeepArt ?? noop,
     });
 
     // Se sacan del objeto para poder declararlas como dependencias sin arrastrar

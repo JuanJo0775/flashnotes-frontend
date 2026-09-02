@@ -58,7 +58,14 @@ export interface NoteHistory {
  * Vistas de nivel superior de la app.
  * El editor es una sub-vista de las notas, no una pestaña propia.
  */
-export type View = 'notes' | 'editor' | 'trash';
+/**
+ * `collection` son las piezas guardadas con `//keep`.
+ *
+ * No son notas y no se tratan como notas: no las escribiste, no se editan, y no
+ * tienen por qué estorbar entre tus archivos. Por eso son una vista aparte y no
+ * un filtro de la lista.
+ */
+export type View = 'notes' | 'editor' | 'trash' | 'collection';
 
 /** Estado del guardado automático, tal y como se le muestra al usuario. */
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error';

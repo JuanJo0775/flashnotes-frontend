@@ -3,8 +3,8 @@
 import { LIMITS } from '@/config/limits';
 import { formatDuration } from '@/lib/utils/formatters';
 import { getLang, fill, pickPlural } from '@/i18n';
-import { greetingFor, whoAreYouFor, KILL_AFTER_KICKS } from '@/lib/system/greeting';
-import { drawArt, canKeep, lastDrawn, asNote } from '@/lib/system/asciiArt';
+import { greetingFor, chatReplyFor, KILL_AFTER_KICKS } from '@/lib/system/greeting';
+import { drawArt, canKeep, lastDrawn, asNote, noteTitle } from '@/lib/system/asciiArt';
 import { isUnlocked, markUsed } from '@/lib/system/commandUnlock';
 import type { Lang } from '@/config/lang';
 import type { Localized, LocalizedPlural, Vars } from '@/i18n';
@@ -44,12 +44,13 @@ export interface CommandContext {
      */
     greetings: number;
     /**
-     * Cuántos `//whoareu` seguidos van, contando ÉSTE.
+     * Cuántas preguntas seguidas van, contando ÉSTA.
      *
-     * `0` significa que no hay conversación en pie: el comando no existe ahí, y
-     * tiene que contestar como cualquier palabra inventada.
+     * Una sola cuenta para `//whoareu` y `//howareu`: alternarlas no engaña a
+     * nadie. `0` significa que no hay conversación en pie —no venís de saludar—
+     * y entonces los comandos no existen ahí.
      */
-    whoareu: number;
+    chat: number;
     /** Cuántas veces te ha echado de la nota, contando ÉSTA si toca. */
     kicks: number;
     /**
@@ -72,6 +73,7 @@ export type CommandEffect =
     | { kind: 'leave-note' }
     | { kind: 'time-drift' }
     | { kind: 'write-note'; text: string }
+    | { kind: 'keep-art'; title: string; text: string }
     | { kind: 'reset-all' }
     | { kind: 'kill-page' }
     | { kind: 'set-effects'; enabled: boolean };
@@ -166,12 +168,14 @@ export function isGreetingLine(content: string): boolean {
     return content.trim().toLowerCase() === GREETING_COMMAND;
 }
 
-export const WHOAREU_COMMAND = '//whoareu';
+/** Las dos preguntas de la conversación. Comparten cuenta. */
+export const CHAT_COMMANDS = ['//whoareu', '//howareu'] as const;
 
-/** ¿Esta línea es la pregunta? La cuenta sólo se toca con ella. */
-export function isWhoAreYouLine(content: string): boolean {
+/** ¿Esta línea es una de las dos preguntas? La cuenta sólo se toca con ellas. */
+export function isChatLine(content: string): boolean {
     if (!isCommandLine(content)) return false;
-    return content.trim().toLowerCase() === WHOAREU_COMMAND;
+    const linea = content.trim().toLowerCase();
+    return (CHAT_COMMANDS as readonly string[]).includes(linea);
 }
 
 interface Command {
@@ -292,15 +296,16 @@ const T = {
         es: 'NO HAY SUPERUSUARIO. NO HAY USUARIOS.\nHAY UN NAVEGADOR.',
         en: 'THERE IS NO SUPERUSER. THERE ARE NO USERS.\nTHERE IS A BROWSER.',
     },
+    // NO DICE CÓMO ARREGLARLO. Decir «recargue para que vuelva» convierte la
+    // avería en una instrucción: sabés que es temporal y que hay salida, y se
+    // deja de sentir como que el sistema perdió algo. Callándolo, el reloj
+    // enloquecido es un hecho y no un aviso — y la salida sigue estando, sólo
+    // que hay que dar con ella.
     clockReleased: {
-        es:
-            'REFERENCIA HORARIA LIBERADA.\n\n' +
-            'YA NO SÉ EN QUÉ AÑO ESTAMOS.\n' +
-            'RECARGUE PARA QUE VUELVA.',
-        en:
-            'TIME REFERENCE RELEASED.\n\n' +
-            'I NO LONGER KNOW WHAT YEAR IT IS.\n' +
-            'RELOAD TO GET IT BACK.',
+        es: 'REFERENCIA HORARIA LIBERADA.\n\n' +
+            'YA NO SÉ EN QUÉ AÑO ESTAMOS.',
+        en: 'TIME REFERENCE RELEASED.\n\n' +
+            'I NO LONGER KNOW WHAT YEAR IT IS.',
     },
     // El hallazgo. La máquina no explica qué es: lo admite.
     attaching: {
@@ -634,16 +639,27 @@ const COMMANDS: readonly Command[] = [
     {
         name: '//whoareu',
         hidden: true,
-        summary: { es: 'preguntarle cómo va', en: 'ask how it is doing' },
+        summary: { es: 'preguntarle quién es', en: 'ask who it is' },
         secretId: 'greeting',
-        resolve: (ctx, _args, lang) => {
-            const r = whoAreYouFor(ctx.whoareu, lang);
-
-            // Agotada la conversación, el comando DESAPARECE: mismo texto que
-            // daría cualquier palabra inventada, para que no se note que ahí
-            // había algo.
-            return texto(r.text ?? unknownCommand('whoareu', lang));
-        },
+        // El espejo de `//whoami`: allá no puede saber quién sos vos —la cookie
+        // es httpOnly— y acá sí sabe quién es ella. La máquina se conoce mejor a
+        // sí misma que a vos, y eso dice todo lo que hay que decir de esta app.
+        resolve: (ctx, _args, lang) =>
+            texto(
+                chatReplyFor('who', ctx.chat, lang).text ??
+                    unknownCommand('whoareu', lang)
+            ),
+    },
+    {
+        name: '//howareu',
+        hidden: true,
+        summary: { es: 'preguntarle cómo está', en: 'ask how it is doing' },
+        secretId: 'greeting',
+        resolve: (ctx, _args, lang) =>
+            texto(
+                chatReplyFor('how', ctx.chat, lang).text ??
+                    unknownCommand('howareu', lang)
+            ),
     },
     {
         name: '//date_off',
@@ -694,9 +710,16 @@ const COMMANDS: readonly Command[] = [
             const ultima = lastDrawn();
             if (!ultima) return texto(T.keepNothing[lang]);
 
+            // CREA UNA PIEZA, no escribe en la nota abierta. Escribir encima
+            // obligaría a tener una nota en blanco a mano para poder guardar, y
+            // la pieza acabaría mezclada entre tus archivos como una nota más.
             return {
                 output: T.keepDone[lang],
-                effect: { kind: 'write-note', text: asNote(ultima, lang) },
+                effect: {
+                    kind: 'keep-art',
+                    title: noteTitle(ultima, lang),
+                    text: asNote(ultima, lang),
+                },
                 secretId: 'art-keep',
             };
         },

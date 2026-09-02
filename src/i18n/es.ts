@@ -33,6 +33,9 @@ export const es = {
     // ── cabecera y navegación ────────────────────────────────────────────────
     'nav.notes': 'Notas',
     'nav.trash': 'Papelera',
+    'nav.collection': 'Colección',
+    'collection.title': 'Colección',
+    'collection.empty': 'Todavía no hay ninguna. El sistema guarda algunas cosas de antes.',
     'nav.viewsLabel': 'Vistas',
     'nav.dateLabel': 'FECHA',
     'nav.datePlaceholder': '----.--.--',

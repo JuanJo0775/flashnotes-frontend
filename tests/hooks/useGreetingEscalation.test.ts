@@ -28,7 +28,7 @@ const ctx = (greetings: number) => ({
     secretsTotal: 16,
     log: '',
     greetings,
-    whoareu: 0,
+    chat: 0,
     kicks: 0,
     lang: 'es' as const,
 });
@@ -108,10 +108,20 @@ describe('//date_off · suelta el reloj', () => {
         expect(run('//date_off', ctx(0))!.effect).toEqual({ kind: 'time-drift' });
     });
 
-    test('avisa de que sólo se arregla recargando', async () => {
+    test('NO dice cómo arreglarlo', async () => {
+        // Decir «recargue para que vuelva» convierte la avería en una
+        // instrucción: sabés que es temporal y que hay salida, y se deja de
+        // sentir como que el sistema perdió algo. La salida sigue estando; sólo
+        // que hay que dar con ella.
         const { run } = await load();
 
-        expect(run('//date_off', ctx(0))!.output).toMatch(/RECARGUE|RELOAD/i);
+        expect(run('//date_off', ctx(0))!.output).not.toMatch(/RECARGUE|RELOAD/i);
+    });
+
+    test('pero sí dice lo que le pasó', async () => {
+        const { run } = await load();
+
+        expect(run('//date_off', ctx(0))!.output).toMatch(/AÑO|YEAR/i);
     });
 
     test('no lo confunde con //date', async () => {

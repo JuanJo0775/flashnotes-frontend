@@ -123,16 +123,25 @@ export function greetingFor(
 }
 
 /* ------------------------------------------------------------------
-   `//whoareu` · la otra mitad de la conversación
+   La conversación · `//whoareu` y `//howareu`
 
-   No es un comando que existe siempre: existe MIENTRAS estás hablando con ella.
-   Justo después de un `//hi` contesta; insistiendo se seca; y al tercero deja de
-   reconocerlo, con el mismo «comando desconocido» que daría cualquier palabra
-   inventada.
+   Dos preguntas distintas que sólo existen MIENTRAS estás hablando con ella:
 
-   Es la escalada de `//hi` pero en horizontal: allá se cansa de que la saluden,
-   acá se cansa de que le pregunten. Y la salida es mejor que un desplante —
-   el comando no se niega, DESAPARECE. Como si nunca hubiera estado.
+     · `//whoareu`  — quién sos
+     · `//howareu`  — cómo estás
+
+   Y comparten UNA SOLA CUENTA: insistir con cualquiera de las dos cansa igual.
+   Alternarlas no engaña a nadie, que es lo que haría alguien buscándole la
+   vuelta — y que no funcione es la gracia.
+
+   `//whoareu` es el espejo de `//whoami`. Allá le preguntás quién sos vos y te
+   contesta que no puede saberlo: la cookie es httpOnly y sos este navegador y
+   nada más. Acá le preguntás quién es ELLA, y sí lo sabe: es la que guarda lo
+   que escribís. La máquina se conoce mejor a sí misma que a vos, y eso dice
+   todo lo que hay que decir de esta app.
+
+   Al tercero las dos DESAPARECEN, con el mismo «comando desconocido» que daría
+   cualquier palabra inventada. No se niegan: dejan de existir.
    ------------------------------------------------------------------ */
 
 /**
@@ -142,17 +151,29 @@ export function greetingFor(
  * saludar de nuevo a los dos minutos sigue siendo insistir, pero preguntarle algo
  * dos minutos después ya no es la misma conversación, es empezar otra.
  */
-export const WHOAREU_WINDOW_MS = 60_000;
+export const CHAT_WINDOW_MS = 60_000;
 
-/** A la tercera deja de existir. */
-export const WHOAREU_GONE_AT = 3;
+/** A la tercera dejan de existir. */
+export const CHAT_GONE_AT = 3;
 
-const WHOAREU_REPLIES: readonly Localized[] = [
-    { es: 'ESTOY BIEN. UN POCO OCUPADO.', en: 'I AM FINE. A LITTLE BUSY.' },
-    { es: 'OCUPADO.', en: 'BUSY.' },
+export type ChatQuestion = 'who' | 'how';
+
+/** Quién sos. El espejo de `//whoami`. */
+const WHO: readonly Localized[] = [
+    {
+        es: 'LA QUE GUARDA LO QUE USTED ESCRIBE. NADA MÁS.',
+        en: 'THE ONE THAT KEEPS WHAT YOU WRITE. NOTHING ELSE.',
+    },
+    { es: 'YA SE LO DIJE.', en: 'I ALREADY TOLD YOU.' },
 ];
 
-export interface WhoAreYouReply {
+/** Cómo estás. */
+const HOW: readonly Localized[] = [
+    { es: 'ESTOY BIEN. UN POCO OCUPADA.', en: 'I AM FINE. A LITTLE BUSY.' },
+    { es: 'OCUPADA.', en: 'BUSY.' },
+];
+
+export interface ChatReply {
     /** Qué contesta, o `null` si ya ni lo reconoce. */
     text: string | null;
 }
@@ -160,17 +181,22 @@ export interface WhoAreYouReply {
 /**
  * Qué contesta a esta pregunta.
  *
- * `count` es cuántas van seguidas, contando ésta. `null` significa que el
- * comando ya no existe y quien llama tiene que dar el mismo «comando
- * desconocido» que daría cualquier palabra inventada — un test fija que sea
- * exactamente el mismo texto, porque si se distinguiera se notaría que ahí hay
- * algo.
+ * `count` es cuántas van seguidas EN TOTAL, contando ésta y sumando las dos
+ * preguntas. `null` significa que el comando ya no existe y quien llama tiene
+ * que dar el mismo «comando desconocido» que daría cualquier palabra inventada
+ * — un test fija que sea exactamente el mismo texto, porque si se distinguiera
+ * se notaría que ahí hay algo.
  */
-export function whoAreYouFor(count: number, lang: Lang): WhoAreYouReply {
-    if (count >= WHOAREU_GONE_AT) return { text: null };
+export function chatReplyFor(
+    question: ChatQuestion,
+    count: number,
+    lang: Lang
+): ChatReply {
+    if (count >= CHAT_GONE_AT) return { text: null };
 
-    const i = Math.min(WHOAREU_REPLIES.length - 1, Math.max(0, count - 1));
-    return { text: WHOAREU_REPLIES[i][lang] };
+    const repertorio = question === 'who' ? WHO : HOW;
+    const i = Math.min(repertorio.length - 1, Math.max(0, count - 1));
+    return { text: repertorio[i][lang] };
 }
 
 /**

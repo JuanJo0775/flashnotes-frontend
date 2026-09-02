@@ -10,10 +10,11 @@ import {
     levelFor,
     type CollapseLevel,
 } from '@/lib/system/collapseEscalation';
-import { countGreeting, WHOAREU_WINDOW_MS } from '@/lib/system/greeting';
+import { countGreeting, CHAT_WINDOW_MS } from '@/lib/system/greeting';
 import { clearFound as clearArt } from '@/lib/system/asciiArt';
 import { resetScores } from '@/lib/system/pongScores';
 import { clearUsed } from '@/lib/system/commandUnlock';
+import { clearCollectibles } from '@/lib/system/collectibles';
 import { forgetWord } from '@/lib/system/morse';
 import { stopDrift } from '@/lib/system/timeDrift';
 
@@ -534,7 +535,7 @@ export function registerGreeting(now: number = Date.now()): number {
 
     // La conversación empieza de cero con cada saludo: preguntarle algo después
     // de volver a saludar es una charla nueva, no la misma insistencia.
-    whoareu = 0;
+    chat = 0;
     return greetings;
 }
 
@@ -562,19 +563,21 @@ export function kickCount(): number {
  * hay nada. Devuelve 0 para que quien llama dé el mismo «comando desconocido»
  * que daría cualquier palabra inventada.
  */
-let whoareu = 0;
+let chat = 0;
 
-export function registerWhoAreYou(now: number = Date.now()): number {
+export function registerChat(now: number = Date.now()): number {
     const enConversacion =
-        lastGreetingAt !== null && now - lastGreetingAt < WHOAREU_WINDOW_MS;
+        lastGreetingAt !== null && now - lastGreetingAt < CHAT_WINDOW_MS;
 
     if (!enConversacion) {
-        whoareu = 0;
+        chat = 0;
         return 0;
     }
 
-    whoareu += 1;
-    return whoareu;
+    // UNA SOLA CUENTA para `//whoareu` y `//howareu`: alternarlas no engaña a
+    // nadie, que es lo que haría alguien buscándole la vuelta.
+    chat += 1;
+    return chat;
 }
 
 /**
@@ -596,7 +599,7 @@ export function resetEverything() {
     themeClicks = 0;
     greetings = 0;
     lastGreetingAt = null;
-    whoareu = 0;
+    chat = 0;
     kicks = 0;
     collapseCount = null;
     lastRecoveryAt = null;
@@ -605,6 +608,7 @@ export function resetEverything() {
     clearArt();
     resetScores();
     clearUsed();
+    clearCollectibles();
     forgetWord();
     stopDrift();
 

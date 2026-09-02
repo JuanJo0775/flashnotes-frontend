@@ -14,7 +14,7 @@ const ctx = (): CommandContext => ({
     secretsTotal: 18,
     log: '',
     greetings: 0,
-    whoareu: 0,
+    chat: 0,
     kicks: 0,
     lang: 'es' as const,
 });
@@ -75,20 +75,33 @@ describe('//keep · quedarse una', () => {
         expect(r.output).toMatch(/NADA QUE GUARDAR/);
     });
 
-    test('después de ver una, la escribe en la nota', () => {
+    test('después de ver una, la guarda en la colección', () => {
+        // CREA UNA PIEZA, no escribe en la nota abierta: escribir encima
+        // obligaría a tener una nota en blanco a mano, y la pieza acabaría
+        // mezclada entre tus archivos como una nota más.
         corre('//art');
         const r = corre('//keep');
 
-        expect(r.effect.kind).toBe('write-note');
+        expect(r.effect.kind).toBe('keep-art');
     });
 
-    test('lo que escribe es el dibujo con su pie', () => {
+    test('lo que guarda es el dibujo con su pie', () => {
         const dibujo = corre('//art').output;
         const r = corre('//keep');
 
-        if (r.effect.kind !== 'write-note') throw new Error('no escribió nada');
-        // La primera línea del dibujo tiene que estar en la nota.
+        if (r.effect.kind !== 'keep-art') throw new Error('no guardó nada');
         expect(r.effect.text).toContain(dibujo.split('\n')[0]);
+    });
+
+    test('el título es el nombre de la pieza y su número', () => {
+        // `POLILLA · 1/8`, no «Nueva nota». Es una ficha de catálogo: dice qué
+        // pieza es y cuántas hay.
+        corre('//art');
+        const r = corre('//keep');
+
+        if (r.effect.kind !== 'keep-art') throw new Error('no guardó nada');
+        expect(r.effect.title).toContain(`/${ART_TOTAL}`);
+        expect(r.effect.title).not.toMatch(/nueva nota/i);
     });
 
     test('guarda la ÚLTIMA que salió, no una cualquiera', () => {
@@ -96,7 +109,7 @@ describe('//keep · quedarse una', () => {
         const segunda = corre('//art').output.split('\n')[0];
         const r = corre('//keep');
 
-        if (r.effect.kind !== 'write-note') throw new Error('no escribió nada');
+        if (r.effect.kind !== 'keep-art') throw new Error('no guardó nada');
         expect(r.effect.text).toContain(segunda);
     });
 

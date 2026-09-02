@@ -21,6 +21,7 @@ const opciones = () => ({
     onLeaveNote: jest.fn(),
     onWriteNote: jest.fn(),
     onKillPage: jest.fn(),
+    onKeepArt: jest.fn(),
 });
 
 beforeEach(() => {

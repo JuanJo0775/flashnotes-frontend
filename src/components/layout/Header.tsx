@@ -12,6 +12,8 @@ interface HeaderProps {
     currentView: View;
     onViewChange: (view: View) => void;
     trashCount?: number;
+    /** Cuántas piezas llevás. Sin ninguna, la pestaña ni aparece. */
+    collectionCount?: number;
     /** Lo pide el rótulo cuando alguien insiste nueve veces (§5). */
     onCollapse?: () => void;
 }
@@ -22,12 +24,16 @@ interface HeaderProps {
 const TABS: { view: View; labelKey: TranslationKey }[] = [
     { view: 'notes', labelKey: 'nav.notes' },
     { view: 'trash', labelKey: 'nav.trash' },
+    // La colección va la última y con estrella: es lo que se GANA, no una parte
+    // de la app que estuviera ahí desde el principio.
+    { view: 'collection', labelKey: 'nav.collection' },
 ];
 
 export default function Header({
     currentView,
     onViewChange,
     trashCount,
+    collectionCount,
     onCollapse,
 }: HeaderProps) {
     const t = useT();
@@ -43,7 +49,12 @@ export default function Header({
             <SystemLabel onCollapse={onCollapse ?? (() => {})} />
 
             <nav aria-label={t('nav.viewsLabel')} className="flex items-center gap-1">
-                {TABS.map(({ view, labelKey }) => (
+                {TABS.filter(
+                    // Sin ninguna pieza la pestaña NO APARECE. Enseñarla vacía
+                    // anunciaría que hay una colección que llenar, y encontrar
+                    // la primera pieza es parte de lo que se descubre.
+                    ({ view }) => view !== 'collection' || Boolean(collectionCount)
+                ).map(({ view, labelKey }) => (
                     <button
                         key={view}
                         type="button"
@@ -51,8 +62,13 @@ export default function Header({
                         className="nav-tab"
                         aria-current={activeTab === view ? 'page' : undefined}
                     >
-                        [{t(labelKey)}
-                        {view === 'trash' && trashCount ? ` ${trashCount}` : ''}]
+                        [{view === 'collection' ? '★ ' : ''}
+                        {t(labelKey)}
+                        {view === 'trash' && trashCount ? ` ${trashCount}` : ''}
+                        {view === 'collection' && collectionCount
+                            ? ` ${collectionCount}`
+                            : ''}
+                        ]
                     </button>
                 ))}
             </nav>

@@ -24,6 +24,9 @@ export const en: Dictionary = {
     // ── header and navigation ────────────────────────────────────────────────
     'nav.notes': 'Notes',
     'nav.trash': 'Trash',
+    'nav.collection': 'Collection',
+    'collection.title': 'Collection',
+    'collection.empty': 'None yet. The system keeps a few things from before.',
     'nav.viewsLabel': 'Views',
     'nav.dateLabel': 'DATE',
     'nav.datePlaceholder': '----.--.--',

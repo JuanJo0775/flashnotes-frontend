@@ -31,29 +31,6 @@ de error del fallo cromático suelte un `-.-.` suelto.
 B1 (tachados animados), B2 (se desbloquean al usarlos) y B3 (`//hi` escondido) ya
 están, en su sitio dentro de la lista. Queda:
 
-# C · Los coleccionables
-
-## C1 · El título es el nombre de la pieza
-
-Al guardar con `//keep`, la nota no se llama «Nueva nota»: se llama por la pieza y
-su número — `POLILLA · 1/8`.
-
-## C2 · Sección propia, no «archivos disponibles»
-
-**No son notas y no se tratan como notas.** Van en una tercera pestaña junto a
-NOTAS y PAPELERA, marcada con una estrella o un cuadrito, y ahí se ven como lo
-que son: una colección.
-
----
-
-## D1 · Un comando que reinicia todo
-
-La cuenta de secretos, las piezas, los marcadores, todo. Como una sesión nueva.
-
-Cuidado: **no puede borrar notas.** Reiniciar el juego no es reiniciar tu trabajo.
-
----
-
 # E · La v0.2
 
 Una versión vieja, a medio hacer, que se entra descifrando el morse.
@@ -91,4 +68,6 @@ preguntar si se hizo.
 | `//date_off` descontrola también la fecha | [EFECTOS §17](EFECTOS.md) | `ad95f3c` |
 | La conversación `//whoareu` que se agota | [EFECTOS §21](EFECTOS.md) | pendiente |
 | Insistir tres veces deja la página muerta | [EFECTOS §21](EFECTOS.md) | pendiente |
-| `//reset`, que no toca las notas | [EFECTOS §22](EFECTOS.md) | pendiente |
+| `//reset`, que no toca las notas | [EFECTOS §22](EFECTOS.md) | `2cc1556` |
+| `//whoareu` y `//howareu`, una sola cuenta | [EFECTOS §21](EFECTOS.md) | pendiente |
+| Los coleccionables con su pestaña propia | [EFECTOS §23](EFECTOS.md) | pendiente |
