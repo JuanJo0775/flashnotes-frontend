@@ -38,20 +38,18 @@ describe('asciiArt · la base', () => {
     });
 });
 
-describe('asciiArt · sólo ASCII imprimible', () => {
-    // Los bloques (█ ▌ ░) NO están en JetBrains Mono: los pinta una fuente de
-    // reserva con otras métricas y el dibujo se descuadra fila a fila. Es la
-    // misma trampa que hizo bailar el corte del pong.
-    test('ningún carácter fuera del ASCII imprimible', () => {
-        for (const p of ART) {
-            for (const c of p.art) {
-                if (c === '\n') continue;
-                const punto = c.codePointAt(0)!;
-                expect(punto).toBeGreaterThanOrEqual(0x20);
-                expect(punto).toBeLessThan(0x7f);
-            }
-        }
-    });
+describe('asciiArt · nada que la monoespaciada no tenga', () => {
+    /*
+     * ⚠ LO QUE SE COMPRUEBA ESTÁ EN `artShape.test.ts`, no acá.
+     *
+     * Este test exigía `[\x20-\x7E]` —sólo ASCII— y era demasiado estricto: la
+     * `Ø` de la flor está en JetBrains Mono y se pinta perfecta, pero lo
+     * rechazaba por no ser ASCII. Prohibir de más obliga a dibujar peor sin
+     * ganar nada.
+     *
+     * La regla de verdad es que no haya BLOQUES ni MARCOS DE CAJA, que ésos sí
+     * faltan en la fuente y descuadran el dibujo fila a fila (REGLAS · C8).
+     */
 
     test('todas las filas de una pieza miden lo mismo', () => {
         // Una fila más corta descoloca el dibujo aunque los glifos alineen.

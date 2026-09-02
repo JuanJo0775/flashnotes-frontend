@@ -9,14 +9,16 @@
  * soportes que esta terminal conoció. Cada pieza trae un pie que dice qué es,
  * como una etiqueta de archivo.
  *
- * SE COLECCIONAN. `//art` da una que no tengas mientras queden; cuando las tenés
- * todas, empieza a repetir. La cuenta vive en `localStorage`, atada a este
- * navegador, con el mismo patrón que los marcadores del pong.
+ * SE GANAN, NO SE REGALAN. Cada una llega por un camino distinto —el ente, la
+ * v0.2, los dos marcadores del pong, los secretos, haber escrito de verdad— y
+ * ninguno da más de una. `//art` es el catálogo: no da nada, sólo dice cuáles
+ * llevás. La cuenta vive en `localStorage`, atada a este navegador.
  *
- * ⚠ TODO ASCII IMPRIMIBLE, y no por gusto retro: los bloques (█ ▌ ░) NO están en
- * JetBrains Mono y los pinta una fuente de reserva con otras métricas, así que un
- * dibujo con bloques se descuadra fila a fila. Es la misma trampa que hizo bailar
- * el corte del pong. Ver docs/REGLAS.md · C8.
+ * ⚠ NADA QUE LA MONOESPACIADA NO TENGA. La regla no es «sólo ASCII» —la `Ø` de la
+ * flor está en JetBrains Mono y se pinta perfecta— sino que no haya BLOQUES
+ * (█ ▌ ░) ni MARCOS DE CAJA (┌ ─ ┐): ésos no están, los pinta una fuente de
+ * reserva con otras métricas, y el dibujo se descuadra fila a fila. Es la trampa
+ * que hizo bailar el corte del pong. Ver docs/REGLAS.md · C8.
  */
 
 import type { Note } from '@/types/note.types';
@@ -68,7 +70,20 @@ export type ArtSource =
     /** Haber encontrado todos los comandos escondidos. */
     | 'all-commands'
     /** El secreto más difícil que quede, por asignar. */
-    | 'hardest';
+    | 'hardest'
+    /**
+     * HABERLOS ENCONTRADO TODOS. La última, y la única que no se puede tener a
+     * medias: sale cuando el contador del panel llega a su propio total.
+     */
+    | 'all-secrets'
+    /**
+     * HABER ESCRITO DE VERDAD.
+     *
+     * Todas las demás premian hurgar. Ésta premia haber USADO la app para lo que
+     * es — y por eso es la única que puede encontrar alguien que nunca haya
+     * tecleado un comando.
+     */
+    | 'written';
 
 export interface ArtPiece {
     id: string;
@@ -281,6 +296,72 @@ export const ART: readonly ArtPiece[] = [
             '                |------|                ',
             '                 .----.                 ',
             '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+        ].join('\n'),
+    },
+    {
+        id: 'flower',
+        source: 'written',
+        caption: {
+            es: 'FLOR · CRECIÓ MIENTRAS USTED ESCRIBÍA',
+            en: 'FLOWER · IT GREW WHILE YOU WROTE',
+        },
+        /*
+         * LA ÚNICA QUE NO SE GANA HURGANDO.
+         *
+         * Todas las demás premian buscar secretos. Ésta premia haber USADO la app
+         * para lo que es — y por eso puede encontrarla alguien que no haya
+         * tecleado un comando en su vida.
+         *
+         * Es lo que la hace valer: en una colección donde todo se consigue
+         * escarbando, la pieza más difícil de justificar es la que se consigue
+         * simplemente escribiendo. Y es la que mejor dice de qué va esta app.
+         */
+        art: [
+            '             .-.       .-.              ',
+            '            (   )     (   )             ',
+            '             :-:       :-:              ',
+            '          .-.     .-.     .-.           ',
+            '         (   )   ( Ø )   (   )          ',
+            '          :-:     :-:     :-:           ',
+            '             .-.       .-.              ',
+            '            (   )     (   )             ',
+            '             :-:       :-:              ',
+            '                   |                    ',
+            '            [      |      ]             ',
+            '             \\           /              ',
+            '              \\_________/               ',
+        ].join('\n'),
+    },
+    {
+        id: 'shelf',
+        source: 'all-secrets',
+        caption: {
+            es: 'CUADERNO · JUANJO0775 ESTUVO AQUÍ',
+            en: 'NOTEBOOK · JUANJO0775 WAS HERE',
+        },
+        /*
+         * LA ÚLTIMA, y la única que no se puede tener a medias: sale cuando el
+         * contador del panel llega a su propio total.
+         *
+         * Un cuaderno ABIERTO, con las dos hojas y el pliegue en medio. Todas las
+         * demás piezas son cosas que la máquina guardaba de antes; ésta es la
+         * única que habla de FUERA de la máquina — y por eso cierra la colección.
+         *
+         * No dice «el que escribió esto» sino ESTUVO AQUÍ, que es lo que se
+         * escribe en un margen. La diferencia importa: lo primero es una firma de
+         * autor, lo segundo es alguien que pasó por un sitio y lo apuntó — que es
+         * de lo que va esta app entera.
+         */
+        art: [
+            ' .-/|              \\ /              |\\-.',
+            ' |||                |                |||',
+            ' |||   ~~~*~~~      |                |||',
+            ' |||                |     estuvo     |||',
+            ' |||  JuanJo0775    |                |||',
+            ' |||                |      aqui      |||',
+            ' |||                |                |||',
+            ' ||/===============\\|/===============\\||',
+            "  `-  ------------  ^  ^ -----------  -'",
         ].join('\n'),
     },
     {

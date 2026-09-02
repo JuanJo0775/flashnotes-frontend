@@ -25,7 +25,7 @@ import V02Skin from '@/components/effects/V02Skin';
 import V02Glitches from '@/components/effects/V02Glitches';
 import CollectionView from '@/components/notes/CollectionView';
 import { splitCollectibles, markCollectible } from '@/lib/system/collectibles';
-import { readRevealed } from '@/lib/system/asciiArt';
+import { awardFrom, readRevealed } from '@/lib/system/asciiArt';
 import { markSecretFound, resetEverything } from '@/hooks/useSystemState';
 import { createV02Note, saveV02Note } from '@/lib/system/v02Notes';
 import { useV02Notes } from '@/hooks/useV02Notes';
@@ -48,6 +48,9 @@ import type { Note, SaveState, View } from '@/types/note.types';
 
 /** Referencia constante: una lista nueva en cada render remontaría todo. */
 const VACIO: never[] = [];
+
+/** Cuánto hay que haber escrito para que salga la flor. Unas dos páginas. */
+const FLOR_DESDE = 5_000;
 
 /** No hay a qué suscribirse: sólo interesa el salto de servidor a cliente. */
 const SIN_CAMBIOS = () => () => {};
@@ -117,6 +120,21 @@ export default function Home() {
         () => noteSummaries.reduce((suma, n) => suma + n.chars, 0),
         [noteSummaries]
     );
+
+    /*
+     * HABER ESCRITO DE VERDAD DA LA FLOR.
+     *
+     * Es la única pieza que no se gana hurgando: todas las demás premian buscar
+     * secretos, y ésta premia haber USADO la app para lo que es. Puede
+     * encontrarla alguien que no haya tecleado un comando en su vida, y eso es
+     * exactamente lo que la hace valer.
+     *
+     * El umbral son cinco mil caracteres — unas dos páginas. Lo bastante para
+     * que no salga por probar, lo bastante poco para que salga usándola.
+     */
+    useEffect(() => {
+        if (bytesWritten >= FLOR_DESDE) awardFrom('written');
+    }, [bytesWritten]);
 
     useEffect(() => {
         void initializeCsrfToken();

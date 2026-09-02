@@ -1,6 +1,7 @@
 // src/hooks/useSystemState.ts
 'use client';
 
+import { awardFrom } from '@/lib/system/asciiArt';
 import { useSyncExternalStore } from 'react';
 import {
     ESCALATION_WINDOW_MS,
@@ -473,6 +474,15 @@ export function markSecretFound(id: string) {
     } catch {
         // Igual que arriba: se pierde al recargar y no pasa nada.
     }
+
+    /*
+     * HABERLOS ENCONTRADO TODOS DA LA ÚLTIMA PIEZA.
+     *
+     * Acá y no en el panel: el panel se puede no abrir nunca, y el hallazgo no
+     * puede depender de que alguien vaya a mirar el contador. Ocurre cuando
+     * ocurre, y `awardPiece` ya se encarga de no darla dos veces.
+     */
+    if (secrets.size >= SECRET_IDS.length) awardFrom('all-secrets');
 
     publish();
 }

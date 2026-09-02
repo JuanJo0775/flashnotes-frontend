@@ -36,12 +36,33 @@ describe('ocupan sitio, sin pasarse', () => {
     });
 });
 
-describe('todo es ASCII imprimible', () => {
-    it.each(ART.map((p) => [p.id, p]))('«%s» no lleva bloques', (_id, piece) => {
-        // Los bloques (█ ▌ ░) NO están en JetBrains Mono: los pinta una fuente de
-        // reserva con otras métricas y el dibujo se descuadra fila a fila
-        // (REGLAS · C8).
-        expect((piece as (typeof ART)[number]).art).toMatch(/^[\x20-\x7E\n]+$/);
+describe('nada que la monoespaciada no tenga', () => {
+    /*
+     * ⚠ LA REGLA NO ES «SÓLO ASCII», ES «NADA QUE FALTE EN JETBRAINS MONO».
+     *
+     * Esto exigía `[\x20-\x7E]` y era demasiado estricto: la `Ø` de la flor está
+     * en la fuente de la casa y se pinta perfecta, pero el test la rechazaba por
+     * no ser ASCII. Prohibir de más obliga a dibujar peor sin ganar nada.
+     *
+     * Lo que de verdad rompe los dibujos son los BLOQUES (U+2580–259F) y los
+     * MARCOS DE CAJA (U+2500–257F): ésos NO están en JetBrains Mono, los pinta
+     * una fuente de reserva con otras métricas, y el dibujo se descuadra fila a
+     * fila. Es lo que hizo bailar el corte del pong (REGLAS · C8).
+     */
+    it.each(ART.map((p) => [p.id, p]))(
+        '«%s» no lleva bloques ni marcos de caja',
+        (_id, piece) => {
+            expect((piece as (typeof ART)[number]).art).not.toMatch(
+                /[─-▟]/
+            );
+        }
+    );
+
+    it.each(ART.map((p) => [p.id, p]))('«%s» no lleva nada exótico', (_id, piece) => {
+        // Latin-1 y punto: lo que hay en cualquier monoespaciada decente.
+        expect((piece as (typeof ART)[number]).art).toMatch(
+            /^[\x20-\x7E -ÿ\n]+$/
+        );
     });
 });
 
