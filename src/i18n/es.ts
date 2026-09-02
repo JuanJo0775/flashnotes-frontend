@@ -171,7 +171,7 @@ export const es = {
     'diag.effects': '[EFECTOS: {state}]',
     'diag.close': '[✗] Cerrar',
 
-    // vsync-test (el pong escondido, ver docs/EFECTOS.md)
+    // vsync-test (el pong escondido, ver docs/SECRETOS.md)
     'pong.title': 'vsync-test',
     'pong.rally': 'PELOTEO',
     'pong.systemRecord': 'RÉCORD DEL SISTEMA',

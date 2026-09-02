@@ -50,7 +50,7 @@ API. Los hooks tienen el estado y hablan con `lib/api`. Si un componente importa
 
 - [docs/DISENO.md](docs/DISENO.md) — sistema de diseño: tokens, tipografía,
   vocabulario visual y las reglas que no se saltan
-- [docs/EFECTOS.md](docs/EFECTOS.md) — catálogo de los efectos escondidos: qué
+- [docs/SECRETOS.md](docs/SECRETOS.md) — catálogo de los efectos escondidos: qué
   se ve, cómo se dispara cada uno, con qué números y por qué está hecho así
 - [docs/REGLAS.md](docs/REGLAS.md) — las reglas del proyecto: producto,
   arquitectura, navegador, tests y lore. Cada una con el defecto real que la

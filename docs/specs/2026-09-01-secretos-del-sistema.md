@@ -1076,7 +1076,7 @@ npm run check  →  EXIT=0
 
 La referencia técnica de lo construido —qué se ve, cómo se dispara cada efecto,
 con qué números y por qué está hecho así— vive en
-[`docs/EFECTOS.md`](../EFECTOS.md). Este documento conserva el **razonamiento**:
+[`docs/SECRETOS.md`](../SECRETOS.md). Este documento conserva el **razonamiento**:
 el lore, las decisiones que se cerraron y por qué.
 
 ## Lo que enseñó construirlo

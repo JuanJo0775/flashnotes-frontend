@@ -3,14 +3,14 @@
 Todo lo pedido que todavía no está construido, con su porqué. **Nada se borra de
 aquí sin haberse hecho o sin haberse descartado por escrito.**
 
-Lo ya construido vive en [`EFECTOS.md`](EFECTOS.md); las reglas que gobiernan
+Lo ya construido vive en [`SECRETOS.md`](SECRETOS.md); las reglas que gobiernan
 cómo construirlo, en [`REGLAS.md`](REGLAS.md).
 
 ---
 
 # A · El morse, lo que falta
 
-El reloj y los tres clics ya están (ver [EFECTOS §20](EFECTOS.md)). Queda:
+El reloj y los tres clics ya están (ver [SECRETOS §20](SECRETOS.md)). Queda:
 
 ## A4 · Que la palabra abra algo
 
@@ -76,20 +76,20 @@ preguntar si se hizo.
 
 | Pieza | Dónde | Commit |
 | ----- | ----- | ------ |
-| `//hi` con escalada hasta echarte | [EFECTOS §16](EFECTOS.md) | `90fb4b4` |
-| `//date_off`, el reloj se suelta | [EFECTOS §17](EFECTOS.md) | `90fb4b4` |
-| `//art` y `//keep` coleccionables | [EFECTOS §18](EFECTOS.md) | `505be7c` |
-| `//help` por niveles y sus tres fugas | [EFECTOS §19](EFECTOS.md) | `505be7c` |
-| El pong `vsync-test` | [EFECTOS §15](EFECTOS.md) | `7ff3dc5` |
-| El reloj de verdad, 24 h con segundos | [EFECTOS §20](EFECTOS.md) | pendiente |
-| Tres clics → morse, palabra por sesión | [EFECTOS §20](EFECTOS.md) | `70fdcca` |
-| Comandos tachados que se revuelven, en su sitio | [EFECTOS §19](EFECTOS.md) | pendiente |
-| Se desbloquean al USARLOS, no al verlos | [EFECTOS §19](EFECTOS.md) | pendiente |
-| `//date_off` descontrola también la fecha | [EFECTOS §17](EFECTOS.md) | `ad95f3c` |
-| La conversación `//whoareu` que se agota | [EFECTOS §21](EFECTOS.md) | pendiente |
-| Insistir tres veces deja la página muerta | [EFECTOS §21](EFECTOS.md) | pendiente |
-| `//reset`, que no toca las notas | [EFECTOS §22](EFECTOS.md) | `2cc1556` |
-| `//whoareu` y `//howareu`, una sola cuenta | [EFECTOS §21](EFECTOS.md) | pendiente |
-| Los coleccionables con su pestaña propia | [EFECTOS §23](EFECTOS.md) | `1c201e8` |
+| `//hi` con escalada hasta echarte | [SECRETOS §16](SECRETOS.md) | `90fb4b4` |
+| `//date_off`, el reloj se suelta | [SECRETOS §17](SECRETOS.md) | `90fb4b4` |
+| `//art` y `//keep` coleccionables | [SECRETOS §18](SECRETOS.md) | `505be7c` |
+| `//help` por niveles y sus tres fugas | [SECRETOS §19](SECRETOS.md) | `505be7c` |
+| El pong `vsync-test` | [SECRETOS §15](SECRETOS.md) | `7ff3dc5` |
+| El reloj de verdad, 24 h con segundos | [SECRETOS §20](SECRETOS.md) | pendiente |
+| Tres clics → morse, palabra por sesión | [SECRETOS §20](SECRETOS.md) | `70fdcca` |
+| Comandos tachados que se revuelven, en su sitio | [SECRETOS §19](SECRETOS.md) | pendiente |
+| Se desbloquean al USARLOS, no al verlos | [SECRETOS §19](SECRETOS.md) | pendiente |
+| `//date_off` descontrola también la fecha | [SECRETOS §17](SECRETOS.md) | `ad95f3c` |
+| La conversación `//whoareu` que se agota | [SECRETOS §21](SECRETOS.md) | pendiente |
+| Insistir tres veces deja la página muerta | [SECRETOS §21](SECRETOS.md) | pendiente |
+| `//reset`, que no toca las notas | [SECRETOS §22](SECRETOS.md) | `2cc1556` |
+| `//whoareu` y `//howareu`, una sola cuenta | [SECRETOS §21](SECRETOS.md) | pendiente |
+| Los coleccionables con su pestaña propia | [SECRETOS §23](SECRETOS.md) | `1c201e8` |
 | La puerta de la v0.2: el morse abre | [spec v0.2](specs/2026-09-02-v02.md) | pendiente |
 | Guardar que miente, y `//recover` | [spec v0.2](specs/2026-09-02-v02.md) | pendiente |
