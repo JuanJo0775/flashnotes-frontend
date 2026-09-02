@@ -90,6 +90,13 @@ export default function BootScreen({ onDone, lockedOut = false }: Props) {
         };
     }, []);
 
+    // También en el propio render, antes del primer efecto: el arranque tiene que
+    // tapar desde el PRIMER fotograma. Con sólo el efecto, había un instante en
+    // el que la app ya estaba pintada debajo y se colaba.
+    if (typeof document !== 'undefined' && !quieto) {
+        document.documentElement.setAttribute('data-booting', '');
+    }
+
     if (quieto) return null;
 
     const { phase } = bootAt(guion, step);

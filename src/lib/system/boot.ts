@@ -97,7 +97,13 @@ export function bootScript(
      * justo antes de decirle que no arrancó — y encima obligaría a esperar
      * hasta ocho segundos para volver a leer el mismo error.
      */
-    if (lockedOut) return [apagon, { phase: 'bars', ms: BOOT_BARS_LOCKED_MS }];
+    /*
+     * Y SIN APAGÓN: un equipo bloqueado no se apagó, se quedó colgado. El apagón
+     * cuenta que algo se cerró bien para volver a abrirse, y acá no se cierra
+     * nada — se vuelve al mismo sitio. Sólo las barras, que es lo que enseña un
+     * monitor cuando no hay nada que enseñar.
+     */
+    if (lockedOut) return [{ phase: 'bars', ms: BOOT_BARS_LOCKED_MS }];
 
     return [
         apagon,

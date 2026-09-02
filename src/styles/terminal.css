@@ -826,10 +826,13 @@
     pointer-events: none;
 }
 
+/* Igual que el arranque: por encima del bloqueo y del colapso, por debajo del
+   barrido. Lo que se está contando es que ya no hay nada, y dejar una pantalla
+   de error asomando por encima lo desmentiría. */
 .wipe-screen {
     position: fixed;
     inset: 0;
-    z-index: 90;
+    z-index: 10002;
     /* `--color-primary`, no `--color-bg`: ésa no existe y dejaba la pantalla
        transparente. */
     background: var(--color-primary);
@@ -904,10 +907,19 @@
    y el logo se veía FLOTANDO sobre las notas. Un nombre de variable inventado no
    da error, da un dibujo encima de otro — es el mismo tropiezo que las esquinas
    de la v0.2, y por eso está escrito acá otra vez. */
+/* ⚠ POR ENCIMA DE TODO MENOS DEL BARRIDO.
+ *
+ * Estaba en 95 y la pantalla de bloqueo (10001) y la de colapso (10000) le
+ * quedaban ENCIMA: al recargar con el fallo puesto, el arranque se veía por
+ * debajo del error y la app asomaba entre medias. Un equipo que arranca no
+ * enseña lo que había antes.
+ *
+ * 10002 lo pone sobre las dos y deja libre el 10005 del barrido, que va sobre
+ * todo por definición. */
 .boot-screen {
     position: fixed;
     inset: 0;
-    z-index: 95;
+    z-index: 10002;
     background: var(--color-primary);
     color: var(--color-ink);
     display: flex;

@@ -94,8 +94,11 @@ describe('con el bloqueo puesto', () => {
      */
     const corto = bootScript(8_000, true);
 
-    it('se apaga y se queda en las barras', () => {
-        expect(corto.map((p) => p.phase)).toEqual(['off', 'bars']);
+    it('sólo las barras: ni siquiera se apaga', () => {
+        // Un equipo bloqueado no se apagó, se quedó colgado. El apagón cuenta
+        // que algo se cerró bien para volver a abrirse, y acá no se cierra nada:
+        // se vuelve al mismo sitio.
+        expect(corto.map((p) => p.phase)).toEqual(['bars']);
     });
 
     it('ni rótulo ni comprobación', () => {
