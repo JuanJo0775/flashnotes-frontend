@@ -15,6 +15,23 @@
 import { render, act } from '@testing-library/react';
 import BootScreen from '@/components/effects/BootScreen';
 
+/**
+ * Pone o quita el bloqueo EN EL ALMACENAMIENTO, que es de donde lo lee.
+ *
+ * Se lee de ahí y no del estado de React porque `useSyncExternalStore` devuelve
+ * el snapshot del servidor en el primer render del cliente, y ahí el bloqueo
+ * siempre es `false`.
+ */
+const conBloqueo = (puesto: boolean) => {
+    localStorage.clear();
+    if (puesto) {
+        localStorage.setItem(
+            'flashnotes:lockout',
+            JSON.stringify({ until: Date.now() + 600_000 })
+        );
+    }
+};
+
 beforeEach(() => {
     jest.useFakeTimers();
 
@@ -47,14 +64,20 @@ describe('el arranque normal', () => {
         // Recargar es apagar y encender. Y el apagón no es uno nuevo: es
         // `.collapse-dying`, el mismo que se ve tras la estática y las franjas.
         // Un gesto, una animación.
+        conBloqueo(false);
         render(<BootScreen onDone={() => {}} />);
+        // Un tic para que lea el almacenamiento: hasta entonces tapa y no
+        // enseña nada, que es mucho menos malo que enseñar la app.
+        correElGuion(1, 0);
 
         expect(document.querySelector('.collapse-dying')).not.toBeNull();
         expect(document.querySelector('.boot-bars')).toBeNull();
     });
 
     it('después las barras, el rótulo y la comprobación', () => {
+        conBloqueo(false);
         render(<BootScreen onDone={() => {}} />);
+        correElGuion(1, 0);
 
         correElGuion(1);
         expect(document.querySelector('.boot-bars')).not.toBeNull();
@@ -67,10 +90,11 @@ describe('el arranque normal', () => {
     });
 
     it('y avisa al terminar', () => {
+        conBloqueo(false);
         const listo = jest.fn();
         render(<BootScreen onDone={listo} />);
 
-        correElGuion(5);
+        correElGuion(6);
 
         expect(listo).toHaveBeenCalled();
     });
@@ -78,6 +102,7 @@ describe('el arranque normal', () => {
     it('mientras dura, la app está tapada', () => {
         // El atributo es lo que la mantiene a opacidad cero. Sin él, el arranque
         // sería una pantalla encima de otra que se sigue viendo.
+        conBloqueo(false);
         const { unmount } = render(<BootScreen onDone={() => {}} />);
 
         expect(document.documentElement).toHaveAttribute('data-booting');
@@ -92,7 +117,9 @@ describe('con el bloqueo puesto', () => {
         // Un equipo bloqueado no se apagó, se quedó colgado — y enseñarle el
         // rótulo del fabricante sería contarle que arrancó bien justo antes de
         // decirle que no arrancó.
-        render(<BootScreen onDone={() => {}} lockedOut />);
+        conBloqueo(true);
+        render(<BootScreen onDone={() => {}} />);
+        correElGuion(1, 0);
 
         expect(document.querySelector('.collapse-dying')).toBeNull();
         expect(document.querySelector('.boot-bars')).not.toBeNull();
@@ -103,9 +130,10 @@ describe('con el bloqueo puesto', () => {
 
     it('y termina enseguida', () => {
         const listo = jest.fn();
-        render(<BootScreen onDone={listo} lockedOut />);
+        conBloqueo(true);
+        render(<BootScreen onDone={listo} />);
 
-        correElGuion(2);
+        correElGuion(4);
 
         expect(listo).toHaveBeenCalled();
     });

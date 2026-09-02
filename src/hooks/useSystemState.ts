@@ -801,6 +801,23 @@ const SERVER_SNAPSHOT: SystemState = {
     v02: false,
 };
 
+/**
+ * ¿Hay bloqueo AHORA MISMO? Sin pasar por React.
+ *
+ * `useSystemState` no sirve para esto: `useSyncExternalStore` devuelve el
+ * snapshot del SERVIDOR en el primer render del cliente (REGLAS · C2), y ahí el
+ * bloqueo siempre es `false`. El arranque preguntaba, le decían que no, hacía el
+ * recorrido largo de ocho segundos, terminaba enseñando el inicio, y sólo
+ * entonces aparecía la pantalla de fallo. Se veía la app un rato en medio de un
+ * bloqueo, que es justo lo que el bloqueo existe para impedir.
+ *
+ * Esto lee el almacenamiento y ya. Sólo vale llamarlo desde un efecto o desde
+ * código que ya sepa que está en el navegador.
+ */
+export function isLockedOutNow(): boolean {
+    return readLockout() !== null;
+}
+
 export function useSystemState(): SystemState {
     return useSyncExternalStore(subscribe, getSystemState, () => SERVER_SNAPSHOT);
 }

@@ -1,7 +1,7 @@
 // src/components/effects/BootScreen.tsx
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import {
     bootAt,
     bootDuration,
@@ -12,6 +12,7 @@ import {
     BOOT_VENDOR,
 } from '@/lib/system/boot';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { isLockedOutNow } from '@/hooks/useSystemState';
 
 /**
  * El monitor encendiéndose.
@@ -39,21 +40,45 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
  * la misma app.
  */
 
+/** No hay a qué suscribirse: sólo interesa el salto de servidor a cliente. */
+const SIN_CAMBIOS = () => () => {};
+
 interface Props {
     onDone: () => void;
-    /** Con el bloqueo puesto el arranque se queda en las barras y vuelve al fallo. */
-    lockedOut?: boolean;
 }
 
-export default function BootScreen({ onDone, lockedOut = false }: Props) {
+export default function BootScreen({ onDone }: Props) {
     const quieto = usePrefersReducedMotion();
     const [step, setStep] = useState(0);
+
+    /*
+     * ⚠ EL BLOQUEO SE LEE DEL ALMACENAMIENTO, NO DEL ESTADO DE REACT.
+     *
+     * `useSystemState` devuelve el snapshot del SERVIDOR en el primer render del
+     * cliente (REGLAS · C2), y ahí el bloqueo siempre es `false`. El arranque
+     * preguntaba, le decían que no, hacía el recorrido largo de ocho segundos,
+     * terminaba enseñando el inicio, y sólo entonces aparecía el fallo. Se veía
+     * la app un rato en mitad de un bloqueo.
+     *
+     * `null` = todavía no se sabe. Mientras tanto la pantalla tapa y no avanza:
+     * un fotograma de espera es mucho menos que ocho segundos de app asomando.
+     */
+    const montado = useSyncExternalStore(
+        SIN_CAMBIOS,
+        () => true,
+        () => false
+    );
+
+    // Derivado, no estado: `setLocked` dentro de un efecto encadena renders y el
+    // compilador de React lo rechaza — con razón. Acá no hace falta guardar
+    // nada, sólo saber si ya se puede leer el almacenamiento.
+    const locked = montado ? isLockedOutNow() : null;
 
     // El dado se tira UNA vez por encendido. Sorteando en cada paso, cada tramo
     // duraría lo suyo y el arranque no tendría una duración, tendría varias.
     const guion = useMemo(
-        () => bootScript(bootDuration(), lockedOut),
-        [lockedOut]
+        () => (locked === null ? [] : bootScript(bootDuration(), locked)),
+        [locked]
     );
 
     useEffect(() => {
@@ -61,6 +86,9 @@ export default function BootScreen({ onDone, lockedOut = false }: Props) {
             onDone();
             return;
         }
+
+        // Sin saber si hay bloqueo no se avanza: el guion todavía no existe.
+        if (locked === null) return;
 
         const { phase, ms } = bootAt(guion, step);
 
@@ -71,7 +99,7 @@ export default function BootScreen({ onDone, lockedOut = false }: Props) {
 
         const id = setTimeout(() => setStep((n) => n + 1), ms);
         return () => clearTimeout(id);
-    }, [guion, step, quieto, onDone]);
+    }, [guion, locked, step, quieto, onDone]);
 
     /*
      * LA APP ENTRA DESVANECIÉNDOSE cuando esto acaba.
@@ -98,6 +126,9 @@ export default function BootScreen({ onDone, lockedOut = false }: Props) {
     }
 
     if (quieto) return null;
+
+    // Mientras no se sepa, la pantalla está y tapa, pero no enseña nada.
+    if (locked === null) return <div className="boot-screen" aria-hidden="true" />;
 
     const { phase } = bootAt(guion, step);
     if (phase === 'done') return null;
