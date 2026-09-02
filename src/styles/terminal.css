@@ -783,3 +783,29 @@
 .collection-empty {
     max-width: 34rem;
 }
+
+/* ------------------------------------------------------------
+   Los huecos del catálogo
+   ------------------------------------------------------------ */
+
+/* Un hueco vacío tiene que LEERSE como vacío sin gritar: si pesara lo mismo que
+   una pieza, la rejilla parecería llena y se perdería justo lo que hace
+   coleccionar, que es ver el sitio que falta. */
+.collection-card.is-empty {
+    border-style: dashed;
+    opacity: 0.4;
+}
+
+/* El número del hueco, grande y solo: es lo único que hay ahí, y lo que dice no
+   es QUÉ falta sino CUÁNTO. */
+.collection-slot {
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+}
+
+/* En una pieza encontrada el número va arriba y discreto: acompaña al dibujo,
+   no compite con él. */
+.collection-num {
+    align-self: flex-start;
+    letter-spacing: 0.08em;
+}

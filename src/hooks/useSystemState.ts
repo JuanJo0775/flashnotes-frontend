@@ -147,7 +147,10 @@ export const SECRET_IDS = [
     'date-off',
     'chat',
     'kicked',
-    'reset',
+    // ⚠ `reset` NO está acá, y no es un olvido: encontrarlo no es un logro, es
+    // saber que hay un botón peligroso. Contarlo entre los hallazgos animaba a
+    // usarlo, que es lo contrario de lo que hace falta con el único comando que
+    // destruye algo tuyo.
     'collection',
     'morse',
     'v02',

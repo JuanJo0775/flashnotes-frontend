@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { formatLog } from '@/lib/system/requestLog';
 import { startDrift } from '@/lib/system/timeDrift';
+import { pendingConfirm, readAnswer } from '@/lib/system/confirm';
 
 import { formatFileSize, formatTime } from '@/lib/utils/formatters';
 import {
@@ -120,7 +121,14 @@ export function useNoteCommands({
 
     const run = useCallback(
         async (content: string, noteId: string): Promise<boolean> => {
-            if (!isCommandLine(content)) return false;
+            // La respuesta a un `[y/n]` NO lleva prefijo: una terminal que
+            // pregunta espera una letra, no otro comando. Si `y` tuviera que
+            // escribirse `//y`, dejaría de parecer una terminal y pasaría a
+            // parecer un formulario.
+            const contestando =
+                pendingConfirm() !== null && readAnswer(content) !== null;
+
+            if (!contestando && !isCommandLine(content)) return false;
 
             const system = getSystemState();
 

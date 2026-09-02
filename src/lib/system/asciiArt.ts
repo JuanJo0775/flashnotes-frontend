@@ -19,6 +19,7 @@
  * el corte del pong. Ver docs/REGLAS.md · C8.
  */
 
+import type { Note } from '@/types/note.types';
 import type { Lang } from '@/config/lang';
 
 type Localized = Readonly<Record<Lang, string>>;
@@ -275,6 +276,61 @@ export function noteTitle(piece: ArtPiece, lang: Lang): string {
     const nombre = piece.caption[lang].split(' · ')[0];
 
     return `${nombre} · ${i}/${ART_TOTAL}`;
+}
+
+/** Las líneas sin espacios de cola: al pasar por el editor pueden cambiar. */
+function normaliza(texto: string): string {
+    return texto
+        .split('\n')
+        .map((l) => l.replace(/\s+$/, ''))
+        .join('\n')
+        .trim();
+}
+
+/**
+ * Qué número de pieza es lo que hay guardado en una nota, o `null`.
+ *
+ * SE RECONOCE POR EL DIBUJO, no por el título: el título es texto que alguien
+ * pudo haber tocado, y el dibujo es la pieza. Y se comparan las líneas sin
+ * espacios de cola, porque al pasar por el editor y volver una línea puede
+ * perder o ganar uno sin dejar de ser la misma.
+ */
+export function pieceIndexOf(contenido: string): number | null {
+    const limpio = normaliza(contenido);
+
+    const i = ART.findIndex((p) => limpio.startsWith(normaliza(p.art)));
+
+    return i < 0 ? null : i + 1;
+}
+
+export interface ArtSlot {
+    /** Su sitio en el catálogo, del 1 al total. */
+    number: number;
+    /** La nota que la guarda, o `null` si todavía no la encontraste. */
+    note: Note | null;
+}
+
+/**
+ * El catálogo entero: los ocho huecos, tengas las que tengas.
+ *
+ * ES LO QUE CONVIERTE UNA LISTA EN UNA COLECCIÓN. Enseñar sólo lo que tenés,
+ * apilado, no deja ver CUÁL acabás de encontrar ni cuáles faltan — y lo que hace
+ * coleccionar es precisamente ver el sitio vacío.
+ *
+ * Cada pieza cae en SU hueco y no en el primero libre: si se apilaran por orden
+ * de hallazgo, el número dejaría de significar nada.
+ */
+export function artSlots(pieces: readonly Note[]): ArtSlot[] {
+    const huecos: ArtSlot[] = ART.map((_, i) => ({ number: i + 1, note: null }));
+
+    for (const nota of pieces) {
+        const n = pieceIndexOf(nota.content ?? '');
+        // Una nota que no es ninguna pieza no ocupa hueco: no debería llegar
+        // acá, pero si llega no puede robarle el sitio a la que falta.
+        if (n !== null) huecos[n - 1].note = nota;
+    }
+
+    return huecos;
 }
 
 /** Cómo queda la pieza al guardarla en una nota. */

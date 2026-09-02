@@ -6,6 +6,12 @@ import { getLang, fill, pickPlural } from '@/i18n';
 import { greetingFor, chatReplyFor, KILL_AFTER_KICKS } from '@/lib/system/greeting';
 import { drawArt, canKeep, lastDrawn, asNote, noteTitle } from '@/lib/system/asciiArt';
 import { isUnlocked, markUsed } from '@/lib/system/commandUnlock';
+import {
+    askConfirm,
+    clearConfirm,
+    pendingConfirm,
+    readAnswer,
+} from '@/lib/system/confirm';
 import { isSessionWord } from '@/lib/system/morse';
 import { isV02, v02Word } from '@/lib/system/v02';
 import { allDropped } from '@/lib/system/dropped';
@@ -309,6 +315,20 @@ const T = {
     enough: {
         es: 'YA ESTÁ.',
         en: 'THAT IS IT.',
+    },
+    resetWarn: {
+        es:
+            'ESTO BORRA: SECRETOS, PIEZAS, MARCADORES Y COMANDOS HALLADOS.' +
+            '\nNO BORRA SUS NOTAS.' +
+            '\n\n¿SEGURO? [y/n]',
+        en:
+            'THIS ERASES: SECRETS, PIECES, SCORES AND FOUND COMMANDS.' +
+            '\nIT DOES NOT ERASE YOUR NOTES.' +
+            '\n\nSURE? [y/n]',
+    },
+    resetCancel: {
+        es: 'CANCELADO. NO SE BORRÓ NADA.',
+        en: 'CANCELLED. NOTHING WAS ERASED.',
     },
     resetDone: {
         es:
@@ -878,17 +898,32 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//reset',
-        secretId: 'reset',
         notInV02: true,
         hidden: true,
         summary: {
             es: 'empezar de cero, como la primera vez',
             en: 'start over, like the first time',
         },
-        resolve: (_ctx, _args, lang) => ({
-            output: T.resetDone[lang],
-            effect: { kind: 'reset-all' },
-        }),
+        /*
+         * ⚠ NO BORRA A LA PRIMERA, Y NO CUENTA COMO SECRETO.
+         *
+         * Es el único comando que destruye algo tuyo —secretos, piezas,
+         * marcadores, el progreso entero— y estaba a un Enter de distancia.
+         * Teclearlo por probar, o dejarlo escrito en una nota y pulsar Enter, y
+         * se acabó la colección.
+         *
+         * LA CONFIRMACIÓN ES UNA PALABRA QUE HAY QUE COPIAR, no un segundo
+         * Enter: dos Enter seguidos es exactamente lo que hace quien no leyó el
+         * aviso.
+         *
+         * Y tampoco es un hallazgo. Encontrarlo no es un logro: es saber que hay
+         * un botón peligroso. Contarlo entre los secretos animaba a usarlo, que
+         * es justo lo contrario de lo que hace falta acá.
+         */
+        resolve: (_ctx, _args, lang) => {
+            askConfirm('reset');
+            return texto(T.resetWarn[lang]);
+        },
     },
     {
         name: '//clear',
@@ -1012,9 +1047,38 @@ export function run(
     ctx: CommandContext,
     random: () => number = Math.random
 ): CommandResult | null {
+    const lang = ctx.lang ?? getLang();
+
+    /*
+     * LA PREGUNTA VA ANTES QUE NADA, y sin exigir el prefijo `//`.
+     *
+     * Una terminal que pregunta `[y/n]` espera una letra, no otro comando. Si
+     * `y` tuviera que escribirse `//y` dejaría de parecer una terminal y pasaría
+     * a parecer un formulario.
+     *
+     * Sólo `y`, `s` y `n` sueltas contestan. Cualquier otra cosa NO es un «no»:
+     * quien escribe otra cosa no está contestando, está haciendo otra cosa — y
+     * su texto tiene que seguir su camino, incluido volver a ser una nota
+     * normal.
+     */
+    if (pendingConfirm() !== null) {
+        const respuesta = readAnswer(content);
+
+        if (respuesta !== null) {
+            clearConfirm();
+
+            return respuesta === 'yes'
+                ? { output: T.resetDone[lang], effect: { kind: 'reset-all' } }
+                : { output: T.resetCancel[lang], effect: SIN_EFECTO };
+        }
+    }
+
     if (!isCommandLine(content)) return null;
 
-    const lang = ctx.lang ?? getLang();
+    // Y cualquier comando que no sea la respuesta retira la pregunta: dejarla en
+    // el aire convertiría una `y` tecleada más tarde, por cualquier motivo, en
+    // un borrado.
+    clearConfirm();
 
     const linea = content
         .replace(/\n$/, '')

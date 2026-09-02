@@ -52,8 +52,19 @@ export default function Header({
     // roto del que se vea enseguida qué le pasó.
     const fecha = today === null ? null : v02 ? reversedDate(today) : today;
 
-    // El editor es una sub-vista de las notas: se marca "Notas" como activa.
-    const activeTab: View = currentView === 'trash' ? 'trash' : 'notes';
+    /**
+     * Qué pestaña se pinta como abierta.
+     *
+     * El editor es una SUB-VISTA de las notas, así que marca «Notas». Todo lo
+     * demás se marca a sí mismo.
+     *
+     * ⚠ Estaba escrito al revés —«papelera, y si no, notas»— y funcionó mientras
+     * sólo hubo dos pestañas. Al aparecer la colección, su vista se pintaba pero
+     * la marca de «acá estás» se quedaba en NOTAS: la pantalla decía una cosa y
+     * la cabecera otra. Una lista blanca que se traga lo que no reconoce
+     * envejece mal por definición; ahora sólo el editor es excepción.
+     */
+    const activeTab: View = currentView === 'editor' ? 'notes' : currentView;
 
     return (
         <header className="terminal-header">
