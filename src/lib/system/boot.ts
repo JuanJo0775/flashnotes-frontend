@@ -35,7 +35,7 @@
 export const BOOT_MIN_MS = 2_000;
 export const BOOT_MAX_MS = 8_000;
 
-export type BootPhase = 'on' | 'bars' | 'logo' | 'check' | 'done';
+export type BootPhase = 'bars' | 'logo' | 'check' | 'done';
 
 /**
  * Cómo se reparte el tiempo entre los tramos.
@@ -50,8 +50,20 @@ const REPARTO: readonly { phase: BootPhase; peso: number }[] = [
     { phase: 'check', peso: 0.25 },
 ];
 
-/** El encendido del tubo, antes de todo. Fijo: es un gesto, no una espera. */
-export const BOOT_ON_MS = 380;
+/*
+ * ⚠ ACÁ HUBO UN «ENCENDIDO DEL TUBO» Y SE QUITÓ.
+ *
+ * Era una animación propia: una línea que nacía en el centro y se abría hacia
+ * arriba y abajo, pintada con la tinta del tema —o sea, del color contrario al
+ * fondo—. Se veía como una pantalla ajena abriéndose, no como un monitor
+ * encendiéndose.
+ *
+ * El apagón de un tubo ya existe y está bien: es el del fallo crítico, después
+ * de la estática y las franjas. Ése es el gesto de la casa y se usa donde toca —
+ * en el borrado. Inventar su inverso para el arranque era un segundo lenguaje
+ * para decir algo que no hacía falta decir: lo que abre el arranque son las
+ * barras de color, y con eso basta.
+ */
 
 /** Cuánto dura este arranque. Se sortea una vez y se reparte. */
 export function bootDuration(rand: () => number = Math.random): number {
@@ -60,13 +72,10 @@ export function bootDuration(rand: () => number = Math.random): number {
 
 /** El guion completo para una duración dada. */
 export function bootScript(totalMs: number): { phase: BootPhase; ms: number }[] {
-    return [
-        { phase: 'on' as const, ms: BOOT_ON_MS },
-        ...REPARTO.map(({ phase, peso }) => ({
-            phase,
-            ms: Math.round(totalMs * peso),
-        })),
-    ];
+    return REPARTO.map(({ phase, peso }) => ({
+        phase,
+        ms: Math.round(totalMs * peso),
+    }));
 }
 
 /** Qué toca en el paso `n` de un guion. */

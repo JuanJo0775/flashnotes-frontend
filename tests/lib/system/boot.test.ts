@@ -21,23 +21,23 @@ import {
 const guion = bootScript(4_000);
 
 describe('el guion', () => {
-    it('enciende el tubo antes de nada', () => {
-        expect(bootAt(guion, 0).phase).toBe('on');
-    });
-
-    it('y luego va en orden: barras, rótulo, comprobación', () => {
-        expect(bootAt(guion, 1).phase).toBe('bars');
-        expect(bootAt(guion, 2).phase).toBe('logo');
-        expect(bootAt(guion, 3).phase).toBe('check');
+    it('abre con las barras: no hay animación de encendido propia', () => {
+        // Hubo una y se quitó. Se veía como una pantalla ajena abriéndose desde
+        // el centro, en el color contrario al tema. El apagón de un tubo ya
+        // existe —el del fallo crítico— y su inverso inventado era un segundo
+        // lenguaje para algo que no hacía falta decir.
+        expect(bootAt(guion, 0).phase).toBe('bars');
+        expect(bootAt(guion, 1).phase).toBe('logo');
+        expect(bootAt(guion, 2).phase).toBe('check');
     });
 
     it('y termina', () => {
-        expect(bootAt(guion, 4).phase).toBe('done');
+        expect(bootAt(guion, 3).phase).toBe('done');
         expect(bootAt(guion, 99).phase).toBe('done');
     });
 
     it('cada tramo dura algo', () => {
-        for (const i of [0, 1, 2, 3]) {
+        for (const i of [0, 1, 2]) {
             expect(bootAt(guion, i).ms).toBeGreaterThan(0);
         }
     });
@@ -68,13 +68,11 @@ describe('cuánto tarda en arrancar', () => {
         }
     });
 
-    it('el reparto suma lo que se sorteó, más el encendido', () => {
-        // Si el reparto no sumara el total, el arranque duraría otra cosa que la
-        // que dice durar, y el sorteo dejaría de significar nada.
+    it('el reparto suma exactamente lo que se sorteó', () => {
+        // Si no sumara el total, el arranque duraría otra cosa que la que dice
+        // durar, y el sorteo dejaría de significar nada.
         const total = 6_000;
-        const suma = bootScript(total)
-            .filter((p) => p.phase !== 'on')
-            .reduce((t, p) => t + p.ms, 0);
+        const suma = bootScript(total).reduce((t, p) => t + p.ms, 0);
 
         expect(suma).toBe(total);
     });

@@ -180,7 +180,21 @@ export default function SystemCollapse({
             at(DYING_MS, () => setPhase('reboot'));
         }
 
-        return () => timers.forEach(clearTimeout);
+        /*
+         * SE MARCA EN `<html>`, como la avería cromática y la v0.2.
+         *
+         * Las capas de glitch y el barrido viven fuera de este árbol, y tienen
+         * que saber que hay un colapso encima para subirse por arriba y para
+         * pintarse con luz en vez de con tinta. Un atributo en la raíz es el
+         * único sitio desde el que se alcanza todo, y ya es el patrón de la
+         * casa para esto.
+         */
+        document.documentElement.setAttribute('data-collapsing', '');
+
+        return () => {
+            document.documentElement.removeAttribute('data-collapsing');
+            timers.forEach(clearTimeout);
+        };
         // Se arma una sola vez: la secuencia es fija desde que empieza.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

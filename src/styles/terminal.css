@@ -818,21 +818,12 @@
    desvanecerse vive fuera del árbol de la pantalla de borrado — es el mismo
    sitio desde el que se alcanzan la avería cromática y la v0.2, y por el mismo
    motivo. */
-[data-wiping] body > * {
-    animation: wipe-fade 900ms ease-in forwards;
+/* ⚠ CON `opacity` Y LA TRANSICIÓN DE ARRIBA, no con `animation`: una regla
+   `animation` sobre `body > *` alcanza al barrido y le sustituye la suya, y el
+   refresco del tubo es lo único que no puede pararse nunca. */
+[data-wiping] body > *:not(.wipe-screen) {
+    opacity: 0;
     pointer-events: none;
-}
-
-/* La pantalla de borrado NO se desvanece con lo demás: es lo que queda. */
-[data-wiping] .wipe-screen {
-    animation: none;
-    opacity: 1;
-}
-
-@keyframes wipe-fade {
-    to {
-        opacity: 0;
-    }
 }
 
 .wipe-screen {
@@ -890,10 +881,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    [data-wiping] body > * {
-        animation: none;
-    }
-
     .wipe-screen.is-off {
         animation: none;
     }
@@ -929,53 +916,43 @@
     font-family: var(--font-mono);
 }
 
-/* EL TUBO ENCENDIÉNDOSE: al revés que el apagón. Una línea horizontal se abre
-   hasta llenar la pantalla. Es el mismo gesto que el colapso, leído hacia
-   adelante, y darle otra animación sería inventar un segundo lenguaje para decir
-   lo mismo. */
-@keyframes boot-on {
-    0% {
-        transform: scaleY(0.02) scaleX(0);
-        opacity: 0;
-    }
-    35% {
-        transform: scaleY(0.02) scaleX(1);
-        opacity: 1;
-    }
-    100% {
-        transform: scaleY(1) scaleX(1);
-        opacity: 1;
-    }
-}
+/* ⚠ ACÁ HUBO UN ENCENDIDO DEL TUBO Y SE QUITÓ.
 
-/* El encendido va en tinta y no en fondo: lo que se abre es el HAZ, y el haz es
-   lo que brilla. En el color del fondo no se vería abrirse nada. */
-.boot-screen.is-on {
-    background: var(--color-ink);
-    transform-origin: center;
-    animation: boot-on 380ms linear forwards;
-}
+   Era una línea que nacía en el centro y se abría hacia arriba y abajo, pintada
+   con la TINTA del tema — o sea, del color contrario al fondo. Se veía como una
+   pantalla ajena abriéndose encima, no como un monitor encendiéndose.
+
+   El apagón de un tubo ya existe y está bien: `collapse-dying`, el del fallo
+   crítico, después de la estática y las franjas. Ése es el gesto de la casa, y se
+   usa donde toca — en el borrado. Inventar su inverso para el arranque era un
+   segundo lenguaje para decir algo que no hacía falta decir: lo que abre el
+   arranque son las barras de color, y con eso basta. */
 
 /* Y LA APP ENTRA DESVANECIÉNDOSE, no de golpe. Aparecer de una después de un
    arranque de monitor rompe justo lo que el arranque acaba de construir: lo que
-   se enciende, se enciende con una imagen que se asienta. */
-@keyframes app-fade-in {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+   se enciende, se enciende con una imagen que se asienta.
+
+   ⚠ CON `transition`, NUNCA CON `animation`.
+   
+   La primera versión usaba `@keyframes` y una regla `animation` sobre
+   `body > *`. Eso ALCANZA AL BARRIDO, que es hijo directo de body y tiene su
+   propia animación — y `animation` no se suma, sustituye. El refresco del tubo
+   dejó de bajar en toda la app, en silencio, y sólo se notaba mirándolo.
+   
+   Es la regla C3 otra vez, y la más cara de todas: el barrido es la única
+   animación que no puede pararse nunca. `transition` no toca `animation`, así
+   que convive con lo que cada capa esté haciendo. */
+body > *:not(.boot-screen):not(.wipe-screen) {
+    transition: opacity 700ms ease-out;
 }
 
-[data-booted] body > *:not(.boot-screen) {
-    animation: app-fade-in 700ms ease-out both;
+[data-booting] body > *:not(.boot-screen) {
+    opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .boot-screen.is-on,
-    [data-booted] body > *:not(.boot-screen) {
-        animation: none;
+    body > *:not(.boot-screen):not(.wipe-screen) {
+        transition: none;
     }
 }
 

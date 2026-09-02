@@ -150,6 +150,33 @@
     z-index: 10003;
 }
 
+/* Y LO MISMO CON EL COLAPSO (z 10000). Sin esto, el fallo crítico se veía sin
+   franjas ni rebanadas — que es justo la pantalla donde más falta hacen, porque
+   es la que cuenta que el sistema se está rompiendo. */
+[data-collapsing] .glitch-bands,
+[data-collapsing] .glitch-slice,
+[data-collapsing] .glitch-level,
+[data-collapsing] .glitch-negative {
+    z-index: 10003;
+}
+
+/* ⚠ EL BARRIDO TIENE QUE VERSE SOBRE EL COLAPSO, Y NO SE VEÍA.
+ *
+ * Su color sale de `--color-ink` al 12 %, que es lo correcto sobre el lienzo de
+ * la app. Pero la capa de colapso pinta su propio fondo, y en tema claro eso
+ * dejaba una línea oscura al 12 % sobre un fondo ya oscuro: invisible.
+ *
+ * Sobre el colapso se pinta con luz y no con tinta. Es el refresco de un tubo:
+ * lo que se ve pasar es el haz, y un haz brilla. */
+[data-collapsing] .scanline-effect {
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        rgb(255 255 255 / 18%),
+        transparent
+    );
+}
+
 /* --- Rebanadas desplazadas ---
    El efecto que más "señal rota" comunica: la imagen se parte en franjas
    horizontales y cada una se corre por su cuenta.
@@ -531,7 +558,18 @@
     z-index: 9997;
     pointer-events: none;
     opacity: 0.35;
-    mix-blend-mode: screen;
+    /* ⚠ EL MODO DE MEZCLA DEPENDE DEL TEMA, y no puede no depender.
+     *
+     * `screen` sólo ACLARA. Sobre el lienzo oscuro las franjas de color saltan a
+     * la vista; sobre el claro no hacen nada, y la avería cromática se veía sólo
+     * en tema oscuro — que es exactamente lo que pasaba y no se entendía.
+     *
+     * En claro toca `multiply`, que sólo oscurece. Es el mismo efecto leído por
+     * el otro lado, no otro efecto: la señal se descompone igual, lo que cambia
+     * es contra qué. El valor por defecto es el de claro porque el tema por
+     * defecto es el claro, y las dos redefiniciones —la del sistema y la del
+     * interruptor— van debajo, como manda la casa. */
+    mix-blend-mode: multiply;
     background-image: repeating-linear-gradient(
         to bottom,
         transparent 0 22px,
@@ -544,6 +582,19 @@
     animation: chroma-roll 2.8s linear infinite;
     will-change: transform;
 }
+
+/* En oscuro, `screen`: sobre el lienzo oscuro lo que se ve es luz de color
+   sumándose, que es lo que hace un tubo con la señal descompuesta. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) .chromatic-tear {
+        mix-blend-mode: screen;
+    }
+}
+
+:root[data-theme='dark'] .chromatic-tear {
+    mix-blend-mode: screen;
+}
+
 
 /* Quien pide menos movimiento se queda con la avería QUIETA, no sin avería: el
    fallo es contenido —le pasó algo al sistema y hay que poder verlo— pero nada
@@ -1246,9 +1297,21 @@
    La capa del vsync-test NO necesita regla propia: recibe la MISMA lista de
    clases que el envoltorio (ver page.tsx), así que hereda filtro, animaciones y
    tirones por construcción. Duplicarlas acá era pedir que divergieran. */
+/* ⚠ LAS DOS ANIMACIONES, NO UNA.
+ *
+ * Esta regla ponía sólo `chroma-swap`, y `animation` es una propiedad: al
+ * declararla de nuevo, SUSTITUYE. El barrido dejaba de bajar durante toda la
+ * avería — se quedaba clavado a media pantalla cambiando de color, que es
+ * exactamente lo que se veía y no se entendía.
+ *
+ * El barrido es el refresco del tubo: una propiedad de la PANTALLA, no de lo que
+ * se esté pintando en ella. No para nunca. Lo que la avería le hace es teñirlo,
+ * no detenerlo. */
 [data-failing] .scanline-effect {
     filter: url(#chroma-split-a);
-    animation: chroma-swap 1.7s steps(1, end) infinite;
+    animation:
+        scanline 9s linear infinite,
+        chroma-swap 1.7s steps(1, end) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

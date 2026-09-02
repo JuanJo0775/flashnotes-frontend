@@ -16,8 +16,10 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 /**
  * El monitor encendiéndose.
  *
- * El tubo se enciende, salen las barras de color, el rótulo del fabricante, la
- * comprobación de memoria, y a trabajar. Sale ANTES de la app, cada vez que se
+ * Salen las barras de color, el rótulo del fabricante, la comprobación de
+ * memoria, y a trabajar. Sin animación de encendido propia: el apagón del tubo
+ * ya existe —el del fallo crítico— y su inverso inventado se veía como una
+ * pantalla ajena abriéndose. Lo que abre el arranque son las barras. Sale ANTES de la app, cada vez que se
  * carga.
  *
  * POR QUÉ SIEMPRE. Un arranque que sale una vez es una pantalla de bienvenida, y
@@ -69,17 +71,17 @@ export default function BootScreen({ onDone }: Props) {
     /*
      * LA APP ENTRA DESVANECIÉNDOSE cuando esto acaba.
      *
-     * El atributo se pone al terminar y se queda: es lo que dispara la entrada.
-     * Aparecer de golpe después de un arranque de monitor rompería justo lo que
-     * el arranque acaba de construir — lo que se enciende, se enciende con una
-     * imagen que se asienta.
+     * Mientras esto vive, la app está a opacidad cero; al desmontarse, la
+     * transición la trae. Aparecer de golpe después de un arranque de monitor
+     * rompería justo lo que el arranque acaba de construir: lo que se enciende,
+     * se enciende con una imagen que se asienta.
      */
     useEffect(() => {
         const raiz = document.documentElement;
-        raiz.removeAttribute('data-booted');
+        raiz.setAttribute('data-booting', '');
 
         return () => {
-            raiz.setAttribute('data-booted', '');
+            raiz.removeAttribute('data-booting');
         };
     }, []);
 
@@ -89,14 +91,7 @@ export default function BootScreen({ onDone }: Props) {
     if (phase === 'done') return null;
 
     return (
-        <div
-            className={`boot-screen${phase === 'on' ? ' is-on' : ''}`}
-            aria-hidden="true"
-        >
-            {/* El encendido no pinta nada: lo que se ve es el propio tubo
-                abriéndose de una línea a la pantalla entera. Ponerle contenido
-                lo estiraría en el momento en que se abre y se vería mal. */}
-
+        <div className="boot-screen" aria-hidden="true">
             {phase === 'bars' && (
                 <div className="boot-bars">
                     {/* Con CSS y no con caracteres: los bloques no están en la
