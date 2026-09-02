@@ -19,7 +19,8 @@ import { isCommandLine } from '@/lib/system/commands';
 import { useNoteCommands } from '@/hooks/useNoteCommands';
 import { pickBootPhrase } from '@/lib/system/lore';
 import { getSystemState, useSystemState } from '@/hooks/useSystemState';
-import { saveOutcome } from '@/lib/system/v02';
+import { isV02, saveOutcome } from '@/lib/system/v02';
+import { v02Placeholder } from '@/lib/system/v02Messages';
 import { rememberDropped } from '@/lib/system/dropped';
 
 /**
@@ -108,6 +109,13 @@ export default function NoteEditor({
      * frase mientras la mirás.
      */
     const [bootText] = useState(() => {
+        // EN LA v0.2 NO HAY TEXTO DE AYUDA: hay el apunte que alguien se dejó a
+        // sí mismo mientras escribía la pantalla, y que nunca sustituyó por el
+        // de verdad. Y una de cada seis veces trae pegado un comando de los que
+        // sólo existen en esta versión — el otro sitio donde asoman es la
+        // basura de una nota que volvió mal de la papelera.
+        if (isV02()) return v02Placeholder(lang);
+
         const system = getSystemState();
         const ahora = new Date();
         const msSinceTrash =

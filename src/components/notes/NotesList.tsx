@@ -2,6 +2,7 @@
 'use client';
 
 import V02NoteCard from '@/components/notes/V02NoteCard';
+import V02Loading from '@/components/notes/V02Loading';
 import { useSystemState } from '@/hooks/useSystemState';
 import { useV02T } from '@/i18n/useV02T';
 import type { Note } from '@/types/note.types';
@@ -33,6 +34,11 @@ export default function NotesList({
     // `useT()` y nada más.
     const t = useV02T();
     const { v02 } = useSystemState();
+
+    // LA v0.2 CARGA A SU MANERA: una barra dibujada que miente. Dejarle la
+    // pantalla de la v1.0 era el mismo descuido que la papelera — un trozo sin
+    // envejecer en medio de una versión que sí lo está.
+    if (isLoading && v02) return <V02Loading />;
 
     if (isLoading) {
         return (

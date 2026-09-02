@@ -192,7 +192,9 @@ export function useNoteCommands({
                     onKeepArt(result.effect.title, result.effect.text);
                     break;
                 case 'toggle-v02':
-                    registerV02Toggle();
+                    // Se le pasa la palabra: al entrar queda guardada, y es la
+                    // que sacará mañana aunque el morse de mañana diga otra.
+                    registerV02Toggle(result.effect.word);
                     break;
                 case 'recover':
                     // Se devuelve al editor por la misma vía que `//keep`: es

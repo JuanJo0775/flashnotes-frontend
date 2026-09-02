@@ -1,6 +1,7 @@
 // src/components/layout/SystemClock.tsx
 'use client';
 
+import { useSystemState } from '@/hooks/useSystemState';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useClock } from '@/hooks/useClock';
 import { sessionMorse } from '@/lib/system/morse';
@@ -22,8 +23,15 @@ import { useT } from '@/i18n';
  * y quien no, no pierde nada.
  */
 
-/** Cuánto se espera entre clic y clic antes de olvidarse de la cuenta. */
-const CLICK_WINDOW_MS = 900;
+/**
+ * Cuánto se espera entre clic y clic antes de olvidarse de la cuenta.
+ *
+ * Eran 900 ms y se quedaban cortos: tres clics seguidos con el ratón, sobre un
+ * blanco pequeño y en la esquina de la pantalla, se van fácil de ahí. Nadie hace
+ * tres clics sin querer en segundo y medio tampoco, así que el gesto sigue
+ * separado del accidente y deja de fallar por poco.
+ */
+const CLICK_WINDOW_MS = 1600;
 
 /** Cuánto se queda el código antes de volver a ser un reloj. */
 const MORSE_MS = 9000;
@@ -32,6 +40,7 @@ const CLICKS = 3;
 
 export default function SystemClock() {
     const hora = useClock();
+    const { v02 } = useSystemState();
     const t = useT();
 
     const [morse, setMorse] = useState<string | null>(null);
@@ -49,6 +58,13 @@ export default function SystemClock() {
     );
 
     const alHacerClic = useCallback(() => {
+        // EN LA v0.2 EL RELOJ ES UN RELOJ Y NADA MÁS.
+        //
+        // El morse es la PUERTA: sirve para entrar. Una vez dentro no pinta
+        // nada, y seguir enseñándolo daría a entender que hay otra cosa detrás
+        // — cuando lo que hay detrás es de donde acabás de venir.
+        if (v02) return;
+
         if (olvidar.current) clearTimeout(olvidar.current);
 
         clicks.current += 1;
@@ -65,7 +81,10 @@ export default function SystemClock() {
 
         if (volver.current) clearTimeout(volver.current);
         volver.current = setTimeout(() => setMorse(null), MORSE_MS);
-    }, []);
+        // `v02` en las dependencias, no vacías: sin él el callback se queda con
+        // el valor que hubiera al montar, y entrar en la v0.2 sin recargar
+        // dejaría el morse funcionando dentro. Lo cazó el compilador de React.
+    }, [v02]);
 
     return (
         <span

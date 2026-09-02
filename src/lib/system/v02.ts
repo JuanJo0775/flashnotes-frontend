@@ -25,6 +25,22 @@
 
 const STORAGE_KEY = 'flashnotes:v02';
 
+/**
+ * La palabra con la que entraste.
+ *
+ * ⚠ SE GUARDA, Y ES LO QUE IMPIDE QUE TE QUEDES ENCERRADO.
+ *
+ * El morse cambia por sesión, y dentro de la v0.2 el reloj ya no lo enseña —
+ * es la puerta de entrada, no algo de esa versión. Sin guardar la palabra,
+ * bastaba recargar para que la de la sesión fuera otra: la que sabías ya no
+ * servía, el reloj no daba la nueva, y la salida desaparecía.
+ *
+ * Guardándola, la puerta por la que entraste sigue siendo la puerta por la que
+ * salís, mañana también. Un estado del que no se puede salir sería una app
+ * rota, no un secreto.
+ */
+const WORD_KEY = 'flashnotes:v02word';
+
 /** La versión que dice ser cuando está puesta. */
 export const V02_LABEL = 'FLASH-NOTES v0.2';
 
@@ -50,19 +66,45 @@ function guardar(valor: boolean) {
     }
 }
 
-export function enterV02() {
+export function enterV02(word?: string) {
     guardar(true);
+    if (!word) return;
+
+    try {
+        localStorage.setItem(WORD_KEY, word.toUpperCase());
+    } catch {
+        // Sin persistencia queda la de la sesión, que es la misma mientras no
+        // recargues.
+    }
+}
+
+/** La palabra que abre y cierra ESTA v0.2, o `null` si no se guardó. */
+export function v02Word(): string | null {
+    try {
+        return localStorage.getItem(WORD_KEY);
+    } catch {
+        return null;
+    }
 }
 
 export function leaveV02() {
     guardar(false);
+    try {
+        localStorage.removeItem(WORD_KEY);
+    } catch {
+        // Nada que hacer.
+    }
 }
 
 /** Entra si estabas fuera y sale si estabas dentro. Lo usa la palabra. */
-export function toggleV02(): boolean {
-    const siguiente = !isV02();
-    guardar(siguiente);
-    return siguiente;
+export function toggleV02(word?: string): boolean {
+    if (isV02()) {
+        leaveV02();
+        return false;
+    }
+
+    enterV02(word);
+    return true;
 }
 
 /** Sólo para los tests: tira la caché sin tocar lo guardado. */

@@ -7,7 +7,9 @@ import Sidebar from '@/components/layout/Sidebar';
 import StatusBar from '@/components/layout/StatusBar';
 import NoteEditor from '@/components/notes/NoteEditor';
 import NotesList from '@/components/notes/NotesList';
+import { trashV02Note } from '@/lib/system/v02Notes';
 import TrashView from '@/components/notes/TrashView';
+import V02TrashView from '@/components/notes/V02TrashView';
 import DiagnosticPanel from '@/components/system/DiagnosticPanel';
 import GlitchLayer from '@/components/effects/GlitchLayer';
 import SystemCollapse from '@/components/effects/SystemCollapse';
@@ -149,7 +151,12 @@ export default function Home() {
 
     const handleMoveToTrash = useCallback(
         async (id: string) => {
-            const ok = await moveToTrash(id);
+            // LA v0.2 TIRA A SU PROPIA PAPELERA, y a veces no la tira.
+            //
+            // Falla hacia NO borrar siempre: si el dado sale mal la nota se
+            // queda donde estaba, entera. Una versión vieja que se traga una
+            // nota no es un efecto de época, es una pérdida de trabajo.
+            const ok = v02 ? trashV02Note(id) : await moveToTrash(id);
             if (ok) {
                 // El sistema se acuerda: si abrís una nota nueva en el minuto
                 // siguiente, el arranque no dice lo de siempre.
@@ -160,7 +167,7 @@ export default function Home() {
             }
             return ok;
         },
-        [moveToTrash]
+        [moveToTrash, v02]
     );
 
     // Ctrl+N funciona en cualquier vista. Los atajos del editor (Ctrl+S, Ctrl+Z,
@@ -355,7 +362,15 @@ export default function Home() {
                                 onKeepArt={guardarPieza}
                             />
                         ) : view === 'trash' ? (
-                            <TrashView />
+                            // CADA VERSIÓN TIENE SU PAPELERA. La de la v0.2
+                            // enseñaba las notas de verdad, y eso rompía lo
+                            // único que sostiene la pieza: son dos versiones
+                            // distintas, con archivos distintos.
+                            v02 ? (
+                                <V02TrashView />
+                            ) : (
+                                <TrashView />
+                            )
                         ) : view === 'collection' ? (
                             <CollectionView pieces={collectibles} />
                         ) : (

@@ -17,10 +17,23 @@
  */
 
 import type { Note } from '@/types/note.types';
+import { TRASH_FAIL_ODDS } from '@/lib/system/v02';
+import { restoreOutcome, type RestoreOutcome } from '@/lib/system/v02Restore';
 
 const STORAGE_KEY = 'flashnotes:v02notes';
 
+/**
+ * Su papelera, aparte de la de verdad.
+ *
+ * Hasta acá la v0.2 enseñaba la papelera del backend, con notas reales dentro.
+ * Eso rompía lo único que sostiene toda la pieza —que son dos versiones con
+ * archivos distintos— y encima ponía trabajo de verdad al alcance de una
+ * interfaz que presume de fallar.
+ */
+const TRASH_KEY = 'flashnotes:v02trash';
+
 let cache: Note[] | null = null;
+let cacheTrash: Note[] | null = null;
 
 /*
  * ALMACÉN DE MÓDULO, como el resto del estado compartido de la app.
@@ -81,6 +94,32 @@ export function readV02Notes(): Note[] {
     }
 }
 
+export function readV02Trashed(): Note[] {
+    if (cacheTrash) return cacheTrash;
+
+    try {
+        const raw = localStorage.getItem(TRASH_KEY);
+        if (!raw) return (cacheTrash = []);
+
+        const parsed: unknown = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return (cacheTrash = []);
+
+        return (cacheTrash = parsed.filter(esNota));
+    } catch {
+        return (cacheTrash = []);
+    }
+}
+
+function guardarPapelera(notas: Note[]) {
+    cacheTrash = notas;
+    try {
+        localStorage.setItem(TRASH_KEY, JSON.stringify(notas));
+    } catch {
+        // Igual que la lista: se olvida al recargar.
+    }
+    listeners.forEach((l) => l());
+}
+
 function guardar(notas: Note[]) {
     cache = notas;
     try {
@@ -130,8 +169,81 @@ export function saveV02Note(
     return actualizada;
 }
 
+/**
+ * Tira una nota a la papelera. A veces **no hace nada**.
+ *
+ * Devuelve si llegó a moverse, para que la pantalla pueda decir lo que pasó —o
+ * no decirlo, que también es propio de esta versión.
+ *
+ * ⚠ FALLA HACIA NO BORRAR, SIEMPRE. Una versión vieja que se traga una nota no
+ * es un efecto de época, es una pérdida de trabajo (REGLAS · A1). Si el dado
+ * sale mal, la nota se queda exactamente donde estaba: la operación no ocurre,
+ * no ocurre a medias.
+ */
+export function trashV02Note(id: string, random: () => number = Math.random): boolean {
+    const notas = readV02Notes();
+    const i = notas.findIndex((n) => n._id === id);
+    if (i < 0) return false;
+
+    if (random() < TRASH_FAIL_ODDS) return false;
+
+    const siguientes = [...notas];
+    const [tirada] = siguientes.splice(i, 1);
+
+    // La papelera primero: entre las dos escrituras hay un instante, y si algo
+    // reventara en medio es mejor que la nota esté en los dos sitios que en
+    // ninguno.
+    guardarPapelera([tirada, ...readV02Trashed()]);
+    guardar(siguientes);
+
+    return true;
+}
+
+/**
+ * Saca una nota de la papelera. La mitad de las veces vuelve CORROMPIDA.
+ *
+ * El texto sigue entero dentro de la basura — ver `v02Restore`. Devuelve el
+ * desenlace para que la pantalla pueda enseñar lo que salió, incluido el
+ * comando que a veces asoma entre el ruido.
+ */
+export function restoreV02Note(
+    id: string,
+    random: () => number = Math.random
+): RestoreOutcome | null {
+    const papelera = readV02Trashed();
+    const i = papelera.findIndex((n) => n._id === id);
+    if (i < 0) return null;
+
+    const nota = papelera[i];
+    const salida = restoreOutcome(nota.content ?? '', random);
+
+    const siguientes = [...papelera];
+    siguientes.splice(i, 1);
+
+    guardar([{ ...nota, content: salida.text } as Note, ...readV02Notes()]);
+    guardarPapelera(siguientes);
+
+    return salida;
+}
+
+/** La borra del todo. Esto sí es para siempre, y sólo se llega pidiéndolo. */
+export function purgeV02Note(id: string): boolean {
+    const papelera = readV02Trashed();
+    const siguientes = papelera.filter((n) => n._id !== id);
+    if (siguientes.length === papelera.length) return false;
+
+    guardarPapelera(siguientes);
+    return true;
+}
+
 /** Lo usan `//reset` y los tests. */
 export function clearV02Notes() {
+    cacheTrash = null;
+    try {
+        localStorage.removeItem(TRASH_KEY);
+    } catch {
+        // Nada que hacer.
+    }
     cache = null;
     try {
         localStorage.removeItem(STORAGE_KEY);

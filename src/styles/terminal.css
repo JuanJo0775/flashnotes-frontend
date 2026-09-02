@@ -676,6 +676,10 @@
     display: inline-block;
     text-align: right;
     min-width: 8ch;
+    /* Un blanco más grande. El reloj es diminuto y está en una esquina: sin
+       esto, tres clics seguidos se iban del objetivo con facilidad. */
+    padding: 0.4em 0.3em;
+    margin: -0.4em -0.3em;
 }
 
 /* Con el código puesto se separa un poco: sin esto, los puntos y las rayas

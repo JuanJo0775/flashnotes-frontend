@@ -646,8 +646,8 @@ export function resetEverything() {
  * puesta. Cambiar estado compartido sin notificar es el mismo error que dejó la
  * barra de estado pillada en `[TODO_BIEN]` durante la avería (REGLAS · B2).
  */
-export function registerV02Toggle(): boolean {
-    const dentro = toggleV02();
+export function registerV02Toggle(word?: string): boolean {
+    const dentro = toggleV02(word);
     publish();
     return dentro;
 }

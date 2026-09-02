@@ -3,6 +3,8 @@
 
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { useToday } from '@/hooks/useToday';
+import { useSystemState } from '@/hooks/useSystemState';
+import { reversedDate } from '@/lib/system/v02Chrome';
 import SystemLabel from '@/components/layout/SystemLabel';
 import LanguageToggle from '@/components/ui/LanguageToggle';
 import { useT, type TranslationKey } from '@/i18n';
@@ -39,7 +41,16 @@ export default function Header({
     const t = useT();
 
     // La fecha se pinta sólo en el cliente (ver useToday).
+    const { v02 } = useSystemState();
     const today = useToday();
+
+    // LA FECHA DE LA v0.2 SALE DEL REVÉS: `2026.09.02` se lee `20.90.6202`.
+    //
+    // Se le da la vuelta a la CADENA ENTERA, que es el error de verdad — alguien
+    // creyó que eso cambiaba el formato. Invertir el orden de los campos daría
+    // `02.09.2026`, que es otro formato correcto, y lo que hace falta acá es uno
+    // roto del que se vea enseguida qué le pasó.
+    const fecha = today === null ? null : v02 ? reversedDate(today) : today;
 
     // El editor es una sub-vista de las notas: se marca "Notas" como activa.
     const activeTab: View = currentView === 'trash' ? 'trash' : 'notes';
@@ -77,7 +88,7 @@ export default function Header({
                 <LanguageToggle />
                 <ThemeToggle />
                 <span className="mono text-xs dim" suppressHydrationWarning>
-                    [{t('nav.dateLabel')}: {today ?? t('nav.datePlaceholder')}]
+                    [{t('nav.dateLabel')}: {fecha ?? t('nav.datePlaceholder')}]
                 </span>
             </div>
         </header>

@@ -91,7 +91,7 @@ export default function StatusBar({
     // Suscrito, y NO leído con `isSystemFailing()`: esa función lee el almacén
     // sin suscribirse, así que el rótulo se habría quedado en [TODO_BIEN] hasta
     // que otra cosa provocara un repintado.
-    const { chromaticFailure, lockedOut } = useSystemState();
+    const { chromaticFailure, lockedOut, v02 } = useSystemState();
     const senalRota = chromaticFailure || lockedOut;
 
     const systemStatus = (): { node: React.ReactNode; isFragment: boolean } => {
@@ -146,7 +146,12 @@ export default function StatusBar({
 
         if (fragment) return { node: <span>{fragment}</span>, isFragment: true };
 
-        return { node: <span>{t('status.ok')}</span>, isFragment: false };
+        // La v0.2 no afirma que todo esté bien: lo PREGUNTA. Una versión que
+        // miente sobre haber guardado no está en condiciones de firmar nada.
+        return {
+            node: <span>{t(v02 ? 'status.v02Ok' : 'status.ok')}</span>,
+            isFragment: false,
+        };
     };
 
     const saveStatus = () => {

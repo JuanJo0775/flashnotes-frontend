@@ -48,7 +48,16 @@ describe('la puerta · la palabra del morse', () => {
 
         const r = run(`//${palabra}`, ctx())!;
 
-        expect(r.effect).toEqual({ kind: 'toggle-v02', entering: true });
+        // La palabra viaja con el efecto: al entrar queda GUARDADA, y es la
+        // que sacará mañana. Dentro de la v0.2 el reloj ya no enseña el morse
+        // —es la puerta de entrada, no algo de esa versión—, así que sin
+        // guardarla bastaría recargar para que la de hoy fuera otra y la salida
+        // desapareciera.
+        expect(r.effect).toEqual({
+            kind: 'toggle-v02',
+            entering: true,
+            word: palabra,
+        });
     });
 
     test('no distingue mayúsculas: se descifra a mano', async () => {
@@ -81,12 +90,26 @@ describe('la puerta · la palabra del morse', () => {
         const palabra = morse.sessionWord(() => 0);
 
         run(`//${palabra}`, ctx());
-        v02.enterV02();
+        v02.enterV02(palabra);
 
         expect(run(`//${palabra}`, ctx())!.effect).toEqual({
             kind: 'toggle-v02',
             entering: false,
+            word: palabra,
         });
+    });
+
+    test('la palabra GUARDADA sale, aunque la de hoy sea otra', async () => {
+        // El caso que de verdad importa: entraste ayer, recargaste, y el morse
+        // de esta sesión dice otra cosa. Dentro no hay dónde mirar la nueva, así
+        // que si sólo valiera ésa quedarías encerrado.
+        const { run, morse, v02 } = await load();
+
+        v02.enterV02('NIDO');
+        const otra = morse.sessionWord(() => 0.9);
+        expect(otra).not.toBe('NIDO');
+
+        expect(run('//nido', ctx())!.effect.kind).toBe('toggle-v02');
     });
 
     test('NO sale en la ayuda, ni tachada', async () => {
@@ -102,15 +125,23 @@ describe('la puerta · la palabra del morse', () => {
 });
 
 describe('la red · //recover', () => {
+    /*
+     * `//recover` SÓLO EXISTE EN LA v0.2. Es la red de esa versión, y nadie la
+     * llevó a la nueva porque la nueva no la necesita: no pierde notas. Por eso
+     * cada test de acá enciende la bandera antes — fuera de la v0.2 el comando
+     * contesta «desconocido», igual que una palabra inventada.
+     */
     test('sin nada caído, lo dice', async () => {
-        const { run } = await load();
+        const { run, v02 } = await load();
+        v02.enterV02('NIDO');
 
         expect(run('//recover', ctx())!.output).toMatch(/NO SE CAYÓ NADA/);
     });
 
     test('devuelve lo que no se guardó', async () => {
         // Perder de verdad, sí; perder para siempre y sin aviso, no.
-        const { run, dropped } = await load();
+        const { run, dropped, v02 } = await load();
+        v02.enterV02('NIDO');
         dropped.rememberDropped('abc', 'T', 'lo que estaba escribiendo');
 
         const r = run('//recover', ctx())!;
@@ -122,7 +153,8 @@ describe('la red · //recover', () => {
     });
 
     test('devuelve lo ÚLTIMO que se cayó', async () => {
-        const { run, dropped } = await load();
+        const { run, dropped, v02 } = await load();
+        v02.enterV02('NIDO');
         dropped.rememberDropped('a', 'T', 'viejo');
         dropped.rememberDropped('b', 'T', 'nuevo');
 

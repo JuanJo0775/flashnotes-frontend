@@ -7,7 +7,7 @@ import { greetingFor, chatReplyFor, KILL_AFTER_KICKS } from '@/lib/system/greeti
 import { drawArt, canKeep, lastDrawn, asNote, noteTitle } from '@/lib/system/asciiArt';
 import { isUnlocked, markUsed } from '@/lib/system/commandUnlock';
 import { isSessionWord } from '@/lib/system/morse';
-import { isV02 } from '@/lib/system/v02';
+import { isV02, v02Word } from '@/lib/system/v02';
 import { allDropped } from '@/lib/system/dropped';
 import type { Lang } from '@/config/lang';
 import type { Localized, LocalizedPlural, Vars } from '@/i18n';
@@ -79,7 +79,7 @@ export type CommandEffect =
     | { kind: 'keep-art'; title: string; text: string }
     | { kind: 'reset-all' }
     | { kind: 'kill-page' }
-    | { kind: 'toggle-v02'; entering: boolean }
+    | { kind: 'toggle-v02'; entering: boolean; word: string }
     | { kind: 'recover'; text: string }
     | { kind: 'set-effects'; enabled: boolean };
 
@@ -211,6 +211,16 @@ interface Command {
      */
     hidden?: boolean;
     /**
+     * En la v0.2 este comando NO EXISTE TODAVÍA.
+     *
+     * Contesta «comando desconocido», igual que una palabra inventada — porque
+     * en esa versión eso es lo que es. La v0.2 no es la v1.0 con cosas rotas: es
+     * la v1.0 antes de que se escribieran.
+     */
+    notInV02?: boolean;
+    /** Y éste sólo existe EN la v0.2. Nadie lo llevó a la versión nueva. */
+    onlyV02?: boolean;
+    /**
      * El secreto que marca. Puede venir del comando entero o de la respuesta.
      *
      * `//attach_*` lo decide al resolver: sólo el PID que abre el juego cuenta
@@ -243,6 +253,26 @@ const texto = (output: string) => ({ output, effect: SIN_EFECTO });
 const T = {
     // El tono de la v0.2 es el mismo, con menos oficio: la misma máquina más
     // joven, que todavía no aprendió a callarse lo que no hace falta decir.
+    todoExit: {
+        es: '\n\n  (se sale tecleando {word})',
+        en: '\n\n  (type {word} to get out)',
+    },
+    todo: {
+        es:
+            'PENDIENTE:\n\n' +
+            '  - guardar solo, sin que lo pidan\n' +
+            '  - que borrar no sea para siempre\n' +
+            '  - mas comandos\n' +
+            '  - traducir lo que falta\n' +
+            '  - pasar los archivos a la version que viene',
+        en:
+            'TODO:\n\n' +
+            '  - save on its own, unasked\n' +
+            '  - make deleting not forever\n' +
+            '  - more commands\n' +
+            '  - translate the rest\n' +
+            '  - move the files to the next version',
+    },
     recoverNothing: {
         es: 'NO SE CAYÓ NADA. TODAVÍA.',
         en: 'NOTHING WAS DROPPED. YET.',
@@ -441,7 +471,12 @@ function pickOne(
 /** El nombre de uno de los escondidos, al azar. */
 function leakOne(random: () => number): string {
     // Sólo los que siguen tachados: soltar uno que ya usaste no es una fuga.
-    const ocultos = COMMANDS.filter((c) => c.hidden && !isUnlocked(c.name));
+    const ocultos = COMMANDS.filter(
+        (c) =>
+            c.hidden &&
+            !isUnlocked(c.name) &&
+            (isV02() ? !c.notInV02 : !c.onlyV02)
+    );
     if (ocultos.length === 0) return '';
     const i = Math.min(ocultos.length - 1, Math.floor(random() * ocultos.length));
     return ocultos[i].name;
@@ -462,8 +497,11 @@ const COMMANDS: readonly Command[] = [
             // Un comando escondido pasa a listarse cuando lo USÁS. Ver no es
             // descubrir: leer su nombre en una ventana de error no basta, hay
             // que teclearlo.
+            const enEstaVersion = COMMANDS.filter((c) =>
+                isV02() ? !c.notInV02 : !c.onlyV02
+            );
             const visible = (c: Command) => !c.hidden || isUnlocked(c.name);
-            const tachados = COMMANDS.filter((c) => !visible(c));
+            const tachados = enEstaVersion.filter((c) => !visible(c));
             const soltado = tachados.length > 0 ? leakOne(random) : '';
 
             // CADA COMANDO OCUPA SU SITIO, descubierto o no. Antes los tachados
@@ -474,7 +512,7 @@ const COMMANDS: readonly Command[] = [
             const filas: ReplyRow[] = [
                 { text: T.availableCommands[lang] },
                 { text: '' },
-                ...COMMANDS.map((c): ReplyRow =>
+                ...enEstaVersion.map((c): ReplyRow =>
                     visible(c)
                         ? { text: `  ${c.name.padEnd(12)} ${c.summary[lang]}` }
                         : { scramble: c.name.length - COMMAND_PREFIX.length }
@@ -508,6 +546,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//whoami',
+        notInV02: true,
         hidden: true,
         summary: {
             es: 'a quién cree tener enfrente',
@@ -518,6 +557,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//sudo',
+        notInV02: true,
         hidden: true,
         summary: { es: 'pedir permiso', en: 'ask for permission' },
         secretId: 'sudo',
@@ -526,6 +566,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//uptime',
+        notInV02: true,
         hidden: true,
         summary: {
             es: 'cuánto lleva abierta esta pestaña',
@@ -540,6 +581,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//date',
+        notInV02: true,
         summary: {
             es: 'la hora acá y la hora del sistema',
             en: 'your time and system time',
@@ -555,12 +597,14 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//df',
+        notInV02: true,
         summary: { es: 'cuánto llevás escrito', en: 'how much you have written' },
         secretId: 'inspect',
         resolve: (ctx, _args, lang) => texto(formatUsage(ctx.notes, lang)),
     },
     {
         name: '//ps',
+        notInV02: true,
         hidden: true,
         summary: {
             es: 'qué está corriendo ahora mismo',
@@ -571,6 +615,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//log',
+        notInV02: true,
         hidden: true,
         summary: { es: 'las últimas peticiones', en: 'the last requests' },
         secretId: 'log',
@@ -578,6 +623,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//history',
+        notInV02: true,
         hidden: true,
         summary: {
             es: 'las versiones guardadas de esta nota',
@@ -593,6 +639,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//diag',
+        notInV02: true,
         hidden: true,
         summary: {
             es: 'abrir el panel de diagnóstico',
@@ -606,6 +653,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//chaos',
+        notInV02: true,
         hidden: true,
         summary: {
             es: 'encender o apagar los efectos (on | off)',
@@ -635,6 +683,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//panic',
+        notInV02: true,
         hidden: true,
         summary: { es: 'romper el sistema', en: 'break the system' },
         secretId: 'collapse',
@@ -642,6 +691,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//hi',
+        notInV02: true,
         hidden: true,
         summary: { es: 'saludar', en: 'say hello' },
         secretId: 'greeting',
@@ -665,6 +715,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//whoareu',
+        notInV02: true,
         hidden: true,
         summary: { es: 'preguntarle quién es', en: 'ask who it is' },
         secretId: 'greeting',
@@ -679,6 +730,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//howareu',
+        notInV02: true,
         hidden: true,
         summary: { es: 'preguntarle cómo está', en: 'ask how it is doing' },
         secretId: 'greeting',
@@ -690,6 +742,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//date_off',
+        notInV02: true,
         hidden: true,
         summary: {
             es: 'soltar el reloj del sistema',
@@ -703,6 +756,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//art',
+        notInV02: true,
         hidden: true,
         summary: { es: 'lo que quedó dibujado', en: 'what was left drawn' },
         secretId: 'art',
@@ -729,6 +783,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//keep',
+        notInV02: true,
         hidden: true,
         summary: { es: 'quedarse la última', en: 'keep the last one' },
         resolve: (_ctx, _args, lang) => {
@@ -752,8 +807,47 @@ const COMMANDS: readonly Command[] = [
         },
     },
     {
+        name: '//todo',
+        hidden: true,
+        onlyV02: true,
+        summary: {
+            es: 'lo que faltaba por hacer',
+            en: 'what was left to do',
+        },
+        /*
+         * EL COMANDO QUE MEJOR CUENTA LA v0.2.
+         *
+         * Es la lista de tareas que alguien dejó escrita y nunca borró. Quien la
+         * lee desde acá ve cosas por hacer; quien conoce la v1.0 reconoce en
+         * ella LO QUE ACABÓ EXISTIENDO — el auto-guardado, la papelera, los
+         * comandos. La v0.2 no sabe que va a llegar a ser algo.
+         *
+         * Y el último punto no se cumplió: los archivos de la v0.2 nunca se
+         * migraron, y por eso siguen sin verse desde la versión nueva.
+         */
+        resolve: (_ctx, _args, lang) => {
+            /*
+             * LA ÚLTIMA LÍNEA ES LA SALIDA, y no está de adorno.
+             *
+             * Dentro de la v0.2 el reloj ya no enseña el morse: es la puerta de
+             * entrada. Quien entró hace semanas y no se acuerda de la palabra no
+             * tiene dónde mirarla — y un estado del que no se puede salir es una
+             * app rota, no un secreto.
+             *
+             * Va escrita como lo que sería en un fichero así: una nota que
+             * alguien se dejó a sí mismo para no tener que acordarse. No explica
+             * nada; quien la necesita entiende para qué es.
+             */
+            const palabra = v02Word();
+            const nota = palabra ? say(T.todoExit, lang, { word: palabra }) : '';
+
+            return texto(T.todo[lang] + nota);
+        },
+    },
+    {
         name: '//recover',
         hidden: true,
+        onlyV02: true,
         summary: {
             es: 'traer de vuelta lo que no se guardó',
             en: 'bring back what was not saved',
@@ -773,6 +867,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//reset',
+        notInV02: true,
         hidden: true,
         summary: {
             es: 'empezar de cero, como la primera vez',
@@ -801,6 +896,7 @@ const COMMANDS: readonly Command[] = [
      */
     {
         name: '//attach_6',
+        notInV02: true,
         match: /^attach_(\d+)$/,
         hidden: true,
         summary: { es: '—', en: '—' },
@@ -838,10 +934,22 @@ const COMMANDS: readonly Command[] = [
  * nombran uno en lugar de quejarse del vídeo. Es la tercera fuga —junto al
  * recuento de `//help` y su soltada ocasional— y la que menos se parece a una
  * pista: parece que al sistema se le escapó, no que te lo esté enseñando.
+ *
+ * ⚠ ES UNA FUNCIÓN, NO UNA CONSTANTE, y ésa es la corrección importante.
+ *
+ * Era una lista calculada UNA VEZ al cargar el módulo, así que no sabía en qué
+ * versión estabas: dentro de la v0.2 soltaba comandos de la v1.0, que ahí no
+ * existen y contestan «desconocido». Una pista que no lleva a ninguna parte es
+ * peor que ninguna pista — enseña que las pistas de esta app no valen, y a
+ * partir de ahí ya nadie sigue ninguna.
  */
-export const HIDDEN_COMMAND_NAMES: readonly string[] = COMMANDS.filter(
-    (c) => c.hidden
-).map((c) => c.name);
+export function hiddenCommandNames(): readonly string[] {
+    const enV02 = isV02();
+
+    return COMMANDS.filter(
+        (c) => c.hidden && (enV02 ? !c.notInV02 : !c.onlyV02)
+    ).map((c) => c.name);
+}
 
 /**
  * Los nombres de los comandos ANUNCIADOS, para la ayuda y para los tests.
@@ -880,19 +988,43 @@ export function run(
 
     // Primero por nombre exacto; si no, por patrón. El orden importa: un
     // comando literal nunca puede quedar tapado por el patrón de otro.
+    // CADA VERSIÓN TIENE SUS COMANDOS. En la v0.2 los de la v1.0 no existen
+    // todavía y contestan «comando desconocido», igual que una palabra
+    // inventada — porque en esa versión eso es lo que son. Y al revés: lo que
+    // es exclusivo de la v0.2 no existe en la nueva, porque nadie lo llevó.
+    const enV02 = isV02();
+    const disponibles = COMMANDS.filter((c) =>
+        enV02 ? !c.notInV02 : !c.onlyV02
+    );
+
     const command =
-        COMMANDS.find((c) => c.name === buscado) ??
-        COMMANDS.find((c) => c.match?.test(corto));
+        disponibles.find((c) => c.name === buscado) ??
+        disponibles.find((c) => c.match?.test(corto));
 
     // LA PALABRA DEL MORSE. Se reconoce acá y no como un comando declarado
     // porque cambia por sesión: metida en la lista se filtraría por `//help` y
     // por las ventanas de error, que sólo conocen los comandos declarados. Acá
     // no existe hasta que la tecleás.
-    if (isSessionWord(corto)) {
-        const entrando = !isV02();
+    //
+    // Y ESTANDO DENTRO, la que abre es la que abrió. El morse cambia por
+    // sesión y ahí dentro el reloj ya no lo enseña, así que exigir la palabra
+    // de hoy dejaría encerrado a quien entró ayer. Se acepta la guardada.
+    const entrando = !isV02();
+    const abre = entrando
+        ? isSessionWord(corto)
+        : isSessionWord(corto) || corto.toUpperCase() === v02Word();
+
+    if (abre) {
         return {
             output: entrando ? T.v02Enter[lang] : T.v02Leave[lang],
-            effect: { kind: 'toggle-v02', entering: entrando },
+            // En mayúsculas: la palabra se descifra a mano y se teclea como
+            // salga, pero la que se guarda es una sola. Normalizar acá evita que
+            // «modo» y «MODO» se guarden como dos puertas distintas.
+            effect: {
+                kind: 'toggle-v02',
+                entering: entrando,
+                word: corto.toUpperCase(),
+            },
         };
     }
 

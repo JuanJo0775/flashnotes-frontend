@@ -1,29 +1,36 @@
 # Catálogo de efectos
 
-Todo lo que la interfaz hace y que no es "guardar una nota". Cada entrada dice
-**qué se ve**, **cómo se dispara**, **con qué números** y **por qué está hecho
-así** — esa última parte es la que evita que alguien lo "arregle" más adelante.
+Todo lo que la interfaz hace y que no es «guardar una nota», contado desde
+dentro: **qué se ve** y, sobre todo, **por qué está hecho así** — esa segunda
+parte es la que evita que alguien lo «arregle» más adelante.
+
+## Dónde está cada cosa
+
+Tres páginas, y cada una responde a una pregunta distinta. Si algo aparece en
+dos, sobra en una.
+
+| Página | Responde a |
+| --- | --- |
+| **`SECRETOS.md`** | *¿Cómo se dispara, y con qué probabilidad?* Disparadores, umbrales, porcentajes exactos y pasos para reproducir. **Es el índice de entrada.** |
+| **Ésta** | *¿Por qué está construido así?* Las decisiones, las trampas del navegador y lo que se probó y no funcionó. |
+| **`REGLAS.md`** | *¿Qué no puede hacer ningún efecto, nunca?* Las cinco reglas de producto (A1–A5) mandan sobre todo lo de aquí. |
 
 El diseño de conjunto y el lore están en
 [`docs/specs/2026-09-01-secretos-del-sistema.md`](specs/2026-09-01-secretos-del-sistema.md).
-Este documento es la referencia técnica de las piezas ya construidas.
 
 ---
 
-## Las dos reglas que mandan sobre todo
+## Las reglas que mandan sobre todo lo de aquí
 
-Si un efecto choca con una de estas, se recorta el efecto.
+Si un efecto choca con una de ellas, **se recorta el efecto**.
 
-**1 · Nada puede perder trabajo, ni aparentar que lo perdió.** Ningún efecto
-interrumpe el auto-guardado, desmonta el editor ni mueve el foco. El colapso
-(§13) tapa la pantalla cuatro segundos y por debajo se sigue escribiendo y
-guardando. Y nada simula pérdida de datos: un contador que baja y se corrige
-sería el efecto más eficaz del lote, y por eso está explícitamente prohibido.
+Están en [`REGLAS.md`](REGLAS.md) · sección A, que es su sitio: A1 nada pierde
+trabajo ni lo aparenta, A2 nada bloquea la escritura, A3
+`prefers-reduced-motion` gana siempre, A4 de cualquier estado se sale, A5 ninguna
+pista lleva a algo que no existe donde estás.
 
-**2 · `prefers-reduced-motion` gana siempre.** Con él activo no hay temblores,
-ni estática, ni negativo, ni sacudidas de tema. Lo que es **contenido** sigue
-funcionando —comandos, panel, fragmentos de texto— porque es texto, no
-movimiento.
+Se listaban también acá, y tenerlas en dos sitios es exactamente cómo se
+desincronizan: acá había dos y en `REGLAS.md` tres.
 
 ## Cómo apagarlo todo
 
@@ -39,32 +46,12 @@ herramientas.
 
 ---
 
-## Índice por disparador
+## Índice de piezas
 
-| Lo que hacés | Lo que pasa |
-| ------------ | ----------- |
-| Nada, dejar la pestaña abierta | [§1 Glitch ambiental](#1--glitch-ambiental) · [§2 Fragmentos](#2--fragmentos-del-sistema) · [§12 Barrido trabado](#12--la-línea-de-barrido-se-traba) |
-| Abrir la app | [§4 Arranque en vídeo inverso](#4--arranque-en-vídeo-inverso) |
-| Abrir una nota vacía | [§3 Arranques raros](#3--arranques-raros) |
-| Escribir `//` y un comando | [§6 Comandos](#6--comandos-en-el-prompt) |
-| `//diag` o Alt+clic en `[SYSTEM_OK]` | [§7 Panel de diagnóstico](#7--panel-de-diagnóstico) |
-| `//log` | [§8 Registro de peticiones](#8--registro-de-peticiones) |
-| Clic 3 en el rótulo | [§5 Botón secreto](#5--el-botón-secreto) |
-| Clic 9 en el rótulo, o `//panic` | [§13 Colapso](#13--colapso-del-sistema) |
-| Seis colapsos seguidos (por clics o por `//panic`, da igual) | [El bloqueo](#el-bloqueo--al-sexto-colapso) |
-| 10 toques rápidos al tema | [§14 Fallo cromático](#14--fallo-cromático) |
-| Entrar a la papelera con la sesión avanzada | [§9 Archivo fantasma](#9--el-archivo-fantasma) |
-| Borrar cinco notas para siempre | [§10 La papelera cuenta](#10--la-papelera-lleva-la-cuenta) |
-| Perder la conexión y recuperarla | [§11 La reconexión](#11--la-reconexión) |
-| `//ps` y después `//attach_6` | [§15 vsync-test](#15--vsync-test--el-pong-escondido) |
-| `//hi`, y otra vez, y otra | [§16 El saludo se agota](#16--el-saludo-se-agota) |
-| `//date_off` | [§17 El reloj se suelta](#17--el-reloj-se-suelta) |
-| `//art`, y otra vez | [§18 Las piezas que quedaron](#18--las-piezas-que-quedaron) |
-| `//help` unas cuantas veces | [§19 La ayuda no lo dice todo](#19--la-ayuda-no-lo-dice-todo) |
-| Tres clics en la hora | [§20 El reloj esconde algo](#20--el-reloj-esconde-algo) |
-| `//hi` y enseguida `//whoareu` | [§21 La conversación se agota](#21--la-conversación-se-agota) |
-| `//reset` | [§22 Empezar de cero](#22--empezar-de-cero) |
-| Guardar una pieza con `//keep` | [§23 La colección](#23--la-colección) |
+El índice **por disparador** —qué hacer para ver cada cosa— está en
+[`SECRETOS.md`](SECRETOS.md), junto con las probabilidades. Acá las piezas van en
+el orden en que se construyeron, que es el orden en que se entienden: cada una
+apoya en las anteriores.
 
 ---
 

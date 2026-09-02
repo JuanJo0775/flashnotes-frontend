@@ -70,6 +70,9 @@ export const es = {
     'sidebar.clockLabel': 'Hora del sistema',
 
     // ── listado de notas ─────────────────────────────────────────────────────
+    // El total no lo sabe nadie, y por eso hay una barra que se lo
+    // inventa. El signo de interrogación explica la barra entera.
+    'list.v02LoadingDetail': 'leyendo bloque 3 de ?',
     'list.loading': '[CARGANDO',
     'list.loadingDetail': 'Recuperando archivos del sistema',
     // No es `[SISTEMA_VACÍO]` ni `[SYSTEM_EMPTY]`: el calco suena a app
@@ -123,6 +126,10 @@ export const es = {
     // ── papelera ─────────────────────────────────────────────────────────────
     'trash.empty': 'La papelera está vacía.',
     'trash.deleted': 'Eliminada',
+    // Las de la v0.2 son otras: texto con un `>` delante, sin corchetes
+    // ni flechas. El cromo llegó después.
+    'trash.v02Restore': '> recuperar',
+    'trash.v02Delete': '> borrar',
     'trash.restore': '[↶] Restaurar',
     'trash.delete': '[X] Eliminar',
     'trash.busy': '[...]',
@@ -136,6 +143,10 @@ export const es = {
     'status.serverDown': '[SERVIDOR_NO_RESPONDE]',
     'status.error': '[ERROR]',
     'status.loading': '[CARGANDO',
+    // La v0.2 no afirma que todo esté bien: lo pregunta. Es el mismo
+    // rótulo con un signo, y ese signo es toda la diferencia entre una
+    // versión que se conoce y una que no.
+    'status.v02Ok': '[TODO_BIEN?]',
     'status.ok': '[TODO_BIEN]',
     'status.broken': '[TODO_MAL]',
     'status.saving': '[GUARDANDO',

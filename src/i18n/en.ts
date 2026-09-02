@@ -58,6 +58,9 @@ export const en: Dictionary = {
     'sidebar.clockLabel': 'System time',
 
     // ── notes list ───────────────────────────────────────────────────────────
+    // El total no lo sabe nadie, y por eso hay una barra que se lo
+    // inventa. El signo de interrogación explica la barra entera.
+    'list.v02LoadingDetail': 'reading block 3 of ?',
     'list.loading': '[LOADING',
     'list.loadingDetail': 'Retrieving files from the system',
     'list.emptyBanner': '[SYSTEM_EMPTY]',
@@ -105,6 +108,10 @@ export const en: Dictionary = {
     // ── trash ────────────────────────────────────────────────────────────────
     'trash.empty': 'The trash is empty.',
     'trash.deleted': 'Deleted',
+    // Las de la v0.2 son otras: texto con un `>` delante, sin corchetes
+    // ni flechas. El cromo llegó después.
+    'trash.v02Restore': '> restore',
+    'trash.v02Delete': '> delete',
     'trash.restore': '[↶] Restore',
     'trash.delete': '[X] Delete',
     'trash.busy': '[...]',
@@ -116,6 +123,10 @@ export const en: Dictionary = {
     'status.serverDown': '[SERVER_NOT_RESPONDING]',
     'status.error': '[ERROR]',
     'status.loading': '[LOADING',
+    // La v0.2 no afirma que todo esté bien: lo pregunta. Es el mismo
+    // rótulo con un signo, y ese signo es toda la diferencia entre una
+    // versión que se conoce y una que no.
+    'status.v02Ok': '[ALL_OK?]',
     'status.ok': '[SYSTEM_OK]',
     'status.broken': '[SYSTEM_FAIL]',
     'status.saving': '[SAVING',

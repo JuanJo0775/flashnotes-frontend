@@ -34,6 +34,27 @@ la app no te interrumpa sin permiso.
 Sin negarse a existir: la versión reducida cuenta lo mismo con menos movimiento.
 El colapso pasa a un corte a negro de 400 ms con el texto ya escrito.
 
+### A4 · De cualquier estado se sale
+
+Un estado del que no se puede salir no es un secreto: es una app rota.
+
+De la v0.2 se sale con la palabra con la que se entró, **que por eso se guarda**
+— el morse cambia por sesión y ahí dentro el reloj ya no lo enseña. De todo lo
+demás se sale con `//reset`.
+
+Nació de un agujero de verdad: al quitar el morse de dentro de la v0.2, bastaba
+recargar para que la palabra de la sesión fuera otra y la salida desapareciera.
+
+### A5 · Ninguna pista lleva a algo que no existe donde estás
+
+Las ventanas de error del fallo cromático sueltan de vez en cuando el nombre de
+un comando escondido. Esa lista se calculaba **una vez** al cargar el módulo, así
+que dentro de la v0.2 nombraba comandos de la v1.0 — que ahí contestan
+«desconocido».
+
+Una pista que no lleva a ninguna parte es peor que ninguna: enseña que las pistas
+de esta app no valen, y a partir de ahí ya no se sigue ninguna.
+
 ---
 
 # B · Reglas de arquitectura

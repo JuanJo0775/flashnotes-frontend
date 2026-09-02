@@ -3,6 +3,8 @@
 
 import { useSyncExternalStore } from 'react';
 import { formatTime } from '@/lib/utils/formatters';
+import { isV02 } from '@/lib/system/v02';
+import { backwardsTime } from '@/lib/system/v02Chrome';
 
 /**
  * La hora del equipo, latiendo.
@@ -40,8 +42,26 @@ let latido: ReturnType<typeof setInterval> | null = null;
 let arranque: ReturnType<typeof setTimeout> | null = null;
 const listeners = new Set<() => void>();
 
+/**
+ * Cuándo se empezó a mirar. La v0.2 cuenta hacia atrás desde acá.
+ *
+ * Se fija al primer latido y no al cargar el módulo: si se fijara antes, el
+ * reloj arrancaría ya retrasado por lo que tardó la página en montar, y lo que
+ * tiene que verse es una hora de verdad que se pone a retroceder.
+ */
+let miradaDesde: number | null = null;
+
 function publicar() {
-    const siguiente = formatTime(new Date());
+    const ms = Date.now();
+    if (miradaDesde === null) miradaDesde = ms;
+
+    // EN LA v0.2 EL RELOJ VA AL REVÉS. Es el error más creíble que se comete
+    // escribiendo esto por primera vez: un `-` donde iba un `+`. Retrocede al
+    // mismo ritmo al que avanzaría — a otra velocidad se leería como un efecto
+    // puesto aposta, a ésta se lee como un signo mal puesto.
+    const instante = isV02() ? new Date(backwardsTime(ms, miradaDesde)) : new Date(ms);
+
+    const siguiente = formatTime(instante);
     if (siguiente === ahora) return;
 
     ahora = siguiente;

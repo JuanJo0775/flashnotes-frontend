@@ -8,7 +8,7 @@ import {
     storePhantoms,
 } from '@/hooks/useSystemState';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { HIDDEN_COMMAND_NAMES } from '@/lib/system/commands';
+import { hiddenCommandNames } from '@/lib/system/commands';
 
 /**
  * Ventanas de error que aparecen y se cierran solas.
@@ -257,16 +257,16 @@ export default function PhantomError() {
         /** Abre una ventana y programa su cierre. */
         function abrirUna(despues: (ms: number, fn: () => void) => void) {
             const mensaje =
-                Math.random() < LEAK_ODDS && HIDDEN_COMMAND_NAMES.length > 0
+                Math.random() < LEAK_ODDS && hiddenCommandNames().length > 0
                     ? {
                           code: '0x' + Math.floor(Math.random() * 65536)
                               .toString(16)
                               .toUpperCase()
                               .padStart(4, '0'),
                           text: `SÍMBOLO SIN RESOLVER: ${
-                              HIDDEN_COMMAND_NAMES[
+                              hiddenCommandNames()[
                                   Math.floor(
-                                      Math.random() * HIDDEN_COMMAND_NAMES.length
+                                      Math.random() * hiddenCommandNames().length
                                   )
                               ]
                           }`,
