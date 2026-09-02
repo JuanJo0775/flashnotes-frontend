@@ -55,6 +55,16 @@ const avanzar = (ms: number) =>
         jest.advanceTimersByTime(ms);
     });
 
+/**
+ * Cuánto hay que adelantar para llegar al rearranque.
+ *
+ * Estaba escrito como `2700` en diez sitios, y al meter las franjas de color
+ * entre la nieve y el apagón todos se quedaron cortos a la vez. Un número mágico
+ * repetido diez veces es diez sitios que hay que acordarse de tocar; con nombre,
+ * es uno.
+ */
+const HASTA_REARRANQUE = 3200;
+
 describe('SystemCollapse · no rompe nada', () => {
     // La regla que de verdad importa: el colapso es una capa ENCIMA. Debajo, la
     // app sigue viva, el editor sigue montado y el auto-guardado sigue su curso.
@@ -112,10 +122,21 @@ describe('SystemCollapse · la secuencia', () => {
         expect(container.querySelector('pre.collapse-noise')).not.toBeNull();
     });
 
-    test('el tubo se apaga', () => {
+    test('entre la nieve y el apagón salen las franjas de color', () => {
+        // Es el orden real de un televisor que pierde la señal: primero ruido,
+        // después la carta de ajuste, y sólo entonces se apaga. Sin ellas la
+        // estática se cortaba a secas y parecía un corte de luz.
         const { container } = render(<SystemCollapse notesCount={12} level={nivel()} onDone={() => {}} />);
 
         avanzar(2300);
+
+        expect(container.querySelector('.collapse-bars')).not.toBeNull();
+    });
+
+    test('y después el tubo se apaga', () => {
+        const { container } = render(<SystemCollapse notesCount={12} level={nivel()} onDone={() => {}} />);
+
+        avanzar(2800);
 
         expect(container.querySelector('[data-phase="dying"]')).not.toBeNull();
     });
@@ -127,7 +148,7 @@ describe('SystemCollapse · la secuencia', () => {
         // entonces se crea el intervalo que teclea. Avanzando de una sola vez,
         // el intervalo nace después de que el reloj ya se movió y no llega a
         // correr — que es justo lo que pasaría en la realidad.
-        avanzar(2700);
+        avanzar(3200);
         avanzar(1300);
 
         expect(screen.getByText(/REINICIANDO/)).toBeInTheDocument();
@@ -145,7 +166,7 @@ describe('SystemCollapse · la secuencia', () => {
             />
         );
 
-        avanzar(2700);
+        avanzar(HASTA_REARRANQUE);
         avanzar(200);
 
         expect(container.querySelector('.collapse-progress')?.textContent).toMatch(
@@ -164,7 +185,7 @@ describe('SystemCollapse · la secuencia', () => {
             />
         );
 
-        avanzar(2700);
+        avanzar(HASTA_REARRANQUE);
         avanzar(5000);
         expect(onDone).not.toHaveBeenCalled();
 
@@ -184,7 +205,7 @@ describe('SystemCollapse · la secuencia', () => {
             />
         );
 
-        avanzar(2700);
+        avanzar(HASTA_REARRANQUE);
         avanzar(400);
 
         const barra = container.querySelector('.collapse-progress')?.textContent ?? '';
@@ -203,7 +224,7 @@ describe('SystemCollapse · la secuencia', () => {
             />
         );
 
-        avanzar(2700);
+        avanzar(HASTA_REARRANQUE);
         avanzar(5000);
 
         expect(container.querySelector('.collapse-progress')?.textContent).not.toContain(
@@ -221,7 +242,7 @@ describe('SystemCollapse · la secuencia', () => {
             />
         );
 
-        avanzar(2700);
+        avanzar(HASTA_REARRANQUE);
         avanzar(1700);
         expect(container.querySelector('.collapse-failed')).not.toBeNull();
 
@@ -235,7 +256,7 @@ describe('SystemCollapse · la secuencia', () => {
             <SystemCollapse notesCount={12} level={nivel()} onDone={onDone} />
         );
 
-        avanzar(2700);
+        avanzar(HASTA_REARRANQUE);
         avanzar(2000);
 
         expect(container.querySelector('.collapse-failed')).toBeNull();
@@ -246,7 +267,7 @@ describe('SystemCollapse · la secuencia', () => {
         const onDone = jest.fn();
         render(<SystemCollapse notesCount={12} level={nivel()} onDone={onDone} />);
 
-        avanzar(2700);
+        avanzar(HASTA_REARRANQUE);
         avanzar(2000);
 
         expect(onDone).toHaveBeenCalledTimes(1);
@@ -257,7 +278,7 @@ describe('SystemCollapse · la secuencia', () => {
         expect(getSystemState().integrity).toBe(0);
 
         render(<SystemCollapse notesCount={3} level={nivel()} onDone={() => {}} />);
-        avanzar(2700);
+        avanzar(HASTA_REARRANQUE);
         avanzar(2000);
 
         expect(getSystemState().integrity).toBe(100);
@@ -296,7 +317,7 @@ describe('SystemCollapse · las líneas salen a medida que carga', () => {
             />
         );
 
-        avanzar(2700);
+        avanzar(HASTA_REARRANQUE);
         avanzar(200);
 
         const texto = container.querySelector('.collapse-reboot-lines')?.textContent ?? '';
@@ -314,7 +335,7 @@ describe('SystemCollapse · las líneas salen a medida que carga', () => {
             />
         );
 
-        avanzar(2700);
+        avanzar(HASTA_REARRANQUE);
         avanzar(3900);
 
         expect(container.querySelector('.collapse-reboot-lines')?.textContent).toMatch(
@@ -341,7 +362,7 @@ describe('SystemCollapse · las líneas salen a medida que carga', () => {
             />
         );
 
-        avanzar(2700);
+        avanzar(HASTA_REARRANQUE);
         avanzar(1500);
 
         const texto = container.querySelector('.collapse-reboot-lines')?.textContent ?? '';

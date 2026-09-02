@@ -51,9 +51,21 @@ const pideQuieto = () => {
     }));
 };
 
-test('empieza enseñando la lista entera, sin nada comido', () => {
+test('empieza DESVANECIENDO la app, sin enseñar nada', () => {
+    // Sin esto, la pantalla de borrado aparecía de golpe sobre las notas y se
+    // leía como un diálogo. Lo que hay que ver primero es a la app irse.
     sinPreferencia();
     render(<WipeScreen onDone={() => {}} />);
+
+    expect(document.documentElement).toHaveAttribute('data-wiping');
+    expect(document.querySelector('.wipe-list')).toBeNull();
+});
+
+test('después enseña la lista entera, sin nada comido', () => {
+    sinPreferencia();
+    render(<WipeScreen onDone={() => {}} />);
+
+    correElGuion(1, 1_000);
 
     const lista = document.querySelector('.wipe-list')?.textContent ?? '';
 
@@ -61,22 +73,35 @@ test('empieza enseñando la lista entera, sin nada comido', () => {
     expect(lista).not.toContain('#');
 });
 
+test('el desvanecido se retira al desmontarse: no deja la app invisible', () => {
+    sinPreferencia();
+    const { unmount } = render(<WipeScreen onDone={() => {}} />);
+
+    unmount();
+
+    expect(document.documentElement).not.toHaveAttribute('data-wiping');
+});
+
 test('se va comiendo sola, sin que nadie la toque', () => {
     sinPreferencia();
     render(<WipeScreen onDone={() => {}} />);
 
-    correElGuion(3);
+    correElGuion(4, 1_000);
 
     expect(document.querySelector('.wipe-list')?.textContent).toContain('#');
 });
 
-test('acaba en tres puntos', () => {
+test('acaba apagando el tubo', () => {
     sinPreferencia();
     render(<WipeScreen onDone={() => {}} />);
 
+    // Un paso por línea, más el desvanecido: el apagón es el siguiente.
     correElGuion(WIPE_STEPS + 1, 1_000);
 
-    expect(document.querySelector('.wipe-dots')?.textContent).toBe('...');
+    // Es el MISMO elemento que usa el fallo crítico: una capa aparte que se
+    // cierra sobre lo que haya debajo. Animar la pantalla entera daba otra cosa
+    // —el contenido se aplastaba con ella— y se veía al revés.
+    expect(document.querySelector('.collapse-dying')).not.toBeNull();
 });
 
 test('avisa al terminar: es quien avisa el que devuelve al inicio', () => {
@@ -84,20 +109,25 @@ test('avisa al terminar: es quien avisa el que devuelve al inicio', () => {
     const listo = jest.fn();
     render(<WipeScreen onDone={listo} />);
 
-    correElGuion(WIPE_STEPS + 3, 1_000);
+    correElGuion(WIPE_STEPS + 4, 1_000);
 
     expect(listo).toHaveBeenCalled();
 });
 
-test('la broma dice lo suyo al final', () => {
+test('la broma recorre lo mismo y al final confiesa, con carita', () => {
+    // El susto tiene que ser IDÉNTICO hasta el último momento, o deja de ser un
+    // susto: quien la ve no puede notar por dónde va a salir.
     sinPreferencia();
-    render(<WipeScreen onDone={() => {}} footer="ERA BROMA" />);
+    render(<WipeScreen onDone={() => {}} prank />);
 
-    correElGuion(WIPE_STEPS + 1, 1_000);
+    correElGuion(WIPE_STEPS + 2, 1_000);
 
-    // Por la clase y no por el texto: el mismo texto está también en el
-    // `.sr-only`, y buscarlo suelto encuentra los dos.
-    expect(document.querySelector('.wipe-footer')?.textContent).toBe('ERA BROMA');
+    expect(document.querySelector('.wipe-face')?.textContent).toBe(':)');
+    expect(document.querySelector('.wipe-footer')?.textContent ?? '').toMatch(
+        /BROMA|KIDDING/i
+    );
+    // Y no se apaga: no hay nada que apagar cuando no se borró nada.
+    expect(document.querySelector('.collapse-dying')).toBeNull();
 });
 
 test('con menos movimiento no hay desfile, pero sí final', () => {
@@ -116,13 +146,15 @@ test('con menos movimiento no hay desfile, pero sí final', () => {
     expect(listo).toHaveBeenCalled();
 });
 
-test('quien escucha oye una frase, no once ficheros tachándose', () => {
+test('quien escucha oye una frase, no catorce ficheros tachándose', () => {
     sinPreferencia();
-    render(<WipeScreen onDone={() => {}} footer="ERA BROMA" />);
+    render(<WipeScreen onDone={() => {}} />);
+
+    correElGuion(1, 1_000);
 
     expect(document.querySelector('.wipe-list')).toHaveAttribute(
         'aria-hidden',
         'true'
     );
-    expect(document.querySelector('.sr-only')?.textContent).toBe('ERA BROMA');
+    expect(document.querySelector('.sr-only')?.textContent ?? '').not.toBe('');
 });

@@ -321,12 +321,18 @@ const T = {
     },
     resetWarn: {
         es:
-            'ESTO BORRA: SECRETOS, PIEZAS, MARCADORES Y COMANDOS HALLADOS.' +
-            '\nNO BORRA SUS NOTAS.' +
+            'ESTO BORRA TODO Y NO SE PUEDE DESHACER:' +
+            '\n\n  - SUS NOTAS, TODAS, TAMBIEN LAS DE LA PAPELERA' +
+            '\n  - SECRETOS, PIEZAS Y MARCADORES' +
+            '\n  - LOS COMANDOS QUE HAYA ENCONTRADO' +
+            '\n\nNO HAY COPIA. NO HAY VUELTA ATRAS.' +
             '\n\n¿SEGURO? [y/n]',
         en:
-            'THIS ERASES: SECRETS, PIECES, SCORES AND FOUND COMMANDS.' +
-            '\nIT DOES NOT ERASE YOUR NOTES.' +
+            'THIS ERASES EVERYTHING AND CANNOT BE UNDONE:' +
+            '\n\n  - YOUR NOTES, ALL OF THEM, TRASH INCLUDED' +
+            '\n  - SECRETS, PIECES AND SCORES' +
+            '\n  - EVERY COMMAND YOU FOUND' +
+            '\n\nTHERE IS NO BACKUP. THERE IS NO GOING BACK.' +
             '\n\nSURE? [y/n]',
     },
     resetCancel: {
@@ -1105,7 +1111,14 @@ export function run(
              * pedís, y eso no es un secreto, es un fallo.
              */
             if (isPrank(random)) {
-                return { output: '', effect: { kind: 'reset-prank' } };
+                return {
+                    output: '',
+                    effect: { kind: 'reset-prank' },
+                    // Que te haga creer que borró todo y no borrara nada ES un
+                    // hallazgo, y de los buenos: sólo lo ve quien tuvo el valor
+                    // de teclear `//reset` y la prudencia de decir que no.
+                    secretId: 'reset-prank',
+                };
             }
 
             return { output: T.resetCancel[lang], effect: SIN_EFECTO };

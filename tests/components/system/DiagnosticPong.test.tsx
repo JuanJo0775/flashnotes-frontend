@@ -23,7 +23,7 @@ beforeEach(() => {
 
 /**
  * Los marcadores se leen en un efecto y no al pintar —si se leyeran al pintar,
- * el servidor diría SIN JUGAR y el cliente otra cosa, y React tiraría el árbol
+ * el servidor diría SIN DATOS y el cliente otra cosa, y React tiraría el árbol
  * entero— así que hay que esperar a que el efecto corra.
  */
 const marcador = (testId: string) =>
@@ -46,7 +46,7 @@ describe('DiagnosticPanel · los marcadores del vsync-test', () => {
         abre();
 
         await expect(marcador('diag-pong-clean')).resolves.toMatch(
-            /SIN JUGAR|NEVER PLAYED/i
+            /SIN DATOS|NO DATA/i
         );
     });
 
@@ -84,7 +84,7 @@ describe('DiagnosticPanel · los marcadores del vsync-test', () => {
 
         await waitFor(() =>
             expect(screen.getByTestId('diag-pong-degraded')).toHaveTextContent(
-                /SIN JUGAR|NEVER PLAYED/i
+                /SIN DATOS|NO DATA/i
             )
         );
     });
@@ -98,7 +98,7 @@ describe('DiagnosticPanel · los marcadores del vsync-test', () => {
         abre();
 
         expect(screen.getByTestId('diag-pong-clean')).toHaveTextContent(
-            /SIN JUGAR|NEVER PLAYED/i
+            /SIN DATOS|NO DATA/i
         );
 
         await waitFor(() =>

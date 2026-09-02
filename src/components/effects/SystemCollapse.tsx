@@ -1,6 +1,7 @@
 // src/components/effects/SystemCollapse.tsx
 'use client';
 
+import { BOOT_BARS } from '@/lib/system/boot';
 import { useEffect, useRef, useState } from 'react';
 import { resetIntegrity, registerRecovery } from '@/hooks/useSystemState';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
@@ -29,7 +30,19 @@ import type { CollapseLevel } from '@/lib/system/collapseEscalation';
 /** La secuencia previa al rearranque, en ms desde el disparo. */
 const CUT_MS = 150; // corte a tinta plana
 const STATIC_MS = 2200; // fin de la estática
-const DYING_MS = 2600; // fin del apagado del tubo
+
+/**
+ * Las barras de color, entre la estática y el apagón.
+ *
+ * Es lo que hacía un televisor al perder la señal de verdad: primero nieve,
+ * después la carta de ajuste, y sólo entonces se apagaba. Sin ellas, la estática
+ * se apagaba a secas y el fallo parecía un corte de luz; con ellas, parece un
+ * equipo que se rindió por su cuenta.
+ *
+ * Cortas a propósito: son un latido dentro de la caída, no una parada.
+ */
+const BARS_MS = 2200 + 520; // fin de las franjas
+const DYING_MS = BARS_MS + 400; // fin del apagado del tubo
 
 /** Con movimiento reducido: un corte a negro y el texto ya escrito. */
 const REDUCED_MS = 400;
@@ -59,7 +72,7 @@ const FAILURE_CADENCE_MS: Record<number, number | null> = {
     3: 900,
 };
 
-type Phase = 'cut' | 'static' | 'dying' | 'reboot' | 'stalled';
+type Phase = 'cut' | 'static' | 'bars' | 'dying' | 'reboot' | 'stalled';
 
 /** Dónde se traba la barra cuando el sistema ya no va a volver. */
 const STALL_MIN = 0.52;
@@ -155,13 +168,15 @@ export default function SystemCollapse({
             // que empieza a subir y se queda clavada cuenta el fallo mucho mejor
             // que no intentarlo — primero te hace creer que vuelve.
             at(CUT_MS, () => setPhase('static'));
-            at(STATIC_MS, () => setPhase('dying'));
+            at(STATIC_MS, () => setPhase('bars'));
+            at(BARS_MS, () => setPhase('dying'));
             at(DYING_MS, () => setPhase('reboot'));
             at(DYING_MS + STALL_HOLD_MS, () => setPhase('stalled'));
             at(DYING_MS + STALL_HOLD_MS + STALL_ERROR_MS, onDone);
         } else {
             at(CUT_MS, () => setPhase('static'));
-            at(STATIC_MS, () => setPhase('dying'));
+            at(STATIC_MS, () => setPhase('bars'));
+            at(BARS_MS, () => setPhase('dying'));
             at(DYING_MS, () => setPhase('reboot'));
         }
 
@@ -265,6 +280,16 @@ export default function SystemCollapse({
                     <div className="collapse-drag" />
                     <div className="collapse-drag is-second" />
                 </>
+            )}
+
+            {/* Las franjas, entre la nieve y el apagón: es lo que hacía un
+                televisor al perder la señal de verdad. */}
+            {phase === 'bars' && (
+                <div className="collapse-bars" aria-hidden="true">
+                    {BOOT_BARS.map((c) => (
+                        <span key={c} style={{ background: c }} />
+                    ))}
+                </div>
             )}
 
             {phase === 'dying' && <div className="collapse-dying" />}

@@ -811,16 +811,37 @@
 }
 
 /* ------------------------------------------------------------
-   La pantalla que se come a sí misma
+   El borrado: desvanecido, cuenta, y apagón
    ------------------------------------------------------------ */
 
-/* Tapa TODO, incluido el editor: lo que se está contando es que ya no hay nada,
-   y dejar la interfaz asomando por detrás lo desmentiría. */
+/* PRIMERO SE VA LA APP. El atributo va en `<html>` porque lo que tiene que
+   desvanecerse vive fuera del árbol de la pantalla de borrado — es el mismo
+   sitio desde el que se alcanzan la avería cromática y la v0.2, y por el mismo
+   motivo. */
+[data-wiping] body > * {
+    animation: wipe-fade 900ms ease-in forwards;
+    pointer-events: none;
+}
+
+/* La pantalla de borrado NO se desvanece con lo demás: es lo que queda. */
+[data-wiping] .wipe-screen {
+    animation: none;
+    opacity: 1;
+}
+
+@keyframes wipe-fade {
+    to {
+        opacity: 0;
+    }
+}
+
 .wipe-screen {
     position: fixed;
     inset: 0;
     z-index: 90;
-    background: var(--color-bg);
+    /* `--color-primary`, no `--color-bg`: ésa no existe y dejaba la pantalla
+       transparente. */
+    background: var(--color-primary);
     color: var(--color-ink);
     display: flex;
     flex-direction: column;
@@ -828,10 +849,18 @@
     justify-content: center;
     gap: 1.5rem;
     font-family: var(--font-mono);
+    transform-origin: center;
 }
 
-.wipe-list,
-.wipe-dots {
+/* EL APAGÓN DEL TUBO. La misma animación que el colapso, y a propósito: es el
+   mismo gesto —cortarle la corriente a un CRT— y darle otra sería inventar un
+   segundo lenguaje para decir lo mismo. La imagen se aplasta a una línea, la
+   línea se cierra a un punto, negro. */
+.wipe-screen.is-off {
+    animation: collapse-dying 420ms linear forwards;
+}
+
+.wipe-list {
     margin: 0;
     font-family: inherit;
     font-size: var(--text-sm);
@@ -839,14 +868,174 @@
     white-space: pre;
 }
 
-/* Los tres puntos, grandes y solos: es la pausa antes de volver a empezar, y
-   una pausa pequeña no se lee como una pausa. */
-.wipe-dots {
-    font-size: 2rem;
-    letter-spacing: 0.3em;
+.wipe-joke {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* La carita, grande: es el remate, y un remate pequeño no remata. */
+.wipe-face {
+    margin: 0;
+    font-family: inherit;
+    font-size: 3.5rem;
+    line-height: 1;
 }
 
 .wipe-footer {
+    margin: 0;
     font-size: var(--text-xs);
     letter-spacing: 0.08em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-wiping] body > * {
+        animation: none;
+    }
+
+    .wipe-screen.is-off {
+        animation: none;
+    }
+}
+
+/* ------------------------------------------------------------
+   El monitor encendiéndose
+   ------------------------------------------------------------ */
+
+/* Tapa todo mientras dura, pero la app se monta por detrás: cuando el arranque
+   acaba ya está lista. Si esperara a terminar para empezar a cargar sería un
+   peaje de verdad, no un adorno. */
+/* ⚠ CON LOS COLORES DEL TEMA, no en negro fijo.
+   Estaba clavado a negro y en tema claro el arranque era otra app: se encendía
+   una pantalla oscura y a los dos segundos aparecía una clara. Un monitor no
+   cambia de color al terminar de arrancar. Con las variables, el equipo se
+   enciende como lo dejaste — y la primera vez, como venga de fábrica.
+
+   ⚠ Y LA VARIABLE ES `--color-primary`, NO `--color-bg`. La segunda no existe:
+   la declaración se descartaba en silencio, la pantalla se quedaba transparente
+   y el logo se veía FLOTANDO sobre las notas. Un nombre de variable inventado no
+   da error, da un dibujo encima de otro — es el mismo tropiezo que las esquinas
+   de la v0.2, y por eso está escrito acá otra vez. */
+.boot-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 95;
+    background: var(--color-primary);
+    color: var(--color-ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+}
+
+/* EL TUBO ENCENDIÉNDOSE: al revés que el apagón. Una línea horizontal se abre
+   hasta llenar la pantalla. Es el mismo gesto que el colapso, leído hacia
+   adelante, y darle otra animación sería inventar un segundo lenguaje para decir
+   lo mismo. */
+@keyframes boot-on {
+    0% {
+        transform: scaleY(0.02) scaleX(0);
+        opacity: 0;
+    }
+    35% {
+        transform: scaleY(0.02) scaleX(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scaleY(1) scaleX(1);
+        opacity: 1;
+    }
+}
+
+/* El encendido va en tinta y no en fondo: lo que se abre es el HAZ, y el haz es
+   lo que brilla. En el color del fondo no se vería abrirse nada. */
+.boot-screen.is-on {
+    background: var(--color-ink);
+    transform-origin: center;
+    animation: boot-on 380ms linear forwards;
+}
+
+/* Y LA APP ENTRA DESVANECIÉNDOSE, no de golpe. Aparecer de una después de un
+   arranque de monitor rompe justo lo que el arranque acaba de construir: lo que
+   se enciende, se enciende con una imagen que se asienta. */
+@keyframes app-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+[data-booted] body > *:not(.boot-screen) {
+    animation: app-fade-in 700ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .boot-screen.is-on,
+    [data-booted] body > *:not(.boot-screen) {
+        animation: none;
+    }
+}
+
+/* Las barras ocupan la pantalla entera y de arriba abajo, como una carta de
+   ajuste. A media altura parecerían un adorno; a pantalla completa, un monitor
+   sin señal. */
+.boot-bars {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.boot-bars > span {
+    flex: 1;
+}
+
+.boot-logo {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    align-items: center;
+}
+
+.boot-logo pre {
+    margin: 0;
+    font-family: inherit;
+    font-size: clamp(0.5rem, 1.6vw, 0.9rem);
+    line-height: 1.2;
+    white-space: pre;
+}
+
+.boot-vendor {
+    margin: 0;
+    font-size: var(--text-2xs);
+    letter-spacing: 0.12em;
+    opacity: 0.7;
+}
+
+/* La comprobación va arriba a la izquierda, que es donde escupe sus líneas un
+   equipo al arrancar. Centrarla la convertiría en un cartel. */
+.boot-check {
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+    margin: 0;
+    font-family: inherit;
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    white-space: pre;
+}
+
+/* Las franjas del borrado, con el equipo ya vacío. Ocupan la pantalla entera:
+   media pantalla sería un adorno, entera es un monitor sin señal. */
+.wipe-bars {
+    position: absolute;
+    inset: 0;
+    display: flex;
+}
+
+.wipe-bars > span {
+    flex: 1;
 }

@@ -147,6 +147,14 @@ export const SECRET_IDS = [
     'date-off',
     'chat',
     'kicked',
+    /*
+     * La BROMA del borrado sí cuenta, aunque `//reset` no.
+     *
+     * No es lo mismo: el comando es un botón peligroso, y contarlo animaba a
+     * usarlo. La broma es lo que sólo ve quien tuvo el valor de teclearlo y la
+     * prudencia de decir que no — eso sí es un hallazgo.
+     */
+    'reset-prank',
     // ⚠ `reset` NO está acá, y no es un olvido: encontrarlo no es un logro, es
     // saber que hay un botón peligroso. Contarlo entre los hallazgos animaba a
     // usarlo, que es lo contrario de lo que hace falta con el único comando que

@@ -12,6 +12,7 @@
 
 import {
     wipeAt,
+    wipeDuration,
     wipeLine,
     isPrank,
     WIPE_STEPS,
@@ -19,34 +20,46 @@ import {
 } from '@/lib/system/wipe';
 
 describe('las fases, en orden', () => {
-    it('empieza comiendo, sin haberse comido nada', () => {
-        const f = wipeAt(0);
-        expect(f.kind).toBe('eating');
-        expect(f.kind === 'eating' && f.eaten).toBe(0);
+    it('empieza DESVANECIENDO la app, no contando', () => {
+        // Sin esto, la pantalla de borrado aparecía de golpe sobre las notas y
+        // se leía como un diálogo. Con el desvanecido, lo que se ve es a la app
+        // irse — y sólo después empieza a contarse.
+        expect(wipeAt(0).kind).toBe('fading');
     });
 
-    it('come una por paso', () => {
+    it('luego come una línea por paso', () => {
         for (let i = 0; i < WIPE_STEPS; i += 1) {
-            const f = wipeAt(i);
-            expect(f.kind === 'eating' && f.eaten).toBe(i);
+            const f = wipeAt(i + 1);
+            expect(f.kind).toBe('erasing');
+            expect(f.kind === 'erasing' && f.eaten).toBe(i);
         }
     });
 
     it('la lista NO encoge: se queda entera y se va marcando', () => {
         // Una lista que sólo encoge se lee como una lista más corta. Lo que da
         // el escalofrío es ver las que ya no están, en su sitio.
-        const a = wipeAt(0);
-        const b = wipeAt(WIPE_STEPS - 1);
+        const a = wipeAt(1);
+        const b = wipeAt(WIPE_STEPS);
 
-        expect(a.kind === 'eating' && a.lines.length).toBe(
-            b.kind === 'eating' && b.lines.length
+        expect(a.kind === 'erasing' && a.lines.length).toBe(
+            b.kind === 'erasing' && b.lines.length
         );
     });
 
-    it('después se queda en blanco, luego tres puntos, luego se acabó', () => {
-        expect(wipeAt(WIPE_STEPS).kind).toBe('blank');
-        expect(wipeAt(WIPE_STEPS + 1).kind).toBe('dots');
-        expect(wipeAt(WIPE_STEPS + 2).kind).toBe('done');
+    it('las notas van LAS PRIMERAS de la lista', () => {
+        // Son lo que de verdad importa, y verlas encabezar es el aviso final.
+        const f = wipeAt(1);
+        expect(f.kind === 'erasing' && f.lines[0]).toMatch(/notas/);
+    });
+
+    it('luego el tubo se apaga, y después las franjas', () => {
+        // Las franjas van DESPUÉS del apagón: es la diferencia entre «se apagó» y
+        // «se apagó y volvió a encenderse desde cero». Lo que se ve entre las dos
+        // cosas es un equipo sin señal, que es lo que hay cuando ya no queda nada
+        // dentro.
+        expect(wipeAt(WIPE_STEPS + 1).kind).toBe('off');
+        expect(wipeAt(WIPE_STEPS + 2).kind).toBe('bars');
+        expect(wipeAt(WIPE_STEPS + 3).kind).toBe('done');
     });
 
     it('pasado el final se queda en «done», no se sale de la lista', () => {
@@ -54,7 +67,42 @@ describe('las fases, en orden', () => {
     });
 
     it('un paso negativo no rompe nada', () => {
-        expect(wipeAt(-3).kind).toBe('eating');
+        expect(wipeAt(-3).kind).toBe('fading');
+    });
+});
+
+describe('la salida de la broma', () => {
+    it('recorre lo mismo hasta el final', () => {
+        // El susto tiene que ser IDÉNTICO, o deja de ser un susto: quien la ve no
+        // puede notar por dónde va a salir.
+        for (let i = 0; i <= WIPE_STEPS; i += 1) {
+            expect(wipeAt(i, true).kind).toBe(wipeAt(i, false).kind);
+        }
+    });
+
+    it('pero en vez de apagarse, confiesa', () => {
+        expect(wipeAt(WIPE_STEPS + 1, true).kind).toBe('joke');
+    });
+
+    it('y también termina', () => {
+        expect(wipeAt(WIPE_STEPS + 2, true).kind).toBe('done');
+    });
+});
+
+describe('cuánto dura cada tramo', () => {
+    it('todos duran algo, menos el final', () => {
+        for (let i = 0; i <= WIPE_STEPS + 2; i += 1) {
+            expect(wipeDuration(i)).toBeGreaterThan(0);
+        }
+        expect(wipeDuration(WIPE_STEPS + 3)).toBe(0);
+    });
+
+    it('la confesión dura más que comerse una línea', () => {
+        // Hay que poder leerla. Un «era broma» que pasa en doscientos
+        // milisegundos no se lee, se sospecha.
+        expect(wipeDuration(WIPE_STEPS + 1, true)).toBeGreaterThan(
+            wipeDuration(2)
+        );
     });
 });
 

@@ -155,6 +155,48 @@ class NotesApi {
         return this.unwrap(response, 'restaurar la nota');
     }
 
+    /**
+     * BORRA TODO. Notas, papelera, sin dejar nada.
+     *
+     * ⚠ ES LA ÚNICA OPERACIÓN IRREVERSIBLE DE LA APP y la única que toca el
+     * servidor de forma destructiva. Sólo la llama `//reset`, y sólo después de
+     * que el aviso diga con todas las letras que las notas también se van y de
+     * que alguien conteste que sí.
+     *
+     * Se pagina hasta agotar porque el listado devuelve una página: borrar «los
+     * cien primeros» y decir que se borró todo sería mentir. Y se tira a la
+     * papelera antes de borrar de verdad porque el borrado definitivo sólo
+     * acepta notas que ya estén ahí.
+     */
+    async wipeEverything(): Promise<number> {
+        let borradas = 0;
+
+        // Las activas primero: pasan por la papelera y de ahí al vacío.
+        for (;;) {
+            const { notes } = await this.listActive(1, 100);
+            if (notes.length === 0) break;
+
+            for (const n of notes) {
+                await this.moveToTrash(n._id);
+                await this.deletePermanently(n._id);
+                borradas += 1;
+            }
+        }
+
+        // Y lo que ya estuviera en la papelera de antes.
+        for (;;) {
+            const { notes } = await this.listTrash(1, 100);
+            if (notes.length === 0) break;
+
+            for (const n of notes) {
+                await this.deletePermanently(n._id);
+                borradas += 1;
+            }
+        }
+
+        return borradas;
+    }
+
     /** DELETE /api/notes/:id/permanent */
     async deletePermanently(id: string): Promise<void> {
         const response = await apiClient.delete<ApiResponse<void>>(

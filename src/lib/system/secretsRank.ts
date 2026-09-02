@@ -44,8 +44,23 @@ export const RANKS: readonly { es: string; en: string }[] = [
  * encontrar no cuenta. Y la última sólo se enciende con todos, por el mismo
  * motivo al revés.
  */
+/*
+ * LOS DOS CARACTERES DE LA BARRA.
+ *
+ * Bloques, como una barra de desplazamiento, y no `#` y `.`: lo que se busca es
+ * una barra, y `#` se lee como texto.
+ *
+ * ⚠ LOS DOS SALEN DEL MISMO BLOQUE UNICODE (U+2588 y U+2591) a propósito.
+ * Ninguno está en JetBrains Mono, así que los pinta una fuente de reserva — pero
+ * la MISMA para los dos, con lo que miden igual y la barra no se descuadra al
+ * llenarse. Mezclar un bloque con un punto ASCII sí la habría descuadrado, que
+ * es la trampa de REGLAS · C8.
+ */
+const LLENA = '█';
+const VACIA = '░';
+
 export function secretsBar(found: number, total: number): string {
-    if (total <= 0) return `[${'.'.repeat(BAR_CELLS)}]`;
+    if (total <= 0) return `[${VACIA.repeat(BAR_CELLS)}]`;
 
     const proporcion = Math.min(1, Math.max(0, found / total));
 
@@ -53,7 +68,7 @@ export function secretsBar(found: number, total: number): string {
     if (found > 0 && llenas === 0) llenas = 1;
     if (found < total && llenas === BAR_CELLS) llenas = BAR_CELLS - 1;
 
-    return `[${'#'.repeat(llenas)}${'.'.repeat(BAR_CELLS - llenas)}]`;
+    return `[${LLENA.repeat(llenas)}${VACIA.repeat(BAR_CELLS - llenas)}]`;
 }
 
 /**

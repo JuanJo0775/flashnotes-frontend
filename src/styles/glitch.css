@@ -1300,3 +1300,19 @@
     z-index: 10004;
     background: #000;
 }
+
+/* Fase 2b · las franjas de color.
+
+   Entre la nieve y el apagón, que es el orden real: un televisor que pierde la
+   señal enseña primero ruido, después la carta de ajuste, y sólo entonces se
+   apaga. Sin ellas la estática se cortaba a secas y el fallo parecía un corte de
+   luz; con ellas parece un equipo que se rindió por su cuenta. */
+.collapse-bars {
+    position: absolute;
+    inset: 0;
+    display: flex;
+}
+
+.collapse-bars > span {
+    flex: 1;
+}

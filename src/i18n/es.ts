@@ -131,6 +131,8 @@ export const es = {
     // El remate de la broma del «no». Los puntos suspensivos del
     // principio enganchan con los tres que acaban de salir en pantalla.
     'reset.prank': '... ERA BROMA. NO SE BORRÓ NADA.',
+    // Lo que oye quien no ve la pantalla: una frase, no catorce ficheros.
+    'reset.wiping': 'BORRANDO...',
     'trash.v02Restore': '> recuperar',
     'trash.v02Delete': '> borrar',
     'trash.restore': '[↶] Restaurar',
@@ -189,7 +191,7 @@ export const es = {
     'pong.speed': 'VELOCIDAD',
     'diag.pongClean': 'VSYNC-TEST',
     'diag.pongDegraded': 'VSYNC-TEST DEGRADADO',
-    'diag.pongNever': 'SIN JUGAR',
+    'diag.pongNever': 'SIN DATOS',
     'diag.pongLine': '{best}  ({games} partidas)',
 
     // ── validación en el cliente ─────────────────────────────────────────────

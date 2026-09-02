@@ -120,7 +120,7 @@ export default function DiagnosticPanel({
      *
      * SE LEEN EN UN EFECTO, NO AL PINTAR, y no es un rodeo. Viven en
      * `localStorage`, que en el servidor no existe: leerlos durante el render
-     * daba «SIN JUGAR» en el servidor y el marcador de verdad en el cliente, y
+     * daba «SIN DATOS» en el servidor y el marcador de verdad en el cliente, y
      * React tiraba el árbol entero y lo regeneraba en cada carga. Es el mismo
      * desajuste de hidratación que ya se cazó una vez en el rótulo de la
      * cabecera, y como aquél, sólo se ve abriendo la app.
@@ -129,7 +129,7 @@ export default function DiagnosticPanel({
      * montar. Se relee en cada apertura, así que el panel siempre trae lo
      * último.
      *
-     * Sin partidas dice SIN JUGAR en vez de un cero: un cero parecería un
+     * Sin partidas dice SIN DATOS en vez de un cero: un cero parecería un
      * récord malísimo en vez de un hueco.
      */
     const [scores, setScores] = useState<Scores | null>(null);

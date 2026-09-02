@@ -8,8 +8,10 @@ import StatusBar from '@/components/layout/StatusBar';
 import NoteEditor from '@/components/notes/NoteEditor';
 import NotesList from '@/components/notes/NotesList';
 import { trashV02Note } from '@/lib/system/v02Notes';
+import { notesApi } from '@/lib/api/notes.api';
 import TrashView from '@/components/notes/TrashView';
 import WipeScreen from '@/components/effects/WipeScreen';
+import BootScreen from '@/components/effects/BootScreen';
 import V02TrashView from '@/components/notes/V02TrashView';
 import DiagnosticPanel from '@/components/system/DiagnosticPanel';
 import GlitchLayer from '@/components/effects/GlitchLayer';
@@ -23,7 +25,7 @@ import V02Skin from '@/components/effects/V02Skin';
 import V02Glitches from '@/components/effects/V02Glitches';
 import CollectionView from '@/components/notes/CollectionView';
 import { splitCollectibles, markCollectible } from '@/lib/system/collectibles';
-import { markSecretFound } from '@/hooks/useSystemState';
+import { markSecretFound, resetEverything } from '@/hooks/useSystemState';
 import { createV02Note, saveV02Note } from '@/lib/system/v02Notes';
 import { useV02Notes } from '@/hooks/useV02Notes';
 import V02Box from '@/components/notes/V02Box';
@@ -91,6 +93,15 @@ export default function Home() {
     const [playingPong, setPlayingPong] = useState(false);
     /** La página muerta: sólo se llega insistiendo con `//hi` hasta el final. */
     const [dead, setDead] = useState(false);
+
+    /**
+     * El monitor todavía se está encendiendo.
+     *
+     * Arranca en `true` SIEMPRE, no sólo la primera vez: un arranque que sale
+     * una vez es una pantalla de bienvenida, y ésas se saltan. Uno que sale
+     * siempre es cómo es la máquina.
+     */
+    const [booting, setBooting] = useState(true);
 
     // Lo mínimo que los comandos y el panel necesitan saber de las notas: nombre
     // y tamaño. No se les pasa el contenido — lo que escribís no se lee.
@@ -275,6 +286,42 @@ export default function Home() {
      */
     const [wipe, setWipe] = useState<boolean | null>(null);
 
+    /**
+     * Borra TODO y luego lo cuenta.
+     *
+     * ⚠ LAS NOTAS TAMBIÉN. Es la única operación irreversible de la app, y por
+     * eso el aviso lo dice antes y hay que contestar que sí.
+     *
+     * El orden importa: primero el servidor, después lo local. Si fuera al
+     * revés y la red fallara a mitad, quedarían las notas sin los secretos —un
+     * estado que no es ni lo de antes ni lo de después.
+     */
+    const alBorrar = useCallback(
+        (prank: boolean) => {
+            // La broma no borra nada: sólo enseña la película.
+            if (prank) {
+                setWipe(true);
+                return;
+            }
+
+            void borrarTodo();
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        []
+    );
+
+    const borrarTodo = useCallback(async () => {
+        try {
+            await notesApi.wipeEverything();
+        } catch {
+            // Si el servidor no colabora, lo local se limpia igual: dejar las
+            // dos mitades a medias sería peor que limpiar una.
+        }
+
+        resetEverything();
+        setWipe(false);
+    }, []);
+
     const guardarPieza = useCallback(
         async (title: string, content: string) => {
             const creada = await createNote({ title, content });
@@ -377,7 +424,7 @@ export default function Home() {
                                 onPlayPong={() => setPlayingPong(true)}
                                 onKillPage={() => setDead(true)}
                                 onKeepArt={guardarPieza}
-                                onWipe={setWipe}
+                                onWipe={alBorrar}
                             />
                         ) : view === 'trash' ? (
                             // CADA VERSIÓN TIENE SU PAPELERA. La de la v0.2
@@ -456,15 +503,26 @@ export default function Home() {
                 página muerta porque ésa no vuelve de ningún sitio. */}
             {wipe !== null && (
                 <WipeScreen
-                    footer={wipe ? t('reset.prank') : undefined}
+                    prank={wipe}
                     onDone={() => {
+                        const eraBroma = wipe;
                         setWipe(null);
                         setSelectedNote(null);
                         setView('notes');
                         void refreshNotes();
+
+                        // Después del borrado de verdad, el monitor VUELVE A
+                        // ARRANCAR: es lo que convierte «se borró» en «esto
+                        // acaba de encenderse por primera vez». La broma no
+                        // arranca nada, porque no se apagó nada.
+                        if (!eraBroma) setBooting(true);
                     }}
                 />
             )}
+
+            {/* Encima de todo, hasta de la página muerta: es el encendido, y
+                nada puede haber pasado todavía cuando el equipo arranca. */}
+            {booting && <BootScreen onDone={() => setBooting(false)} />}
 
             {dead && <DeadPage />}
 

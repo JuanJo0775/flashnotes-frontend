@@ -14,6 +14,10 @@
 
 import { secretsBar, secretsRank, RANKS, BAR_CELLS } from '@/lib/system/secretsRank';
 
+/** Los dos caracteres de la barra: bloque lleno y bloque vacío. */
+const LLENA = '█';
+const VACIA = '░';
+
 describe('la barra', () => {
     it('mide siempre lo mismo', () => {
         for (const [f, t] of [[0, 28], [1, 28], [27, 28], [28, 28]]) {
@@ -22,28 +26,41 @@ describe('la barra', () => {
     });
 
     it('vacía del todo con cero, llena del todo con todos', () => {
-        expect(secretsBar(0, 28)).toBe(`[${'.'.repeat(BAR_CELLS)}]`);
-        expect(secretsBar(28, 28)).toBe(`[${'#'.repeat(BAR_CELLS)}]`);
+        expect(secretsBar(0, 28)).toBe(`[${VACIA.repeat(BAR_CELLS)}]`);
+        expect(secretsBar(28, 28)).toBe(`[${LLENA.repeat(BAR_CELLS)}]`);
     });
 
     it('con uno encontrado ya se ve algo', () => {
         // Redondear a cero el primer hallazgo sería decirle a alguien que lo que
         // acaba de encontrar no cuenta.
-        expect(secretsBar(1, 28)).toContain('#');
+        expect(secretsBar(1, 28)).toContain(LLENA);
     });
 
     it('no se llena antes de tiempo', () => {
-        expect(secretsBar(27, 28)).toContain('.');
+        expect(secretsBar(27, 28)).toContain(VACIA);
     });
 
     it('aguanta un total de cero sin dividir por él', () => {
         expect(() => secretsBar(0, 0)).not.toThrow();
     });
 
-    it('todo lo que dibuja es ASCII imprimible', () => {
-        // Los bloques no están en JetBrains Mono y descuadrarían la fila
-        // (REGLAS · C8).
-        expect(secretsBar(9, 28)).toMatch(/^[\x20-\x7E]+$/);
+    it('los dos bloques salen del mismo tramo Unicode', () => {
+        /*
+         * La versión honesta de REGLAS · C8 para una barra de una sola fila.
+         *
+         * Ninguno de los dos bloques está en JetBrains Mono, así que los pinta
+         * una fuente de reserva. Lo que rompería la barra no es que haya
+         * reserva: es MEZCLAR dos fuentes. Con los dos caracteres en el mismo
+         * bloque Unicode los pinta la misma, miden igual, y la barra no baila al
+         * llenarse. Un bloque junto a un punto ASCII sí lo habría hecho.
+         */
+        const barra = secretsBar(9, 28).slice(1, -1);
+
+        for (const c of barra) {
+            const cp = c.codePointAt(0) ?? 0;
+            expect(cp).toBeGreaterThanOrEqual(0x2580);
+            expect(cp).toBeLessThanOrEqual(0x259f);
+        }
     });
 });
 

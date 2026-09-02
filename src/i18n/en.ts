@@ -113,6 +113,8 @@ export const en: Dictionary = {
     // El remate de la broma del «no». Los puntos suspensivos del
     // principio enganchan con los tres que acaban de salir en pantalla.
     'reset.prank': '... JUST KIDDING. NOTHING WAS ERASED.',
+    // Lo que oye quien no ve la pantalla: una frase, no catorce ficheros.
+    'reset.wiping': 'ERASING...',
     'trash.v02Restore': '> restore',
     'trash.v02Delete': '> delete',
     'trash.restore': '[↶] Restore',
@@ -169,7 +171,7 @@ export const en: Dictionary = {
     'pong.speed': 'SPEED',
     'diag.pongClean': 'VSYNC-TEST',
     'diag.pongDegraded': 'VSYNC-TEST DEGRADED',
-    'diag.pongNever': 'NEVER PLAYED',
+    'diag.pongNever': 'NO DATA',
     'diag.pongLine': '{best}  ({games} games)',
 
     // ── client-side validation ───────────────────────────────────────────────
