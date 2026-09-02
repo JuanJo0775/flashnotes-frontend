@@ -522,7 +522,16 @@ export default function Home() {
 
             {/* Encima de todo, hasta de la página muerta: es el encendido, y
                 nada puede haber pasado todavía cuando el equipo arranca. */}
-            {booting && <BootScreen onDone={() => setBooting(false)} />}
+            {booting && (
+                <BootScreen
+                    // Con el bloqueo puesto, el arranque se queda en las barras:
+                    // un equipo bloqueado no llega a arrancar, y hacer esperar
+                    // ocho segundos para volver a leer el mismo error sería
+                    // castigar a quien ya está castigado.
+                    lockedOut={lockedOut}
+                    onDone={() => setBooting(false)}
+                />
+            )}
 
             {dead && <DeadPage />}
 

@@ -35,7 +35,18 @@
 export const BOOT_MIN_MS = 2_000;
 export const BOOT_MAX_MS = 8_000;
 
-export type BootPhase = 'bars' | 'logo' | 'check' | 'done';
+export type BootPhase = 'off' | 'bars' | 'logo' | 'check' | 'done';
+
+/**
+ * El apagón con el que EMPIEZA el arranque.
+ *
+ * Recargar es apagar y encender. Lo que se ve primero, entonces, es el equipo
+ * apagándose: la misma animación del fallo crítico —la imagen se aplasta a una
+ * línea, la línea se cierra a un punto— y sólo después las barras.
+ *
+ * Fijo y fuera del sorteo: es un gesto físico, no una espera.
+ */
+export const BOOT_OFF_MS = 420;
 
 /**
  * Cómo se reparte el tiempo entre los tramos.
@@ -71,12 +82,34 @@ export function bootDuration(rand: () => number = Math.random): number {
 }
 
 /** El guion completo para una duración dada. */
-export function bootScript(totalMs: number): { phase: BootPhase; ms: number }[] {
-    return REPARTO.map(({ phase, peso }) => ({
-        phase,
-        ms: Math.round(totalMs * peso),
-    }));
+export function bootScript(
+    totalMs: number,
+    lockedOut = false
+): { phase: BootPhase; ms: number }[] {
+    const apagon = { phase: 'off' as const, ms: BOOT_OFF_MS };
+
+    /*
+     * ⚠ CON EL BLOQUEO PUESTO, EL ARRANQUE SE QUEDA EN LAS BARRAS.
+     *
+     * Un equipo bloqueado no llega a arrancar: se apaga, enseña que no hay
+     * señal, y vuelve a la pantalla de fallo. Enseñarle el rótulo del
+     * fabricante y la comprobación de memoria sería contar que arrancó bien
+     * justo antes de decirle que no arrancó — y encima obligaría a esperar
+     * hasta ocho segundos para volver a leer el mismo error.
+     */
+    if (lockedOut) return [apagon, { phase: 'bars', ms: BOOT_BARS_LOCKED_MS }];
+
+    return [
+        apagon,
+        ...REPARTO.map(({ phase, peso }) => ({
+            phase,
+            ms: Math.round(totalMs * peso),
+        })),
+    ];
 }
+
+/** Lo que duran las barras cuando no hay nada más que enseñar. */
+const BOOT_BARS_LOCKED_MS = 900;
 
 /** Qué toca en el paso `n` de un guion. */
 export function bootAt(

@@ -41,15 +41,20 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 interface Props {
     onDone: () => void;
+    /** Con el bloqueo puesto el arranque se queda en las barras y vuelve al fallo. */
+    lockedOut?: boolean;
 }
 
-export default function BootScreen({ onDone }: Props) {
+export default function BootScreen({ onDone, lockedOut = false }: Props) {
     const quieto = usePrefersReducedMotion();
     const [step, setStep] = useState(0);
 
     // El dado se tira UNA vez por encendido. Sorteando en cada paso, cada tramo
     // duraría lo suyo y el arranque no tendría una duración, tendría varias.
-    const guion = useMemo(() => bootScript(bootDuration()), []);
+    const guion = useMemo(
+        () => bootScript(bootDuration(), lockedOut),
+        [lockedOut]
+    );
 
     useEffect(() => {
         if (quieto) {
@@ -92,6 +97,11 @@ export default function BootScreen({ onDone }: Props) {
 
     return (
         <div className="boot-screen" aria-hidden="true">
+            {/* RECARGAR ES APAGAR Y ENCENDER, así que lo primero que se ve es el
+                equipo apagándose. Es el MISMO elemento del fallo crítico: una
+                capa que se cierra sobre lo que haya debajo. */}
+            {phase === 'off' && <div className="collapse-dying" />}
+
             {phase === 'bars' && (
                 <div className="boot-bars">
                     {/* Con CSS y no con caracteres: los bloques no están en la

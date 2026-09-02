@@ -168,7 +168,19 @@
  *
  * Sobre el colapso se pinta con luz y no con tinta. Es el refresco de un tubo:
  * lo que se ve pasar es el haz, y un haz brilla. */
-[data-collapsing] .scanline-effect {
+/* Y LO MISMO SOBRE CUALQUIER PANTALLA QUE PINTE SU PROPIO FONDO.
+ *
+ * El colapso, el arranque, el borrado y el bloqueo tapan la app entera con un
+ * fondo suyo. El barrido va por encima de todas (z 10005) pero se pinta con
+ * `--color-ink` al 12 %, que es lo correcto sobre el lienzo y puede ser
+ * invisible sobre ellas.
+ *
+ * Sobre esas pantallas se pinta con LUZ: es el refresco de un tubo, y lo que
+ * pasa por el tubo es el haz. Un haz brilla, no ensucia. */
+[data-collapsing] .scanline-effect,
+[data-booting] .scanline-effect,
+[data-wiping] .scanline-effect,
+.is-locked-out .scanline-effect {
     background: linear-gradient(
         to bottom,
         transparent,
