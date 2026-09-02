@@ -106,6 +106,15 @@ export interface CommandResult {
     rows?: ReplyRow[];
     /** Qué secreto queda marcado como hallado, si marca alguno. */
     secretId?: string;
+    /**
+     * El comando se NEGÓ A EXISTIR, y por eso no cuenta como usado.
+     *
+     * Lo pone `//attach_*` mientras no hayas pasado por `//ps`. Sin esto,
+     * teclearlo a ciegas destapaba su hueco en la ayuda con la misma respuesta
+     * que le está diciendo que no existe — y quien se niega es quien sabe que se
+     * negó, así que lo dice él y no una comparación de cadenas desde fuera.
+     */
+    denied?: boolean;
 }
 
 const SIN_EFECTO: CommandEffect = { kind: 'none' };
@@ -715,10 +724,10 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//whoareu',
+        secretId: 'chat',
         notInV02: true,
         hidden: true,
         summary: { es: 'preguntarle quién es', en: 'ask who it is' },
-        secretId: 'greeting',
         // El espejo de `//whoami`: allá no puede saber quién sos vos —la cookie
         // es httpOnly— y acá sí sabe quién es ella. La máquina se conoce mejor a
         // sí misma que a vos, y eso dice todo lo que hay que decir de esta app.
@@ -730,10 +739,10 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//howareu',
+        secretId: 'chat',
         notInV02: true,
         hidden: true,
         summary: { es: 'preguntarle cómo está', en: 'ask how it is doing' },
-        secretId: 'greeting',
         resolve: (ctx, _args, lang) =>
             texto(
                 chatReplyFor('how', ctx.chat, lang).text ??
@@ -742,13 +751,13 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//date_off',
+        secretId: 'date-off',
         notInV02: true,
         hidden: true,
         summary: {
             es: 'soltar el reloj del sistema',
             en: 'let the system clock go',
         },
-        secretId: 'date',
         resolve: (_ctx, _args, lang) => ({
             output: T.clockReleased[lang],
             effect: { kind: 'time-drift' },
@@ -808,6 +817,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//todo',
+        secretId: 'v02-todo',
         hidden: true,
         onlyV02: true,
         summary: {
@@ -846,6 +856,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//recover',
+        secretId: 'v02-recover',
         hidden: true,
         onlyV02: true,
         summary: {
@@ -867,6 +878,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//reset',
+        secretId: 'reset',
         notInV02: true,
         hidden: true,
         summary: {
@@ -901,6 +913,33 @@ const COMMANDS: readonly Command[] = [
         hidden: true,
         summary: { es: '—', en: '—' },
         resolve: (_ctx, args, lang) => {
+            /*
+             * ⚠ NO EXISTE HASTA HABER USADO `//ps`.
+             *
+             * Era el trato desde el principio —«sólo se llega desde `//ps`, que
+             * es lo que lo convierte en un hallazgo»— y no se cumplía: resolvía
+             * igual lo hubieras leído o no. Quien probaba `//attach_1` a ciegas
+             * se topaba con la lista de procesos sin haberla pedido.
+             *
+             * Y contesta EXACTAMENTE lo que una palabra inventada. Un «todavía
+             * no» sería peor que nada: confirma que ahí hay algo y convierte la
+             * puerta cerrada en un cartel.
+             */
+            if (!isUnlocked('//ps')) {
+                return {
+                    ...texto(
+                        say(T.unknownCommand, lang, {
+                            name: `//attach_${args}`.toUpperCase(),
+                        })
+                    ),
+                    // `denied` y no una comparación de cadenas: quien se niega
+                    // es quien sabe que se negó. Sin esto, teclearlo a ciegas
+                    // destapaba su hueco en la ayuda con la misma respuesta que
+                    // le dice que no existe.
+                    denied: true,
+                };
+            }
+
             const pid = Number(args);
             const proceso = PROCESSES.find((p) => p.pid === pid);
 
@@ -1017,6 +1056,10 @@ export function run(
     if (abre) {
         return {
             output: entrando ? T.v02Enter[lang] : T.v02Leave[lang],
+            // Descifrar el morse y CRUZAR la puerta son dos cosas distintas, y
+            // la segunda merece contarse aparte: mucha gente va a leer el código
+            // sin llegar a teclear la palabra.
+            secretId: 'v02',
             // En mayúsculas: la palabra se descifra a mano y se teclea como
             // salga, pero la que se guarda es una sola. Normalizar acá evita que
             // «modo» y «MODO» se guarden como dos puertas distintas.
@@ -1039,11 +1082,26 @@ export function run(
     const capturado = command.match?.exec(corto)?.[1];
     const args = capturado ?? resto.join(' ');
 
-    // USARLO lo desbloquea. Va acá y no dentro de cada comando para que ninguno
-    // pueda olvidarse de hacerlo.
-    if (command.hidden) markUsed(command.name);
+    const { output, effect, secretId, rows, denied } = command.resolve(
+        ctx,
+        args,
+        lang,
+        random
+    );
 
-    const { output, effect, secretId, rows } = command.resolve(ctx, args, lang, random);
+    /*
+     * USARLO lo desbloquea — pero sólo si de verdad ocurrió algo.
+     *
+     * Va acá y no dentro de cada comando para que ninguno pueda olvidarse de
+     * hacerlo. Y va DESPUÉS de resolver, no antes, por `//attach_*`: ése se
+     * niega a existir mientras no hayas usado `//ps`, y desbloqueándolo antes
+     * quien lo tecleara a ciegas destapaba su hueco en la ayuda con la misma
+     * respuesta que le dice que no existe.
+     *
+     * Un comando que contesta «desconocido» no se ha usado: se ha fallado.
+     */
+    if (command.hidden && !denied) markUsed(command.name);
+
     return { output, effect, rows, secretId: secretId ?? command.secretId };
 }
 

@@ -132,6 +132,28 @@ export const SECRET_IDS = [
     'greeting',
     'art',
     'art-keep',
+
+    /*
+     * LO CONSTRUIDO DESPUÉS.
+     *
+     * El contador tiene que incluirlo TODO: es lo que le dice a alguien cuánto
+     * conoce del sistema, y con la mitad de las piezas fuera decía que ya casi
+     * lo había visto todo cuando le faltaba la capa más profunda.
+     *
+     * Cada uno de éstos se marca en alguna parte, y un test lo comprueba pieza
+     * por pieza — la lista y las marcas se escriben en sitios distintos y es
+     * exactamente así como se desincronizan.
+     */
+    'date-off',
+    'chat',
+    'kicked',
+    'reset',
+    'collection',
+    'morse',
+    'v02',
+    'v02-recover',
+    'v02-todo',
+    'v02-corrupt',
 ] as const;
 
 export type SecretId = (typeof SECRET_IDS)[number];
@@ -478,7 +500,15 @@ export function registerLogoClick(): LogoClickOutcome {
         };
     }
 
-    if (clickCount === FLICKER_AT_CLICK) return { kind: 'version-flicker' };
+    if (clickCount === FLICKER_AT_CLICK) {
+        // ⚠ ESTO FALTABA, y era un defecto de verdad: `logo` estaba en la lista
+        // del contador y no se marcaba en ninguna parte, así que el panel decía
+        // «x/18» con un 18 al que era IMPOSIBLE llegar. El mismo error que el
+        // umbral de diez colapsos, pero peor — acá la app te dice a la cara
+        // cuántos te faltan.
+        markSecretFound('logo');
+        return { kind: 'version-flicker' };
+    }
 
     return { kind: 'none' };
 }
@@ -562,6 +592,9 @@ export function registerGreeting(now: number = Date.now()): number {
 let kicks = 0;
 
 export function registerKick(): number {
+    // Que te eche de la nota es un final, y los finales cuentan.
+    markSecretFound('kicked');
+
     kicks += 1;
     return kicks;
 }

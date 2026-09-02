@@ -5,6 +5,7 @@ import { useSystemState } from '@/hooks/useSystemState';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useClock } from '@/hooks/useClock';
 import { sessionMorse } from '@/lib/system/morse';
+import { markSecretFound } from '@/hooks/useSystemState';
 import { useT } from '@/i18n';
 
 /**
@@ -78,6 +79,10 @@ export default function SystemClock() {
 
         clicks.current = 0;
         setMorse(sessionMorse());
+
+        // Sacarlo YA cuenta. Descifrarlo es otro hallazgo aparte (`v02`): quien
+        // llegó hasta acá encontró algo, aunque no sepa todavía qué es.
+        markSecretFound('morse');
 
         if (volver.current) clearTimeout(volver.current);
         volver.current = setTimeout(() => setMorse(null), MORSE_MS);

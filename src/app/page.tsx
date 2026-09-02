@@ -22,6 +22,7 @@ import V02Skin from '@/components/effects/V02Skin';
 import V02Glitches from '@/components/effects/V02Glitches';
 import CollectionView from '@/components/notes/CollectionView';
 import { splitCollectibles, markCollectible } from '@/lib/system/collectibles';
+import { markSecretFound } from '@/hooks/useSystemState';
 import { createV02Note, saveV02Note } from '@/lib/system/v02Notes';
 import { useV02Notes } from '@/hooks/useV02Notes';
 import V02Box from '@/components/notes/V02Box';
@@ -268,7 +269,14 @@ export default function Home() {
     const guardarPieza = useCallback(
         async (title: string, content: string) => {
             const creada = await createNote({ title, content });
-            if (creada) markCollectible(creada._id);
+            if (!creada) return;
+
+            markCollectible(creada._id);
+
+            // La pestaña con estrella aparece con la primera pieza guardada, y
+            // ese momento —descubrir que las piezas tienen sitio propio— es un
+            // hallazgo distinto de haber sacado una con `//art`.
+            markSecretFound('collection');
         },
         [createNote]
     );

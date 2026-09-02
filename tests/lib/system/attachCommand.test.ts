@@ -74,6 +74,19 @@ describe('//ps · la única puerta al vsync-test', () => {
 });
 
 describe('//attach_6 · abre el juego', () => {
+    /*
+     * ⚠ HAY QUE HABER PASADO POR `//ps`.
+     *
+     * Estos tests daban por hecho que `//attach_6` resolvía a secas, y por eso
+     * no cazaron que la puerta estaba abierta de par en par: el comando existía
+     * lo hubieras leído o no, y quien probara `//attach_1` a ciegas se topaba
+     * con la lista de procesos sin haberla pedido. Lo que se está probando acá
+     * es la segunda mitad del camino; la primera la cubre `attachGate`.
+     */
+    beforeEach(() => {
+        corre('//ps');
+    });
+
     test('arranca el pong', () => {
         expect(corre('//attach_6').effect).toEqual({ kind: 'play-pong' });
     });
@@ -88,6 +101,12 @@ describe('//attach_6 · abre el juego', () => {
 });
 
 describe('//attach_N · el resto de procesos contesta', () => {
+    // Una vez leída la lista, los procesos SON algo: negarse con su nombre es la
+    // mitad de la gracia. Sin haberla leído callan todos igual (`attachGate`).
+    beforeEach(() => {
+        corre('//ps');
+    });
+
     test('adjuntarse al auto-guardado recibe un reproche', () => {
         const r = corre('//attach_1');
 

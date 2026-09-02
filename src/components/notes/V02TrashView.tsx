@@ -11,6 +11,7 @@ import {
     purgeV02Note,
 } from '@/lib/system/v02Notes';
 import { useLang } from '@/i18n';
+import { markSecretFound } from '@/hooks/useSystemState';
 import { useV02T } from '@/i18n/useV02T';
 
 /**
@@ -53,6 +54,11 @@ export default function V02TrashView() {
     const recuperar = (id: string) => {
         const salida = restoreV02Note(id);
         if (!salida) return;
+
+        // Ver una nota volver rota es el hallazgo; que traiga un comando dentro
+        // es la suerte. Se marca lo primero, porque lo segundo ya se cuenta solo
+        // cuando el comando se usa.
+        if (salida.corrupted) markSecretFound('v02-corrupt');
 
         // El aviso NO dice si venía un comando. Decirlo sería señalarlo con el
         // dedo, y lo que se busca es que alguien lo encuentre leyendo.

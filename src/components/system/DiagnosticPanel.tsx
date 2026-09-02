@@ -4,12 +4,14 @@
 import { useEffect, useRef, useState } from 'react';
 import ProgressBar from '@/components/ui/ProgressBar';
 import { useTheme } from '@/hooks/useTheme';
+import { useLang } from '@/i18n';
 import {
     useSystemState,
     setEffectsEnabled,
     markSecretFound,
 } from '@/hooks/useSystemState';
 import { coreTemperature, coreRatio, CORE_MAX_C } from '@/lib/system/diagnostics';
+import { secretsBar, secretsRank } from '@/lib/system/secretsRank';
 import { formatDuration, formatFileSize } from '@/lib/utils/formatters';
 import { readScores, type Board, type Scores } from '@/lib/system/pongScores';
 import { useT } from '@/i18n';
@@ -62,6 +64,7 @@ export default function DiagnosticPanel({
     const system = useSystemState();
     const theme = useTheme();
     const t = useT();
+    const lang = useLang();
 
     // El tiempo activo tiene que correr mientras el panel está abierto: un
     // diagnóstico con el reloj congelado se nota enseguida. Sólo tictaquea con
@@ -174,8 +177,27 @@ export default function DiagnosticPanel({
                     <Reading label={t('diag.theme')}>
                         {t(theme === 'dark' ? 'theme.dark' : 'theme.light')}
                     </Reading>
+                    {/* No es un dato más: es lo que le dice a alguien cuánto
+                        conoce del sistema, y por eso lleva barra y escalón. Un
+                        `7/28` seco se lee y se olvida; una barra a un cuarto da
+                        ganas de saber qué hay en los otros tres. */}
                     <Reading label={t('diag.secrets')}>
-                        {system.secretsFound}/{system.secretsTotal}
+                        <span className="flex items-center gap-2">
+                            <span aria-hidden="true">
+                                {secretsBar(system.secretsFound, system.secretsTotal)}
+                            </span>
+                            <span>
+                                {system.secretsFound}/{system.secretsTotal}
+                            </span>
+                            <span className="dim">
+                                ·{' '}
+                                {secretsRank(
+                                    system.secretsFound,
+                                    system.secretsTotal,
+                                    lang
+                                )}
+                            </span>
+                        </span>
                     </Reading>
                     <Reading label={t('diag.pongClean')}>
                         <span data-testid="diag-pong-clean">{pong('clean')}</span>
