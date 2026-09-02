@@ -5,7 +5,10 @@ interface ProgressBarProps {
     /** Porcentaje de llenado, de 0 a 100. */
     value: number;
     segments?: number;
+    /** Texto visible antes de la barra. Opcional. */
     label?: string;
+    /** Nombre accesible. Describe QUÉ se está midiendo. */
+    name: string;
 }
 
 /**
@@ -17,6 +20,7 @@ export default function ProgressBar({
     value,
     segments = 10,
     label,
+    name,
 }: ProgressBarProps) {
     const clamped = Math.min(100, Math.max(0, value));
     const filled = Math.round((clamped / 100) * segments);
@@ -28,7 +32,7 @@ export default function ProgressBar({
             aria-valuenow={clamped}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label={label ?? 'Capacidad'}
+            aria-label={name}
         >
             {label && <span>{label}:</span>}
             <span className="progress-fill" aria-hidden="true">

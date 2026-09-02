@@ -6,6 +6,10 @@ import { useTrash } from '@/hooks/useTrash';
 import MetaTag from '@/components/ui/MetaTag';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { formatFileSize, formatRelativeTime } from '@/lib/utils/formatters';
+import { permanentDeleteMessage } from '@/lib/system/lore';
+import { GHOST_ID } from '@/lib/system/ghostFile';
+import { useSystemState, registerPermanentDelete } from '@/hooks/useSystemState';
+import { useT } from '@/i18n';
 
 interface TrashViewProps {
     onCountChange?: (count: number) => void;
@@ -14,6 +18,11 @@ interface TrashViewProps {
 export default function TrashView({ onCountChange }: TrashViewProps) {
     const { trashedNotes, isLoading, error, restoreNote, deletePermanently, clearError } =
         useTrash();
+
+    // El sistema lleva la cuenta de los borrados definitivos de esta sesión: a
+    // partir del quinto, el diálogo deja de ser genérico.
+    const { permanentDeletes } = useSystemState();
+    const t = useT();
 
     const [busyId, setBusyId] = useState<string | null>(null);
     // Nota marcada para borrado definitivo. Es la única acción irreversible de
@@ -36,13 +45,17 @@ export default function TrashView({ onCountChange }: TrashViewProps) {
         const ok = await deletePermanently(pendingDelete.id);
         setBusyId(null);
         setPendingDelete(null);
-        if (ok) onCountChange?.(trashedNotes.length - 1);
+
+        if (ok) {
+            registerPermanentDelete();
+            onCountChange?.(trashedNotes.length - 1);
+        }
     };
 
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-full">
-                <p className="mono text-lg loading-dots">[CARGANDO</p>
+                <p className="mono text-lg loading-dots">{t('status.loading')}</p>
             </div>
         );
     }
@@ -51,9 +64,12 @@ export default function TrashView({ onCountChange }: TrashViewProps) {
         <div className="p-6">
             <ConfirmDialog
                 open={pendingDelete !== null}
-                title="⚠ Eliminar definitivamente"
-                message={`«${pendingDelete?.title ?? ''}» se borrará para siempre. Esta acción no se puede deshacer.`}
-                confirmLabel="[X] Eliminar"
+                title={t('dialog.deleteTitle')}
+                message={permanentDeleteMessage(
+                    pendingDelete?.title ?? '',
+                    permanentDeletes
+                )}
+                confirmLabel={t('dialog.deleteConfirm')}
                 danger
                 busy={busyId !== null}
                 onConfirm={handleDeleteConfirm}
@@ -61,7 +77,7 @@ export default function TrashView({ onCountChange }: TrashViewProps) {
             />
 
             <h2 className="section-header flex items-baseline justify-between gap-4">
-                <span>Papelera</span>
+                <span>{t('nav.trash')}</span>
                 <span className="mono text-xs text-meta tabular-nums">
                     {trashedNotes.length}
                 </span>
@@ -69,12 +85,12 @@ export default function TrashView({ onCountChange }: TrashViewProps) {
 
             {error && (
                 <div className="notice mb-4" role="alert">
-                    <span>{error}</span>
+                    <span>{t(error.key, error.vars)}</span>
                     <button
                         type="button"
                         onClick={clearError}
                         className="btn-terminal"
-                        aria-label="Descartar el error"
+                        aria-label={t('error.dismiss')}
                     >
                         [X]
                     </button>
@@ -83,7 +99,7 @@ export default function TrashView({ onCountChange }: TrashViewProps) {
 
             {trashedNotes.length === 0 ? (
                 <p className="text-center text-meta mono text-sm py-10">
-                    La papelera está vacía.
+                    {t('trash.empty')}
                 </p>
             ) : (
                 <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -96,11 +112,11 @@ export default function TrashView({ onCountChange }: TrashViewProps) {
                                 className="border border-line bg-tertiary p-4 flex flex-col gap-3"
                             >
                                 <p className="mono text-base font-medium truncate">
-                                    {note.title || 'Sin_titulo.txt'}
+                                    {note.title || t('common.untitled')}
                                 </p>
 
                                 <p className="mono text-xs text-meta leading-relaxed h-14 overflow-hidden whitespace-pre-wrap">
-                                    {note.content?.slice(0, 140) || '(vacío)'}
+                                    {note.content?.slice(0, 140) || t('common.empty')}
                                     {(note.content?.length ?? 0) > 140 && '…'}
                                 </p>
 
@@ -108,12 +124,20 @@ export default function TrashView({ onCountChange }: TrashViewProps) {
                                     <MetaTag>
                                         {note.updatedAt
                                             ? formatRelativeTime(note.updatedAt)
-                                            : '—'}
+                                            : t('common.dash')}
                                     </MetaTag>
                                     <MetaTag>
                                         {formatFileSize(note.content?.length ?? 0)}
                                     </MetaTag>
-                                    <MetaTag variant="error">Eliminada</MetaTag>
+                                    {/* El archivo fantasma se distingue SIEMPRE:
+                                        lleva [SISTEMA] en vez de [ELIMINADA].
+                                        Es un chiste, no una trampa — nadie debe
+                                        poder confundirlo con una nota suya. */}
+                                    {note._id === GHOST_ID ? (
+                                        <MetaTag variant="warning">{t('trash.systemFile')}</MetaTag>
+                                    ) : (
+                                        <MetaTag variant="error">{t('trash.deleted')}</MetaTag>
+                                    )}
                                 </div>
 
                                 <div className="flex gap-2 pt-3 border-t border-line-soft">
@@ -123,20 +147,20 @@ export default function TrashView({ onCountChange }: TrashViewProps) {
                                         disabled={busy}
                                         className="btn-terminal flex-1"
                                     >
-                                        {busy ? '[...]' : '[↶] Restaurar'}
+                                        {busy ? t('trash.busy') : t('trash.restore')}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() =>
                                             setPendingDelete({
                                                 id: note._id,
-                                                title: note.title || 'Sin_titulo.txt',
+                                                title: note.title || t('common.untitled'),
                                             })
                                         }
                                         disabled={busy}
                                         className="btn-terminal is-danger flex-1"
                                     >
-                                        [X] Eliminar
+                                        {t('trash.delete')}
                                     </button>
                                 </div>
                             </li>

@@ -4,6 +4,7 @@
 import type { Note } from '@/types/note.types';
 import NoteCard from './NoteCard';
 import TypewriterText from '@/components/effects/TypewriterText';
+import { useT } from '@/i18n';
 
 interface NotesListProps {
     notes: Note[];
@@ -26,13 +27,15 @@ export default function NotesList({
     onNewNote,
     onLoadMore,
 }: NotesListProps) {
+    const t = useT();
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-full">
                 <div className="text-center flex flex-col gap-3">
-                    <p className="mono text-lg loading-dots">[CARGANDO</p>
+                    <p className="mono text-lg loading-dots">{t('list.loading')}</p>
                     <p className="text-meta text-xs mono">
-                        Recuperando archivos del sistema
+                        {t('list.loadingDetail')}
                     </p>
                 </div>
             </div>
@@ -44,15 +47,15 @@ export default function NotesList({
             <div className="flex items-center justify-center h-full p-6">
                 <div className="text-center max-w-sm flex flex-col gap-5 items-center">
                     <p className="pixel text-3xl">
-                        <TypewriterText text="[SISTEMA_VACÍO]" speed={45} />
+                        <TypewriterText text={t('list.emptyBanner')} speed={45} />
                     </p>
                     <p className="mono text-sm text-meta">
-                        No hay archivos en el sistema.
+                        {t('list.emptyLine1')}
                         <br />
-                        Creá el primero para empezar.
+                        {t('list.emptyLine2')}
                     </p>
                     <button type="button" onClick={onNewNote} className="btn-terminal">
-                        [+] Crear primer archivo
+                        {t('list.createFirst')}
                     </button>
                 </div>
             </div>
@@ -62,7 +65,7 @@ export default function NotesList({
     return (
         <div className="p-6">
             <h2 className="section-header flex items-baseline justify-between gap-4">
-                <span>Archivos_disponibles</span>
+                <span>{t('list.available')}</span>
                 <span className="mono text-xs text-meta tabular-nums">
                     {notes.length}
                     {total > notes.length ? ` / ${total}` : ''}
@@ -83,7 +86,7 @@ export default function NotesList({
 
             <div className="flex items-center gap-2">
                 <button type="button" onClick={onNewNote} className="btn-terminal">
-                    [+] Nuevo archivo
+                    {t('list.newFile')}
                 </button>
 
                 {hasMore && (
@@ -94,8 +97,8 @@ export default function NotesList({
                         className="btn-terminal"
                     >
                         {isLoadingMore
-                            ? '[...] Cargando'
-                            : `[↓] Cargar ${total - notes.length} más`}
+                            ? t('common.loading')
+                            : t('list.loadMore', { n: total - notes.length })}
                     </button>
                 )}
             </div>

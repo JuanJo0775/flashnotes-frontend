@@ -1,6 +1,11 @@
 // src/lib/api/notes.api.ts
 import { apiClient } from './client';
-import type { Note, CreateNoteDto, UpdateNoteDto } from '@/types/note.types';
+import type {
+    Note,
+    CreateNoteDto,
+    UpdateNoteDto,
+    NoteHistory,
+} from '@/types/note.types';
 import type {
     ApiResponse,
     PaginatedResponse,
@@ -107,6 +112,31 @@ class NotesApi {
             `${this.basePath}/${id}/redo`
         );
         return this.unwrap(response, 'rehacer el cambio');
+    }
+
+    /**
+     * GET /api/notes/:id/history
+     *
+     * Las versiones que el backend guarda por nota (hasta HISTORY_MAX). La ruta
+     * está en el backend desde el principio; esta es la primera vez que el
+     * frontend la usa.
+     */
+    async history(id: string): Promise<NoteHistory> {
+        if (!isValidObjectId(id)) {
+            throw new Error('ID inválido para consultar el historial');
+        }
+
+        const response = await apiClient.get<ApiResponse<Partial<NoteHistory>>>(
+            `${this.basePath}/${id}/history`
+        );
+        const data = this.unwrap(response, 'consultar el historial');
+
+        // Una nota sin ediciones no trae los arrays: se normalizan acá para que
+        // quien los pinte no tenga que defenderse de undefined.
+        return {
+            versions: data.versions ?? [],
+            redoStack: data.redoStack ?? [],
+        };
     }
 
     /** PATCH /api/notes/:id/trash */

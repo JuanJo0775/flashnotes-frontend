@@ -8,6 +8,8 @@ interface KeyboardShortcuts {
     onUndo?: () => void;
     onRedo?: () => void;
     onNewNote?: () => void;
+    /** Escape: volver atrás. Ver la nota sobre los diálogos más abajo. */
+    onEscape?: () => void;
 }
 
 /**
@@ -33,10 +35,33 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcuts) {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             const mod = e.ctrlKey || e.metaKey;
+            const current = ref.current;
+
+            // Escape va ANTES de la guarda del modificador: es el único atajo
+            // que se pulsa solo.
+            if (e.key === 'Escape') {
+                if (!current.onEscape) return;
+
+                // Ctrl+Escape y Cmd+Escape son del sistema operativo (en Windows
+                // abre el menú de inicio). No se tocan.
+                if (mod || e.altKey) return;
+
+                // Si hay un <dialog> abierto, Escape es SUYO.
+                //
+                // ConfirmDialog y DiagnosticPanel usan <dialog> nativo con
+                // showModal(), que cierra con Escape por su cuenta. Sin esta
+                // guarda una sola pulsación haría las dos cosas: cerrar el
+                // diálogo y además salir del editor que hay detrás.
+                if (document.querySelector('dialog[open]')) return;
+
+                e.preventDefault();
+                current.onEscape();
+                return;
+            }
+
             if (!mod) return;
 
             const key = e.key.toLowerCase();
-            const current = ref.current;
 
             // Ctrl/Cmd + Shift + Z, o Ctrl/Cmd + Y → rehacer
             if ((key === 'z' && e.shiftKey) || key === 'y') {

@@ -50,7 +50,13 @@ API. Los hooks tienen el estado y hablan con `lib/api`. Si un componente importa
 
 - [docs/DISENO.md](docs/DISENO.md) — sistema de diseño: tokens, tipografía,
   vocabulario visual y las reglas que no se saltan
+- [docs/EFECTOS.md](docs/EFECTOS.md) — catálogo de los efectos escondidos: qué
+  se ve, cómo se dispara cada uno, con qué números y por qué está hecho así
 - [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md) — puesta en producción
+- `docs/specs/` — el diseño detrás de lo construido. Ahora mismo:
+  [secretos del sistema](docs/specs/2026-09-01-secretos-del-sistema.md)
+  (revisión 2), con el lore, las decisiones cerradas y el razonamiento de cada
+  pieza. Nada de esto toca el backend.
 
 ## Dos trampas que ya costaron caro
 

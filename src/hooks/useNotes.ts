@@ -3,7 +3,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
-import { getErrorMessage } from '@/lib/api/client';
+import { getErrorInfo } from '@/lib/api/client';
+import type { Message } from '@/i18n';
 import type { Note, CreateNoteDto, UpdateNoteDto } from '@/types/note.types';
 import { isValidObjectId, validateTitle, validateContent } from '@/lib/utils/validators';
 
@@ -19,7 +20,7 @@ interface UseNotesReturn {
     isLoadingMore: boolean;
     /** Total de notas en el servidor, no sólo las cargadas. */
     total: number;
-    error: string | null;
+    error: Message | null;
 
     createNote: (data: CreateNoteDto) => Promise<Note | null>;
     updateNote: (id: string, data: UpdateNoteDto) => Promise<Note | null>;
@@ -33,7 +34,7 @@ export const useNotes = (): UseNotesReturn => {
     const [notes, setNotes] = useState<Note[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<Message | null>(null);
     const [page, setPage] = useState(1);
     const [total, setTotal] = useState(0);
     const [hasMore, setHasMore] = useState(false);
@@ -56,7 +57,7 @@ export const useNotes = (): UseNotesReturn => {
             setTotal(pagination?.total ?? fetched.length);
             setHasMore(pagination ? pagination.page < pagination.pages : false);
         } catch (err) {
-            setError(getErrorMessage(err));
+            setError(getErrorInfo(err));
             setNotes([]);
             setHasMore(false);
         } finally {
@@ -94,7 +95,7 @@ export const useNotes = (): UseNotesReturn => {
             setTotal(pagination?.total ?? total);
             setHasMore(pagination ? pagination.page < pagination.pages : false);
         } catch (err) {
-            setError(getErrorMessage(err));
+            setError(getErrorInfo(err));
         } finally {
             setIsLoadingMore(false);
             loadingRef.current = false;
@@ -106,13 +107,13 @@ export const useNotes = (): UseNotesReturn => {
 
         const titleCheck = validateTitle(data.title);
         if (!titleCheck.valid) {
-            setError(titleCheck.error ?? 'Título inválido');
+            setError(titleCheck.error ?? { key: 'valid.titleNotText' });
             return null;
         }
 
         const contentCheck = validateContent(data.content ?? '');
         if (!contentCheck.valid) {
-            setError(contentCheck.error ?? 'Contenido inválido');
+            setError(contentCheck.error ?? { key: 'valid.contentNotText' });
             return null;
         }
 
@@ -122,7 +123,7 @@ export const useNotes = (): UseNotesReturn => {
             setTotal((t) => t + 1);
             return newNote;
         } catch (err) {
-            setError(getErrorMessage(err));
+            setError(getErrorInfo(err));
             return null;
         }
     }, []);
@@ -132,14 +133,14 @@ export const useNotes = (): UseNotesReturn => {
             setError(null);
 
             if (!isValidObjectId(id)) {
-                setError('ID inválido para actualizar la nota');
+                setError({ key: 'error.INVALID_ID_FORMAT' });
                 return null;
             }
 
             if (data.title !== undefined) {
                 const titleCheck = validateTitle(data.title);
                 if (!titleCheck.valid) {
-                    setError(titleCheck.error ?? 'Título inválido');
+                    setError(titleCheck.error ?? { key: 'valid.titleNotText' });
                     return null;
                 }
             }
@@ -147,7 +148,7 @@ export const useNotes = (): UseNotesReturn => {
             if (data.content !== undefined) {
                 const contentCheck = validateContent(data.content);
                 if (!contentCheck.valid) {
-                    setError(contentCheck.error ?? 'Contenido inválido');
+                    setError(contentCheck.error ?? { key: 'valid.contentNotText' });
                     return null;
                 }
             }
@@ -157,7 +158,7 @@ export const useNotes = (): UseNotesReturn => {
                 setNotes((prev) => prev.map((n) => (n._id === id ? updated : n)));
                 return updated;
             } catch (err) {
-                setError(getErrorMessage(err));
+                setError(getErrorInfo(err));
                 return null;
             }
         },
@@ -168,7 +169,7 @@ export const useNotes = (): UseNotesReturn => {
         setError(null);
 
         if (!isValidObjectId(id)) {
-            setError('ID inválido para mover la nota a la papelera');
+            setError({ key: 'error.INVALID_ID_FORMAT' });
             return false;
         }
 
@@ -178,7 +179,7 @@ export const useNotes = (): UseNotesReturn => {
             setTotal((t) => Math.max(0, t - 1));
             return true;
         } catch (err) {
-            setError(getErrorMessage(err));
+            setError(getErrorInfo(err));
             return false;
         }
     }, []);

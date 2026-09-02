@@ -10,6 +10,13 @@ import { isValidObjectId } from '@/lib/utils/validators';
 import { LIMITS } from '@/config/limits';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useT, useLang } from '@/i18n';
+import BootPrompt from '@/components/effects/BootPrompt';
+import LinePrompts from '@/components/notes/LinePrompts';
+import { isCommandLine } from '@/lib/system/commands';
+import { useNoteCommands } from '@/hooks/useNoteCommands';
+import { pickBootPhrase } from '@/lib/system/lore';
+import { getSystemState } from '@/hooks/useSystemState';
 
 /**
  * Cadencia del auto-guardado.
@@ -25,6 +32,44 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
  */
 const AUTOSAVE_DELAY_MS = 2500;
 
+/**
+ * Ritmo con el que se teclea la respuesta de un comando.
+ *
+ * Más rápido que el arranque: el arranque es la máquina despertando, esto es la
+ * máquina contestando algo que le preguntaste, y una terminal contesta rápido.
+ *
+ * EL RITMO SE ADAPTA AL LARGO, y hace falta. Con 18 ms fijos por carácter, la
+ * lista de `>help` —unos 450 caracteres— tardaba OCHO SEGUNDOS en aparecer y
+ * catorce en cerrar su arco: imposible de usar, y encima se borraba antes de que
+ * te diera tiempo a leerla. Sólo se notó usando la app.
+ *
+ * Ahora el tecleo entero cabe en poco más de un segundo sea cual sea el largo, y
+ * la pausa crece con lo que hay que leer.
+ */
+const REPLY_TYPE_MS = 18;
+const REPLY_TYPE_TOTAL_MS = 1200;
+const REPLY_HOLD_BASE_MS = 2000;
+const REPLY_HOLD_PER_CHAR_MS = 22;
+const REPLY_HOLD_MAX_MS = 9000;
+const REPLY_ERASE_TOTAL_MS = 500;
+
+/** Los tiempos que le tocan a una respuesta de este largo. */
+function replyTimings(length: number) {
+    const chars = Math.max(1, length);
+
+    return {
+        typeMs: Math.min(REPLY_TYPE_MS, REPLY_TYPE_TOTAL_MS / chars),
+        holdMs: Math.min(
+            REPLY_HOLD_MAX_MS,
+            REPLY_HOLD_BASE_MS + chars * REPLY_HOLD_PER_CHAR_MS
+        ),
+        eraseMs: Math.min(8, REPLY_ERASE_TOTAL_MS / chars),
+    };
+}
+
+/** Referencia estable, para no recrear callbacks cuando el padre no los pasa. */
+const noop = () => {};
+
 interface NoteEditorProps {
     note: Note;
     onSave: (id: string, data: { title?: string; content?: string }) => Promise<Note | null>;
@@ -33,6 +78,12 @@ interface NoteEditorProps {
     onRedo: (id: string) => Promise<Note | null>;
     onMoveToTrash: (id: string) => Promise<boolean>;
     onSaveStateChange: (state: SaveState) => void;
+    /** Informa al padre de cuántos caracteres tiene la nota abierta. */
+    onLengthChange?: (length: number) => void;
+    /** Las notas de la sesión, para que `>ls` y `>df` puedan contarlas. */
+    notes?: readonly { title: string; chars: number }[];
+    onOpenDiagnostics?: () => void;
+    onCollapse?: () => void;
 }
 
 export default function NoteEditor({
@@ -43,8 +94,14 @@ export default function NoteEditor({
     onRedo,
     onMoveToTrash,
     onSaveStateChange,
+    onLengthChange,
+    notes = [],
+    onOpenDiagnostics,
+    onCollapse,
 }: NoteEditorProps) {
     const { isFullyOperational } = useNetworkStatus();
+    const t = useT();
+    const lang = useLang();
 
     const [title, setTitle] = useState(note.title);
     const [content, setContent] = useState(note.content);
@@ -53,6 +110,55 @@ export default function NoteEditor({
     const [canRedo, setCanRedo] = useState(Boolean(note.redoStack?.length));
     const [showTrashConfirm, setShowTrashConfirm] = useState(false);
     const [isTrashing, setIsTrashing] = useState(false);
+
+    // Secuencia de arranque: sólo en una nota que se abre vacía. Mientras dura,
+    // el cursor real del textarea se oculta y el que se ve es el de la
+    // animación, para que no haya dos a la vez. Termina en cuanto el usuario
+    // escribe o sale del campo: él manda, no la animación.
+    const [isBooting, setIsBooting] = useState(note.content === '');
+
+    /**
+     * Qué se teclea al abrir una nota vacía.
+     *
+     * Casi siempre el texto de ayuda de siempre. Una de cada treinta veces, otra
+     * frase — y si acabás de mandar una nota a la papelera, la que reacciona a
+     * eso, que gana a todas.
+     *
+     * Se calcula UNA vez al montar: el editor se remonta con `key` al cambiar de
+     * nota, así que cada nota vacía tira su propio dado y ninguna cambia de
+     * frase mientras la mirás.
+     */
+    const [bootText] = useState(() => {
+        const system = getSystemState();
+        const ahora = new Date();
+        const msSinceTrash =
+            system.noteTrashedAt === null ? null : Date.now() - system.noteTrashedAt;
+
+        const ctx = {
+            hour: ahora.getHours(),
+            sessionMs: Date.now() - system.sessionStart,
+            idleMs: 0,
+            msSinceTrash,
+        };
+
+        const recienTirada = msSinceTrash !== null && msSinceTrash < 60_000;
+        // El texto de siempre sale traducido; las frases raras vienen de
+        // `lore.ts`, que todavía habla sólo español (ver el spec, fase 5).
+        if (!recienTirada && Math.random() >= 1 / 30) return t('editor.bootPlaceholder');
+
+        return pickBootPhrase(ctx, null);
+    });
+
+    // Comandos del editor. `onClearNote` y el vaciado tras ejecutar son la
+    // misma cosa: el comando nunca queda escrito en la nota.
+    const clearNote = useCallback(() => setContent(''), []);
+
+    const commands = useNoteCommands({
+        notes,
+        onOpenDiagnostics: onOpenDiagnostics ?? noop,
+        onCollapse: onCollapse ?? noop,
+        onClearNote: clearNote,
+    });
 
     const contentRef = useRef<HTMLTextAreaElement>(null);
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -136,6 +242,14 @@ export default function NoteEditor({
         const saved = savedRef.current;
         if (title === saved.title && content === saved.content) return;
 
+        // Mientras lo escrito sea un comando, NO se programa nada.
+        //
+        // Sin esto, la promesa de que "ni el comando ni su respuesta llegan a la
+        // base de datos" es falsa: el auto-guardado corre a los 2,5 s de la
+        // última tecla, así que escribir `>help` y tardar tres segundos en
+        // pulsar Enter bastaba para guardarlo Y gastar un punto de historial.
+        if (isCommandLine(content)) return;
+
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
         saveTimeoutRef.current = setTimeout(() => void flush(), AUTOSAVE_DELAY_MS);
 
@@ -170,9 +284,37 @@ export default function NoteEditor({
         if (recovered) void flush();
     }, [isFullyOperational, flush]);
 
+    // Al abrir la nota, el cursor va al FINAL del texto, no al principio.
+    //
+    // `focus()` a secas deja el cursor en la posición cero, así que al volver a
+    // una nota ya escrita aparecías al comienzo y tenías que bajar a mano hasta
+    // donde ibas. Retomar la escritura donde la dejaste es lo que se espera de
+    // un editor.
     useEffect(() => {
-        contentRef.current?.focus();
+        const el = contentRef.current;
+        if (!el) return;
+
+        el.focus();
+        const fin = el.value.length;
+        el.setSelectionRange(fin, fin);
+        el.scrollTop = el.scrollHeight;
     }, []);
+
+    // El padre necesita el tamaño para el medidor de la barra de estado, pero
+    // NO en cada tecla: avisar al padre re-renderiza la página entera —barra
+    // lateral y barra de estado incluidas— y encadena una actualización más por
+    // pulsación. Escribiendo rápido, esa cadena llegaba al límite de
+    // actualizaciones anidadas de React ("Maximum update depth exceeded"), React
+    // abortaba el ciclo y la interfaz se quedaba congelada: los prompts
+    // desaparecían y no volvían hasta que otro render los rescataba.
+    //
+    // Un medidor no necesita precisión de carácter: se agrupa cada 250 ms.
+    useEffect(() => {
+        if (!onLengthChange) return;
+
+        const id = setTimeout(() => onLengthChange(content.length), 250);
+        return () => clearTimeout(id);
+    }, [content, onLengthChange]);
 
     const runHistoryAction = useCallback(
         async (action: (id: string) => Promise<Note | null>) => {
@@ -217,11 +359,51 @@ export default function NoteEditor({
         if (moved) onBack();
     }, [noteId, onMoveToTrash, onBack]);
 
+    /**
+     * Escape sale del editor, guardando lo que haya pendiente.
+     *
+     * No pregunta. El editor ya autoguarda cada 2,5 s y al perder el foco, así
+     * que "¿querés guardar?" sería una pregunta cuya respuesta el sistema ya
+     * conoce. Escape GUARDA en vez de preguntar.
+     *
+     * El flush se espera antes de volver: `onBack` recarga la lista, y sin
+     * esperar la lista se recargaría con el contenido anterior — la nota que
+     * acabás de escribir aparecería con el tamaño viejo.
+     */
+    const handleEscape = useCallback(() => {
+        void (async () => {
+            await flush();
+            onBack();
+        })();
+    }, [flush, onBack]);
+
     useKeyboardShortcuts({
         onSave: () => void flush(),
         onUndo: handleUndo,
         onRedo: handleRedo,
+        onEscape: handleEscape,
     });
+
+    /**
+     * Enter sobre un comando lo ejecuta en lugar de insertar un salto.
+     *
+     * La comprobación es SÍNCRONA y puramente sintáctica a propósito:
+     * preventDefault tiene que llamarse dentro del manejador, no después de un
+     * await, o el salto de línea ya se insertó. Si no es un comando, no se toca
+     * nada: a nadie que esté escribiendo de verdad se le roba el Enter.
+     */
+    const handleKeyDown = useCallback(
+        (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+            if (e.key !== 'Enter' || e.shiftKey) return;
+            if (!isCommandLine(content)) return;
+
+            e.preventDefault();
+            setIsBooting(false);
+            setContent('');
+            void commands.run(content, noteId);
+        },
+        [content, noteId, commands]
+    );
 
     const overContentLimit = content.length > LIMITS.CONTENT_MAX;
 
@@ -229,9 +411,9 @@ export default function NoteEditor({
         <div className="flex flex-col h-full">
             <ConfirmDialog
                 open={showTrashConfirm}
-                title="⚠ Mover a papelera"
-                message="La nota se moverá a la papelera. Podés restaurarla desde ahí."
-                confirmLabel="[✓] Mover"
+                title={t('dialog.trashTitle')}
+                message={t('dialog.trashMessage')}
+                confirmLabel={t('dialog.trashConfirm')}
                 busy={isTrashing}
                 onConfirm={handleTrashConfirm}
                 onCancel={() => setShowTrashConfirm(false)}
@@ -241,18 +423,18 @@ export default function NoteEditor({
             <div className="border-b border-line bg-secondary p-4 flex flex-col gap-3 shrink-0">
                 <div className="flex items-center justify-between gap-4">
                     <button type="button" onClick={onBack} className="btn-terminal">
-                        [←] Volver
+                        {t('editor.back')}
                     </button>
 
                     <div className="flex items-center gap-2">
                         {saveState === 'saving' && (
-                            <MetaTag variant="neutral">Guardando…</MetaTag>
+                            <MetaTag variant="neutral">{t('editor.saving')}</MetaTag>
                         )}
                         {saveState === 'saved' && (
-                            <MetaTag variant="success">Guardado</MetaTag>
+                            <MetaTag>{t('editor.saved')}</MetaTag>
                         )}
                         {saveState === 'error' && (
-                            <MetaTag variant="error">Sin guardar</MetaTag>
+                            <MetaTag variant="error">{t('editor.notSaved')}</MetaTag>
                         )}
                         <MetaTag variant={overContentLimit ? 'error' : 'neutral'}>
                             {formatFileSize(content.length)}
@@ -262,7 +444,7 @@ export default function NoteEditor({
 
                 <div className="flex flex-col gap-2">
                     <label htmlFor="note-title-input" className="comment">
-                        Editor_core
+                        {t('editor.core')}
                     </label>
                     <input
                         id="note-title-input"
@@ -272,46 +454,77 @@ export default function NoteEditor({
                         onBlur={() => void flush()}
                         maxLength={LIMITS.TITLE_MAX}
                         className="input-terminal pixel text-xl"
-                        placeholder="Nombre_del_archivo.txt"
+                        placeholder={t('editor.titlePlaceholder')}
                     />
                 </div>
             </div>
 
-            {/* --- Área de escritura --- */}
+            {/* --- Área de escritura ---
+                El relleno derecho es menor que el resto a propósito: iguala el
+                de la barra del título, así el borde derecho de la caja del
+                título hace de guía y la barra de desplazamiento cae justo sobre
+                esa misma línea, sin dejar un hueco muerto al lado. */}
             <div className="flex-1 min-h-0 bg-tertiary">
-                <div className="h-full flex items-start gap-2 p-6">
-                    <span className="mono text-meta select-none pt-px" aria-hidden="true">
-                        &gt;
-                    </span>
+                <div className="h-full py-6 pl-6 pr-4">
+                    <div className="editor-canvas">
+                    <LinePrompts textareaRef={contentRef} value={content} />
                     <label htmlFor="note-content-textarea" className="sr-only">
-                        Contenido de la nota
+                        {t('editor.contentLabel')}
                     </label>
+                    {isBooting && !commands.response && (
+                        <p className="editor-placeholder" aria-hidden="true">
+                            <BootPrompt text={bootText} />
+                        </p>
+                    )}
+                    {/* La respuesta de un comando ocupa el mismo hueco que el
+                        arranque y se teclea con el mismo motor, sólo que más
+                        rápido. Se retira sola al cerrar su arco. */}
+                    {commands.response && (
+                        <p className="editor-placeholder editor-reply">
+                            <BootPrompt
+                                key={commands.response}
+                                text={commands.response}
+                                wakeMs={0}
+                                {...replyTimings(commands.response.length)}
+                                onDone={commands.dismiss}
+                            />
+                        </p>
+                    )}
                     <textarea
                         id="note-content-textarea"
                         ref={contentRef}
                         value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        onBlur={() => void flush()}
-                        className="flex-1 h-full resize-none bg-transparent border-none outline-none mono text-base leading-relaxed"
-                        placeholder="El usuario comienza a escribir aquí…"
+                        onKeyDown={handleKeyDown}
+                        onChange={(e) => {
+                            setIsBooting(false);
+                            commands.dismiss();
+                            setContent(e.target.value);
+                        }}
+                        onBlur={() => {
+                            setIsBooting(false);
+                            void flush();
+                        }}
+                        className={`editor-textarea${isBooting ? ' is-booting' : ''}`}
                         spellCheck={false}
                     />
+                    </div>
                 </div>
             </div>
 
             {overContentLimit && (
                 <p className="notice shrink-0" role="alert">
                     <span>
-                        La nota supera los {LIMITS.CONTENT_MAX.toLocaleString('es')}{' '}
-                        caracteres y no se puede guardar. Recortá{' '}
-                        {(content.length - LIMITS.CONTENT_MAX).toLocaleString('es')}.
+                        {t('editor.overLimit', {
+                            max: LIMITS.CONTENT_MAX.toLocaleString(lang),
+                            excess: (content.length - LIMITS.CONTENT_MAX).toLocaleString(lang),
+                        })}
                     </span>
                 </p>
             )}
 
             {/* --- Acciones --- */}
             <div className="panel-footer justify-between">
-                <span className="comment">Acciones_rápidas</span>
+                <span className="comment">{t('editor.quickActions')}</span>
 
                 <div className="flex items-center gap-2">
                     <button
@@ -319,26 +532,26 @@ export default function NoteEditor({
                         onClick={handleUndo}
                         disabled={!canUndo}
                         className="btn-terminal"
-                        title="Deshacer (Ctrl+Z)"
+                        title={t('editor.undoTitle')}
                     >
-                        [↶] Undo
+                        {t('editor.undo')}
                     </button>
                     <button
                         type="button"
                         onClick={handleRedo}
                         disabled={!canRedo}
                         className="btn-terminal"
-                        title="Rehacer (Ctrl+Y)"
+                        title={t('editor.redoTitle')}
                     >
-                        [↷] Redo
+                        {t('editor.redo')}
                     </button>
                     <button
                         type="button"
                         onClick={() => setShowTrashConfirm(true)}
                         className="btn-terminal"
-                        title="Mover a papelera"
+                        title={t('editor.trashTitle')}
                     >
-                        [🗑] Papelera
+                        {t('editor.trash')}
                     </button>
                 </div>
             </div>

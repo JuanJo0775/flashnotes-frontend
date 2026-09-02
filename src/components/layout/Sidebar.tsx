@@ -3,6 +3,7 @@
 
 import type { Note } from '@/types/note.types';
 import { formatFileSize, formatTime } from '@/lib/utils/formatters';
+import { useT } from '@/i18n';
 
 interface SidebarProps {
     notes: Note[];
@@ -25,19 +26,21 @@ export default function Sidebar({
     onNewNote,
     onLoadMore,
 }: SidebarProps) {
+    const t = useT();
+
     return (
         <aside className="w-72 shrink-0 border-r border-line bg-secondary flex flex-col">
             <div className="border-b border-line p-4 flex flex-col gap-3">
-                <span className="comment">Seleccionar_archivo</span>
+                <span className="comment">{t('sidebar.selectFile')}</span>
                 <button type="button" onClick={onNewNote} className="btn-terminal w-full">
-                    [+] Nueva nota
+                    {t('sidebar.newNote')}
                 </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-2">
                 {notes.length === 0 ? (
                     <p className="text-center text-meta text-xs mono py-8">
-                        Sin archivos
+                        {t('sidebar.empty')}
                     </p>
                 ) : (
                     <ul className="flex flex-col">
@@ -56,7 +59,7 @@ export default function Sidebar({
                                             La guía crece para llenar el hueco,
                                             como en el listado de la referencia. */}
                                         <span className="file-row-name">
-                                            {note.title || 'Sin_titulo.txt'}
+                                            {note.title || t('common.untitled')}
                                         </span>
                                         <span className="file-row-leader" aria-hidden="true" />
                                         <span className="file-row-status">
@@ -77,8 +80,8 @@ export default function Sidebar({
                         className="btn-terminal w-full mt-2"
                     >
                         {isLoadingMore
-                            ? '[...] Cargando'
-                            : `[↓] Cargar más (${total - notes.length})`}
+                            ? t('common.loading')
+                            : t('sidebar.loadMore', { n: total - notes.length })}
                     </button>
                 )}
             </div>
@@ -86,10 +89,10 @@ export default function Sidebar({
             <div className="panel-footer justify-between text-2xs mono text-meta uppercase tracking-wider">
                 <span>
                     {notes.length}
-                    {total > notes.length ? `/${total}` : ''} archivos
+                    {total > notes.length ? `/${total}` : ''} {t('sidebar.files')}
                 </span>
                 <span>
-                    {selectedNote?.updatedAt ? formatTime(selectedNote.updatedAt) : '--:--:--'}
+                    {selectedNote?.updatedAt ? formatTime(selectedNote.updatedAt) : t('sidebar.noTime')}
                 </span>
             </div>
         </aside>

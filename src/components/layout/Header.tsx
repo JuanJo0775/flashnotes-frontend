@@ -4,12 +4,17 @@
 import { useSyncExternalStore } from 'react';
 import { formatDate } from '@/lib/utils/formatters';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import SystemLabel from '@/components/layout/SystemLabel';
+import LanguageToggle from '@/components/ui/LanguageToggle';
+import { useT, type TranslationKey } from '@/i18n';
 import type { View } from '@/types/note.types';
 
 interface HeaderProps {
     currentView: View;
     onViewChange: (view: View) => void;
     trashCount?: number;
+    /** Lo pide el rótulo cuando alguien insiste nueve veces (§5). */
+    onCollapse?: () => void;
 }
 
 // La fecha no cambia mientras la pestaña está abierta: no hay nada a lo que
@@ -18,12 +23,22 @@ const subscribeToNothing = () => () => {};
 const getToday = () => formatDate(new Date());
 const getNoDate = () => null;
 
-const TABS: { view: View; label: string }[] = [
-    { view: 'notes', label: 'Notas' },
-    { view: 'trash', label: 'Papelera' },
+// Las pestañas guardan la CLAVE, no el rótulo: el texto se resuelve en el
+// render, que es cuando se sabe el idioma. Una constante de módulo con el texto
+// ya traducido se congelaría en el idioma que hubiera al importar el archivo.
+const TABS: { view: View; labelKey: TranslationKey }[] = [
+    { view: 'notes', labelKey: 'nav.notes' },
+    { view: 'trash', labelKey: 'nav.trash' },
 ];
 
-export default function Header({ currentView, onViewChange, trashCount }: HeaderProps) {
+export default function Header({
+    currentView,
+    onViewChange,
+    trashCount,
+    onCollapse,
+}: HeaderProps) {
+    const t = useT();
+
     // La fecha se pinta sólo en el cliente.
     //
     // Antes era `formatDate(new Date())` directo en el render: Next lo evaluaba
@@ -40,10 +55,10 @@ export default function Header({ currentView, onViewChange, trashCount }: Header
 
     return (
         <header className="terminal-header">
-            <span className="pixel">[FLASH-NOTES v1.0]</span>
+            <SystemLabel onCollapse={onCollapse ?? (() => {})} />
 
-            <nav aria-label="Vistas" className="flex items-center gap-1">
-                {TABS.map(({ view, label }) => (
+            <nav aria-label={t('nav.viewsLabel')} className="flex items-center gap-1">
+                {TABS.map(({ view, labelKey }) => (
                     <button
                         key={view}
                         type="button"
@@ -51,16 +66,17 @@ export default function Header({ currentView, onViewChange, trashCount }: Header
                         className="nav-tab"
                         aria-current={activeTab === view ? 'page' : undefined}
                     >
-                        [{label}
+                        [{t(labelKey)}
                         {view === 'trash' && trashCount ? ` ${trashCount}` : ''}]
                     </button>
                 ))}
             </nav>
 
             <div className="flex items-center gap-3">
+                <LanguageToggle />
                 <ThemeToggle />
                 <span className="mono text-xs dim" suppressHydrationWarning>
-                    [DATE: {today ?? '----.--.--'}]
+                    [{t('nav.dateLabel')}: {today ?? t('nav.datePlaceholder')}]
                 </span>
             </div>
         </header>

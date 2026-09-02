@@ -10,8 +10,10 @@ jest.mock('@/lib/api/notes.api', () => ({
     },
 }));
 
+// El hook guarda la CLAVE del error, sin traducir, para que el texto siga al
+// idioma en pantalla. El mock devuelve una clave real, no una cadena suelta.
 jest.mock('@/lib/api/client', () => ({
-    getErrorMessage: jest.fn(() => 'ERROR'),
+    getErrorInfo: jest.fn(() => ({ key: 'error.UNKNOWN' })),
 }));
 
 const undoMock = notesApi.undo as jest.Mock;
@@ -67,7 +69,7 @@ describe('useUndoRedo', () => {
             expect(await result.current.undo(noteId)).toBeNull();
         });
 
-        expect(result.current.error).toBe('ERROR');
+        expect(result.current.error).toEqual({ key: 'error.UNKNOWN' });
     });
 
     test('rechaza un ID que no es un ObjectId, sin llamar a la API', async () => {
@@ -78,7 +80,7 @@ describe('useUndoRedo', () => {
         });
 
         expect(undoMock).not.toHaveBeenCalled();
-        expect(result.current.error).toMatch(/ID inválido/i);
+        expect(result.current.error).toEqual({ key: 'error.INVALID_ID_FORMAT' });
     });
 
     test('ignora un segundo undo mientras el primero sigue en vuelo', async () => {

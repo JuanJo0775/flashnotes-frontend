@@ -23,8 +23,20 @@ describe('formatters - formatDate', () => {
     });
 
     test('debe rellenar con ceros', () => {
-        const date = new Date('2026-01-05');
+        // Se construye en hora LOCAL, no desde una cadena UTC: `new Date('2026-01-05')`
+        // se interpreta como medianoche UTC, que en UTC-3 es el día 4 por la
+        // noche. Con las fechas ya en la hora del dispositivo, el test tenía que
+        // dejar de depender del huso de quien lo corre.
+        const date = new Date(2026, 0, 5);
         expect(formatDate(date)).toBe('2026.01.05');
+    });
+
+    test('usa la fecha del dispositivo, no la UTC', () => {
+        // El caso que motivó el cambio: a alguien en UTC-3, a las 22:00 la app
+        // le mostraba la fecha de MAÑANA. Una app de notas que se equivoca de
+        // día no tiene ninguna gracia.
+        const casiMedianoche = new Date(2026, 1, 4, 22, 30);
+        expect(formatDate(casiMedianoche)).toBe('2026.02.04');
     });
 });
 
@@ -34,13 +46,19 @@ describe('formatters - formatTime', () => {
     });
 
     test('debe rellenar con ceros', () => {
-        const date = new Date('2026-02-04T01:05:09Z');
+        const date = new Date(2026, 1, 4, 1, 5, 9);
         expect(formatTime(date)).toBe('01:05:09');
     });
 
     test('debe manejar medianoche', () => {
-        const date = new Date('2026-02-04T00:00:00Z');
+        const date = new Date(2026, 1, 4, 0, 0, 0);
         expect(formatTime(date)).toBe('00:00:00');
+    });
+
+    test('usa la hora del dispositivo', () => {
+        // Una nota guardada a las 22:00 tiene que decir 22:00, no 01:00 del día
+        // siguiente.
+        expect(formatTime(new Date(2026, 1, 4, 22, 0, 0))).toBe('22:00:00');
     });
 });
 

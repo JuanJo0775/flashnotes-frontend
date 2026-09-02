@@ -3,16 +3,20 @@
 
 import type { ReactNode } from 'react';
 
-type Variant = 'neutral' | 'success' | 'error' | 'warning';
+type Variant = 'neutral' | 'error' | 'warning';
 
 interface MetaTagProps {
     children: ReactNode;
     variant?: Variant;
 }
 
+/*
+ * No hay variante de "éxito" a propósito: en esta interfaz el color sólo aparece
+ * cuando algo requiere atención. Que todo vaya bien se comunica en el mismo
+ * negro o blanco que el resto del texto.
+ */
 const VARIANT_CLASS: Record<Variant, string> = {
     neutral: 'meta-tag',
-    success: 'meta-tag status-ok',
     error: 'meta-tag status-error',
     warning: 'meta-tag status-warn',
 };

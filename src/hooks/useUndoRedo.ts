@@ -3,13 +3,14 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
-import { getErrorMessage } from '@/lib/api/client';
+import { getErrorInfo } from '@/lib/api/client';
+import type { Message } from '@/i18n';
 import type { Note } from '@/types/note.types';
 import { isValidObjectId } from '@/lib/utils/validators';
 
 interface UseUndoRedoReturn {
     isProcessing: boolean;
-    error: string | null;
+    error: Message | null;
     undo: (noteId: string) => Promise<Note | null>;
     redo: (noteId: string) => Promise<Note | null>;
     clearError: () => void;
@@ -24,7 +25,7 @@ interface UseUndoRedoReturn {
  */
 export const useUndoRedo = (): UseUndoRedoReturn => {
     const [isProcessing, setIsProcessing] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<Message | null>(null);
     const inFlightRef = useRef(false);
 
     const run = useCallback(
@@ -34,7 +35,7 @@ export const useUndoRedo = (): UseUndoRedoReturn => {
         ): Promise<Note | null> => {
             if (inFlightRef.current) return null;
             if (!isValidObjectId(noteId)) {
-                setError('ID inválido para esta operación');
+                setError({ key: 'error.INVALID_ID_FORMAT' });
                 return null;
             }
 
@@ -45,7 +46,7 @@ export const useUndoRedo = (): UseUndoRedoReturn => {
             try {
                 return await operation(noteId);
             } catch (err) {
-                setError(getErrorMessage(err));
+                setError(getErrorInfo(err));
                 return null;
             } finally {
                 inFlightRef.current = false;

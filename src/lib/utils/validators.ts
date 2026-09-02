@@ -5,10 +5,16 @@ import {
     FORBIDDEN_TITLE_CONTROL,
     FORBIDDEN_TITLE_MARKUP,
 } from '@/config/limits';
+import { getLang } from '@/i18n';
+import type { Message } from '@/i18n';
 
 export interface ValidationResult {
     valid: boolean;
-    error?: string;
+    /**
+     * Qué falla, SIN traducir. Ver `i18n/types.ts`: guardar la clave en vez
+     * del texto es lo que hace que el mensaje siga al idioma en pantalla.
+     */
+    error?: Message;
 }
 
 /**
@@ -27,28 +33,28 @@ export function isValidObjectId(id: unknown): id is string {
  */
 export function validateTitle(title: unknown): ValidationResult {
     if (typeof title !== 'string') {
-        return { valid: false, error: 'El título debe ser un texto' };
+        return { valid: false, error: { key: 'valid.titleNotText' } };
     }
 
     const trimmed = title.trim();
 
     if (trimmed.length === 0) {
-        return { valid: false, error: 'El título no puede estar vacío' };
+        return { valid: false, error: { key: 'valid.titleEmpty' } };
     }
 
     if (trimmed.length > LIMITS.TITLE_MAX) {
         return {
             valid: false,
-            error: `El título no puede superar ${LIMITS.TITLE_MAX} caracteres`,
+            error: { key: 'valid.titleTooLong', vars: { max: LIMITS.TITLE_MAX } },
         };
     }
 
     if (FORBIDDEN_TITLE_CONTROL.test(trimmed)) {
-        return { valid: false, error: 'El título no puede tener saltos de línea' };
+        return { valid: false, error: { key: 'valid.titleNewline' } };
     }
 
     if (FORBIDDEN_TITLE_MARKUP.test(trimmed)) {
-        return { valid: false, error: 'El título no puede contener < ni >' };
+        return { valid: false, error: { key: 'valid.titleMarkup' } };
     }
 
     return { valid: true };
@@ -59,13 +65,16 @@ export function validateTitle(title: unknown): ValidationResult {
  */
 export function validateContent(content: unknown): ValidationResult {
     if (typeof content !== 'string') {
-        return { valid: false, error: 'El contenido debe ser un texto' };
+        return { valid: false, error: { key: 'valid.contentNotText' } };
     }
 
     if (content.length > LIMITS.CONTENT_MAX) {
         return {
             valid: false,
-            error: `El contenido no puede superar ${LIMITS.CONTENT_MAX.toLocaleString('es')} caracteres`,
+            error: {
+                key: 'valid.contentTooLong',
+                vars: { max: LIMITS.CONTENT_MAX.toLocaleString(getLang()) },
+            },
         };
     }
 

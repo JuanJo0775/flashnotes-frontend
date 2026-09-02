@@ -42,6 +42,18 @@ export interface NoteWithHistory extends Note {
     versions: NoteVersion[];
     redoStack: NoteVersion[];
 }
+
+/**
+ * Lo que devuelve GET /api/notes/:id/history.
+ *
+ * El backend viene guardando estas versiones desde siempre y hasta ahora nadie
+ * las había pedido: la ruta existía, estaba probada, y el frontend no la
+ * llamaba. Es lo que muestra el comando `>history`.
+ */
+export interface NoteHistory {
+    versions: NoteVersion[];
+    redoStack: NoteVersion[];
+}
 /**
  * Vistas de nivel superior de la app.
  * El editor es una sub-vista de las notas, no una pestaña propia.
