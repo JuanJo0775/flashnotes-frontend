@@ -497,13 +497,19 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     pointer-events: auto;
-    cursor: pointer;
 
     /* Un pelo más apretada que el texto normal: es una salida de terminal, y
        así entra de una vez la ayuda entera sin tener que desplazarla. */
     line-height: 1.45;
     padding-right: var(--gutter);
     padding-bottom: 0.5rem;
+}
+
+/* El clic que la cierra va aquí y no en el marco: puesto en el marco, arrastrar
+   la barra de desplazamiento contaba como clic y la cerraba justo cuando
+   querías bajarla. */
+.editor-reply-body {
+    cursor: pointer;
 }
 
 .editor-placeholder {

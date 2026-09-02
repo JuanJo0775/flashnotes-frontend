@@ -52,6 +52,9 @@ API. Los hooks tienen el estado y hablan con `lib/api`. Si un componente importa
   vocabulario visual y las reglas que no se saltan
 - [docs/EFECTOS.md](docs/EFECTOS.md) — catálogo de los efectos escondidos: qué
   se ve, cómo se dispara cada uno, con qué números y por qué está hecho así
+- [docs/REGLAS.md](docs/REGLAS.md) — las reglas del proyecto: producto,
+  arquitectura, navegador, tests y lore. Cada una con el defecto real que la
+  originó. **Es lo único que hay que leer antes de escribir código acá.**
 - [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md) — puesta en producción
 - `docs/specs/` — el diseño detrás de lo construido. Ahora mismo:
   [secretos del sistema](docs/specs/2026-09-01-secretos-del-sistema.md)

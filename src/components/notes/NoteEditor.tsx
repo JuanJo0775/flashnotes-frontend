@@ -53,6 +53,23 @@ const REPLY_HOLD_PER_CHAR_MS = 22;
 const REPLY_HOLD_MAX_MS = 9000;
 const REPLY_ERASE_TOTAL_MS = 500;
 
+/**
+ * A partir de cuántas líneas la respuesta SE QUEDA hasta que la cierres.
+ *
+ * Las respuestas largas —`//help` lista quince comandos, `//ps` seis procesos,
+ * `//log` cuarenta peticiones— no entran en el hueco del editor. Borrándose
+ * solas a los nueve segundos había que leerlas y desplazarlas contra reloj, y en
+ * la práctica no se podían leer.
+ *
+ * Seis: por debajo de eso entra de un vistazo y desaparecer sola es lo correcto
+ * —una respuesta de una línea que hay que cerrar a mano es una molestia—; por
+ * encima, hay algo que leer.
+ */
+const LONG_REPLY_LINES = 6;
+
+const isLongReply = (text: string) =>
+    text.split('\n').length > LONG_REPLY_LINES;
+
 /** Los tiempos que le tocan a una respuesta de este largo. */
 function replyTimings(length: number) {
     const chars = Math.max(1, length);
@@ -163,6 +180,10 @@ export default function NoteEditor({
         onClearNote: clearNote,
         onPlayPong: onPlayPong ?? noop,
     });
+
+    // Se sacan del objeto para poder declararlas como dependencias sin arrastrar
+    // el objeto entero, que cambia de identidad en cada render.
+    const { response: respuesta, dismiss: descartar } = commands;
 
     const contentRef = useRef<HTMLTextAreaElement>(null);
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -375,11 +396,24 @@ export default function NoteEditor({
      * acabás de escribir aparecería con el tamaño viejo.
      */
     const handleEscape = useCallback(() => {
+        // Con una respuesta abierta, Escape la cierra y se queda: salir de la
+        // nota además de cerrarla serían dos cosas con una tecla, y la que no
+        // pediste es la que duele.
+        if (respuesta) {
+            descartar();
+            return;
+        }
+
         void (async () => {
             await flush();
             onBack();
         })();
-    }, [flush, onBack]);
+        // `descartar` es estable (useCallback sin dependencias) y `respuesta`
+        // cambia poquísimo, así que declararlas no rehace este callback en cada
+        // pulsación. Se desestructuran arriba en vez de leer `commands.x` acá
+        // para no meter en las dependencias el objeto entero, que sí cambia de
+        // identidad en cada render.
+    }, [respuesta, descartar, flush, onBack]);
 
     useKeyboardShortcuts({
         onSave: () => void flush(),
@@ -488,20 +522,27 @@ export default function NoteEditor({
                         // recibe el ratón para poder desplazarla cuando es
                         // larga, así que sin esto taparía el editor hasta que
                         // terminara de escribirse sola.
-                        <p
-                            className="editor-placeholder editor-reply"
-                            onClick={() => {
-                                commands.dismiss();
-                                contentRef.current?.focus();
-                            }}
-                        >
-                            <BootPrompt
-                                key={commands.response}
-                                text={commands.response}
-                                wakeMs={0}
-                                {...replyTimings(commands.response.length)}
-                                onDone={commands.dismiss}
-                            />
+                        <p className="editor-placeholder editor-reply">
+                            {/* El clic va en el CONTENIDO y no en el marco.
+                                Puesto en el marco, arrastrar la barra de
+                                desplazamiento contaba como clic y cerraba la
+                                respuesta justo cuando querías bajarla. */}
+                            <span
+                                className="editor-reply-body"
+                                onClick={() => {
+                                    commands.dismiss();
+                                    contentRef.current?.focus();
+                                }}
+                            >
+                                <BootPrompt
+                                    key={commands.response}
+                                    text={commands.response}
+                                    wakeMs={0}
+                                    persist={isLongReply(commands.response)}
+                                    {...replyTimings(commands.response.length)}
+                                    onDone={commands.dismiss}
+                                />
+                            </span>
                         </p>
                     )}
                     <textarea

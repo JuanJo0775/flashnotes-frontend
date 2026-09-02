@@ -39,6 +39,15 @@ interface BootPromptProps {
     holdMs?: number;
     /** Milisegundos por carácter al borrar. */
     eraseMs?: number;
+    /**
+     * Escribe el texto y SE QUEDA: sin pausa, sin borrado y sin avisar.
+     *
+     * Lo piden las respuestas que hay que poder LEER. `//help` lista quince
+     * comandos y no entra en el hueco del editor; borrándose sola a los nueve
+     * segundos, había que leerla y desplazarla contra reloj, así que en la
+     * práctica no se podía leer. Quien la monta decide cuándo se va.
+     */
+    persist?: boolean;
     /** Se llama una vez, al cerrar el arco. No se llama si se cancela. */
     onDone?: () => void;
 }
@@ -49,6 +58,7 @@ export default function BootPrompt({
     typeMs = TYPE_MS,
     holdMs = HOLD_MS,
     eraseMs = ERASE_MS,
+    persist = false,
     onDone,
 }: BootPromptProps) {
     const [count, setCount] = useState(0);
@@ -82,6 +92,9 @@ export default function BootPrompt({
                 await wait(typeMs);
             }
 
+            // Escrito y quieto: el arco no se cierra porque no tiene final.
+            if (persist) return;
+
             await wait(holdMs);
 
             for (let i = text.length - 1; i >= 0; i -= 1) {
@@ -99,7 +112,7 @@ export default function BootPrompt({
             cancelled = true;
             timers.forEach(clearTimeout);
         };
-    }, [text, reducedMotion, wakeMs, typeMs, holdMs, eraseMs]);
+    }, [text, reducedMotion, wakeMs, typeMs, holdMs, eraseMs, persist]);
 
     return (
         <span className="mono">
