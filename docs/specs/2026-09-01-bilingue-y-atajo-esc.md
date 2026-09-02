@@ -256,7 +256,7 @@ Casos que no cruzan solos:
   equivalente inglés completo.
 - **El voseo** (`escribí`, `recargá`, `pulsá`) desaparece en inglés; lo que hay
   que conservar es el trato directo y seco, no la conjugación.
-- **Los nombres de comando** (`>help`, `>diag`, `>panic`) **no se traducen**:
+- **Los nombres de comando** (`//help`, `//diag`, `//panic`) **no se traducen**:
   son la interfaz de la terminal, no prosa. Sus descripciones sí.
 
 **Cómo quedó implementado.** Los textos del lore NO se movieron al diccionario:

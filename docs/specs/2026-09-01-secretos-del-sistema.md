@@ -13,7 +13,7 @@
 > | §4 arranque en vídeo inverso | **listo** |
 > | §5 el botón secreto | **listo** |
 > | §6 comandos en el prompt | **listo** |
-> | §7 panel de diagnóstico · con `>history` | **listo** |
+> | §7 panel de diagnóstico · con `//history` | **listo** |
 > | §8 registro de peticiones | **listo** |
 > | §9 archivo fantasma (opción A) | **listo** |
 > | §10 la papelera lleva la cuenta | **listo** |
@@ -124,7 +124,7 @@ mismo blanco de siempre.
 | Interruptor de apagado | Sí, en el panel, y recordado | — |
 | `prefers-reduced-motion` | Desactiva **siempre** todo lo que se mueve | — |
 | **§9 archivo fantasma: ¿base de datos?** | **A — sólo cliente** | Ver abajo |
-| **Cómo se abre el panel** | **`>diag` + Alt/⌥+clic** | Ver abajo |
+| **Cómo se abre el panel** | **`//diag` + Alt/⌥+clic** | Ver abajo |
 | **¿Se ve el contador `N/M`?** | **Sí, siempre** | Ver abajo |
 
 ### §9 · Sólo cliente, y no como paso intermedio
@@ -146,9 +146,9 @@ superficie de dos repositorios para un chiste que queda peor.
 
 **Este trabajo no toca el backend en ninguna de sus piezas.**
 
-### Panel · `>diag` como vía canónica, Alt+clic como atajo
+### Panel · `//diag` como vía canónica, Alt+clic como atajo
 
-`>diag` primero, porque sale listado en `>help` —o sea que es *encontrable* en
+`//diag` primero, porque sale listado en `//help` —o sea que es *encontrable* en
 lugar de adivinable—, funciona con teclado y es una función pura que se prueba
 sin navegador.
 
@@ -167,7 +167,7 @@ pantalla, y el panel ya tiene su vía accesible por comando.
 La objeción a mostrarlo era que invita a buscar y convierte esto en un juego.
 Pero fijate dónde vive: **dentro del panel, que es él mismo un secreto**. No hay
 ningún camino por el que alguien vea `0/M`; para leer esa fila ya tuviste que
-ejecutar `>diag` o dar con el Alt+clic. El contador no puede aparecer antes de
+ejecutar `//diag` o dar con el Alt+clic. El contador no puede aparecer antes de
 tiempo, así que la objeción no tiene dónde aplicarse.
 
 Entonces: se muestra siempre, el panel se cuenta a sí mismo como hallazgo —lo
@@ -181,9 +181,9 @@ los fragmentos, el barrido trabado y el arranque en vídeo inverso son atmósfer
 **no suman al contador**. Contarlos inflaría el denominador con cosas que nadie
 puede buscar.
 
-Los catorce contables: `>help` · panel · botón secreto · colapso · `>history` ·
-`>log` · `>sudo` · `>whoami` · `>date` · el trío `>ps`/`>df`/`>ls` · archivo
-fantasma · quinto borrado permanente · `>chaos` · fallo cromático.
+Los catorce contables: `//help` · panel · botón secreto · colapso · `//history` ·
+`//log` · `//sudo` · `//whoami` · `//date` · el trío `//ps`/`//df`/`//ls` · archivo
+fantasma · quinto borrado permanente · `//chaos` · fallo cromático.
 
 La lista viva es `SECRET_IDS` en `useSystemState.ts`; esta enumeración es su
 reflejo en prosa y puede quedar atrasada. El que manda es el registro.
@@ -254,7 +254,7 @@ fechas visibles de la app, tiene tests que lo fijan y no tiene nada que ver con
 los secretos.
 
 Y ahí está la gracia: **el desfase entre las dos es lore verdadero**, y es lo que
-responde `>date` (§6). Si el dispositivo está justo en UTC el chiste cambia de
+responde `//date` (§6). Si el dispositivo está justo en UTC el chiste cambia de
 forma y queda mejor:
 
 ```
@@ -493,15 +493,21 @@ sano.
 
 ## 6 · Comandos en el prompt
 
+> **El prefijo cambió de `>` a `//` al construirlo.** El editor ya dibuja un `>`
+> al principio de cada línea, así que teclear `>help` se veía en pantalla como
+> `> >help`: parecía un error de la app antes que un comando. `//` además es
+> vocabulario de la casa — la clase `.comment` antepone `// ` en todas las
+> etiquetas de sección.
+
 La pieza que mejor encaja con lo que la app ya es: el editor **ya** muestra un
 `>` al principio de cada línea. Esto lo convierte en una terminal de verdad.
 
 ### La condición de activación
 
 **No es "en una nota vacía".** En el instante en que pulsás Enter la nota no está
-vacía: contiene `>help`. La regla operativa es:
+vacía: contiene `//help`. La regla operativa es:
 
-> El contenido **entero** de la nota es **una única línea** que empieza por `>`.
+> El contenido **entero** de la nota es **una única línea** que empieza por `//`.
 
 Si hay una segunda línea, o texto antes del `>`, Enter hace lo de siempre. No se
 le roba el Enter a nadie que esté escribiendo.
@@ -510,8 +516,8 @@ le roba el Enter a nadie que esté escribiendo.
 
 La revisión 1 prometía que "ni el comando ni su respuesta llegan a la base de
 datos", pero el auto-guardado corre a los 2,5 s de la última tecla
-(`NoteEditor.tsx:28`). Escribís `>help`, tardás tres segundos en pulsar Enter, y
-`>help` **ya está guardado y ya consumió un punto de historial**.
+(`NoteEditor.tsx:28`). Escribís `//help`, tardás tres segundos en pulsar Enter, y
+`//help` **ya está guardado y ya consumió un punto de historial**.
 
 **Mientras el contenido cumpla la condición de activación, no se programa el
 `setTimeout` del auto-guardado.** Sin esa supresión explícita la promesa es
@@ -521,23 +527,23 @@ falsa. Es una prueba obligatoria.
 
 | Comando | Respuesta |
 | ------- | --------- |
-| `>help` | Lista los comandos disponibles |
-| `>whoami` | Ver abajo |
-| `>uptime` | Tiempo desde que se abrió la pestaña |
-| `>date` | Hora local, hora del sistema y el desfase |
-| `>version` | `FLASH-NOTES v1.0 · NÚCLEO ESTABLE` |
-| `>history` | El historial real de la nota (§7 lo detalla) |
-| `>log` | El registro de peticiones (§8) |
-| `>ps` | Los procesos que corren de verdad |
-| `>df` | Uso total contra `CONTENT_MAX`, con el medidor ASCII |
-| `>ls` | Tus notas, con las guías de puntos de la barra lateral |
-| `>sudo` | Ver abajo |
-| `>diag` | Abre el panel de diagnóstico (§7) |
-| `>chaos on\|off` | Enciende o apaga los efectos ambientales |
-| `>panic` | Dispara el colapso (§13) |
-| `>clear` | Vacía la nota |
+| `//help` | Lista los comandos disponibles |
+| `//whoami` | Ver abajo |
+| `//uptime` | Tiempo desde que se abrió la pestaña |
+| `//date` | Hora local, hora del sistema y el desfase |
+| `//version` | `FLASH-NOTES v1.0 · NÚCLEO ESTABLE` |
+| `//history` | El historial real de la nota (§7 lo detalla) |
+| `//log` | El registro de peticiones (§8) |
+| `//ps` | Los procesos que corren de verdad |
+| `//df` | Uso total contra `CONTENT_MAX`, con el medidor ASCII |
+| `//ls` | Tus notas, con las guías de puntos de la barra lateral |
+| `//sudo` | Ver abajo |
+| `//diag` | Abre el panel de diagnóstico (§7) |
+| `//chaos on\|off` | Enciende o apaga los efectos ambientales |
+| `//panic` | Dispara el colapso (§13) |
+| `//clear` | Vacía la nota |
 
-### `>whoami` — la limitación es la respuesta
+### `//whoami` — la limitación es la respuesta
 
 La revisión 1 pedía "el hash corto de la sesión, el mismo que el backend usa en
 sus logs". **Eso es imposible.** La cookie es `httpOnly: true`
@@ -556,7 +562,7 @@ SOS ESTE NAVEGADOR. NADA MÁS.
 
 Cero backend, y dice exactamente lo que la app es.
 
-### `>sudo`
+### `//sudo`
 
 ```
 >sudo
@@ -564,7 +570,7 @@ NO HAY SUPERUSUARIO. NO HAY USUARIOS.
 HAY UN NAVEGADOR.
 ```
 
-### `>ps` — los procesos son los tuyos
+### `//ps` — los procesos son los tuyos
 
 Todo lo listado corre de verdad, con los intervalos reales tomados de las
 constantes del código. El chiste es que no hay chiste.
@@ -600,7 +606,7 @@ de este documento.
 
 ## 7 · Panel de diagnóstico
 
-**Cómo se abre.** `>diag`, o Alt+clic (⌥+clic) sobre `[SYSTEM_OK]`. Cerrado
+**Cómo se abre.** `//diag`, o Alt+clic (⌥+clic) sobre `[SYSTEM_OK]`. Cerrado
 arriba.
 
 **Qué es.** Un `<dialog>` con la misma piel que los diálogos existentes —
@@ -620,7 +626,7 @@ SECRETOS          3/14
 NÚCLEO            41°C  ▮▮▮▮▮▯▯▯▯▯
 ```
 
-`SESIÓN` dice `NO LEGIBLE` por lo mismo que `>whoami`: la cookie es `httpOnly`.
+`SESIÓN` dice `NO LEGIBLE` por lo mismo que `//whoami`: la cookie es `httpOnly`.
 El panel no inventa un dato que no tiene.
 
 `NÚCLEO` es inventado y se deriva del ritmo de escritura de los últimos minutos.
@@ -634,14 +640,14 @@ Al pie, el interruptor `[EFECTOS: ON]` / `[EFECTOS: OFF]`, que persiste.
 el panel aparece al 60 % de opacidad, desaparece, y aparece al 100 %, como una
 señal que engancha. Acompañado de un `glitch-jolt` de 3 px.
 
-### `>history` — la capacidad que ya está pagada
+### `//history` — la capacidad que ya está pagada
 
 El backend guarda hasta 20 snapshots por nota con su `editedAt` desde siempre.
 `GET /api/notes/:id/history` está implementado (`note.controller.js:277`),
 enrutado (`notes.routes.js:76`) y **el frontend nunca lo llamó**: no aparece en
 `notes.api.ts`, ni en `note.types.ts`, ni en ningún hook.
 
-`>history` despliega esa pila con la maquetación de guías de puntos que ya usa la
+`//history` despliega esa pila con la maquetación de guías de puntos que ya usa la
 barra lateral:
 
 ```
@@ -662,7 +668,7 @@ El backend loguea cada llamada como `[REQUEST] PATCH /notes/:id { sessionHash }`
 El cliente no guardaba nada equivalente.
 
 **Qué es.** Un búfer circular en memoria con las últimas ~40 llamadas que hizo el
-frontend, pintado con el formato del log del servidor. Se lee con `>log` o desde
+frontend, pintado con el formato del log del servidor. Se lee con `//log` o desde
 el panel.
 
 ```
@@ -766,7 +772,7 @@ de la nada.
 
 ## 13 · Colapso del sistema
 
-El clímax. Se dispara con la integridad a 0 (§5) o con `>panic`.
+El clímax. Se dispara con la integridad a 0 (§5) o con `//panic`.
 
 **Dura unos 4,2 s** y ocurre **entero en una capa por encima de la app**. Debajo,
 el editor sigue montado y el auto-guardado sigue su curso.
@@ -880,7 +886,7 @@ Listado explícito para que nada se cuele después sin decisión.
 | ---- | ---------- |
 | Que `FILES: 12` muestre un número equivocado y se corrija | Simula pérdida de datos. Regla 3. Era la idea más efectiva del lote y por eso hay que nombrarla. |
 | Comandos escritos en el título | `limits.ts` prohíbe `<` y `>` en títulos (`FORBIDDEN_TITLE_MARKUP`) y el backend lo valida igual. Imposible. |
-| `>export` | Es una función que falta, no un secreto. Va por la puerta de adelante. |
+| `//export` | Es una función que falta, no un secreto. Va por la puerta de adelante. |
 | Sonido | Fuera de alcance desde la revisión 1. |
 | Persistir la integridad entre sesiones | Recargar siempre da un sistema sano. |
 | Logros o puntuaciones | Convierte esto en un juego. |
@@ -937,11 +943,11 @@ entre, o se acorta, o no entra.
 Se dejan escritas porque cada una costaría una tarde de depuración si alguien
 volviera al documento viejo.
 
-**1 · `>whoami` era imposible.** Cookie `httpOnly`, el hash se calcula en el
+**1 · `//whoami` era imposible.** Cookie `httpOnly`, el hash se calcula en el
 servidor y no hay ruta que lo devuelva. Resuelto en §6 convirtiendo la limitación
 en la respuesta.
 
-**2 · Los comandos sí se guardaban.** El auto-guardado a 2,5 s escribía `>help`
+**2 · Los comandos sí se guardaban.** El auto-guardado a 2,5 s escribía `//help`
 en la base junto con un punto de historial. Resuelto en §6 con supresión
 explícita del `setTimeout`.
 
@@ -1019,7 +1025,7 @@ El aspecto de las animaciones se juzga mirándolas, no con tests.
 
 1. `useSystemState`, `commands.ts`, `lore.ts` y `requestLog.ts`. Son la base de
    casi todo y se prueban sin pintar nada.
-2. Los comandos (§6) y el panel (§7), con `>history` (§7) y `>log` (§8). Dan
+2. Los comandos (§6) y el panel (§7), con `//history` (§7) y `//log` (§8). Dan
    valor visible enseguida y no dependen de ninguna animación.
 3. Los textos: §3, §10, §11. Son cadenas y condiciones; ningún efecto nuevo.
 4. El glitch (§1), los fragmentos (§2) y el barrido trabado (§12). Probar §12
@@ -1054,3 +1060,51 @@ calculándose sobre las dos familias completas.
 No se resolvió acá porque el diccionario pertenece a la pieza de trabajo de
 internacionalización y estaba en edición activa; tocarlo desde este lado habría
 pisado su trabajo.
+
+---
+
+# E · Estado final
+
+**Las catorce piezas están construidas, probadas y vistas corriendo.**
+
+```
+npm run check  →  EXIT=0
+  frontend   596 tests   (eran 99 al empezar)
+  backend    148 tests   (sin tocar)
+  lint · typecheck · build   limpios
+```
+
+La referencia técnica de lo construido —qué se ve, cómo se dispara cada efecto,
+con qué números y por qué está hecho así— vive en
+[`docs/EFECTOS.md`](../EFECTOS.md). Este documento conserva el **razonamiento**:
+el lore, las decisiones que se cerraron y por qué.
+
+## Lo que enseñó construirlo
+
+Cinco defectos no los encontró ningún test. Aparecieron al abrir la app, y los
+cinco eran invisibles desde el código:
+
+| Defecto | Por qué ningún test lo veía |
+| ------- | --------------------------- |
+| Las fechas en UTC mostraban el día de mañana | Los tests construían fechas UTC y comprobaban salida UTC: coherentes entre sí y equivocados los dos |
+| Desajuste de hidratación en el rótulo | En los tests no hay render de servidor |
+| La pantalla de colapso invertía el tema | Ningún test mira colores computados |
+| El `<dialog>` escapaba del filtro | La capa superior del navegador no existe en jsdom |
+| Dos reglas CSS con `animation` pisándose | Jest no resuelve la cascada |
+
+Hay un patrón: **los tests cubren lógica; el navegador cubre composición.** Todo
+lo que dependa de cómo el navegador junta capas, temas, cascada o hidratación
+hay que ir a mirarlo.
+
+## Lo que queda abierto
+
+- **El ritmo.** Cada cuánto caen los tirones, cuánto dura la interferencia, si
+  cuarenta segundos de rearranque se hacen largos. Está probado que funciona; si
+  se siente bien se juzga usándolo un rato.
+- **Las fechas locales y la hidratación.** Los componentes que las pintan también
+  se renderizan en el servidor, que tiene otro huso. No apareció ningún error al
+  probar, pero es el primer sitio donde mirar si algo se ve raro.
+- **Las ventanas fantasma sobre el puzzle.** Con cinco abiertas tapan medio
+  volcado. Es solvible siempre —el clic las atraviesa, huyen del cursor, y están
+  los cinco minutos— pero si se hace pesado, sesgar sus posiciones hacia los
+  bordes lo arregla sin quitarles presencia.
