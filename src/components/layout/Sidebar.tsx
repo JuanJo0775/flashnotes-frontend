@@ -89,7 +89,11 @@ export default function Sidebar({
             <div className="panel-footer justify-between text-2xs mono text-meta uppercase tracking-wider">
                 <span>
                     {notes.length}
-                    {total > notes.length ? `/${total}` : ''} {t('sidebar.files')}
+                    {total > notes.length ? `/${total}` : ''}{' '}
+                    {/* El plural concuerda con lo que hay CARGADO, que es el
+                        número que está pegado a la palabra: "1/6 archivos" sería
+                        raro, pero "1 archivo" y "6 archivos" son lo correcto. */}
+                    {t.plural('sidebar.files', total > notes.length ? total : notes.length)}
                 </span>
                 <span>
                     {selectedNote?.updatedAt ? formatTime(selectedNote.updatedAt) : t('sidebar.noTime')}

@@ -49,7 +49,8 @@ export const en: Dictionary = {
     'sidebar.newNote': '[+] New note',
     'sidebar.empty': 'No files',
     'sidebar.loadMore': '[↓] Load more ({n})',
-    'sidebar.files': 'files',
+    'sidebar.files.one': 'file',
+    'sidebar.files.other': 'files',
     'sidebar.noTime': '--:--:--',
 
     // ── notes list ───────────────────────────────────────────────────────────

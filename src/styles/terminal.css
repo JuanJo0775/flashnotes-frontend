@@ -483,7 +483,18 @@
    pero NO es un texto de ayuda: es lo que el sistema contestó. Va en tinta
    plena y con las líneas separadas, para que se lea como una salida de terminal
    y no como un marcador de posición. */
-.editor-reply {
+/* ⚠ VA CON DOS CLASES, Y NO ES DECORACIÓN.
+   El elemento lleva `editor-placeholder editor-reply`, y `.editor-placeholder`
+   —que declara `pointer-events: none`— está MÁS ABAJO en esta hoja con la misma
+   especificidad. Con un solo selector, la regla de abajo ganaba: la respuesta no
+   recibía la rueda del ratón y NO SE PODÍA DESPLAZAR, aunque saliera la barra.
+
+   Es la misma trampa de la cascada que ya dejó al tirón sin reproducirse durante
+   la avería (ver docs/REGLAS.md · C3): a igual especificidad gana la última, y
+   aquí la última es la genérica.
+
+   Dos clases suben la especificidad por encima y el orden deja de importar. */
+.editor-placeholder.editor-reply {
     color: var(--color-body);
     z-index: 1;
 
@@ -498,8 +509,7 @@
     overscroll-behavior: contain;
     pointer-events: auto;
 
-    /* Un pelo más apretada que el texto normal: es una salida de terminal, y
-       así entra de una vez la ayuda entera sin tener que desplazarla. */
+    /* Un pelo más apretada que el texto normal: es una salida de terminal. */
     line-height: 1.45;
     padding-right: var(--gutter);
     padding-bottom: 0.5rem;

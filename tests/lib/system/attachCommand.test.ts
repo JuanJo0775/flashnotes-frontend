@@ -17,7 +17,8 @@ const ctx = (over: Partial<CommandContext> = {}): CommandContext => ({
 });
 
 /** `run` devuelve null si la línea no era un comando; acá siempre lo es. */
-const corre = (linea: string) => run(linea, ctx())!;
+// El azar en 0,5 esquiva las ramas aleatorias de `//help`.
+const corre = (linea: string) => run(linea, ctx(), () => 0.5)!;
 
 describe('//ps · la única puerta al vsync-test', () => {
     // `//ps` era decoración pura: listaba cinco procesos y ya. Ahora es lo único
@@ -130,10 +131,12 @@ describe('//help · no delata el juego', () => {
         expect(corre('//help').output).not.toContain('attach');
     });
 
-    test('pero sigue listando los comandos de siempre', () => {
+    test('sigue listando lo básico', () => {
+        // Los avanzados ya no salen —ver commands.test.ts— pero la puerta de
+        // entrada tiene que seguir estando.
         const salida = corre('//help').output;
 
-        for (const c of ['//ps', '//diag', '//log', '//whoami']) {
+        for (const c of ['//help', '//version', '//ls']) {
             expect(salida).toContain(c);
         }
     });

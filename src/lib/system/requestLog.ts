@@ -1,6 +1,16 @@
 // src/lib/system/requestLog.ts
 
 import { getLang } from '@/i18n';
+import type { Localized } from '@/i18n';
+
+/**
+ * Un `Localized` y no un ternario: al añadir un idioma esto deja de compilar
+ * en vez de servir inglés en silencio. Ver `i18n/types.ts`.
+ */
+const SIN_PETICIONES: Localized = {
+    es: 'SIN PETICIONES REGISTRADAS.',
+    en: 'NO REQUESTS LOGGED.',
+};
 
 /**
  * Registro de las últimas peticiones que hizo el cliente.
@@ -106,6 +116,6 @@ export function formatEntry(entry: RequestLogEntry): string {
 /** El registro entero, una petición por línea. */
 export function formatLog(): string {
     if (buffer.length === 0)
-        return getLang() === 'es' ? 'SIN PETICIONES REGISTRADAS.' : 'NO REQUESTS LOGGED.';
+        return SIN_PETICIONES[getLang()];
     return entries().map(formatEntry).join('\n');
 }

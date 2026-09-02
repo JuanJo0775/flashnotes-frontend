@@ -12,6 +12,7 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useT, useLang } from '@/i18n';
 import BootPrompt from '@/components/effects/BootPrompt';
+import { replyTimings } from '@/lib/system/replyTiming';
 import LinePrompts from '@/components/notes/LinePrompts';
 import { isCommandLine } from '@/lib/system/commands';
 import { useNoteCommands } from '@/hooks/useNoteCommands';
@@ -32,57 +33,6 @@ import { getSystemState } from '@/hooks/useSystemState';
  */
 const AUTOSAVE_DELAY_MS = 2500;
 
-/**
- * Ritmo con el que se teclea la respuesta de un comando.
- *
- * Más rápido que el arranque: el arranque es la máquina despertando, esto es la
- * máquina contestando algo que le preguntaste, y una terminal contesta rápido.
- *
- * EL RITMO SE ADAPTA AL LARGO, y hace falta. Con 18 ms fijos por carácter, la
- * lista de `//help` —unos 450 caracteres— tardaba OCHO SEGUNDOS en aparecer y
- * catorce en cerrar su arco: imposible de usar, y encima se borraba antes de que
- * te diera tiempo a leerla. Sólo se notó usando la app.
- *
- * Ahora el tecleo entero cabe en poco más de un segundo sea cual sea el largo, y
- * la pausa crece con lo que hay que leer.
- */
-const REPLY_TYPE_MS = 18;
-const REPLY_TYPE_TOTAL_MS = 1200;
-const REPLY_HOLD_BASE_MS = 2000;
-const REPLY_HOLD_PER_CHAR_MS = 22;
-const REPLY_HOLD_MAX_MS = 9000;
-const REPLY_ERASE_TOTAL_MS = 500;
-
-/**
- * A partir de cuántas líneas la respuesta SE QUEDA hasta que la cierres.
- *
- * Las respuestas largas —`//help` lista quince comandos, `//ps` seis procesos,
- * `//log` cuarenta peticiones— no entran en el hueco del editor. Borrándose
- * solas a los nueve segundos había que leerlas y desplazarlas contra reloj, y en
- * la práctica no se podían leer.
- *
- * Seis: por debajo de eso entra de un vistazo y desaparecer sola es lo correcto
- * —una respuesta de una línea que hay que cerrar a mano es una molestia—; por
- * encima, hay algo que leer.
- */
-const LONG_REPLY_LINES = 6;
-
-const isLongReply = (text: string) =>
-    text.split('\n').length > LONG_REPLY_LINES;
-
-/** Los tiempos que le tocan a una respuesta de este largo. */
-function replyTimings(length: number) {
-    const chars = Math.max(1, length);
-
-    return {
-        typeMs: Math.min(REPLY_TYPE_MS, REPLY_TYPE_TOTAL_MS / chars),
-        holdMs: Math.min(
-            REPLY_HOLD_MAX_MS,
-            REPLY_HOLD_BASE_MS + chars * REPLY_HOLD_PER_CHAR_MS
-        ),
-        eraseMs: Math.min(8, REPLY_ERASE_TOTAL_MS / chars),
-    };
-}
 
 /** Referencia estable, para no recrear callbacks cuando el padre no los pasa. */
 const noop = () => {};
@@ -189,6 +139,9 @@ export default function NoteEditor({
         // se evalúa antes. El envoltorio es estable, así que no rehace el hook
         // en cada render.
         onLeaveNote: salir,
+        // `//keep` deja el dibujo escrito donde estabas. Sólo puede pasar con la
+        // nota en blanco —el comando ES todo el contenido— así que no pisa nada.
+        onWriteNote: setContent,
     });
 
     // Se sacan del objeto para poder declararlas como dependencias sin arrastrar
@@ -553,8 +506,7 @@ export default function NoteEditor({
                                     key={commands.response}
                                     text={commands.response}
                                     wakeMs={0}
-                                    persist={isLongReply(commands.response)}
-                                    {...replyTimings(commands.response.length)}
+                                    {...replyTimings(commands.response)}
                                     onDone={commands.dismiss}
                                 />
                             </span>

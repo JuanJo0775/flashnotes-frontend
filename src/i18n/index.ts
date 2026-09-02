@@ -1,7 +1,7 @@
 // src/i18n/index.ts
 'use client';
 
-import { useCallback, useSyncExternalStore } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import {
     LANG_STORAGE_KEY,
     DEFAULT_LANG,
@@ -11,9 +11,17 @@ import {
 } from '@/config/lang';
 import { es } from './es';
 import { en } from './en';
-import type { Dictionary, TranslationKey, Vars, Message } from './types';
+import type {
+    Dictionary,
+    TranslationKey,
+    Vars,
+    Message,
+    Localized,
+    LocalizedPlural,
+    PluralKey,
+} from './types';
 
-export type { Lang, TranslationKey, Vars, Message };
+export type { Lang, TranslationKey, Vars, Message, Localized, LocalizedPlural, PluralKey };
 
 const DICTIONARIES: Record<Lang, Dictionary> = { es, en };
 
@@ -138,11 +146,7 @@ export function useLang(): Lang {
 export function translate(lang: Lang, key: TranslationKey, vars?: Vars): string {
     const template = DICTIONARIES[lang][key] ?? key;
 
-    if (!vars) return template;
-
-    return template.replace(/\{(\w+)\}/g, (match, name: string) =>
-        name in vars ? String(vars[name]) : match
-    );
+    return vars ? fill(template, vars) : template;
 }
 
 /**
@@ -163,10 +167,96 @@ export function translateMessage(lang: Lang, message: Message): string {
     return translate(lang, message.key, message.vars);
 }
 
-export type TFunction = (key: TranslationKey, vars?: Vars) => string;
+// ---------------------------------------------------------------------------
+//  Plurales
+// ---------------------------------------------------------------------------
+
+/**
+ * Las reglas de plural del idioma, cacheadas.
+ *
+ * `new Intl.PluralRules(...)` no es gratis y esto se llama en cada render que
+ * pinte un contador. Son dos objetos en toda la vida de la pestaña.
+ */
+const REGLAS = new Map<Lang, Intl.PluralRules>();
+
+function reglas(lang: Lang): Intl.PluralRules {
+    let r = REGLAS.get(lang);
+    if (!r) {
+        r = new Intl.PluralRules(lang);
+        REGLAS.set(lang, r);
+    }
+    return r;
+}
+
+/**
+ * El texto que le toca a `count`, con `{n}` ya sustituido.
+ *
+ * Se delega en `Intl.PluralRules` en lugar de escribir `n === 1 ? … : …`. Para
+ * español e inglés dan lo mismo, pero la regla de "uno contra el resto" es una
+ * particularidad de estos dos idiomas, no una ley: el ruso tiene tres formas y
+ * el japonés una. Con `Intl` esos idiomas entran sin tocar esta función.
+ *
+ * Si al idioma le falta la categoría que pide la regla, se cae en `other`, que
+ * el tipo garantiza que existe.
+ */
+export function translatePlural(
+    lang: Lang,
+    key: PluralKey,
+    count: number,
+    vars?: Vars
+): string {
+    const categoria = reglas(lang).select(count);
+    const exacta = `${key}.${categoria}`;
+    const elegida = (hasKey(exacta) ? exacta : `${key}.other`) as TranslationKey;
+
+    return translate(lang, elegida, { n: count, ...vars });
+}
+
+/** Lo mismo para un texto de autor que no vive en el diccionario. */
+export function pickPlural(
+    lang: Lang,
+    forms: LocalizedPlural,
+    count: number,
+    vars?: Vars
+): string {
+    const formas = forms[lang];
+    const plantilla = formas[reglas(lang).select(count)] ?? formas.other;
+
+    return fill(plantilla, { n: count, ...vars });
+}
+
+/** Sustituye `{x}` en una plantilla. Es lo que comparten `translate` y los plurales. */
+export function fill(template: string, vars: Vars): string {
+    return template.replace(/\{(\w+)\}/g, (match, name: string) =>
+        name in vars ? String(vars[name]) : match
+    );
+}
+
+export interface TFunction {
+    (key: TranslationKey, vars?: Vars): string;
+    /** `t.plural('sidebar.files', 1)` -> "archivo"; con 3 -> "archivos". */
+    plural(key: PluralKey, count: number, vars?: Vars): string;
+}
+
+/**
+ * Un traductor atado a un idioma.
+ *
+ * Se arma acá fuera y no dentro de `useT` a propósito: colgar `plural` de la
+ * función es una mutación, y el compilador de React la rechaza si ocurre dentro
+ * del cuerpo de un hook. Fuera es una fábrica corriente que devuelve un objeto
+ * nuevo — y de paso sirve para usar el traductor sin React.
+ */
+export function makeT(lang: Lang): TFunction {
+    const t = ((key: TranslationKey, vars?: Vars) => translate(lang, key, vars)) as TFunction;
+
+    t.plural = (key, count, vars) => translatePlural(lang, key, count, vars);
+
+    return t;
+}
 
 /** El traductor ligado al idioma actual. Es lo que usan los componentes. */
 export function useT(): TFunction {
     const lang = useLang();
-    return useCallback((key: TranslationKey, vars?: Vars) => translate(lang, key, vars), [lang]);
+
+    return useMemo(() => makeT(lang), [lang]);
 }

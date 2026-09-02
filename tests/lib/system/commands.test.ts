@@ -77,12 +77,48 @@ describe('commands - la condición de activación', () => {
 });
 
 describe('commands - comandos que responden texto', () => {
-    test('//help lista los comandos disponibles', () => {
-        const salida = run('//help', ctx())!.output;
+    // `//help` lista SÓLO lo básico. El azar se fija en 0,5: esquiva tanto la
+    // rama satírica (1 de 6) como la fuga de un comando escondido (1 de 4), así
+    // que lo que se mide es la lista y nada más.
+    const LISTA = () => 0.5;
+
+    test('//help lista los comandos anunciados', () => {
+        const salida = run('//help', ctx(), LISTA)!.output;
 
         for (const nombre of COMMAND_NAMES) {
             expect(salida).toContain(nombre);
         }
+    });
+
+    test('//help NO lista los escondidos', () => {
+        // Listarlos convertía cada hallazgo en una lectura: bastaba teclear
+        // `//help` una vez para que no quedara nada por descubrir.
+        const salida = run('//help', ctx(), LISTA)!.output;
+
+        for (const nombre of ['//ps', '//panic', '//diag', '//chaos']) {
+            expect(salida).not.toContain(nombre);
+        }
+    });
+
+    test('//help dice CUÁNTOS faltan, para que se puedan buscar', () => {
+        // Sin esto serían inalcanzables y nada lo delataría — el error exacto
+        // que ya se cometió con el umbral de diez colapsos.
+        const salida = run('//help', ctx(), LISTA)!.output;
+
+        expect(salida).toMatch(/\d+ COMANDOS NO LISTADOS|\d+ COMMANDS NOT LISTED/);
+    });
+
+    test('de vez en cuando no está para listas', () => {
+        // Una ayuda que siempre contesta igual se lee como documentación.
+        const salida = run('//help', ctx(), () => 0)!.output;
+
+        expect(salida).not.toMatch(/COMANDOS DISPONIBLES|AVAILABLE COMMANDS/);
+    });
+
+    test('pero el desplante no rompe nada: volver a pedirla funciona', () => {
+        expect(run('//help', ctx(), LISTA)!.output).toMatch(
+            /COMANDOS DISPONIBLES|AVAILABLE COMMANDS/
+        );
     });
 
     test('//version se identifica', () => {
@@ -216,7 +252,13 @@ describe('commands - entradas que no son comandos', () => {
     });
 
     test('no distingue mayúsculas de minúsculas', () => {
-        expect(run('//HELP', ctx())!.output).toBe(run('//help', ctx())!.output);
+        // Con el azar fijado: `//help` tiene ramas al azar, y sin fijarlo esto
+        // compararía dos tiradas distintas en vez de dos formas de escribirlo.
+        const fijo = () => 0.5;
+
+        expect(run('//HELP', ctx(), fijo)!.output).toBe(
+            run('//help', ctx(), fijo)!.output
+        );
     });
 
     test('tolera espacio entre el prompt y el comando', () => {

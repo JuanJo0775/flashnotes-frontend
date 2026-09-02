@@ -2,19 +2,12 @@
 
 import { LIMITS } from '@/config/limits';
 import { formatDuration } from '@/lib/utils/formatters';
-import { getLang } from '@/i18n';
+import { getLang, fill, pickPlural } from '@/i18n';
 import { greetingFor } from '@/lib/system/greeting';
+import { drawArt, canKeep, lastDrawn, asNote } from '@/lib/system/asciiArt';
 import type { Lang } from '@/config/lang';
+import type { Localized, LocalizedPlural, Vars } from '@/i18n';
 
-/**
- * Un texto de la terminal en los dos idiomas.
- *
- * Los NOMBRES de los comandos (`//help`, `//diag`) NO se traducen: son la interfaz
- * de la terminal, igual que `ls` o `df` en un shell de verdad, y traducirlos
- * rompería el músculo de quien ya los sabe. Lo que se traduce es todo lo que el
- * sistema RESPONDE, más los resúmenes que lista `//help`.
- */
-type Localized = Readonly<Record<Lang, string>>;
 
 /**
  * Los comandos que se pueden escribir en el editor.
@@ -68,6 +61,7 @@ export type CommandEffect =
     | { kind: 'play-pong' }
     | { kind: 'leave-note' }
     | { kind: 'time-drift' }
+    | { kind: 'write-note'; text: string }
     | { kind: 'set-effects'; enabled: boolean };
 
 export interface CommandResult {
@@ -147,8 +141,15 @@ interface Command {
     /**
      * No aparece en `//help`.
      *
-     * Sólo lo usa `//attach_*`: listarlo convertiría el hallazgo en una lectura
-     * y dejaría a `//ps` sin su único motivo para ser leído.
+     * LA MAYORÍA LO ESTÁ. `//help` lista sólo lo BÁSICO —lo que alguien podría
+     * querer de una app de notas, más las puertas de entrada— y calla el resto.
+     * Listarlos todos convertía cada hallazgo en una lectura: bastaba teclear
+     * `//help` una vez para que no quedara nada por descubrir, y las piezas
+     * dejaban de ser secretos para ser un menú.
+     *
+     * Lo que impide que se vuelvan inalcanzables —el error del umbral de diez
+     * colapsos— son tres fugas: `//help` dice CUÁNTOS faltan, de vez en cuando
+     * suelta uno, y las ventanas de error del fallo cromático los nombran.
      */
     hidden?: boolean;
     /**
@@ -158,26 +159,233 @@ interface Command {
      * como hallazgo. Adjuntarse al auto-guardado y llevarse un reproche no lo es.
      */
     secretId?: string;
-    resolve: (ctx: CommandContext, args: string, lang: Lang) => CommandResult;
+    /** El azar llega inyectado para que los tests puedan fijarlo. */
+    resolve: (
+        ctx: CommandContext,
+        args: string,
+        lang: Lang,
+        random?: () => number
+    ) => CommandResult;
 }
 
 const texto = (output: string) => ({ output, effect: SIN_EFECTO });
+
+/**
+ * Todo el texto que sueltan los comandos, en TODOS los idiomas.
+ *
+ * No son ternarios `lang === 'es' ? … : …` a propósito. Un ternario compila
+ * igual el día que `Lang` gane un idioma y sirve inglés en silencio; un
+ * `Localized` incompleto NO COMPILA y el error dice exactamente qué falta. Es
+ * la misma garantía que da el diccionario, aplicada al texto de autor.
+ *
+ * Vive junto a los comandos y no en `i18n/es.ts` porque es texto con voz: el
+ * comentario que explica por qué una frase funciona tiene que estar al lado de
+ * las dos versiones.
+ */
+const T = {
+    artNew: { es: 'PIEZA NUEVA · {n}/{total}', en: 'NEW PIECE · {n}/{total}' },
+    artSeen: { es: 'YA LA TENÍAS · {n}/{total}', en: 'ALREADY YOURS · {n}/{total}' },
+    artKeepHint: {
+        es: 'PUEDE QUEDÁRSELA CON //keep',
+        en: 'YOU CAN KEEP IT WITH //keep',
+    },
+    artComplete: {
+        es: 'NO QUEDA NINGUNA MÁS. ERA TODO LO QUE GUARDABA.',
+        en: 'THERE ARE NO MORE. THAT WAS EVERYTHING I KEPT.',
+    },
+    keepNothing: {
+        es: 'NO HAY NADA QUE GUARDAR TODAVÍA.',
+        en: 'NOTHING TO KEEP YET.',
+    },
+    keepDone: {
+        es: 'AHÍ LA TIENE. NO LA PIERDA.',
+        en: 'THERE IT IS. DO NOT LOSE IT.',
+    },
+    unlisted: {
+        es: '{n} COMANDOS NO LISTADOS.',
+        en: '{n} COMMANDS NOT LISTED.',
+    },
+    leak: {
+        es: 'UNO SE ME ESCAPÓ: {cmd}',
+        en: 'ONE SLIPPED OUT: {cmd}',
+    },
+    version: {
+        es: 'FLASH-NOTES v1.0 · NÚCLEO ESTABLE',
+        en: 'FLASH-NOTES v1.0 · STABLE CORE',
+    },
+    // La cookie de sesión es httpOnly (session.js): el JavaScript del cliente NO
+    // puede leerla, y el hash que sale en los logs se calcula en el servidor. En
+    // vez de inventar un identificador o de pedir un endpoint nuevo, la
+    // limitación ES la respuesta — y dice exactamente lo que la app es.
+    whoami: {
+        es:
+            'NO SÉ. LA COOKIE ES httpOnly — NI YO PUEDO LEERLA.\n' +
+            'SOS ESTE NAVEGADOR. NADA MÁS.',
+        en:
+            "I DON'T KNOW. THE COOKIE IS httpOnly — NOT EVEN I CAN READ IT.\n" +
+            'YOU ARE THIS BROWSER. NOTHING ELSE.',
+    },
+    sudo: {
+        es: 'NO HAY SUPERUSUARIO. NO HAY USUARIOS.\nHAY UN NAVEGADOR.',
+        en: 'THERE IS NO SUPERUSER. THERE ARE NO USERS.\nTHERE IS A BROWSER.',
+    },
+    clockReleased: {
+        es:
+            'REFERENCIA HORARIA LIBERADA.\n\n' +
+            'YA NO SÉ EN QUÉ AÑO ESTAMOS.\n' +
+            'RECARGUE PARA QUE VUELVA.',
+        en:
+            'TIME REFERENCE RELEASED.\n\n' +
+            'I NO LONGER KNOW WHAT YEAR IT IS.\n' +
+            'RELOAD TO GET IT BACK.',
+    },
+    // El hallazgo. La máquina no explica qué es: lo admite.
+    attaching: {
+        es:
+            'ADJUNTANDO A {name}…\n' +
+            'ACTIVO DESDE EL PRIMER ARRANQUE.\n\n' +
+            '¿HACE CUÁNTO QUE ESTÁ MIRANDO?',
+        en:
+            'ATTACHING TO {name}…\n' +
+            'RUNNING SINCE FIRST BOOT.\n\n' +
+            'HOW LONG HAVE YOU BEEN WATCHING?',
+    },
+    availableCommands: { es: 'COMANDOS DISPONIBLES', en: 'AVAILABLE COMMANDS' },
+    uptimeLabel: { es: 'TURNO ACTIVO', en: 'SHIFT ACTIVE' },
+    fetchingHistory: { es: 'CONSULTANDO ACTAS…', en: 'CONSULTING THE RECORDS…' },
+    openingDiag: { es: 'ABRIENDO DIAGNÓSTICO…', en: 'OPENING DIAGNOSTICS…' },
+    effectsLabel: { es: 'EFECTOS', en: 'EFFECTS' },
+    useVerb: { es: 'USÁ', en: 'USE' },
+    systemLabel: { es: 'SISTEMA', en: 'SYSTEM' },
+    noFilesThisShift: {
+        es: 'SIN ARCHIVOS EN ESTE TURNO.',
+        en: 'NO FILES ON THIS SHIFT.',
+    },
+    untitled: { es: 'Sin_titulo.txt', en: 'Untitled.txt' },
+    unknownCommand: {
+        es: 'COMANDO DESCONOCIDO: {name}. PROBÁ //help.',
+        en: 'UNKNOWN COMMAND: {name}. TRY //help.',
+    },
+    noSuchProcess: { es: 'NO HAY PROCESO {pid}.', en: 'NO PROCESS {pid}.' },
+    processInUse: { es: 'PROCESO {name} EN USO.', en: 'PROCESS {name} IN USE.' },
+    noOffset: {
+        es: 'SIN DESFASE. ESTÁS EN LA HORA DEL SISTEMA.',
+        en: 'NO OFFSET. YOU ARE ON SYSTEM TIME.',
+    },
+    // La única frase de lore que el usuario puede verificar mirando su reloj.
+    neverMoved: { es: 'EL SISTEMA NUNCA SE MUDÓ.', en: 'THE SYSTEM NEVER MOVED.' },
+    psHeaderName: { es: 'PROCESO', en: 'PROCESS' },
+    psHeaderInterval: { es: 'INTERVALO', en: 'INTERVAL' },
+    attachHint: {
+        es: 'USE //attach_<PID> PARA ADJUNTARSE A UN PROCESO.',
+        en: 'USE //attach_<PID> TO ATTACH TO A PROCESS.',
+    },
+    scaleLabel: { es: 'ESCALA', en: 'SCALE' },
+} satisfies Record<string, Localized>;
+
+/** El texto con sus `{variables}` ya sustituidas. */
+function say(text: Localized, lang: Lang, vars?: Vars): string {
+    return vars ? fill(text[lang], vars) : text[lang];
+}
+
+/**
+ * Cuánto llevás escrito, con el plural bien puesto.
+ *
+ * Antes decía "en 1 archivo(s)". El paréntesis es el parche que delata que
+ * nadie miró el caso de uno.
+ */
+const WRITTEN: LocalizedPlural = {
+    es: {
+        one: 'ESCRITO   {b}b en {n} archivo',
+        other: 'ESCRITO   {b}b en {n} archivos',
+    },
+    en: {
+        one: 'WRITTEN   {b}b across {n} file',
+        other: 'WRITTEN   {b}b across {n} files',
+    },
+};
+
+/** Cada cuántas veces `//help` se niega a listar nada. */
+const SNARK_ODDS = 1 / 6;
+
+/** Y cada cuántas suelta el nombre de uno de los escondidos. */
+const LEAK_ODDS = 1 / 4;
+
+/**
+ * Cuando no está para listas.
+ *
+ * Ninguna es una negativa seca: todas dicen algo del sistema. Y volver a pedirla
+ * funciona — es un desplante, no una avería. Un comando que a veces no anda de
+ * verdad sería un defecto, no un chiste.
+ */
+const HELP_SNARK: readonly Localized[] = [
+    {
+        es: 'LA LISTA LA TENÍA ALGUIEN QUE YA NO TRABAJA ACÁ.',
+        en: 'THE LIST WAS KEPT BY SOMEONE WHO NO LONGER WORKS HERE.',
+    },
+    {
+        es: 'PRUEBE COSAS. ES LO QUE HAGO YO.',
+        en: 'TRY THINGS. IT IS WHAT I DO.',
+    },
+    {
+        es: 'AYUDA DE QUÉ. ACÁ NO PASA NADA.',
+        en: 'HELP WITH WHAT. NOTHING HAPPENS HERE.',
+    },
+    { es: 'AHORA NO.', en: 'NOT NOW.' },
+];
+
+function pickOne(
+    repertorio: readonly Localized[],
+    lang: Lang,
+    random: () => number
+): string {
+    const i = Math.min(repertorio.length - 1, Math.floor(random() * repertorio.length));
+    return repertorio[i][lang];
+}
+
+/** El nombre de uno de los escondidos, al azar. */
+function leakOne(random: () => number): string {
+    const ocultos = COMMANDS.filter((c) => c.hidden);
+    const i = Math.min(ocultos.length - 1, Math.floor(random() * ocultos.length));
+    return ocultos[i].name;
+}
 
 const COMMANDS: readonly Command[] = [
     {
         name: '//help',
         summary: { es: 'esta lista', en: 'this list' },
         secretId: 'commands',
-        resolve: (_ctx, _args, lang) =>
-            texto(
+        resolve: (_ctx, _args, lang, random = Math.random) => {
+            // DE VEZ EN CUANDO NO CONTESTA. Una ayuda que siempre responde igual
+            // se lee como documentación; ésta es una máquina cansada, y una de
+            // cada seis veces no está para listas. Volver a pedirla funciona: es
+            // un desplante, no una avería.
+            if (random() < SNARK_ODDS) return texto(pickOne(HELP_SNARK, lang, random));
+
+            const listados = COMMANDS.filter((c) => !c.hidden);
+            const ocultos = COMMANDS.length - listados.length;
+
+            return texto(
                 [
-                    lang === 'es' ? 'COMANDOS DISPONIBLES' : 'AVAILABLE COMMANDS',
+                    T.availableCommands[lang],
                     '',
-                    ...COMMANDS.filter((c) => !c.hidden).map(
+                    ...listados.map(
                         (c) => `  ${c.name.padEnd(12)} ${c.summary[lang]}`
                     ),
+                    '',
+                    // DICE CUÁNTOS FALTAN, PERO NO CUÁLES. Sin esto los comandos
+                    // escondidos serían inalcanzables y nada lo delataría — el
+                    // error exacto que ya se cometió con el umbral de diez
+                    // colapsos. Sabés que hay que buscar; sigue habiendo qué.
+                    fill(T.unlisted[lang], { n: ocultos }),
+                    // Y una de cada cuatro veces suelta UNO: la red que garantiza
+                    // que, insistiendo, todo acaba encontrándose.
+                    ...(random() < LEAK_ODDS
+                        ? ['', fill(T.leak[lang], { cmd: leakOne(random) })]
+                        : []),
                 ].join('\n')
-            ),
+            );
+        },
     },
     {
         name: '//version',
@@ -186,62 +394,36 @@ const COMMANDS: readonly Command[] = [
             en: 'who this system claims to be',
         },
         resolve: (_ctx, _args, lang) =>
-            texto(
-                lang === 'es'
-                    ? 'FLASH-NOTES v1.0 · NÚCLEO ESTABLE'
-                    : 'FLASH-NOTES v1.0 · STABLE CORE'
-            ),
+            texto(T.version[lang]),
     },
     {
         name: '//whoami',
+        hidden: true,
         summary: {
             es: 'a quién cree tener enfrente',
             en: 'who it thinks is out there',
         },
         secretId: 'whoami',
-        // La cookie de sesión es httpOnly (session.js): el JavaScript del
-        // cliente NO puede leerla, y el hash que sale en los logs se calcula en
-        // el servidor. En vez de inventar un identificador o de pedir un
-        // endpoint nuevo, la limitación ES la respuesta — y dice exactamente lo
-        // que la app es.
-        resolve: (_ctx, _args, lang) =>
-            texto(
-                (lang === 'es'
-                    ? [
-                          'NO SÉ. LA COOKIE ES httpOnly — NI YO PUEDO LEERLA.',
-                          'SOS ESTE NAVEGADOR. NADA MÁS.',
-                      ]
-                    : [
-                          "I DON'T KNOW. THE COOKIE IS httpOnly — NOT EVEN I CAN READ IT.",
-                          'YOU ARE THIS BROWSER. NOTHING ELSE.',
-                      ]
-                ).join('\n')
-            ),
+        resolve: (_ctx, _args, lang) => texto(T.whoami[lang]),
     },
     {
         name: '//sudo',
+        hidden: true,
         summary: { es: 'pedir permiso', en: 'ask for permission' },
         secretId: 'sudo',
         resolve: (_ctx, _args, lang) =>
-            texto(
-                (lang === 'es'
-                    ? ['NO HAY SUPERUSUARIO. NO HAY USUARIOS.', 'HAY UN NAVEGADOR.']
-                    : [
-                          'THERE IS NO SUPERUSER. THERE ARE NO USERS.',
-                          'THERE IS A BROWSER.',
-                      ]
-                ).join('\n')
-            ),
+            texto(T.sudo[lang]),
     },
     {
         name: '//uptime',
+        hidden: true,
         summary: {
             es: 'cuánto lleva abierta esta pestaña',
             en: 'how long this tab has been open',
         },
         resolve: (ctx, _args, lang) =>
             texto(
-                `${lang === 'es' ? 'TURNO ACTIVO' : 'SHIFT ACTIVE'}  ${formatDuration(
+                `${T.uptimeLabel[lang]}  ${formatDuration(
                     ctx.now.getTime() - ctx.sessionStart.getTime()
                 )}`
             ),
@@ -269,6 +451,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//ps',
+        hidden: true,
         summary: {
             es: 'qué está corriendo ahora mismo',
             en: "what's running right now",
@@ -278,12 +461,14 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//log',
+        hidden: true,
         summary: { es: 'las últimas peticiones', en: 'the last requests' },
         secretId: 'log',
         resolve: (ctx) => texto(ctx.log),
     },
     {
         name: '//history',
+        hidden: true,
         summary: {
             es: 'las versiones guardadas de esta nota',
             en: 'the saved versions of this note',
@@ -292,24 +477,26 @@ const COMMANDS: readonly Command[] = [
         // "ACTAS" es deliberado: no dice "versiones" ni "historial", dice el
         // registro oficial de algo que pasó. "THE RECORDS" hace lo mismo.
         resolve: (_ctx, _args, lang) => ({
-            output: lang === 'es' ? 'CONSULTANDO ACTAS…' : 'CONSULTING THE RECORDS…',
+            output: T.fetchingHistory[lang],
             effect: { kind: 'fetch-history' },
         }),
     },
     {
         name: '//diag',
+        hidden: true,
         summary: {
             es: 'abrir el panel de diagnóstico',
             en: 'open the diagnostics panel',
         },
         secretId: 'diagnostics',
         resolve: (_ctx, _args, lang) => ({
-            output: lang === 'es' ? 'ABRIENDO DIAGNÓSTICO…' : 'OPENING DIAGNOSTICS…',
+            output: T.openingDiag[lang],
             effect: { kind: 'open-diagnostics' },
         }),
     },
     {
         name: '//chaos',
+        hidden: true,
         summary: {
             es: 'encender o apagar los efectos (on | off)',
             en: 'turn the effects on or off (on | off)',
@@ -318,7 +505,7 @@ const COMMANDS: readonly Command[] = [
         resolve: (ctx, args, lang) => {
             const arg = args.trim().toLowerCase();
             // `on` y `off` son argumentos, no palabras: no se traducen.
-            const rotulo = lang === 'es' ? 'EFECTOS' : 'EFFECTS';
+            const rotulo = T.effectsLabel[lang];
 
             if (arg === 'on' || arg === 'off') {
                 const enabled = arg === 'on';
@@ -330,7 +517,7 @@ const COMMANDS: readonly Command[] = [
 
             // Sin argumento no cambia nada: informa. Un `//chaos` suelto que
             // apagara los efectos sería una sorpresa desagradable.
-            const uso = lang === 'es' ? 'USÁ' : 'USE';
+            const uso = T.useVerb[lang];
             return texto(
                 `${rotulo}: ${ctx.effectsEnabled ? 'ON' : 'OFF'} · ${uso} >chaos on | >chaos off`
             );
@@ -338,6 +525,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//panic',
+        hidden: true,
         summary: { es: 'romper el sistema', en: 'break the system' },
         secretId: 'collapse',
         resolve: () => ({ output: '', effect: { kind: 'collapse' } }),
@@ -356,28 +544,59 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//date_off',
+        hidden: true,
         summary: {
             es: 'soltar el reloj del sistema',
             en: 'let the system clock go',
         },
         secretId: 'date',
         resolve: (_ctx, _args, lang) => ({
-            output:
-                lang === 'es'
-                    ? [
-                          'REFERENCIA HORARIA LIBERADA.',
-                          '',
-                          'YA NO SÉ EN QUÉ AÑO ESTAMOS.',
-                          'RECARGUE PARA QUE VUELVA.',
-                      ].join('\n')
-                    : [
-                          'TIME REFERENCE RELEASED.',
-                          '',
-                          'I NO LONGER KNOW WHAT YEAR IT IS.',
-                          'RELOAD TO GET IT BACK.',
-                      ].join('\n'),
+            output: T.clockReleased[lang],
             effect: { kind: 'time-drift' },
         }),
+    },
+    {
+        name: '//art',
+        hidden: true,
+        summary: { es: 'lo que quedó dibujado', en: 'what was left drawn' },
+        secretId: 'art',
+        resolve: (_ctx, _args, lang, random = Math.random) => {
+            const { piece, found, total, isNew } = drawArt(random);
+
+            const pie = isNew
+                ? fill(T.artNew[lang], { n: found, total })
+                : fill(T.artSeen[lang], { n: found, total });
+
+            return texto(
+                [
+                    piece.art,
+                    '',
+                    `-- ${piece.caption[lang]}`,
+                    pie,
+                    // La primera pieza desbloquea guardarla. Decirlo sólo cuando
+                    // ocurre: repetirlo en cada tirada sería un tutorial.
+                    ...(isNew && found === 1 ? ['', T.artKeepHint[lang]] : []),
+                    ...(found === total && isNew ? ['', T.artComplete[lang]] : []),
+                ].join('\n')
+            );
+        },
+    },
+    {
+        name: '//keep',
+        hidden: true,
+        summary: { es: 'quedarse la última', en: 'keep the last one' },
+        resolve: (_ctx, _args, lang) => {
+            if (!canKeep()) return texto(T.keepNothing[lang]);
+
+            const ultima = lastDrawn();
+            if (!ultima) return texto(T.keepNothing[lang]);
+
+            return {
+                output: T.keepDone[lang],
+                effect: { kind: 'write-note', text: asNote(ultima, lang) },
+                secretId: 'art-keep',
+            };
+        },
     },
     {
         name: '//clear',
@@ -406,35 +625,18 @@ const COMMANDS: readonly Command[] = [
 
             if (!proceso) {
                 return texto(
-                    lang === 'es' ? `NO HAY PROCESO ${pid}.` : `NO PROCESS ${pid}.`
+                    say(T.noSuchProcess, lang, { pid })
                 );
             }
 
             if (pid !== PONG_PID) {
-                const enUso =
-                    lang === 'es'
-                        ? `PROCESO ${proceso.name} EN USO.`
-                        : `PROCESS ${proceso.name} IN USE.`;
+                const enUso = say(T.processInUse, lang, { name: proceso.name });
 
                 return texto(`${enUso} ${proceso.refusal[lang]}`);
             }
 
-            // El hallazgo. La máquina no explica qué es: lo admite.
             return {
-                output:
-                    lang === 'es'
-                        ? [
-                              `ADJUNTANDO A ${proceso.name}…`,
-                              'ACTIVO DESDE EL PRIMER ARRANQUE.',
-                              '',
-                              '¿HACE CUÁNTO QUE ESTÁ MIRANDO?',
-                          ].join('\n')
-                        : [
-                              `ATTACHING TO ${proceso.name}…`,
-                              'RUNNING SINCE FIRST BOOT.',
-                              '',
-                              'HOW LONG HAVE YOU BEEN WATCHING?',
-                          ].join('\n'),
+                output: say(T.attaching, lang, { name: proceso.name }),
                 effect: { kind: 'play-pong' },
                 // Sólo acá. Adjuntarse al auto-guardado y llevarse un reproche
                 // no es haber encontrado nada.
@@ -443,6 +645,18 @@ const COMMANDS: readonly Command[] = [
         },
     },
 ];
+
+/**
+ * Los nombres de los comandos ESCONDIDOS.
+ *
+ * Los usan las ventanas de error del fallo cromático, que de vez en cuando
+ * nombran uno en lugar de quejarse del vídeo. Es la tercera fuga —junto al
+ * recuento de `//help` y su soltada ocasional— y la que menos se parece a una
+ * pista: parece que al sistema se le escapó, no que te lo esté enseñando.
+ */
+export const HIDDEN_COMMAND_NAMES: readonly string[] = COMMANDS.filter(
+    (c) => c.hidden
+).map((c) => c.name);
 
 /**
  * Los nombres de los comandos ANUNCIADOS, para la ayuda y para los tests.
@@ -461,7 +675,11 @@ export const COMMAND_NAMES: readonly string[] = COMMANDS.filter(
  * Devuelve `null` si el contenido no cumple la condición de activación, que es
  * la señal de "esto no era para mí, dejá que Enter haga lo de siempre".
  */
-export function run(content: string, ctx: CommandContext): CommandResult | null {
+export function run(
+    content: string,
+    ctx: CommandContext,
+    random: () => number = Math.random
+): CommandResult | null {
     if (!isCommandLine(content)) return null;
 
     const lang = ctx.lang ?? getLang();
@@ -482,10 +700,7 @@ export function run(content: string, ctx: CommandContext): CommandResult | null 
         COMMANDS.find((c) => c.match?.test(corto));
 
     if (!command) {
-        const desconocido =
-            lang === 'es'
-                ? `COMANDO DESCONOCIDO: ${nombre.toUpperCase()}. PROBÁ //help.`
-                : `UNKNOWN COMMAND: ${nombre.toUpperCase()}. TRY //help.`;
+        const desconocido = say(T.unknownCommand, lang, { name: nombre.toUpperCase() });
 
         return { output: desconocido, effect: SIN_EFECTO };
     }
@@ -495,7 +710,7 @@ export function run(content: string, ctx: CommandContext): CommandResult | null 
     const capturado = command.match?.exec(corto)?.[1];
     const args = capturado ?? resto.join(' ');
 
-    const { output, effect, secretId } = command.resolve(ctx, args, lang);
+    const { output, effect, secretId } = command.resolve(ctx, args, lang, random);
     return { output, effect, secretId: secretId ?? command.secretId };
 }
 
@@ -525,15 +740,11 @@ export function describeOffset(offsetMinutes: number, lang: Lang = getLang()): s
     const etiqueta = `UTC${signo}${horas}`;
 
     if (offsetMinutes === 0) {
-        return lang === 'es'
-            ? `${etiqueta} · SIN DESFASE. ESTÁS EN LA HORA DEL SISTEMA.`
-            : `${etiqueta} · NO OFFSET. YOU ARE ON SYSTEM TIME.`;
+        return `${etiqueta} · ${T.noOffset[lang]}`;
     }
 
     // La única frase de lore que el usuario puede verificar mirando su reloj.
-    return lang === 'es'
-        ? `${etiqueta} · EL SISTEMA NUNCA SE MUDÓ.`
-        : `${etiqueta} · THE SYSTEM NEVER MOVED.`;
+    return `${etiqueta} · ${T.neverMoved[lang]}`;
 }
 
 function formatDate(now: Date, lang: Lang): string {
@@ -544,7 +755,7 @@ function formatDate(now: Date, lang: Lang): string {
 
     return [
         `LOCAL     ${local} (${etiqueta})`,
-        `${(lang === 'es' ? 'SISTEMA' : 'SYSTEM').padEnd(9)} ${utc} UTC`,
+        `${T.systemLabel[lang].padEnd(9)} ${utc} UTC`,
         frase,
     ].join('\n');
 }
@@ -562,13 +773,13 @@ function formatNotes(
     lang: Lang
 ): string {
     if (notes.length === 0)
-        return lang === 'es' ? 'SIN ARCHIVOS EN ESTE TURNO.' : 'NO FILES ON THIS SHIFT.';
+        return T.noFilesThisShift[lang];
 
     const ANCHO = 34;
 
     return notes
         .map((n) => {
-            const nombre = n.title || (lang === 'es' ? 'Sin_titulo.txt' : 'Untitled.txt');
+            const nombre = n.title || T.untitled[lang];
             const tamano = `${n.chars}b`;
             const puntos = '·'.repeat(Math.max(1, ANCHO - nombre.length - tamano.length));
             return `${nombre} ${puntos} ${tamano}`;
@@ -593,15 +804,10 @@ function formatUsage(
     // dibujar la barra, igual que hace la barra de estado.
     const escala = LIMITS.CONTENT_MAX;
 
-    return lang === 'es'
-        ? [
-              `ESCRITO   ${total}b en ${notes.length} archivo(s)`,
-              `ESCALA    ${escala}b  ${meter(total / escala)}`,
-          ].join('\n')
-        : [
-              `WRITTEN   ${total}b across ${notes.length} file(s)`,
-              `SCALE     ${escala}b  ${meter(total / escala)}`,
-          ].join('\n');;
+    return [
+        pickPlural(lang, WRITTEN, notes.length, { b: total }),
+        `${T.scaleLabel[lang].padEnd(9)} ${escala}b  ${meter(total / escala)}`,
+    ].join('\n');
 }
 
 /**
@@ -697,17 +903,13 @@ function processTable(lang: Lang): string {
         `${pid}  ${nombre.padEnd(16)}${intervalo.padStart(9)}`;
 
     return [
-        lang === 'es'
-            ? fila('PROCESO', 'INTERVALO', 'PID')
-            : fila('PROCESS', 'INTERVAL', 'PID'),
+        fila(T.psHeaderName[lang], T.psHeaderInterval[lang], 'PID'),
         ...PROCESSES.map((p) => fila(p.name, p.interval, `  ${p.pid}`)),
         '',
         // Da el VERBO pero no el PID. Adivinar «attach» a ciegas sería
         // imposible —y un secreto inalcanzable es código muerto, error que este
         // proyecto ya cometió una vez—, pero decir cuál de los seis es el raro
         // sería regalar el hallazgo. La pista se entrega, la observación es tuya.
-        lang === 'es'
-            ? 'USE //attach_<PID> PARA ADJUNTARSE A UN PROCESO.'
-            : 'USE //attach_<PID> TO ATTACH TO A PROCESS.',
+        T.attachHint[lang],
     ].join('\n');
 }

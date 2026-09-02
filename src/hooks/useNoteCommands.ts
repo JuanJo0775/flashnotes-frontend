@@ -21,6 +21,19 @@ import {
 import { useTheme } from '@/hooks/useTheme';
 import type { NoteHistory } from '@/types/note.types';
 import { getLang } from '@/i18n';
+import type { Localized } from '@/i18n';
+
+// `Localized` y no ternarios: al añadir un idioma dejan de compilar en vez
+// de servir inglés en silencio. Ver `i18n/types.ts`.
+const SIN_VERSIONES: Localized = {
+    es: 'SIN VERSIONES GUARDADAS TODAVÍA.',
+    en: 'NO VERSIONS SAVED YET.',
+};
+
+const HISTORIAL_ILEGIBLE: Localized = {
+    es: 'NO SE PUDO LEER EL HISTORIAL DE ESTA NOTA.',
+    en: "COULDN'T READ THIS NOTE'S HISTORY.",
+};
 
 /**
  * Ejecuta los comandos del editor.
@@ -45,6 +58,8 @@ interface UseNoteCommandsOptions {
     onPlayPong: () => void;
     /** `//hi` insistido de más: te saca de la nota. */
     onLeaveNote: () => void;
+    /** `//keep`: deja el dibujo escrito en la nota abierta. */
+    onWriteNote: (text: string) => void;
 }
 
 interface UseNoteCommandsReturn {
@@ -58,9 +73,7 @@ interface UseNoteCommandsReturn {
 /** Las versiones que guarda el backend, como una pila legible. */
 function formatHistory(history: NoteHistory): string {
     if (history.versions.length === 0) {
-        return getLang() === 'es'
-            ? 'SIN VERSIONES GUARDADAS TODAVÍA.'
-            : 'NO VERSIONS SAVED YET.';
+        return SIN_VERSIONES[getLang()];
     }
 
     // La más reciente arriba: es el orden en que uno busca en un historial.
@@ -83,6 +96,7 @@ export function useNoteCommands({
     onClearNote,
     onPlayPong,
     onLeaveNote,
+    onWriteNote,
 }: UseNoteCommandsOptions): UseNoteCommandsReturn {
     const [response, setResponse] = useState<string | null>(null);
     const theme = useTheme();
@@ -136,6 +150,9 @@ export function useNoteCommands({
                 case 'leave-note':
                     onLeaveNote();
                     break;
+                case 'write-note':
+                    onWriteNote(result.effect.text);
+                    break;
                 case 'time-drift':
                     startDrift(Date.now());
                     break;
@@ -150,9 +167,7 @@ export function useNoteCommands({
                         setResponse(formatHistory(await notesApi.history(noteId)));
                     } catch {
                         setResponse(
-                            getLang() === 'es'
-                                ? 'NO SE PUDO LEER EL HISTORIAL DE ESTA NOTA.'
-                                : "COULDN'T READ THIS NOTE'S HISTORY."
+                            HISTORIAL_ILEGIBLE[getLang()]
                         );
                     }
                     break;
@@ -170,6 +185,7 @@ export function useNoteCommands({
             onClearNote,
             onPlayPong,
             onLeaveNote,
+            onWriteNote,
         ]
     );
 

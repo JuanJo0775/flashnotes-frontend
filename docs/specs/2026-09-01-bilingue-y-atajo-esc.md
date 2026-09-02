@@ -83,10 +83,41 @@ dialog.*   confirmaciones         a11y.*     etiquetas de lector de pantalla
 ```
 
 **Interpolación** mínima y a mano: `t('status.noteSize', { n: 42 })` sustituye
-`{n}` en la plantilla. Sin motor de plantillas, sin pluralización automática —
-los pocos plurales que hay se resuelven con claves separadas
-(`list.oneNote` / `list.manyNotes`), que es más legible que una regla ICU para
-dos casos.
+`{n}` en la plantilla. Sin motor de plantillas.
+
+### Plurales
+
+`t.plural('sidebar.files', n)` elige entre `sidebar.files.one` y
+`sidebar.files.other`. La categoría la decide **`Intl.PluralRules`**, no un
+`n === 1` escrito a mano: español e inglés coinciden en "uno contra el resto",
+pero eso es una particularidad suya y no una ley — el ruso tiene tres formas y
+el japonés una. Con `Intl`, esos idiomas entran sin tocar la función.
+
+El tipo `PluralKey` se deriva de las claves que terminan en `.other`, así que
+sólo se puede pedir el plural de un grupo que exista. `other` es obligatoria;
+`one`, `few`, `many` y las demás son opcionales y se cae en `other` si faltan.
+
+Para el texto de autor que no vive en el diccionario está `pickPlural`, que toma
+un `LocalizedPlural`. Es lo que arregló el `en 1 archivo(s)` de `//df`: el
+paréntesis era el parche que delataba que nadie había mirado el caso de uno.
+
+### Nada de ternarios para elegir idioma
+
+El texto de autor usa `Localized = Record<Lang, string>`, **nunca**
+`lang === 'es' ? … : …`. La diferencia importa el día que `Lang` gane un idioma:
+
+| forma                       | al añadir un idioma                    |
+| --------------------------- | --------------------------------------- |
+| `Record<Lang, string>`      | **no compila**, y el error dice qué falta |
+| `lang === 'es' ? a : b`     | compila y sirve inglés **en silencio**  |
+
+Hubo 27 ternarios y se convirtieron todos. Se comprobó añadiendo `'fr'` a `Lang`
+de forma temporal: el compilador enumeró **116 sitios** — 71 en `commands.ts`,
+33 en `lore.ts`, 11 en `greeting.ts` y el resto sueltos — y ninguno se coló.
+
+`tests/i18n/plural.test.ts` prohíbe el ternario en todo `src/`, y comprueba
+además que su detector caza el patrón malo: un test de "no hay nada" que pasa
+porque el detector no funciona da confianza sin dar garantía.
 
 ### Estado del idioma
 

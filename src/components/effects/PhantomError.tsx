@@ -8,6 +8,7 @@ import {
     storePhantoms,
 } from '@/hooks/useSystemState';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { HIDDEN_COMMAND_NAMES } from '@/lib/system/commands';
 
 /**
  * Ventanas de error que aparecen y se cierran solas.
@@ -66,6 +67,20 @@ export const PHANTOM_MESSAGES: readonly { code: string; text: string }[] = [
 
 /** Cuántas pueden estar abiertas a la vez con la señal rota. */
 export const PHANTOM_MAX_OPEN = 3;
+
+/**
+ * Cada cuántas ventanas, en vez de quejarse del vídeo, se le escapa un comando.
+ *
+ * Es la tercera fuga de los comandos escondidos, y la mejor: `//help` te dice
+ * cuántos faltan y a veces suelta uno —eso se lee como ayuda— pero una ventana
+ * de error que muestra `//panic` en un volcado se lee como un descuido. Enterarte
+ * de algo que el sistema no quería contarte vale más que enterarte porque te lo
+ * contó.
+ *
+ * Una de cada tres: menos, y podrías no ver ninguna en toda una avería; más, y
+ * las ventanas dejarían de hablar de la señal, que es de lo que van.
+ */
+const LEAK_ODDS = 1 / 3;
 
 /**
  * Y cuántas durante el bloqueo.
@@ -242,7 +257,23 @@ export default function PhantomError() {
         /** Abre una ventana y programa su cierre. */
         function abrirUna(despues: (ms: number, fn: () => void) => void) {
             const mensaje =
-                PHANTOM_MESSAGES[Math.floor(Math.random() * PHANTOM_MESSAGES.length)];
+                Math.random() < LEAK_ODDS && HIDDEN_COMMAND_NAMES.length > 0
+                    ? {
+                          code: '0x' + Math.floor(Math.random() * 65536)
+                              .toString(16)
+                              .toUpperCase()
+                              .padStart(4, '0'),
+                          text: `SÍMBOLO SIN RESOLVER: ${
+                              HIDDEN_COMMAND_NAMES[
+                                  Math.floor(
+                                      Math.random() * HIDDEN_COMMAND_NAMES.length
+                                  )
+                              ]
+                          }`,
+                      }
+                    : PHANTOM_MESSAGES[
+                          Math.floor(Math.random() * PHANTOM_MESSAGES.length)
+                      ];
             const id = (nextId += 1);
 
             setPhantoms((abiertas) =>

@@ -2,6 +2,26 @@
 
 import type { Note } from '@/types/note.types';
 import { getLang } from '@/i18n';
+import type { Lang } from '@/config/lang';
+
+/**
+ * El texto de la nota fantasma, en TODOS los idiomas.
+ *
+ * Un `Record<Lang, …>` y no ternarios: al añadir un idioma esto deja de
+ * compilar y el error enumera lo que falta. Ver `i18n/types.ts`.
+ */
+const GHOST: Readonly<Record<Lang, { sinActividad: string; cabecera: string; aviso: string }>> = {
+    es: {
+        sinActividad: 'SIN ACTIVIDAD REGISTRADA EN ESTE TURNO.',
+        cabecera: '// REGISTRO DE SESIÓN',
+        aviso: '// ESTE ARCHIVO NO LO ESCRIBIÓ USTED.',
+    },
+    en: {
+        sinActividad: 'NO ACTIVITY LOGGED ON THIS SHIFT.',
+        cabecera: '// SESSION LOG',
+        aviso: '// YOU DID NOT WRITE THIS FILE.',
+    },
+};
 
 /**
  * SYSTEM.LOG: la nota que aparece en la papelera y que nadie creó.
@@ -71,22 +91,15 @@ export function shouldHaunt(ctx: GhostContext): boolean {
 export function buildGhostNote(log: string): Note {
     // `SYSTEM.LOG` no se traduce: es un nombre de archivo. El cuerpo sí — es la
     // máquina hablando, y habla en el idioma en que la estás leyendo.
-    const es = getLang() === 'es';
-    const cuerpo =
-        log.trim().length > 0
-            ? log
-            : es
-              ? 'SIN ACTIVIDAD REGISTRADA EN ESTE TURNO.'
-              : 'NO ACTIVITY LOGGED ON THIS SHIFT.';
+    const lang = getLang();
+    const cuerpo = log.trim().length > 0 ? log : GHOST[lang].sinActividad;
 
     return {
         _id: GHOST_ID,
         title: GHOST_TITLE,
         content: [
-            es ? '// REGISTRO DE SESIÓN' : '// SESSION LOG',
-            es
-                ? '// ESTE ARCHIVO NO LO ESCRIBIÓ USTED.'
-                : '// YOU DID NOT WRITE THIS FILE.',
+            GHOST[lang].cabecera,
+            GHOST[lang].aviso,
             '',
             cuerpo,
         ].join('\n'),

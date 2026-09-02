@@ -59,7 +59,10 @@ export const es = {
     'sidebar.newNote': '[+] Nueva nota',
     'sidebar.empty': 'Sin archivos',
     'sidebar.loadMore': '[↓] Cargar más ({n})',
-    'sidebar.files': 'archivos',
+    // Grupo de plural: se pide con `t.plural('sidebar.files', n)`. `other` es
+    // obligatoria; `one` es opcional y la elige `Intl.PluralRules`.
+    'sidebar.files.one': 'archivo',
+    'sidebar.files.other': 'archivos',
     'sidebar.noTime': '--:--:--',
 
     // ── listado de notas ─────────────────────────────────────────────────────

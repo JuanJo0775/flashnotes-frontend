@@ -59,6 +59,8 @@ herramientas.
 | `//ps` y después `//attach_6` | [§15 vsync-test](#15--vsync-test--el-pong-escondido) |
 | `//hi`, y otra vez, y otra | [§16 El saludo se agota](#16--el-saludo-se-agota) |
 | `//date_off` | [§17 El reloj se suelta](#17--el-reloj-se-suelta) |
+| `//art`, y otra vez | [§18 Las piezas que quedaron](#18--las-piezas-que-quedaron) |
+| `//help` unas cuantas veces | [§19 La ayuda no lo dice todo](#19--la-ayuda-no-lo-dice-todo) |
 
 ---
 
@@ -389,6 +391,18 @@ La integridad **no se recuerda**: recargar siempre devuelve un sistema sano.
 ---
 
 # 6 · Comandos en el prompt
+
+> **Las respuestas se borran solas, y las largas tardan más.** Que la terminal se
+> limpie y te deje la nota en blanco es parte de cómo se siente, así que ninguna
+> se queda para siempre. Pero con el tope de nueve segundos, `//help` había que
+> leerlo y desplazarlo contra reloj: una respuesta de más de seis líneas aguanta
+> ahora 32 s, tiempo de bajarla entera y volver.
+>
+> Y **se podía ver la barra pero no desplazar**: el elemento lleva
+> `editor-placeholder editor-reply`, y la primera —que declara
+> `pointer-events: none`— iba más abajo en la hoja con la misma especificidad, así
+> que ganaba. Es la trampa de la cascada de [REGLAS.md · C3](REGLAS.md), la misma
+> que dejó al tirón sin reproducirse durante la avería.
 
 El editor ya muestra un `>` al principio de cada línea. Esto termina de
 convertirlo en una terminal.
@@ -1422,6 +1436,98 @@ en cada repintado, la pantalla temblaría de números y se leería como parpadeo
 
 **Sólo lo arregla recargar**, como el fallo cromático. Y es sólo pintura: el
 `updatedAt` que guarda el backend no se toca. Se rompe el reloj, no tus datos.
+
+---
+
+# 18 · Las piezas que quedaron
+
+`//art`. No son adornos que la app inventa: son cosas que ya estaban en la
+memoria de una máquina encendida hace demasiado. La polilla es **la primera
+avería informática documentada** —dentro de un relé, en 1947, y de ahí viene
+«bug»—; la cinta y el disquete son soportes que esta terminal conoció.
+
+Ocho piezas, cada una con su pie:
+
+```
+     \         /     
+  .--.\.-----./.--.  
+ /    \|     |/    \ 
+|  /\  |  .  |  /\  |
+ \ \/  '.___.'  \/ / 
+  '--'    |    '--'  
+          |          
+-- POLILLA · HALLADA EN EL RELÉ 70, 1947
+PIEZA NUEVA · 1/8
+```
+
+**Se coleccionan, y `//art` prioriza las que te faltan.** Sorteando a ciegas
+entre las ocho, conseguir la última pedía una media de veinte intentos y
+coleccionar se volvía un trámite. Dando primero las que no tenés, cada tirada
+avanza; completada, empieza a repetir y lo dice.
+
+La colección vive en `localStorage`, atada a este navegador, con el mismo patrón
+que los marcadores del pong.
+
+### `//keep` · quedarse una
+
+Se desbloquea con **la primera** pieza —esperar a tenerlas las ocho dejaría el
+comando inútil justo mientras coleccionás, que es cuando dan ganas de guardar
+una— y escribe el dibujo en la nota abierta. Sólo puede pasar con la nota en
+blanco, porque el comando ES todo el contenido, así que no pisa nada.
+
+Guarda **la última que salió**, y esa memoria es de sesión y no de
+almacenamiento: quedarse una pieza es un gesto del momento, y recordar entre
+sesiones cuál viste hace tres días haría que `//keep` guardara algo que ya no
+tenés delante.
+
+> ⚠ **Todo ASCII imprimible.** Los bloques (`█ ▌ ░`) no están en JetBrains Mono y
+> los pinta una fuente de reserva con otras métricas, así que un dibujo con
+> bloques se descuadra fila a fila. Es la misma trampa que hizo bailar el corte
+> del pong — ver [REGLAS.md · C8](REGLAS.md). Dos tests lo fijan: todo carácter
+> dentro del ASCII imprimible, y todas las filas de una pieza del mismo ancho.
+
+---
+
+# 19 · La ayuda no lo dice todo
+
+`//help` listaba los dieciocho comandos. Bastaba teclearlo una vez para que no
+quedara nada por descubrir: las piezas dejaban de ser secretos y pasaban a ser un
+menú.
+
+Ahora lista **sólo lo básico** —lo que alguien podría querer de una app de notas,
+más las puertas de entrada— y calla el resto.
+
+| Anunciados | Escondidos |
+| ---------- | ---------- |
+| `//help` `//version` `//clear` `//ls` `//df` `//date` `//hi` | `//whoami` `//sudo` `//uptime` `//ps` `//log` `//history` `//diag` `//chaos` `//panic` `//date_off` `//art` `//keep` `//attach_*` |
+
+### Tres fugas, para que nada sea inalcanzable
+
+Un secreto que nadie puede encontrar no es un secreto, es código muerto — el
+error exacto que ya se cometió con el umbral de diez colapsos. Así que hay tres
+maneras de que un comando escondido llegue a vos:
+
+1. **`//help` dice CUÁNTOS faltan, no cuáles.** `12 COMANDOS NO LISTADOS.` Sabés
+   que hay que buscar; sigue habiendo qué buscar.
+2. **Una de cada cuatro veces se le escapa uno.** `UNO SE ME ESCAPÓ: //panic`
+3. **Las ventanas de error del fallo cromático los nombran**, una de cada tres:
+   `SÍMBOLO SIN RESOLVER: //chaos`
+
+La tercera es la mejor. Las dos primeras se leen como ayuda; una ventana de error
+que muestra un comando en un volcado se lee como un descuido, y **enterarte de
+algo que el sistema no quería contarte vale más que enterarte porque te lo
+contó.**
+
+### Y una de cada seis veces no está para listas
+
+```
+//help
+> LA LISTA LA TENÍA ALGUIEN QUE YA NO TRABAJA ACÁ.
+```
+
+Una ayuda que siempre contesta igual se lee como documentación; ésta es una
+máquina cansada. Volver a pedirla funciona: es un desplante, no una avería — un
+comando que a veces no anda de verdad sería un defecto, no un chiste.
 
 ---
 
