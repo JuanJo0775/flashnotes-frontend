@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { formatLog } from '@/lib/system/requestLog';
 import { startDrift } from '@/lib/system/timeDrift';
+
 import { formatFileSize, formatTime } from '@/lib/utils/formatters';
 import {
     isCommandLine,
@@ -20,6 +21,7 @@ import {
     registerGreeting,
     registerChat,
     registerKick,
+    registerV02Toggle,
     kickCount,
     resetEverything,
     setEffectsEnabled,
@@ -188,6 +190,14 @@ export function useNoteCommands({
                     break;
                 case 'keep-art':
                     onKeepArt(result.effect.title, result.effect.text);
+                    break;
+                case 'toggle-v02':
+                    registerV02Toggle();
+                    break;
+                case 'recover':
+                    // Se devuelve al editor por la misma vía que `//keep`: es
+                    // texto que va a la nota abierta.
+                    onWriteNote(result.effect.text);
                     break;
                 case 'time-drift':
                     startDrift(Date.now());

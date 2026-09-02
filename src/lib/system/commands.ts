@@ -6,6 +6,9 @@ import { getLang, fill, pickPlural } from '@/i18n';
 import { greetingFor, chatReplyFor, KILL_AFTER_KICKS } from '@/lib/system/greeting';
 import { drawArt, canKeep, lastDrawn, asNote, noteTitle } from '@/lib/system/asciiArt';
 import { isUnlocked, markUsed } from '@/lib/system/commandUnlock';
+import { isSessionWord } from '@/lib/system/morse';
+import { isV02 } from '@/lib/system/v02';
+import { allDropped } from '@/lib/system/dropped';
 import type { Lang } from '@/config/lang';
 import type { Localized, LocalizedPlural, Vars } from '@/i18n';
 
@@ -76,6 +79,8 @@ export type CommandEffect =
     | { kind: 'keep-art'; title: string; text: string }
     | { kind: 'reset-all' }
     | { kind: 'kill-page' }
+    | { kind: 'toggle-v02'; entering: boolean }
+    | { kind: 'recover'; text: string }
     | { kind: 'set-effects'; enabled: boolean };
 
 /** Una fila de la respuesta: texto, o un nombre que no se deja leer. */
@@ -236,6 +241,28 @@ const texto = (output: string) => ({ output, effect: SIN_EFECTO });
  * las dos versiones.
  */
 const T = {
+    // El tono de la v0.2 es el mismo, con menos oficio: la misma máquina más
+    // joven, que todavía no aprendió a callarse lo que no hace falta decir.
+    recoverNothing: {
+        es: 'NO SE CAYÓ NADA. TODAVÍA.',
+        en: 'NOTHING WAS DROPPED. YET.',
+    },
+    recoverDone: {
+        es: 'LO TENÍA POR ACÁ.\n\n' +
+            'NO SÉ POR QUÉ NO LO GUARDÉ LA PRIMERA VEZ.',
+        en: 'I HAD IT SOMEWHERE.\n\n' +
+            'NOT SURE WHY I DID NOT SAVE IT THE FIRST TIME.',
+    },
+    v02Enter: {
+        es: 'CARGANDO 0.2.\n\n' +
+            'ESTA ES VIEJA. NO ESTÁ TERMINADA.',
+        en: 'LOADING 0.2.\n\n' +
+            'THIS ONE IS OLD. IT IS NOT FINISHED.',
+    },
+    v02Leave: {
+        es: 'VOLVIENDO.',
+        en: 'COMING BACK.',
+    },
     unknown: {
         es: 'COMANDO DESCONOCIDO: {name}. PROBÁ //help.',
         en: 'UNKNOWN COMMAND: {name}. TRY //help.',
@@ -725,6 +752,26 @@ const COMMANDS: readonly Command[] = [
         },
     },
     {
+        name: '//recover',
+        hidden: true,
+        summary: {
+            es: 'traer de vuelta lo que no se guardó',
+            en: 'bring back what was not saved',
+        },
+        // LA RED DE LA v0.2. Perder de verdad, sí; perder para siempre y sin
+        // aviso, no — eso sigue siendo la primera regla del proyecto.
+        resolve: (_ctx, _args, lang) => {
+            const caidas = allDropped();
+            if (caidas.length === 0) return texto(T.recoverNothing[lang]);
+
+            const ultima = caidas[caidas.length - 1];
+            return {
+                output: T.recoverDone[lang],
+                effect: { kind: 'recover', text: ultima.content },
+            };
+        },
+    },
+    {
         name: '//reset',
         hidden: true,
         summary: {
@@ -836,6 +883,18 @@ export function run(
     const command =
         COMMANDS.find((c) => c.name === buscado) ??
         COMMANDS.find((c) => c.match?.test(corto));
+
+    // LA PALABRA DEL MORSE. Se reconoce acá y no como un comando declarado
+    // porque cambia por sesión: metida en la lista se filtraría por `//help` y
+    // por las ventanas de error, que sólo conocen los comandos declarados. Acá
+    // no existe hasta que la tecleás.
+    if (isSessionWord(corto)) {
+        const entrando = !isV02();
+        return {
+            output: entrando ? T.v02Enter[lang] : T.v02Leave[lang],
+            effect: { kind: 'toggle-v02', entering: entrando },
+        };
+    }
 
     if (!command) {
         const desconocido = say(T.unknownCommand, lang, { name: nombre.toUpperCase() });

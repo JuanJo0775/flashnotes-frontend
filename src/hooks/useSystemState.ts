@@ -15,6 +15,8 @@ import { clearFound as clearArt } from '@/lib/system/asciiArt';
 import { resetScores } from '@/lib/system/pongScores';
 import { clearUsed } from '@/lib/system/commandUnlock';
 import { clearCollectibles } from '@/lib/system/collectibles';
+import { leaveV02, isV02, toggleV02 } from '@/lib/system/v02';
+import { clearDropped } from '@/lib/system/dropped';
 import { forgetWord } from '@/lib/system/morse';
 import { stopDrift } from '@/lib/system/timeDrift';
 
@@ -192,6 +194,14 @@ export interface SystemState {
      * Sobrevive a recargar la página.
      */
     lockedOut: boolean;
+    /**
+     * Estás en la versión de antes.
+     *
+     * Se publica desde acá y no se lee suelto para que la interfaz se repinte al
+     * entrar y al salir — leer el almacén con una función suelta no re-renderiza
+     * (REGLAS · B2), y la barra de estado ya se quedó pillada una vez por eso.
+     */
+    v02: boolean;
 }
 
 /** Lo que hay que hacer tras un clic en el rótulo. */
@@ -325,6 +335,7 @@ let state: SystemState = {
     noteTrashedAt,
     chromaticFailure,
     lockedOut: lockoutUntil !== null,
+    v02: isV02(),
 };
 
 const listeners = new Set<() => void>();
@@ -343,6 +354,7 @@ function publish() {
         noteTrashedAt,
         chromaticFailure,
         lockedOut: lockoutUntil !== null,
+        v02: isV02(),
     };
 
     const unchanged =
@@ -352,6 +364,7 @@ function publish() {
         next.permanentDeletes === state.permanentDeletes &&
         next.noteTrashedAt === state.noteTrashedAt &&
         next.chromaticFailure === state.chromaticFailure &&
+        next.v02 === state.v02 &&
         next.lockedOut === state.lockedOut;
 
     if (unchanged) return;
@@ -609,6 +622,8 @@ export function resetEverything() {
     resetScores();
     clearUsed();
     clearCollectibles();
+    leaveV02();
+    clearDropped();
     forgetWord();
     stopDrift();
 
@@ -619,6 +634,20 @@ export function resetEverything() {
     }
 
     publish();
+}
+
+/**
+ * Entra o sale de la v0.2, y AVISA.
+ *
+ * `toggleV02()` sólo cambia la bandera y el almacenamiento; sin publicar, nadie
+ * se entera y el rótulo de la cabecera se queda diciendo v1.0 con la v0.2 ya
+ * puesta. Cambiar estado compartido sin notificar es el mismo error que dejó la
+ * barra de estado pillada en `[TODO_BIEN]` durante la avería (REGLAS · B2).
+ */
+export function registerV02Toggle(): boolean {
+    const dentro = toggleV02();
+    publish();
+    return dentro;
 }
 
 export function registerCollapse(): CollapseLevel {
@@ -721,6 +750,9 @@ const SERVER_SNAPSHOT: SystemState = {
     noteTrashedAt: null,
     chromaticFailure: false,
     lockedOut: false,
+    // El servidor nunca está en la v0.2: la bandera vive en el navegador, así
+    // que el primer render del cliente tiene que coincidir con esto.
+    v02: false,
 };
 
 export function useSystemState(): SystemState {

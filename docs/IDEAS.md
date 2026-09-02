@@ -31,21 +31,41 @@ de error del fallo cromático suelte un `-.-.` suelto.
 B1 (tachados animados), B2 (se desbloquean al usarlos) y B3 (`//hi` escondido) ya
 están, en su sitio dentro de la lista. Queda:
 
-# E · La v0.2
+# E · La v0.2, lo que falta
 
-Una versión vieja, a medio hacer, que se entra descifrando el morse.
+La puerta y el esqueleto ya están (ver
+[`docs/specs/2026-09-02-v02.md`](specs/2026-09-02-v02.md)): se entra
+descifrando el morse, la bandera sobrevive a recargar, el rótulo dice la versión,
+guardar miente y `//recover` es la red. Queda el resto de las averías:
 
-- Funciona, pero mal: la papelera falla a veces, salen errores solos, hay
-  interfaces a medio dibujar con dígitos.
-- **A veces dice que no guardó y sí guardó** — miente sobre sí misma, no sobre
-  tus datos.
-- **Y en algunas variantes pierde de verdad**, porque al fin y al cabo es una
-  versión antigua con errores. Decidido así explícitamente.
-- Los comandos no están todos y algunos no andan bien.
-- El glitch de claro/oscuro sigue, pero con más fallas: a veces sale estática y
-  vuelve al glitch. Una experiencia distinta, no la misma con otro color.
+## E1 · La papelera falla a ratos
 
-Merece su propio documento de diseño antes de tocar código.
+`trashFails()` ya existe y está probado; falta engancharlo a la papelera de
+verdad. Tirar una nota a veces no hace nada, o dice que la tiró y no la tiró.
+**Nunca al revés: nunca borra algo que no le pediste.**
+
+## E2 · Interfaces a medio dibujar
+
+`halfBaked()` ya existe: devuelve `TITULO_417` en vez de un texto. Falta
+repartirlo por la interfaz — marcos sin cerrar, etiquetas con el nombre de la
+variable, dígitos donde iba una palabra.
+
+## E3 · Los comandos no están todos
+
+En la v0.2 faltan comandos y alguno contesta mal. `//help` más corto y menos
+fiable, porque todavía no estaba terminado.
+
+## E4 · El glitch de tema, con más averías
+
+Sigue rompiéndose a los diez toques, pero la avería **cambia sola**: a ratos sale
+estática, a ratos vuelve al fallo cromático. No es el mismo efecto con otro
+color: es una avería que no se decide.
+
+## E5 · La pista del morse
+
+⚠ **Sin ella la puerta es inalcanzable** — el error del umbral de diez colapsos.
+Candidatas: una frase de arranque que lo mencione, o que una ventana de error del
+fallo cromático suelte un `-.-.` suelto.
 
 ---
 
@@ -70,4 +90,6 @@ preguntar si se hizo.
 | Insistir tres veces deja la página muerta | [EFECTOS §21](EFECTOS.md) | pendiente |
 | `//reset`, que no toca las notas | [EFECTOS §22](EFECTOS.md) | `2cc1556` |
 | `//whoareu` y `//howareu`, una sola cuenta | [EFECTOS §21](EFECTOS.md) | pendiente |
-| Los coleccionables con su pestaña propia | [EFECTOS §23](EFECTOS.md) | pendiente |
+| Los coleccionables con su pestaña propia | [EFECTOS §23](EFECTOS.md) | `1c201e8` |
+| La puerta de la v0.2: el morse abre | [spec v0.2](specs/2026-09-02-v02.md) | pendiente |
+| Guardar que miente, y `//recover` | [spec v0.2](specs/2026-09-02-v02.md) | pendiente |

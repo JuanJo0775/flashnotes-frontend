@@ -18,7 +18,9 @@ import LinePrompts from '@/components/notes/LinePrompts';
 import { isCommandLine } from '@/lib/system/commands';
 import { useNoteCommands } from '@/hooks/useNoteCommands';
 import { pickBootPhrase } from '@/lib/system/lore';
-import { getSystemState } from '@/hooks/useSystemState';
+import { getSystemState, useSystemState } from '@/hooks/useSystemState';
+import { saveOutcome } from '@/lib/system/v02';
+import { rememberDropped } from '@/lib/system/dropped';
 
 /**
  * Cadencia del auto-guardado.
@@ -157,6 +159,9 @@ export default function NoteEditor({
     // el objeto entero, que cambia de identidad en cada render.
     const { response: respuesta, rows, dismiss: descartar } = commands;
 
+    /** Estás en la versión de antes: guardar deja de ser de fiar. */
+    const { v02 } = useSystemState();
+
     const contentRef = useRef<HTMLTextAreaElement>(null);
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -223,16 +228,36 @@ export default function NoteEditor({
 
         reportState('saving');
 
+        /*
+         * EN LA v0.2, GUARDAR NO ES DE FIAR.
+         *
+         *   · `lied`    — guarda, y dice que no. Es la pieza central: no es poco
+         *                 fiable con tus datos, es poco fiable HABLANDO DE SÍ
+         *                 MISMA. El susto funciona igual porque no sabés que
+         *                 miente, y cuando vas a mirar la nota está entera.
+         *   · `dropped` — no guarda de verdad. Mucho más raro, y con red: lo que
+         *                 no se guardó se recupera con `//recover` mientras la
+         *                 sesión siga abierta. Perder de verdad, sí; perder para
+         *                 siempre y sin aviso, no.
+         */
+        const suerte = v02 ? saveOutcome() : 'ok';
+
+        if (suerte === 'dropped') {
+            rememberDropped(noteId, draft.title, draft.content);
+            reportState('error');
+            return;
+        }
+
         const updated = await onSave(noteId, payload);
 
         if (updated) {
             applyServerNote(updated);
-            reportState('saved');
+            reportState(suerte === 'lied' ? 'error' : 'saved');
         } else {
             // useNotes ya publicó el mensaje concreto en el estado de error.
             reportState('error');
         }
-    }, [noteId, isFullyOperational, onSave, applyServerNote, reportState]);
+    }, [noteId, isFullyOperational, onSave, applyServerNote, reportState, v02]);
 
     // Auto-guardado con debounce sobre el borrador.
     useEffect(() => {

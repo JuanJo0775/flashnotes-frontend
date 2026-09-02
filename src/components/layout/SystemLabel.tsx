@@ -1,8 +1,9 @@
 // src/components/layout/SystemLabel.tsx
 'use client';
 
+import { V02_LABEL } from '@/lib/system/v02';
 import { useEffect, useState } from 'react';
-import { registerLogoClick } from '@/hooks/useSystemState';
+import { useSystemState, registerLogoClick } from '@/hooks/useSystemState';
 import { fireGlitch, severityForIntegrity } from '@/hooks/useGlitch';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
@@ -119,6 +120,8 @@ export default function SystemLabel({ onCollapse }: SystemLabelProps) {
         return () => clearTimeout(id);
     }, [flickering]);
 
+    const { v02 } = useSystemState();
+
     const handleClick = () => {
         const outcome = registerLogoClick();
 
@@ -143,7 +146,16 @@ export default function SystemLabel({ onCollapse }: SystemLabelProps) {
     };
 
     const visible =
-        phase === 'reversed' ? variant : flickering ? LABEL_PATCHED : LABEL;
+        // En la v0.2 el rótulo dice la versión que es. No es un adorno: es lo
+        // primero que mira alguien que sospecha que la app cambió, y verlo
+        // confirma que no se lo imaginó.
+        v02
+            ? `[${V02_LABEL}]`
+            : phase === 'reversed'
+              ? variant
+              : flickering
+                ? LABEL_PATCHED
+                : LABEL;
 
     return (
         <span className="system-label" onClick={handleClick}>
@@ -153,7 +165,7 @@ export default function SystemLabel({ onCollapse }: SystemLabelProps) {
             >
                 {visible}
             </span>
-            <span className="sr-only">{LABEL}</span>
+            <span className="sr-only">{v02 ? V02_LABEL : LABEL}</span>
         </span>
     );
 }

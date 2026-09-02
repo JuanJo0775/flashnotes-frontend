@@ -1,5 +1,10 @@
 // tests/hooks/useReset.test.ts
 
+// Sin importaciones estáticas, TypeScript trataría este archivo como un
+// script GLOBAL y su `load()` chocaría con el de otro test. Esto lo convierte
+// en módulo y le devuelve su ámbito.
+export {};
+
 /**
  * `//reset` · empezar de cero.
  *
