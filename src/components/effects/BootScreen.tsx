@@ -115,8 +115,25 @@ export default function BootScreen({ onDone }: Props) {
 
         return () => {
             raiz.removeAttribute('data-booting');
+            raiz.removeAttribute('data-tube-off');
         };
     }, []);
+
+    /*
+     * CON EL TUBO APAGADO NO HAY BARRIDO.
+     *
+     * El barrido es el refresco del tubo, y un tubo apagado no refresca nada.
+     * Dejar la línea cruzando mientras la imagen se cierra a un punto contaría
+     * que la pantalla sigue encendida justo cuando se está apagando.
+     */
+    const apagandose = locked !== null && bootAt(guion, step).phase === 'off';
+
+    useEffect(() => {
+        const raiz = document.documentElement;
+
+        if (apagandose) raiz.setAttribute('data-tube-off', '');
+        else raiz.removeAttribute('data-tube-off');
+    }, [apagandose]);
 
     // También en el propio render, antes del primer efecto: el arranque tiene que
     // tapar desde el PRIMER fotograma. Con sólo el efecto, había un instante en

@@ -160,67 +160,24 @@
     z-index: 10003;
 }
 
-/* ⚠ EL BARRIDO TIENE QUE VERSE SOBRE EL COLAPSO, Y NO SE VEÍA.
+/* ⚠ AQUÍ HUBO UN BARRIDO «ESPECIAL» PARA ESTAS PANTALLAS, Y SE QUITÓ.
  *
- * Su color sale de `--color-ink` al 12 %, que es lo correcto sobre el lienzo de
- * la app. Pero la capa de colapso pinta su propio fondo, y en tema claro eso
- * dejaba una línea oscura al 12 % sobre un fondo ya oscuro: invisible.
+ * Le cambiaba el color a dos tonos, el grosor a cuatro píxeles y la velocidad a
+ * dos segundos y medio, para «asegurar» que se viera sobre el colapso, el
+ * arranque y el borrado.
  *
- * Sobre el colapso se pinta con luz y no con tinta. Es el refresco de un tubo:
- * lo que se ve pasar es el haz, y un haz brilla. */
-/* SOBRE CUALQUIER PANTALLA QUE PINTE SU PROPIO FONDO.
+ * Todo eso sobraba, y encima estaba mal: EL BARRIDO ES UNO. Es el refresco del
+ * tubo, y un tubo no refresca distinto según lo que esté pintando. Con dos
+ * versiones, lo que se veía en el arranque no era la misma línea que se ve
+ * escribiendo —más rápida, más gorda, de otro color— y eso se nota aunque no se
+ * sepa decir por qué.
  *
- * El colapso, el arranque, el borrado y el bloqueo tapan la app entera con un
- * fondo suyo. El barrido va por encima de todas (z 10005) pero se pinta con
- * `--color-ink` al 12 %, que es lo correcto sobre el lienzo y puede ser
- * invisible sobre ellas.
+ * No se veía por otra cosa: `[data-booting] body > *` le ponía `opacity: 0`,
+ * porque el barrido es hijo directo de body igual que la app. Arreglado eso, la
+ * línea de siempre se ve en todas partes sin tocarle nada.
  *
- * ⚠ Y UN COLOR FIJO TAMPOCO SIRVE. Una línea clara se pierde sobre las barras de
- * color —que son saturadas y brillantes— y una oscura se pierde sobre el fondo
- * oscuro del colapso. No hay un color que valga para todos, porque estas
- * pantallas no comparten paleta: hay negro, hay lienzo del tema, y hay siete
- * franjas de colores puros.
- *
- * `difference` no elige color: INVIERTE lo que haya debajo, poco. Sobre negro
- * aclara, sobre las barras oscurece, y sobre el lienzo hace lo que toque. Es
- * además lo que hace de verdad un haz al pasar: altera lo que ilumina, no lo
- * tapa. */
-[data-collapsing] .scanline-effect,
-[data-booting] .scanline-effect,
-[data-wiping] .scanline-effect,
-.is-locked-out .scanline-effect {
-    /* ⚠ DOS MEDIAS LÍNEAS, UNA OSCURA Y UNA CLARA. Y NADA de `mix-blend-mode`.
-     *
-     * El problema: estas pantallas no comparten paleta. Hay negro, hay lienzo del
-     * tema —que puede ser claro u oscuro— y hay siete franjas de colores puros.
-     * Ningún color único se ve sobre todas.
-     *
-     * `mix-blend-mode: difference` parecía la respuesta —invierte lo que haya
-     * debajo, así que se ve sobre cualquier cosa— y NO PINTABA NADA. Con los
-     * estilos computados diciendo `visible`, opacidad 1, z-index 10005 y la
-     * línea colocada a media pantalla, en el navegador no había línea. Se vio
-     * mirando, no leyendo estilos.
-     *
-     * Esto no necesita mezclarse con nada: la línea lleva su mitad oscura arriba
-     * y su mitad clara abajo. Sobre fondo claro se ve la de arriba, sobre fondo
-     * oscuro la de abajo, y sobre las franjas de color se ve una de las dos
-     * siempre. Además es lo que hace un haz de verdad: un núcleo brillante con
-     * su borde apagado. */
-    background:
-        linear-gradient(to bottom, transparent, rgb(0 0 0 / 40%)) 0 0 / 100% 2px
-            no-repeat,
-        linear-gradient(to bottom, rgb(255 255 255 / 55%), transparent) 0 2px /
-            100% 2px no-repeat;
-
-    /* Más rápido, que era el otro problema: en la app la línea tarda NUEVE
-       segundos en cruzar —un tic de fondo que no debe distraer de lo que estás
-       escribiendo— pero estas pantallas duran entre medio segundo y ocho. Con el
-       ciclo largo podía no pasar ni una vez mientras se veían. */
-    animation-duration: 2.5s;
-
-    /* Y más gruesa: dos píxeles se pierden entre los bordes de las franjas. */
-    height: 4px;
-}
+ * La lección, que ya va por la tercera: cuando algo no se ve, averiguar por qué
+ * NO SE VE antes de dibujar uno nuevo encima. */
 
 /* --- Rebanadas desplazadas ---
    El efecto que más "señal rota" comunica: la imagen se parte en franjas
@@ -1423,4 +1380,14 @@
 
 .collapse-bars > span {
     flex: 1;
+}
+
+/* Con el tubo APAGADO no hay barrido.
+
+   Es la única excepción a que la línea esté siempre, y no la contradice: el
+   barrido es el refresco del tubo, y un tubo apagado no refresca nada. Dejarla
+   cruzando mientras la imagen se cierra a un punto contaría que la pantalla
+   sigue encendida justo en el momento en que se apaga. */
+[data-tube-off] .scanline-effect {
+    display: none;
 }

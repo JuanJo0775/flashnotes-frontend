@@ -96,6 +96,32 @@ describe('nadie puede pararlo sin querer', () => {
         expect(culpables.map((c) => c.selector)).toEqual([]);
     });
 
+    it('ES UNO SOLO: nadie le cambia el aspecto en ninguna pantalla', () => {
+        /*
+         * Hubo una versión «especial» para el arranque, el colapso y el borrado:
+         * dos tonos, cuatro píxeles de alto y dos segundos y medio de recorrido,
+         * puesta para «asegurar» que se viera.
+         *
+         * Sobraba, y encima estaba mal. El barrido es el refresco del tubo, y un
+         * tubo no refresca distinto según lo que esté pintando. Con dos
+         * versiones, lo que se veía en el arranque no era la misma línea que se
+         * ve escribiendo — y eso se nota aunque no se sepa decir por qué.
+         *
+         * Lo que lo escondía era otra cosa (la opacidad de arriba). Este test
+         * impide volver a taparlo dibujando uno nuevo encima.
+         */
+        const retoques = REGLAS.filter(
+            (r) =>
+                r.selector.includes('.scanline-effect') &&
+                /(^|[\s;])(height|animation-duration|mix-blend-mode)\s*:/.test(
+                    r.cuerpo
+                ) &&
+                r.selector.trim() !== '.scanline-effect'
+        );
+
+        expect(retoques.map((r) => r.selector)).toEqual([]);
+    });
+
     it('vive por encima de todas las capas que tapan la app', () => {
         // Colapso 10000, bloqueo 10001, arranque y borrado por debajo. Si el
         // barrido no estuviera arriba del todo, desaparecería justo en las

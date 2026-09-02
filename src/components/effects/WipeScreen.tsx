@@ -73,8 +73,21 @@ export default function WipeScreen({ onDone, prank = false }: Props) {
      */
     useEffect(() => {
         document.documentElement.setAttribute('data-wiping', '');
-        return () => document.documentElement.removeAttribute('data-wiping');
+        return () => {
+            document.documentElement.removeAttribute('data-wiping');
+            document.documentElement.removeAttribute('data-tube-off');
+        };
     }, []);
+
+    // Con el tubo apagado no hay barrido: un tubo apagado no refresca nada.
+    const apagandose = wipeAt(step, prank).kind === 'off';
+
+    useEffect(() => {
+        const raiz = document.documentElement;
+
+        if (apagandose) raiz.setAttribute('data-tube-off', '');
+        else raiz.removeAttribute('data-tube-off');
+    }, [apagandose]);
 
     if (quieto) return null;
 
