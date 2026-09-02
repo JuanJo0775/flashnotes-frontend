@@ -17,6 +17,7 @@ const opciones = () => ({
     onOpenDiagnostics: jest.fn(),
     onCollapse: jest.fn(),
     onClearNote: jest.fn(),
+    onPlayPong: jest.fn(),
 });
 
 beforeEach(() => {

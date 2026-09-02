@@ -56,6 +56,7 @@ herramientas.
 | Entrar a la papelera con la sesión avanzada | [§9 Archivo fantasma](#9--el-archivo-fantasma) |
 | Borrar cinco notas para siempre | [§10 La papelera cuenta](#10--la-papelera-lleva-la-cuenta) |
 | Perder la conexión y recuperarla | [§11 La reconexión](#11--la-reconexión) |
+| `//ps` y después `//attach_6` | [§15 vsync-test](#15--vsync-test--el-pong-escondido) |
 
 ---
 
@@ -649,6 +650,12 @@ no.
 
 # 12 · La línea de barrido se traba
 
+> **El barrido va por encima de TODO.** Estaba en `z-index: 9998` y cualquier
+> capa superior lo tapaba, así que desaparecía justo en las pantallas donde más
+> sentido tiene — el colapso, el bloqueo, el juego. Es el refresco del tubo, o
+> sea una propiedad de la PANTALLA y no de lo que se pinte en ella, así que ahora
+> va en 10005 y se ve siempre.
+
 La línea de barrido CRT recorre la pantalla cada 9 s. **Una de cada cuatro
 pasadas** se detiene 120 ms a media pantalla y sigue.
 
@@ -1204,6 +1211,157 @@ menos movimiento está pidiendo no tener.
 
 Es la única pieza que no se apaga entera con movimiento reducido, porque su
 información no está en el movimiento.
+
+---
+
+# 15 · vsync-test · el pong escondido
+
+Un pong. Y no es un juego pegado encima: la barra de estado lleva doce piezas
+diciendo que la máquina está sola.
+
+```
+[SIN RELEVO]        [NADIE MÁS CONECTADO]        [TURNO 1/1]
+```
+
+Esto es lo que hace cuando nadie la mira. Un turno sin relevo y una pelota contra
+la pared.
+
+### Cómo se llega
+
+`//ps` era decoración: listaba cinco procesos y ya. Ahora lista seis.
+
+```
+PID  PROCESO            INTERVALO
+  1  autosave              2500ms
+  2  network-poll         60000ms
+  3  scanline              9000ms
+  4  meter-batch            250ms
+  5  glitch-ambient      variable
+  6  vsync-test              16ms      ← 60 fps
+
+USE //attach_<PID> PARA ADJUNTARSE A UN PROCESO.
+```
+
+**16 ms son 60 fps**, y no hay nada más en la app que dibuje a velocidad de
+fotograma: el más rápido de los otros cinco corre cuatro veces por segundo.
+
+El pie da **el verbo pero no el PID**. Adivinar `attach` a ciegas sería
+imposible; decir cuál de los seis es el raro sería regalar el hallazgo.
+
+`//attach_*` **no sale en `//help`**: `//ps` es la única puerta. Los otros PIDs
+contestan, y ahí está la otra mitad del chiste — `//attach_1` se lleva un
+«NO TOQUE EL AUTO-GUARDADO».
+
+Es un token único (`//attach_6`, no `//attach 6`) por convención de terminal, y
+porque sin argumento que parsear no puede romperse por un espacio de más.
+
+### Los dos modos
+
+| | |
+| --- | --- |
+| **Solo · contra la pared** | Pared a la izquierda, tu paleta a la derecha con ↑/↓. No hay puntos, hay **peloteo**. Rebotar en la pared no cuenta: mide lo que devolviste vos |
+| **Dos jugadores** | ↑/↓ contra W/S en el mismo teclado, a 11. Las flechas son siempre del jugador uno: el segundo es el que se adapta |
+
+Las flechas gobiernan la paleta **derecha** porque están en el lado derecho del
+teclado. En dos jugadores, W/S —lado izquierdo— gobiernan la izquierda, que es
+como se sientan dos personas frente a un teclado.
+
+**La velocidad sube con el reloj, no con los golpes**: 18 columnas por segundo al
+empezar, +6 % cada 12 s, compuesto y **sin tope**. A los dos minutos va a 1,79
+veces; pasa el doble antes de los dos minutos y medio. Siempre se pierde, y lo
+único que cambia es cuándo — que es lo que hace que el marcador signifique algo.
+
+Si acelerara al devolverla, quien juega agresivo se encontraría una pelota más
+rápida que quien espera, y dos marcadores dejarían de comparar lo mismo.
+
+### Fluido cuando va bien, a tirones cuando va mal
+
+Ésta es la decisión que más da esta pieza, y salió de un defecto.
+
+Una rejilla de 72×24 es baja resolución: a 18 columnas por segundo la pelota
+avanza **0,3 celdas por fotograma**, así que redondeando a celda sólo se mueve
+una vez cada tres. Se veía a tirones aunque el bucle fuera a 60 fps clavados. El
+tirón no era retraso: era el redondeo.
+
+Así que el dibujo se partió en dos:
+
+| | Cómo se pinta | Cómo se ve |
+| --- | --- | --- |
+| **Sano** | El campo en un `<pre>`; la pelota y las paletas encima, con desplazamiento decimal en CSS | Continuo |
+| **Averiado** | Todo dentro de la rejilla, redondeado a celda | A tirones |
+
+O sea: **el juego no va a saltos porque la rejilla no dé para más. Va a saltos
+cuando el vídeo falla.** El tirón dejó de ser una limitación y pasó a ser el
+síntoma.
+
+Cada 7–17 s, además, se cae la tabla de glifos durante 220–700 ms: los bloques
+pasan a ASCII pelado (`O | # :`) y el dibujo se cuadricula. El tiempo justo para
+verlo y dudar de si lo viste.
+
+### ⚠ Los glifos obligan a una pila de fuentes propia
+
+JetBrains Mono —la de toda la app— **no trae los bloques**, así que los pintaba
+una fuente de reserva con otras métricas. Medido en el navegador:
+
+```
+base (M)   9,120 px
+█ ▌ ▓ ░   14,489 px      ← reserva
+●         12,352 px
+┊          8,357 px
+```
+
+En una rejilla de caracteres eso no es estética: una fila con un glifo ancho de
+más empuja todo lo que lleva detrás, y la paleta del borde derecho sale
+descolocada respecto a la de arriba. **El corte bailaba.**
+
+Por eso `.pong-stage` declara `ui-monospace, Consolas, DejaVu Sans Mono…`. No se
+nota que es otra tipografía porque ahí no hay texto, hay bloques; el marcador y
+las pistas siguen en la de la casa. **Si se cambian los glifos, hay que volver a
+medirlos.**
+
+### El cromo es el de la app
+
+Cabecera y pie de verdad, con los conmutadores **reales**: `[VSYNC-TEST v0.1]` en
+vez del logo, las dos modalidades donde van las pestañas, y ES/EN, claro/oscuro y
+la fecha donde siempre. Abajo, el estado del sistema y —en vez del recuento de
+archivos— la velocidad, que sube sola.
+
+Que el conmutador de tema sea el real importa: **es el que rompe la señal a
+fuerza de insistir**, y romperla desde el juego es lo que le da sentido al
+segundo marcador.
+
+### Los dos marcadores
+
+> **El juego no se hace más difícil. Se rompe la pantalla.**
+
+Con la señal rota (§14) la física es **idéntica byte por byte**: lo que cambia es
+que ves la pelota doble y corrida. No es una variante difícil, es un display
+averiado — y por eso es un logro distinto y lleva marcador aparte.
+
+```
+VSYNC-TEST                42  (7 partidas)
+VSYNC-TEST DEGRADADO      12  (3 partidas)
+
+RÉCORD DEL SISTEMA       118.394
+```
+
+El récord del sistema ya está puesto cuando llegás. Lleva jugando desde antes que
+vos y no tenía nada más que hacer.
+
+Viven en `localStorage` con el mismo patrón que el tema y el bloqueo: atados a
+este navegador, sobreviven a recargar. **No van a Mongo**: guardar un contador de
+peloteo pedía colección, endpoint y migración, y el backend no se toca.
+
+Se ven en el panel de diagnóstico, que gana así una razón para reabrirlo.
+
+### La regla que rompe
+
+Las tres reglas dicen que **nada bloquea la escritura**. Ésta la rompe: mientras
+jugás, el teclado es del juego.
+
+Lo que la justifica es el consentimiento. Todo el resto de los efectos *te pasan*;
+éste **lo pediste**. Escape devuelve el teclado, la nota sigue guardándose debajo,
+y el comando nunca llega a la base de datos.
 
 ---
 

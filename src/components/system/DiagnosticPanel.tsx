@@ -11,6 +11,7 @@ import {
 } from '@/hooks/useSystemState';
 import { coreTemperature, coreRatio, CORE_MAX_C } from '@/lib/system/diagnostics';
 import { formatDuration, formatFileSize } from '@/lib/utils/formatters';
+import { readScores, type Board, type Scores } from '@/lib/system/pongScores';
 import { useT } from '@/i18n';
 
 /**
@@ -111,6 +112,44 @@ export default function DiagnosticPanel({
     const uptime = formatDuration(now - system.sessionStart);
     const temp = coreTemperature(charsPerMinute);
 
+    /**
+     * Los marcadores del `vsync-test`.
+     *
+     * SE LEEN EN UN EFECTO, NO AL PINTAR, y no es un rodeo. Viven en
+     * `localStorage`, que en el servidor no existe: leerlos durante el render
+     * daba «SIN JUGAR» en el servidor y el marcador de verdad en el cliente, y
+     * React tiraba el árbol entero y lo regeneraba en cada carga. Es el mismo
+     * desajuste de hidratación que ya se cazó una vez en el rótulo de la
+     * cabecera, y como aquél, sólo se ve abriendo la app.
+     *
+     * Arranca en `null` —lo mismo que pinta el servidor— y se rellena tras
+     * montar. Se relee en cada apertura, así que el panel siempre trae lo
+     * último.
+     *
+     * Sin partidas dice SIN JUGAR en vez de un cero: un cero parecería un
+     * récord malísimo en vez de un hueco.
+     */
+    const [scores, setScores] = useState<Scores | null>(null);
+
+    useEffect(() => {
+        if (!open) return;
+
+        // Agendado: un `setState` síncrono dentro de un efecto encadena un
+        // render durante el commit.
+        const id = setTimeout(() => setScores(readScores()), 0);
+        return () => clearTimeout(id);
+    }, [open]);
+
+    const pong = (board: Board) => {
+        const marcador = scores?.[board];
+        return !marcador || marcador.games === 0
+            ? t('diag.pongNever')
+            : t('diag.pongLine', {
+                  best: marcador.best,
+                  games: marcador.games,
+              });
+    };
+
     return (
         <dialog
             ref={ref}
@@ -137,6 +176,14 @@ export default function DiagnosticPanel({
                     </Reading>
                     <Reading label={t('diag.secrets')}>
                         {system.secretsFound}/{system.secretsTotal}
+                    </Reading>
+                    <Reading label={t('diag.pongClean')}>
+                        <span data-testid="diag-pong-clean">{pong('clean')}</span>
+                    </Reading>
+                    <Reading label={t('diag.pongDegraded')}>
+                        <span data-testid="diag-pong-degraded">
+                            {pong('degraded')}
+                        </span>
                     </Reading>
                     <Reading label={t('diag.core')}>
                         <span className="flex items-center gap-2">

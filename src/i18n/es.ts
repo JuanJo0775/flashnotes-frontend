@@ -130,6 +130,7 @@ export const es = {
     'status.error': '[ERROR]',
     'status.loading': '[CARGANDO',
     'status.ok': '[TODO_BIEN]',
+    'status.broken': '[TODO_MAL]',
     'status.saving': '[GUARDANDO',
     'status.saved': '[GUARDADO]',
     'status.notSaved': '[NO_GUARDADO]',
@@ -151,6 +152,24 @@ export const es = {
     'diag.coreMeter': 'Temperatura del núcleo: {temp} de {max} grados',
     'diag.effects': '[EFECTOS: {state}]',
     'diag.close': '[✗] Cerrar',
+
+    // vsync-test (el pong escondido, ver docs/EFECTOS.md)
+    'pong.title': 'vsync-test',
+    'pong.rally': 'PELOTEO',
+    'pong.systemRecord': 'RÉCORD DEL SISTEMA',
+    'pong.hintVersus': '[2] DOS JUGADORES  ·  [ESC] SALIR',
+    'pong.hintWall': '[1] CONTRA LA PARED  ·  A {score}  ·  [ESC] SALIR',
+    'pong.lost': 'SE ESCAPÓ. PELOTEO {rally}.',
+    'pong.won': 'GANA {side}.',
+    'pong.again': '[ENTER] OTRA',
+    'pong.modesLabel': 'Modos de juego',
+    'pong.modeWall': 'PARED',
+    'pong.modeVersus': '2 JUGADORES',
+    'pong.speed': 'VELOCIDAD',
+    'diag.pongClean': 'VSYNC-TEST',
+    'diag.pongDegraded': 'VSYNC-TEST DEGRADADO',
+    'diag.pongNever': 'SIN JUGAR',
+    'diag.pongLine': '{best}  ({games} partidas)',
 
     // ── validación en el cliente ─────────────────────────────────────────────
     // Mismas reglas que el backend (ver config/limits.ts), dichas antes de

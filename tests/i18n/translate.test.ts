@@ -49,6 +49,12 @@ describe('los diccionarios', () => {
             // "Error 500" y "[ERROR]" se escriben igual en los dos idiomas.
             'error.withStatus',
             'status.error',
+            // `vsync-test` es el NOMBRE DEL PROCESO, no prosa: es el mismo
+            // identificador que lista `//ps`, igual que `autosave` o
+            // `scanline`. Traducirlo rompería la pista que lo delata — quien
+            // lo vio en la tabla tiene que reconocerlo al abrirlo.
+            'pong.title',
+            'diag.pongClean',
         ]);
 
         const sospechosas = (Object.keys(es) as (keyof typeof es)[]).filter(

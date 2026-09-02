@@ -57,6 +57,7 @@ export type CommandEffect =
     | { kind: 'collapse' }
     | { kind: 'clear-note' }
     | { kind: 'fetch-history' }
+    | { kind: 'play-pong' }
     | { kind: 'set-effects'; enabled: boolean };
 
 export interface CommandResult {
@@ -110,12 +111,29 @@ interface Command {
     name: string;
     /** Una línea para el listado de ayuda, en los dos idiomas. */
     summary: Localized;
+    /**
+     * Empareja por patrón en vez de por nombre exacto.
+     *
+     * Lo pide `//attach_<PID>`, que es un token único con un número dentro. El
+     * grupo capturado llega a `resolve` como argumento, así que el comando se
+     * escribe una vez y sirve para todos los PIDs.
+     */
+    match?: RegExp;
+    /**
+     * No aparece en `//help`.
+     *
+     * Sólo lo usa `//attach_*`: listarlo convertiría el hallazgo en una lectura
+     * y dejaría a `//ps` sin su único motivo para ser leído.
+     */
+    hidden?: boolean;
+    /**
+     * El secreto que marca. Puede venir del comando entero o de la respuesta.
+     *
+     * `//attach_*` lo decide al resolver: sólo el PID que abre el juego cuenta
+     * como hallazgo. Adjuntarse al auto-guardado y llevarse un reproche no lo es.
+     */
     secretId?: string;
-    resolve: (
-        ctx: CommandContext,
-        args: string,
-        lang: Lang
-    ) => Omit<CommandResult, 'secretId'>;
+    resolve: (ctx: CommandContext, args: string, lang: Lang) => CommandResult;
 }
 
 const texto = (output: string) => ({ output, effect: SIN_EFECTO });
@@ -130,7 +148,7 @@ const COMMANDS: readonly Command[] = [
                 [
                     lang === 'es' ? 'COMANDOS DISPONIBLES' : 'AVAILABLE COMMANDS',
                     '',
-                    ...COMMANDS.map(
+                    ...COMMANDS.filter((c) => !c.hidden).map(
                         (c) => `  ${c.name.padEnd(12)} ${c.summary[lang]}`
                     ),
                 ].join('\n')
@@ -304,10 +322,76 @@ const COMMANDS: readonly Command[] = [
         summary: { es: 'vaciar la nota', en: 'empty the note' },
         resolve: () => ({ output: '', effect: { kind: 'clear-note' } }),
     },
+    /**
+     * `//attach_<PID>` · la puerta al vsync-test.
+     *
+     * OCULTO A PROPÓSITO. Sólo se llega desde `//ps`, que es lo que convierte
+     * esa tabla de adorno en la única puerta del juego.
+     *
+     * Es un token único —`//attach_6`, no `//attach 6`— porque en terminal el
+     * guion bajo hace de espacio y los espacios de verdad separan argumentos.
+     * Además elimina una fragilidad: sin argumento que parsear, no puede
+     * romperse por un espacio de más al teclearlo.
+     */
+    {
+        name: '//attach_6',
+        match: /^attach_(\d+)$/,
+        hidden: true,
+        summary: { es: '—', en: '—' },
+        resolve: (_ctx, args, lang) => {
+            const pid = Number(args);
+            const proceso = PROCESSES.find((p) => p.pid === pid);
+
+            if (!proceso) {
+                return texto(
+                    lang === 'es' ? `NO HAY PROCESO ${pid}.` : `NO PROCESS ${pid}.`
+                );
+            }
+
+            if (pid !== PONG_PID) {
+                const enUso =
+                    lang === 'es'
+                        ? `PROCESO ${proceso.name} EN USO.`
+                        : `PROCESS ${proceso.name} IN USE.`;
+
+                return texto(`${enUso} ${proceso.refusal[lang]}`);
+            }
+
+            // El hallazgo. La máquina no explica qué es: lo admite.
+            return {
+                output:
+                    lang === 'es'
+                        ? [
+                              `ADJUNTANDO A ${proceso.name}…`,
+                              'ACTIVO DESDE EL PRIMER ARRANQUE.',
+                              '',
+                              '¿HACE CUÁNTO QUE ESTÁ MIRANDO?',
+                          ].join('\n')
+                        : [
+                              `ATTACHING TO ${proceso.name}…`,
+                              'RUNNING SINCE FIRST BOOT.',
+                              '',
+                              'HOW LONG HAVE YOU BEEN WATCHING?',
+                          ].join('\n'),
+                effect: { kind: 'play-pong' },
+                // Sólo acá. Adjuntarse al auto-guardado y llevarse un reproche
+                // no es haber encontrado nada.
+                secretId: 'pong',
+            };
+        },
+    },
 ];
 
-/** Los nombres de todos los comandos, para la ayuda y para los tests. */
-export const COMMAND_NAMES: readonly string[] = COMMANDS.map((c) => c.name);
+/**
+ * Los nombres de los comandos ANUNCIADOS, para la ayuda y para los tests.
+ *
+ * Deja fuera los ocultos, y esa exclusión es justo el invariante que interesa:
+ * lo que hay acá es exactamente lo que `//help` lista. `//attach_*` no está
+ * porque no debe poder encontrarse leyendo la ayuda — sólo desde `//ps`.
+ */
+export const COMMAND_NAMES: readonly string[] = COMMANDS.filter(
+    (c) => !c.hidden
+).map((c) => c.name);
 
 /**
  * Ejecuta lo que haya escrito.
@@ -326,9 +410,14 @@ export function run(content: string, ctx: CommandContext): CommandResult | null 
         .slice(COMMAND_PREFIX.length)
         .trim();
     const [nombre, ...resto] = linea.split(/\s+/);
-    const buscado = `${COMMAND_PREFIX}${nombre.toLowerCase()}`;
+    const corto = nombre.toLowerCase();
+    const buscado = `${COMMAND_PREFIX}${corto}`;
 
-    const command = COMMANDS.find((c) => c.name === buscado);
+    // Primero por nombre exacto; si no, por patrón. El orden importa: un
+    // comando literal nunca puede quedar tapado por el patrón de otro.
+    const command =
+        COMMANDS.find((c) => c.name === buscado) ??
+        COMMANDS.find((c) => c.match?.test(corto));
 
     if (!command) {
         const desconocido =
@@ -339,8 +428,13 @@ export function run(content: string, ctx: CommandContext): CommandResult | null 
         return { output: desconocido, effect: SIN_EFECTO };
     }
 
-    const { output, effect } = command.resolve(ctx, resto.join(' '), lang);
-    return { output, effect, secretId: command.secretId };
+    // Cuando el comando empareja por patrón, el argumento es lo capturado —el
+    // PID de `//attach_6`— y no lo que venga separado por espacios.
+    const capturado = command.match?.exec(corto)?.[1];
+    const args = capturado ?? resto.join(' ');
+
+    const { output, effect, secretId } = command.resolve(ctx, args, lang);
+    return { output, effect, secretId: secretId ?? command.secretId };
 }
 
 // ------------------------------------------------------------------
@@ -457,17 +551,101 @@ function formatUsage(
  * medidor. El chiste es que no hay chiste: la máquina falsa te está diciendo
  * exactamente lo que hace.
  */
+/**
+ * Los procesos que el sistema admite tener corriendo.
+ *
+ * Los cinco primeros son ciertos: cada uno existe de verdad en el código, con
+ * ese intervalo. El SEXTO es la única puerta al `vsync-test` (ver pong.ts).
+ *
+ * Sus 16 ms son la pista entera: son 60 fps, y no hay nada más en esta app que
+ * dibuje a velocidad de fotograma — el más rápido de los otros cinco corre
+ * cuatro veces por segundo. Un proceso de vídeo que nadie arrancó, con nombre de
+ * mantenimiento aburrido, es lo que la máquina hace cuando nadie la mira.
+ *
+ * `refusal` es lo que contesta al intentar adjuntarse. Está en la misma voz
+ * cansada que el resto del sistema, y es la mitad del chiste de `//attach`.
+ */
+const PROCESSES: readonly {
+    pid: number;
+    name: string;
+    interval: string;
+    refusal: Localized;
+}[] = [
+    {
+        pid: 1,
+        name: 'autosave',
+        interval: '2500ms',
+        refusal: {
+            es: 'NO TOQUE EL AUTO-GUARDADO.',
+            en: "DON'T TOUCH THE AUTOSAVE.",
+        },
+    },
+    {
+        pid: 2,
+        name: 'network-poll',
+        interval: '60000ms',
+        refusal: {
+            es: 'ESTÁ ESPERANDO RESPUESTA. COMO SIEMPRE.',
+            en: 'IT IS WAITING FOR AN ANSWER. AS ALWAYS.',
+        },
+    },
+    {
+        pid: 3,
+        name: 'scanline',
+        interval: '9000ms',
+        refusal: {
+            es: 'ES SÓLO UNA LÍNEA QUE BAJA. DÉJELA BAJAR.',
+            en: 'IT IS ONLY A LINE GOING DOWN. LET IT.',
+        },
+    },
+    {
+        pid: 4,
+        name: 'meter-batch',
+        interval: '250ms',
+        refusal: {
+            es: 'CUENTA LO QUE USTED ESCRIBE. NO MIRE.',
+            en: 'IT COUNTS WHAT YOU WRITE. DO NOT LOOK.',
+        },
+    },
+    {
+        pid: 5,
+        name: 'glitch-ambient',
+        interval: 'variable',
+        refusal: {
+            es: 'NO SE ADJUNTE A ESO.',
+            en: 'DO NOT ATTACH TO THAT.',
+        },
+    },
+    {
+        pid: 6,
+        name: 'vsync-test',
+        interval: '16ms',
+        // Nunca se usa: el 6 abre el juego en vez de negarse. Está por
+        // completitud, para que la tabla no tenga un hueco que explicar.
+        refusal: { es: '…', en: '…' },
+    },
+];
+
+const PONG_PID = 6;
+
 function processTable(lang: Lang): string {
     // Los nombres de proceso NO se traducen: son identificadores, igual que en
     // un `ps` de verdad. Sólo cambia la cabecera.
+    const fila = (nombre: string, intervalo: string, pid = '   ') =>
+        `${pid}  ${nombre.padEnd(16)}${intervalo.padStart(9)}`;
+
     return [
         lang === 'es'
-            ? 'PID  PROCESO            INTERVALO'
-            : 'PID  PROCESS            INTERVAL',
-        '  1  autosave              2500ms',
-        '  2  network-poll         60000ms',
-        '  3  scanline              9000ms',
-        '  4  meter-batch            250ms',
-        '  5  glitch-ambient      variable',
+            ? fila('PROCESO', 'INTERVALO', 'PID')
+            : fila('PROCESS', 'INTERVAL', 'PID'),
+        ...PROCESSES.map((p) => fila(p.name, p.interval, `  ${p.pid}`)),
+        '',
+        // Da el VERBO pero no el PID. Adivinar «attach» a ciegas sería
+        // imposible —y un secreto inalcanzable es código muerto, error que este
+        // proyecto ya cometió una vez—, pero decir cuál de los seis es el raro
+        // sería regalar el hallazgo. La pista se entrega, la observación es tuya.
+        lang === 'es'
+            ? 'USE //attach_<PID> PARA ADJUNTARSE A UN PROCESO.'
+            : 'USE //attach_<PID> TO ATTACH TO A PROCESS.',
     ].join('\n');
 }

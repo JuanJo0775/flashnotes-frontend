@@ -84,6 +84,8 @@ interface NoteEditorProps {
     notes?: readonly { title: string; chars: number }[];
     onOpenDiagnostics?: () => void;
     onCollapse?: () => void;
+    /** Abre el `vsync-test`: sólo lo pide `//attach_6`. */
+    onPlayPong?: () => void;
 }
 
 export default function NoteEditor({
@@ -98,6 +100,7 @@ export default function NoteEditor({
     notes = [],
     onOpenDiagnostics,
     onCollapse,
+    onPlayPong,
 }: NoteEditorProps) {
     const { isFullyOperational } = useNetworkStatus();
     const t = useT();
@@ -158,6 +161,7 @@ export default function NoteEditor({
         onOpenDiagnostics: onOpenDiagnostics ?? noop,
         onCollapse: onCollapse ?? noop,
         onClearNote: clearNote,
+        onPlayPong: onPlayPong ?? noop,
     });
 
     const contentRef = useRef<HTMLTextAreaElement>(null);
@@ -480,7 +484,17 @@ export default function NoteEditor({
                         arranque y se teclea con el mismo motor, sólo que más
                         rápido. Se retira sola al cerrar su arco. */}
                     {commands.response && (
-                        <p className="editor-placeholder editor-reply">
+                        // Un clic la cierra y devuelve el cursor. La respuesta
+                        // recibe el ratón para poder desplazarla cuando es
+                        // larga, así que sin esto taparía el editor hasta que
+                        // terminara de escribirse sola.
+                        <p
+                            className="editor-placeholder editor-reply"
+                            onClick={() => {
+                                commands.dismiss();
+                                contentRef.current?.focus();
+                            }}
+                        >
                             <BootPrompt
                                 key={commands.response}
                                 text={commands.response}

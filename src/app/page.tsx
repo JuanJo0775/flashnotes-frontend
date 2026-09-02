@@ -14,6 +14,7 @@ import SystemCollapse from '@/components/effects/SystemCollapse';
 import ChromaticFailure from '@/components/effects/ChromaticFailure';
 import PhantomError from '@/components/effects/PhantomError';
 import SystemLockout from '@/components/effects/SystemLockout';
+import PongOverlay from '@/components/effects/PongOverlay';
 import { useNotes } from '@/hooks/useNotes';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -65,6 +66,13 @@ export default function Home() {
     // del componente: `registerCollapse` muta el almacén y tiene que ocurrir
     // exactamente una vez por colapso.
     const [collapse, setCollapse] = useState<CollapseLevel | null>(null);
+    /**
+     * El `vsync-test`, abierto o no.
+     *
+     * Vive acá y no dentro del editor porque el juego se pinta sobre la app
+     * entera: dentro del editor quedaría recortado por su caja.
+     */
+    const [playingPong, setPlayingPong] = useState(false);
 
     // Lo mínimo que los comandos y el panel necesitan saber de las notas: nombre
     // y tamaño. No se les pasa el contenido — lo que escribís no se lee.
@@ -151,6 +159,36 @@ export default function Home() {
         },
     });
 
+    /**
+     * Las clases de la avería, calculadas UNA vez y repartidas.
+     *
+     * Las llevan el envoltorio de la app Y la capa del vsync-test, que es
+     * hermana suya y no descendiente. Se comparte la lista en vez de repetirla
+     * porque la regla del proyecto es que durante el fallo cromático NO HAY
+     * EXCEPCIONES: todo lo visible se ve roto. Duplicando la lista, cualquier
+     * animación que se añada mañana entraría en un sitio y no en el otro, y la
+     * excepción aparecería sola.
+     */
+    const glitchClassName = [
+        chromaticFailure || lockedOut ? 'chromatic-failure' : '',
+        glitch.active ? 'glitch-jolt' : '',
+        // El fantasma monocromo y la pérdida de vertical viven en el mismo
+        // elemento que el tirón: así los `transform` se componen en vez de
+        // pelearse por la propiedad.
+        glitch.active && glitch.severity !== 'minor' ? 'glitch-ghost' : '',
+        glitch.active ? `is-${glitch.severity}` : '',
+        // La ráfaga: la MISMA aberración del fallo del tema, pero transitoria y
+        // sin romper nada. Es lo que emparenta al botón secreto con el fallo
+        // cromático — los dos son pánico.
+        glitch.chromaBurst ? 'chroma-burst' : '',
+    ]
+        .filter(Boolean)
+        .join(' ');
+
+    const glitchStyle = glitch.active
+        ? ({ '--glitch-amp': `${glitch.amplitudePx}px` } as React.CSSProperties)
+        : undefined;
+
     const isEditing = view === 'editor' && selectedNote !== null;
 
     return (
@@ -173,27 +211,8 @@ export default function Home() {
                 amplitud llega por variable, así que el mismo fotograma sirve
                 para el temblor de reposo y para el de un sistema medio roto. */}
             <div
-                className={[
-                    'container-terminal',
-                    chromaticFailure || lockedOut ? 'chromatic-failure' : '',
-                    glitch.active ? 'glitch-jolt' : '',
-                    // El fantasma monocromo y la pérdida de vertical viven en el
-                    // mismo elemento que el tirón: así los `transform` se
-                    // componen en vez de pelearse por la propiedad.
-                    glitch.active && glitch.severity !== 'minor' ? 'glitch-ghost' : '',
-                    glitch.active ? `is-${glitch.severity}` : '',
-                    // La ráfaga: la MISMA aberración del fallo del tema, pero
-                    // transitoria y sin romper nada. Es lo que emparenta al
-                    // botón secreto con el fallo cromático — los dos son pánico.
-                    glitch.chromaBurst ? 'chroma-burst' : '',
-                ]
-                    .filter(Boolean)
-                    .join(' ')}
-                style={
-                    glitch.active
-                        ? ({ '--glitch-amp': `${glitch.amplitudePx}px` } as React.CSSProperties)
-                        : undefined
-                }
+                className={`container-terminal ${glitchClassName}`}
+                style={glitchStyle}
             >
                 <Header
                     currentView={view}
@@ -232,6 +251,7 @@ export default function Home() {
                                 notes={noteSummaries}
                                 onOpenDiagnostics={() => setShowDiagnostics(true)}
                                 onCollapse={() => setCollapse(registerCollapse())}
+                                onPlayPong={() => setPlayingPong(true)}
                             />
                         ) : view === 'trash' ? (
                             <TrashView />
@@ -281,6 +301,13 @@ export default function Home() {
                 que empezara: no se llegaba a ver ni la estática ni la barra
                 trabándose. Justo la secuencia que da sentido al desenlace. */}
             {lockedOut && !collapse && <SystemLockout />}
+
+            <PongOverlay
+                open={playingPong}
+                onClose={() => setPlayingPong(false)}
+                glitchClassName={glitchClassName}
+                glitchStyle={glitchStyle}
+            />
 
             <DiagnosticPanel
                 open={showDiagnostics}

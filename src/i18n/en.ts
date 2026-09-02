@@ -112,6 +112,7 @@ export const en: Dictionary = {
     'status.error': '[ERROR]',
     'status.loading': '[LOADING',
     'status.ok': '[SYSTEM_OK]',
+    'status.broken': '[SYSTEM_FAIL]',
     'status.saving': '[SAVING',
     'status.saved': '[SAVED]',
     'status.notSaved': '[NOT_SAVED]',
@@ -133,6 +134,24 @@ export const en: Dictionary = {
     'diag.coreMeter': 'Core temperature: {temp} of {max} degrees',
     'diag.effects': '[EFFECTS: {state}]',
     'diag.close': '[✗] Close',
+
+    // vsync-test (el pong escondido, ver docs/EFECTOS.md)
+    'pong.title': 'vsync-test',
+    'pong.rally': 'RALLY',
+    'pong.systemRecord': 'SYSTEM RECORD',
+    'pong.hintVersus': '[2] TWO PLAYERS  ·  [ESC] QUIT',
+    'pong.hintWall': '[1] AGAINST THE WALL  ·  TO {score}  ·  [ESC] QUIT',
+    'pong.lost': 'IT GOT AWAY. RALLY {rally}.',
+    'pong.won': '{side} WINS.',
+    'pong.again': '[ENTER] AGAIN',
+    'pong.modesLabel': 'Game modes',
+    'pong.modeWall': 'WALL',
+    'pong.modeVersus': '2 PLAYERS',
+    'pong.speed': 'SPEED',
+    'diag.pongClean': 'VSYNC-TEST',
+    'diag.pongDegraded': 'VSYNC-TEST DEGRADED',
+    'diag.pongNever': 'NEVER PLAYED',
+    'diag.pongLine': '{best}  ({games} games)',
 
     // ── client-side validation ───────────────────────────────────────────────
     'valid.titleNotText': 'The title must be text',

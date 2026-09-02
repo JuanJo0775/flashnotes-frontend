@@ -38,6 +38,8 @@ interface UseNoteCommandsOptions {
     onOpenDiagnostics: () => void;
     onCollapse: () => void;
     onClearNote: () => void;
+    /** Abre el `vsync-test`. Sólo lo dispara `//attach_6`. */
+    onPlayPong: () => void;
 }
 
 interface UseNoteCommandsReturn {
@@ -74,6 +76,7 @@ export function useNoteCommands({
     onOpenDiagnostics,
     onCollapse,
     onClearNote,
+    onPlayPong,
 }: UseNoteCommandsOptions): UseNoteCommandsReturn {
     const [response, setResponse] = useState<string | null>(null);
     const theme = useTheme();
@@ -113,6 +116,9 @@ export function useNoteCommands({
                 case 'clear-note':
                     onClearNote();
                     break;
+                case 'play-pong':
+                    onPlayPong();
+                    break;
                 case 'set-effects':
                     setEffectsEnabled(result.effect.enabled);
                     break;
@@ -136,7 +142,7 @@ export function useNoteCommands({
 
             return true;
         },
-        [notes, theme, onOpenDiagnostics, onCollapse, onClearNote]
+        [notes, theme, onOpenDiagnostics, onCollapse, onClearNote, onPlayPong]
     );
 
     const dismiss = useCallback(() => setResponse(null), []);

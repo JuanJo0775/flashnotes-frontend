@@ -65,7 +65,15 @@
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 9998;
+
+    /* POR ENCIMA DE TODO, incluidas las capas de colapso (10000), bloqueo
+       (10001) y el vsync-test (9998).
+
+       El barrido no es un adorno de la pantalla de inicio: es el refresco del
+       tubo, o sea una propiedad de la PANTALLA, no de lo que se esté pintando
+       en ella. Estaba en 9998 y cualquier capa por encima lo tapaba, así que
+       desaparecía justo en las pantallas donde más sentido tiene. */
+    z-index: 10005;
     width: 100%;
     height: 2px;
     background: linear-gradient(

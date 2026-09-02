@@ -118,6 +118,7 @@ export const SECRET_IDS = [
     'trash-tally',
     'chaos',
     'chroma',
+    'pong',
 ] as const;
 
 export type SecretId = (typeof SECRET_IDS)[number];

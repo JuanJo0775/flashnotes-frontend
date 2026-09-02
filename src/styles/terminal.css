@@ -486,6 +486,24 @@
 .editor-reply {
     color: var(--color-body);
     z-index: 1;
+
+    /* SE DESBORDABA. La respuesta se pinta con `position: absolute; inset: 0`
+       encima del editor, así que una salida larga —`//help` lista quince
+       comandos— se derramaba fuera del panel y se montaba sobre el pie.
+
+       Se recorta al hueco y se desplaza. Y para poder desplazarla hace falta
+       que reciba el ratón, al revés que el texto de arranque, que es un
+       marcador de posición y no debe estorbar. */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    pointer-events: auto;
+    cursor: pointer;
+
+    /* Un pelo más apretada que el texto normal: es una salida de terminal, y
+       así entra de una vez la ayuda entera sin tener que desplazarla. */
+    line-height: 1.45;
+    padding-right: var(--gutter);
+    padding-bottom: 0.5rem;
 }
 
 .editor-placeholder {

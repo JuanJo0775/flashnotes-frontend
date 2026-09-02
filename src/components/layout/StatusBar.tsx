@@ -6,6 +6,7 @@ import ProgressBar from '@/components/ui/ProgressBar';
 import { useNetworkStatus, clearLastOutage } from '@/hooks/useNetworkStatus';
 import { formatDuration } from '@/lib/utils/formatters';
 import { useSystemFragment } from '@/hooks/useSystemFragment';
+import { useSystemState } from '@/hooks/useSystemState';
 import { MAX_FRAGMENT_LENGTH } from '@/lib/system/lore';
 import { LIMITS } from '@/config/limits';
 import { useT } from '@/i18n';
@@ -87,6 +88,12 @@ export default function StatusBar({
      * Devuelve además si lo que se muestra es un fragmento, porque eso cambia
      * cómo se expone al lector de pantalla.
      */
+    // Suscrito, y NO leído con `isSystemFailing()`: esa función lee el almacén
+    // sin suscribirse, así que el rótulo se habría quedado en [TODO_BIEN] hasta
+    // que otra cosa provocara un repintado.
+    const { chromaticFailure, lockedOut } = useSystemState();
+    const senalRota = chromaticFailure || lockedOut;
+
     const systemStatus = (): { node: React.ReactNode; isFragment: boolean } => {
         if (!isOnline)
             return {
@@ -120,6 +127,20 @@ export default function StatusBar({
         if (isLoading)
             return {
                 node: <span className="loading-dots">{t('status.loading')}</span>,
+                isFragment: false,
+            };
+
+        // Con la señal rota el rótulo se da vuelta: [TODO_BIEN] pasa a
+        // [TODO_MAL]. Va ANTES del fragmento a propósito — mientras la avería
+        // dura, el sistema no está para dejar caer frases sueltas sobre lo solo
+        // que se siente; sólo puede decir que algo va mal.
+        //
+        // Es la única pieza del lore que se CONTRADICE a sí misma, y por eso
+        // funciona: doce piezas insistiendo en que todo va bien hacen que este
+        // rótulo, la primera vez, se lea como una confesión.
+        if (senalRota)
+            return {
+                node: <span className="text-danger">{t('status.broken')}</span>,
                 isFragment: false,
             };
 

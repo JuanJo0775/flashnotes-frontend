@@ -323,6 +323,16 @@ describe('SystemCollapse · las líneas salen a medida que carga', () => {
     });
 
     test('con el bloqueo, las líneas se van torciendo en vez de salir bien', () => {
+        // EL PUNTO DONDE LA BARRA SE TRABA SE SORTEA a propósito, para que no
+        // falle siempre en el mismo sitio. Eso hacía este test aleatorio: la
+        // línea del error de paridad vive al 52 % y el tope sorteado cae entre
+        // 0,52 y 0,83, así que con un sorteo bajo no llegaba a asomar y el test
+        // fallaba una de cada nueve veces sin que nada estuviera roto.
+        //
+        // Se fija el sorteo alto: lo que este test comprueba es QUÉ líneas salen
+        // con el bloqueo, no dónde se traba la barra, que tiene las suyas.
+        const azar = jest.spyOn(Math, 'random').mockReturnValue(0.9);
+
         const { container } = render(
             <SystemCollapse
                 notesCount={12}
@@ -338,6 +348,8 @@ describe('SystemCollapse · las líneas salen a medida que carga', () => {
         expect(texto).toMatch(/ERROR DE PARIDAD|REINTENTANDO/);
         expect(texto).not.toMatch(/MEMORIA: OK/);
         expect(texto).not.toMatch(/RECUPERADAS/);
+
+        azar.mockRestore();
     });
 
     test('con movimiento reducido el texto sale entero, sin barra que mirar', () => {

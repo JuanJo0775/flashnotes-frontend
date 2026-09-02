@@ -1090,3 +1090,170 @@
         filter: url(#chroma-split-a);
     }
 }
+
+/* ------------------------------------------------------------------
+   §15 · vsync-test · el pong escondido
+
+   Se abre con `//attach_6`, que sólo se encuentra leyendo `//ps`.
+
+   Va por DEBAJO del colapso (10000) y del bloqueo (10001): si el sistema se
+   está cayendo mientras jugás, eso manda.
+   ------------------------------------------------------------------ */
+.pong-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    display: flex;
+    /* Cabecera arriba, mesa en medio, pie abajo: el mismo reparto que la app.
+       El juego no es una pantalla ajena, es la app en otro modo. */
+    flex-direction: column;
+    background: var(--color-primary);
+    color: var(--color-ink);
+
+    /* El alto de celda de la rejilla, en múltiplos del tamaño de letra. Lo
+       comparten el <pre> y las piezas que van encima, y por eso vive acá: si
+       divergieran, la pelota flotaría por encima o por debajo de su fila. */
+    --pong-line: 1.05;
+}
+
+.pong-frame {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    max-width: 100%;
+    padding: 1rem;
+    position: relative;
+}
+
+/* El tablero: el campo y, encima, lo que se mueve. */
+.pong-stage {
+    position: relative;
+
+    /* ⚠ PILA DE FUENTES PROPIA, Y NO ES CAPRICHO.
+
+       JetBrains Mono —la de toda la app— no trae los bloques (█ ▌ ● ┊), así que
+       los pintaba una fuente de reserva de 14,5 px contra los 9,12 de la base.
+       En una rejilla de caracteres eso descoloca la fila entera: el corte
+       BAILABA de una línea a la siguiente, y la paleta del borde derecho salía
+       desalineada.
+
+       Estas familias sí los traen a la anchura de una `M`, comprobado midiendo
+       en el navegador. Que sea otra tipografía no se nota: aquí no hay texto,
+       hay bloques. El marcador y las pistas siguen en la de la casa. */
+    font-family: ui-monospace, "Cascadia Mono", Consolas, "DejaVu Sans Mono",
+        "Liberation Mono", Menlo, monospace;
+
+    /* Se escala contra las DOS dimensiones: 72 columnas piden ancho y 24 filas
+       piden alto, y en una ventana apaisada y baja manda el alto. Con sólo `vw`
+       el corte se salía por abajo en pantallas cortas. */
+    font-size: clamp(0.5rem, min(1.55vw, 2.5vh), 1.35rem);
+    line-height: var(--pong-line);
+
+    /* El techo y el suelo de la mesa. Sin ellos la pelota rebota contra nada:
+       se la ve saltar en mitad del vacío y parece un fallo, no un rebote. Van
+       en CSS y no en la rejilla para no gastar dos de las veinticuatro filas. */
+    border-top: 1px solid var(--color-ink);
+    border-bottom: 1px solid var(--color-ink);
+}
+
+.pong-court {
+    margin: 0;
+    font: inherit;
+    white-space: pre;
+    user-select: none;
+}
+
+/* La pelota y las paletas, colocadas con precisión DECIMAL.
+
+   Ésta es la pieza que hace que el juego se vea fluido. Dentro de la rejilla la
+   pelota avanza 0,3 celdas por fotograma, así que redondeando a celda sólo se
+   mueve una vez cada tres: se ve a tirones aunque el bucle vaya a 60 fps
+   clavados. El tirón no era retraso, era el redondeo.
+
+   `1ch` es el avance exacto de un carácter en monoespaciada, así que las
+   coordenadas del juego se convierten en píxeles sin medir nada. */
+.pong-sprite {
+    position: absolute;
+    top: 0;
+    left: 0;
+    white-space: pre;
+    line-height: var(--pong-line);
+    user-select: none;
+    pointer-events: none;
+    transform: translate(
+        calc(var(--x) * 1ch),
+        calc(var(--y) * var(--pong-line) * 1em)
+    );
+}
+
+.pong-hud {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    /* Al ancho de la mesa: estirados a la pantalla, el marcador quedaba en una
+       esquina y el récord en la otra, a medio metro de lo que describen. */
+    width: min(100%, 62rem);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+
+.pong-hud-top {
+    /* El marcador sí manda: es lo único que hay que leer de un vistazo. */
+    opacity: 1;
+    font-size: 0.9rem;
+}
+
+.pong-proc,
+.pong-hint {
+    opacity: 0.55;
+}
+
+.pong-over {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    /* Translúcido y no opaco: el corte con la pelota fuera sigue viéndose
+       detrás, que es la prueba de por dónde se te escapó. */
+    background: color-mix(in srgb, var(--color-primary) 82%, transparent);
+    text-align: center;
+}
+
+.pong-over-title {
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.pong-over-hint {
+    font-size: 0.75rem;
+    opacity: 0.6;
+    letter-spacing: 0.08em;
+}
+
+/* El barrido es hermano del envoltorio filtrado, no descendiente, así que el
+   filtro no le llega por herencia. Se le da con la marca de <html>.
+
+   La capa del vsync-test NO necesita regla propia: recibe la MISMA lista de
+   clases que el envoltorio (ver page.tsx), así que hereda filtro, animaciones y
+   tirones por construcción. Duplicarlas acá era pedir que divergieran. */
+[data-failing] .scanline-effect {
+    filter: url(#chroma-split-a);
+    animation: chroma-swap 1.7s steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-failing] .scanline-effect {
+        animation: none;
+    }
+
+}
