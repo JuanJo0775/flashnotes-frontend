@@ -22,6 +22,7 @@ import CollectionView from '@/components/notes/CollectionView';
 import { splitCollectibles, markCollectible } from '@/lib/system/collectibles';
 import { createV02Note, saveV02Note } from '@/lib/system/v02Notes';
 import { useV02Notes } from '@/hooks/useV02Notes';
+import V02Box from '@/components/notes/V02Box';
 import { isV02 } from '@/lib/system/v02';
 import { LOCKOUT_BOOT_ATTR } from '@/config/lockout';
 import { useNotes } from '@/hooks/useNotes';
@@ -265,6 +266,16 @@ export default function Home() {
         [createNote]
     );
 
+    /**
+     * Dibuja la caja alrededor, pero SÓLO en la v0.2.
+     *
+     * Fuera de ella devuelve el contenido tal cual: la v1.0 no tiene por qué
+     * llevar un envoltorio de más ni pagar cuatro elementos absolutos por
+     * región. Una sola función y el mismo árbol para las dos versiones.
+     */
+    const enCaja = (contenido: React.ReactNode, title?: string) =>
+        enV02 ? <V02Box title={title}>{contenido}</V02Box> : contenido;
+
     const isEditing = view === 'editor' && selectedNote !== null;
 
     return (
@@ -290,18 +301,22 @@ export default function Home() {
                 className={`container-terminal ${glitchClassName}`}
                 style={glitchStyle}
             >
-                <Header
+                {enCaja(
+                    <Header
                     currentView={view}
                     onViewChange={handleViewChange}
                     onCollapse={() => setCollapse(registerCollapse())}
-                    collectionCount={collectibles.length}
-                />
+                        collectionCount={collectibles.length}
+                    />,
+                    'head'
+                )}
 
                 <div className="flex flex-1 min-h-0">
                     {/* Las piezas NO salen en la barra lateral: no son notas y
                         no se abren en el editor. Filtrarlas sólo de la lista
                         principal las dejaba asomando por el lado. */}
-                    <Sidebar
+                    {enCaja(
+                        <Sidebar
                         notes={notasVisibles}
                         selectedNote={selectedNote}
                         total={totalVisible}
@@ -309,10 +324,14 @@ export default function Home() {
                         isLoadingMore={isLoadingMore}
                         onSelectNote={handleSelectNote}
                         onNewNote={handleNewNote}
-                        onLoadMore={loadMore}
-                    />
+                            onLoadMore={loadMore}
+                        />,
+                        'files'
+                    )}
 
-                    <main className="flex-1 min-w-0 overflow-y-auto">
+                    <main className="flex-1 min-w-0 overflow-y-auto v02-main">
+                        {enCaja(
+                            <>
                         {isEditing ? (
                             <NoteEditor
                                 // `key` remonta el editor al cambiar de nota, así
@@ -351,17 +370,27 @@ export default function Home() {
                                 onLoadMore={loadMore}
                             />
                         )}
+                            </>,
+                            view === 'trash'
+                                ? 'trash'
+                                : view === 'collection'
+                                  ? 'coll'
+                                  : 'main'
+                        )}
                     </main>
                 </div>
 
-                <StatusBar
+                {enCaja(
+                    <StatusBar
                     notesCount={totalVisible}
                     isLoading={isLoading}
                     error={error ?? historyError}
                     saveState={saveState}
                     openNoteLength={isEditing ? openNoteLength : undefined}
-                    onOpenDiagnostics={() => setShowDiagnostics(true)}
-                />
+                        onOpenDiagnostics={() => setShowDiagnostics(true)}
+                    />,
+                    'sys'
+                )}
             </div>
 
             {/* El colapso va FUERA del contenedor y por encima de todo. El

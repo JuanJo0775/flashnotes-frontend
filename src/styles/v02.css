@@ -231,3 +231,139 @@
     padding: 0;
     margin: 0;
 }
+
+/* ---- La caja dibujada ----
+
+   El marco son CARACTERES DE VERDAD, no bordes: guiones arriba y abajo, barras
+   a los lados, cruces en las esquinas.
+
+   El truco para que se adapte a cualquier tamaño es emitir muchos más de los
+   que caben y recortar. Cuatrocientos guiones dentro de un `overflow: hidden`
+   llenan cualquier ancho; doscientas barras, cualquier alto. Y como todo va en
+   la misma monoespaciada, encaja en la rejilla sin medir nada. */
+.v02-box {
+    position: relative;
+    padding: 0.55em 1.1ch;
+    line-height: inherit;
+}
+
+.v02-box-h,
+.v02-box-v,
+.v02-corner,
+.v02-box-title {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    white-space: pre;
+    font-family: var(--font-mono);
+    line-height: 1;
+}
+
+.v02-box-h {
+    left: 0;
+    right: 0;
+    overflow: hidden;
+}
+
+.v02-box-top {
+    top: -0.35em;
+}
+
+.v02-box-bottom {
+    bottom: -0.35em;
+}
+
+.v02-box-v {
+    top: 0;
+    bottom: 0;
+    overflow: hidden;
+    /* El interlineado de las barras marca el paso del lado vertical: más
+       apretado que el texto para que se lea como una línea y no como una
+       columna de caracteres sueltos. */
+    line-height: 0.62;
+}
+
+.v02-box-left {
+    left: 0;
+}
+
+.v02-box-right {
+    right: 0;
+}
+
+.v02-corner {
+    line-height: 1;
+}
+
+.v02-corner-tl {
+    top: -0.35em;
+    left: 0;
+}
+
+.v02-corner-tr {
+    top: -0.35em;
+    right: 0;
+}
+
+.v02-corner-bl {
+    bottom: -0.35em;
+    left: 0;
+}
+
+.v02-corner-br {
+    bottom: -0.35em;
+    right: 0;
+}
+
+/* El título va METIDO en el guion de arriba, tapándolo: así se lee como una
+   etiqueta pegada a la caja y no como una primera fila de contenido. */
+.v02-box-title {
+    top: -0.35em;
+    left: 2ch;
+    background: var(--color-primary);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+.v02-box-inner {
+    position: relative;
+}
+
+/* Las cajas necesitan SITIO. El marco vive medio carácter fuera del contenido,
+   así que sin margen el guion de arriba se corta contra el borde de la ventana
+   y el de abajo se come el pie. */
+[data-v02] .container-terminal {
+    padding: 0.9em 1ch;
+    gap: 0.9em;
+    display: flex;
+    flex-direction: column;
+}
+
+[data-v02] .v02-box {
+    margin: 0.2em 0;
+}
+
+/* La barra lateral y el área principal, separadas por su propio hueco: pegadas,
+   los dos marcos se tocaban y se leían como una sola línea gruesa. */
+[data-v02] .flex.flex-1.min-h-0 {
+    gap: 1.4ch;
+}
+
+/* Dentro de una caja, el panel ya no necesita su propio borde: el marco es el
+   dibujo. Dos bordes seguidos se ven como un error de maquetación, que es
+   distinto de una versión vieja. */
+[data-v02] .v02-box .terminal-header,
+[data-v02] .v02-box .status-bar,
+[data-v02] .v02-box aside {
+    border: 0 !important;
+}
+
+/* El lado vertical: barras seguidas, no una columna de caracteres sueltos. El
+   interlineado ajusta el paso para que se lean como una línea. */
+[data-v02] .v02-box-v {
+    line-height: 0.78;
+    letter-spacing: 0;
+    opacity: 0.85;
+}
