@@ -71,6 +71,31 @@ describe('nadie puede pararlo sin querer', () => {
         }
     });
 
+    it('ninguna regla que barra `body > *` lo apaga con `opacity`', () => {
+        /*
+         * EL SEGUNDO PATRÓN QUE LO MATÓ, y costó tres intentos encontrarlo.
+         *
+         * `[data-booting] body > * { opacity: 0 }` tapa la app durante el
+         * arranque — y el barrido es hijo directo de body, así que se apagaba con
+         * ella. Los estilos computados decían `visible`, z-index 10005 y la línea
+         * colocada a media pantalla; en el navegador no había línea. Sólo se vio
+         * leyendo la opacidad DEL ELEMENTO, no la de sus padres.
+         *
+         * Es la misma lección que con `animation`, con otra propiedad: el barrido
+         * vive en `body > *` a propósito, porque es el refresco del tubo y no
+         * pertenece a la app. Cualquier regla que hable de «toda la app» tiene que
+         * excluirlo por nombre.
+         */
+        const culpables = REGLAS.filter(
+            (r) =>
+                /body\s*>\s*\*/.test(r.selector) &&
+                !r.selector.includes('scanline-effect') &&
+                /opacity\s*:\s*0/.test(r.cuerpo)
+        );
+
+        expect(culpables.map((c) => c.selector)).toEqual([]);
+    });
+
     it('vive por encima de todas las capas que tapan la app', () => {
         // Colapso 10000, bloqueo 10001, arranque y borrado por debajo. Si el
         // barrido no estuviera arriba del todo, desaparecería justo en las

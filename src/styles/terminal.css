@@ -821,7 +821,7 @@
 /* ⚠ CON `opacity` Y LA TRANSICIÓN DE ARRIBA, no con `animation`: una regla
    `animation` sobre `body > *` alcanza al barrido y le sustituye la suya, y el
    refresco del tubo es lo único que no puede pararse nunca. */
-[data-wiping] body > *:not(.wipe-screen) {
+[data-wiping] body > *:not(.wipe-screen):not(.scanline-effect) {
     opacity: 0;
     pointer-events: none;
 }
@@ -954,16 +954,28 @@
    Es la regla C3 otra vez, y la más cara de todas: el barrido es la única
    animación que no puede pararse nunca. `transition` no toca `animation`, así
    que convive con lo que cada capa esté haciendo. */
-body > *:not(.boot-screen):not(.wipe-screen) {
+/* ⚠ EL BARRIDO QUEDA FUERA DE LOS DESVANECIDOS.
+ *
+ * Es hijo directo de `body`, igual que la app, así que `body > *` lo alcanzaba y
+ * se apagaba con todo lo demás: `opacity: 0` durante el arranque entero y durante
+ * el borrado entero. Se veía —o no se veía— exactamente igual que si no
+ * existiera, con los estilos diciendo `visible` y z-index 10005.
+ *
+ * Es la MISMA lección que la de `animation`, pero con otra propiedad: cualquier
+ * regla que barra `body > *` va a alcanzarlo, porque el barrido vive ahí arriba a
+ * propósito — es el refresco del tubo, una propiedad de la pantalla, no de lo que
+ * se pinta en ella. Cualquier regla que hable de «toda la app» tiene que
+ * excluirlo explícitamente. */
+body > *:not(.boot-screen):not(.wipe-screen):not(.scanline-effect) {
     transition: opacity 700ms ease-out;
 }
 
-[data-booting] body > *:not(.boot-screen) {
+[data-booting] body > *:not(.boot-screen):not(.scanline-effect) {
     opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    body > *:not(.boot-screen):not(.wipe-screen) {
+    body > *:not(.boot-screen):not(.wipe-screen):not(.scanline-effect) {
         transition: none;
     }
 }
