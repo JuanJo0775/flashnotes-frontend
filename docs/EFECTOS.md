@@ -61,6 +61,7 @@ herramientas.
 | `//date_off` | [§17 El reloj se suelta](#17--el-reloj-se-suelta) |
 | `//art`, y otra vez | [§18 Las piezas que quedaron](#18--las-piezas-que-quedaron) |
 | `//help` unas cuantas veces | [§19 La ayuda no lo dice todo](#19--la-ayuda-no-lo-dice-todo) |
+| Tres clics en la hora | [§20 El reloj esconde algo](#20--el-reloj-esconde-algo) |
 
 ---
 
@@ -1528,6 +1529,63 @@ contó.**
 Una ayuda que siempre contesta igual se lee como documentación; ésta es una
 máquina cansada. Volver a pedirla funciona: es un desplante, no una avería — un
 comando que a veces no anda de verdad sería un defecto, no un chiste.
+
+---
+
+# 20 · El reloj esconde algo
+
+El pie de la barra lateral enseñaba `--:--:--` cuando no había nota abierta. **Y
+eso ya parecía morse.**
+
+Esta pieza no se inventó: se leyó de algo que llevaba ahí desde el principio. Es
+la regla del lore aplicada al pie de la letra.
+
+### Primero, que el reloj sea un reloj
+
+Ahora enseña **la hora del equipo, en 24 h y con segundos**, y corre.
+
+Gana tres cosas de una vez:
+
+- Una terminal con reloj es una terminal. El hueco ya estaba.
+- **Es el único sitio donde se VE `//date_off`.** El reloj es donde mirarías la
+  hora, así que es donde tiene que notarse que el sistema la perdió — pasa por
+  `formatTime`, que aplica el desvarío.
+- El código necesita un blanco fijo y siempre presente donde vivir.
+
+Vive en un almacén de módulo y no en un intervalo por componente: así la hora es
+**la misma** en todos los sitios donde se pinte, y sólo late mientras alguien
+mira.
+
+### Tres clics
+
+```
+11:50:37     →  clic clic clic  →  .-.:.:...:-:---
+                                    R  E  S   T  O
+```
+
+**Sólo puntos, rayas y el mismo `:` del reloj.** Así se lee como una hora rota y
+no como un adorno pegado encima — que es lo que lo hace encontrable sin que nadie
+lo explique.
+
+Vuelve a ser un reloj a los nueve segundos. Y los clics tienen que ser
+**seguidos**: nadie hace tres clics sin querer en menos de un segundo, pero tres
+repartidos en un minuto los hace cualquiera.
+
+Es el mismo gesto que abre el rótulo de la cabecera, así que quien encontró aquél
+sabe que acá se prueba; y quien no, no pierde nada.
+
+### La palabra cambia por sesión
+
+Se sortea al cargar y vive **sólo en memoria**. La de hoy no sirve mañana, y
+contarla no sirve de nada: se resuelve mirando, no preguntando.
+
+Las diez palabras se escriben con un alfabeto corto de catorce letras, todas de
+una a tres señales — con letras de cinco, la palabra desbordaba el hueco. Y son
+los códigos morse **de verdad**: inventarlos volvería el puzzle imposible, porque
+se descifra con una tabla que cualquiera puede buscar.
+
+> **La puerta está, la habitación no.** Teclear la palabra todavía no hace nada:
+> abre la v0.2, que está por construirse. Ver [`IDEAS.md`](IDEAS.md) · E.
 
 ---
 

@@ -1,8 +1,9 @@
 // src/components/layout/Sidebar.tsx
 'use client';
 
+import SystemClock from '@/components/layout/SystemClock';
 import type { Note } from '@/types/note.types';
-import { formatFileSize, formatTime } from '@/lib/utils/formatters';
+import { formatFileSize } from '@/lib/utils/formatters';
 import { useT } from '@/i18n';
 
 interface SidebarProps {
@@ -95,9 +96,15 @@ export default function Sidebar({
                         raro, pero "1 archivo" y "6 archivos" son lo correcto. */}
                     {t.plural('sidebar.files', total > notes.length ? total : notes.length)}
                 </span>
-                <span>
-                    {selectedNote?.updatedAt ? formatTime(selectedNote.updatedAt) : t('sidebar.noTime')}
-                </span>
+                {/* LA HORA DEL EQUIPO, latiendo, en 24 h y con segundos.
+                    Antes enseñaba la de la nota abierta, o `--:--:--` cuando no
+                    había ninguna — y ese marcador de posición es el que dio pie
+                    a todo esto, porque ya parecía morse.
+
+                    Es además el único sitio donde se VE `//date_off`: el reloj
+                    es donde mirarías la hora, así que es donde tiene que
+                    notarse que el sistema la perdió. */}
+                <SystemClock />
             </div>
         </aside>
     );

@@ -64,6 +64,7 @@ export const es = {
     'sidebar.files.one': 'archivo',
     'sidebar.files.other': 'archivos',
     'sidebar.noTime': '--:--:--',
+    'sidebar.clockLabel': 'Hora del sistema',
 
     // ── listado de notas ─────────────────────────────────────────────────────
     'list.loading': '[CARGANDO',

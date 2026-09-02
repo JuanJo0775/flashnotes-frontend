@@ -651,3 +651,24 @@
     border-color: var(--color-warn);
     color: var(--color-warn);
 }
+
+/* El reloj del pie de la barra lateral.
+
+   Tres clics lo cambian por el código morse de la sesión, así que tiene que
+   invitar a hacer clic sin anunciar que hay algo: cursor de puntero y nada más.
+   Sin `user-select`, el triple clic seleccionaría el texto en vez de contar. */
+.system-clock {
+    cursor: pointer;
+    user-select: none;
+    /* El hueco no se mueve al pasar de `14:05:09` a un código más largo. */
+    display: inline-block;
+    text-align: right;
+    min-width: 8ch;
+}
+
+/* Con el código puesto se separa un poco: sin esto, los puntos y las rayas
+   quedaban tan apretados que se leían como una sola mancha. */
+.system-clock.is-morse {
+    letter-spacing: 0.12em;
+    min-width: 0;
+}

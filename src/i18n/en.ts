@@ -52,6 +52,7 @@ export const en: Dictionary = {
     'sidebar.files.one': 'file',
     'sidebar.files.other': 'files',
     'sidebar.noTime': '--:--:--',
+    'sidebar.clockLabel': 'System time',
 
     // ── notes list ───────────────────────────────────────────────────────────
     'list.loading': '[LOADING',
