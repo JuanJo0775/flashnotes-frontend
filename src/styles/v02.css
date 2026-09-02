@@ -1,0 +1,233 @@
+/* ------------------------------------------------------------------
+   La v0.2 · cómo se ve una versión que nadie terminó
+
+   La bandera va en <html> como `data-v02`, igual que `data-failing`, para que
+   alcance TAMBIÉN a los diálogos: se pintan en la capa superior del navegador,
+   fuera del subárbol de la app, y una v0.2 con un diálogo impecable en medio se
+   delataría sola (REGLAS · C5).
+
+   TRES IDEAS, y ninguna es «poner cosas feas»:
+
+     1. LOS MARCOS SE DIBUJARON A MANO. Antes de que alguien hiciera el sistema
+        de diseño, los bordes eran guiones y las esquinas eran `+`. Se ven así.
+
+     2. NADIE ALINEÓ NADA. Los elementos están un pelo fuera de sitio, cada uno
+        para su lado. No al azar en cada repintado —eso sería parpadeo— sino
+        FIJO por posición: es un desajuste, no un temblor.
+
+     3. LA PALETA NO SE TOCA. El primer intento le puso un tinte de fósforo
+        verde y quedaba mal: dejaba de ser FlashNotes vieja para ser otra app
+        con otro color. Lo que envejece no es el color — es cómo está dibujado.
+
+   Todo esto es de PANTALLA. Lo que de verdad falla —guardar, la papelera— vive
+   en el código, no acá.
+   ------------------------------------------------------------------ */
+
+/* ⚠ LA PALETA NO SE TOCA.
+   El primer intento le puso un tinte de fósforo verde y quedaba mal: dejaba de
+   ser FlashNotes vieja para ser otra app con otro color. Lo que envejece no es
+   la paleta — es cómo está dibujado. Los mismos colores de siempre, puestos por
+   alguien que todavía no sabía ponerlos. */
+
+/* ---- 1 · Los marcos dibujados a mano ---- */
+
+[data-v02] .file-container,
+[data-v02] .collection-card,
+[data-v02] .dialog-terminal,
+[data-v02] .notice {
+    border-style: dashed !important;
+    border-width: 1px !important;
+    border-radius: 0 !important;
+    position: relative;
+}
+
+/* Las esquinas, con el `+` de toda la vida. Van en las cuatro para que se lea
+   como un marco y no como una errata. */
+[data-v02] .file-container::before,
+[data-v02] .collection-card::before {
+    content: '+';
+    position: absolute;
+    top: -0.62em;
+    left: -0.24em;
+    font-size: 0.9em;
+    line-height: 1;
+    background: var(--color-primary);
+    padding: 0 0.1em;
+    opacity: 0.75;
+}
+
+[data-v02] .file-container::after,
+[data-v02] .collection-card::after {
+    content: '+';
+    position: absolute;
+    bottom: -0.62em;
+    right: -0.24em;
+    font-size: 0.9em;
+    line-height: 1;
+    background: var(--color-primary);
+    padding: 0 0.1em;
+    opacity: 0.75;
+}
+
+/* Las reglas horizontales pasan a ser guiones de verdad. */
+[data-v02] .rule-dashed,
+[data-v02] .panel-footer {
+    border-style: dashed !important;
+}
+
+/* Los botones, entre corchetes y sin caja: así se escribía un botón antes de
+   que hubiera botones. */
+[data-v02] .btn-terminal {
+    border-style: dotted !important;
+    border-radius: 0 !important;
+}
+
+[data-v02] .btn-terminal::before {
+    content: '[';
+    margin-right: 0.15em;
+    opacity: 0.6;
+}
+
+[data-v02] .btn-terminal::after {
+    content: ']';
+    margin-left: 0.15em;
+    opacity: 0.6;
+}
+
+/* ---- 2 · Nadie alineó nada ---- */
+
+/* Fijo por posición, no al azar en cada repintado: un desajuste se queda
+   quieto, y un temblor se lee como que la pantalla vibra. Son décimas de píxel
+   distintas en cada tarjeta, lo justo para que la rejilla no case. */
+[data-v02] .file-container {
+    transform: translateY(1px);
+}
+
+[data-v02] li:nth-child(3n) .file-container {
+    transform: translate(2px, -1px);
+}
+
+[data-v02] li:nth-child(4n) .file-container {
+    transform: translate(-1px, 2px);
+}
+
+[data-v02] .file-row:nth-child(2n) {
+    padding-left: 3px;
+}
+
+[data-v02] .file-row:nth-child(5n) {
+    padding-left: 7px;
+    letter-spacing: 0.04em;
+}
+
+/* La cabecera y el pie tampoco encajan del todo. */
+[data-v02] .terminal-header {
+    letter-spacing: 0.02em;
+}
+
+[data-v02] .status-bar {
+    padding-left: 5px;
+}
+
+/* ---- 3 · El renderizado a medias ---- */
+
+/* Los títulos de sección salen con el subrayado sin terminar: la línea llega
+   hasta donde llegó quien la estaba haciendo. */
+[data-v02] .section-title::after {
+    content: ' ' counter(nada) '';
+    border-bottom: 1px dashed currentColor;
+    display: inline-block;
+    width: 6ch;
+    margin-left: 0.6ch;
+    opacity: 0.45;
+    vertical-align: middle;
+}
+
+/* Un trozo de la interfaz sin estilo, como si esa regla no se hubiera escrito:
+   el pie de las tarjetas pierde su tipografía pequeña y se queda con la de por
+   defecto del navegador. Es el detalle que más incomoda de todos. */
+[data-v02] .file-container > div:last-child {
+    font-family: serif;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* ---- El glitch del tema, en la v0.2 ---- */
+
+/* La avería no se decide: alterna entre la aberración cromática y la estática.
+   No es el mismo efecto con otro color — es una avería que va y viene. */
+@keyframes v02-indeciso {
+    0%,
+    38% {
+        filter: url(#chroma-split-a);
+        opacity: 1;
+    }
+    40%,
+    48% {
+        filter: grayscale(1) contrast(2.4) brightness(1.3);
+        opacity: 0.86;
+    }
+    50%,
+    88% {
+        filter: url(#chroma-split-b);
+        opacity: 1;
+    }
+    90%,
+    100% {
+        filter: grayscale(1) contrast(3) brightness(0.8);
+        opacity: 0.9;
+    }
+}
+
+[data-v02] .chromatic-failure {
+    animation: v02-indeciso 2.6s steps(1, end) infinite !important;
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+    [data-v02] .chromatic-failure {
+        animation: none !important;
+    }
+}
+
+/* ---- Las tarjetas, dibujadas con caracteres ---- */
+
+/* No es una caja con borde: es un dibujo. Por eso no lleva `border` ninguno —
+   el marco está en el texto. */
+.v02-card {
+    display: block;
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+    cursor: pointer;
+    color: var(--color-body);
+}
+
+.v02-card pre {
+    margin: 0;
+    /* `ch` es el avance exacto de un carácter en monoespaciada, así que el
+       cuadro mide lo que dice medir sin nada que calcular en ejecución. */
+    font-size: 0.78rem;
+    line-height: 1.25;
+    white-space: pre;
+}
+
+.v02-card:hover pre,
+.v02-card:focus-visible pre {
+    /* Ni sombra ni fondo: se marca invirtiendo, que es lo que hace una terminal
+       cuando algo está seleccionado. */
+    background: var(--color-ink);
+    color: var(--color-primary);
+}
+
+.v02-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem 2ch;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}

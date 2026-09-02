@@ -177,3 +177,54 @@ describe('v02 · cambiar de versión AVISA', () => {
         expect(avisos).toBeGreaterThan(0);
     });
 });
+
+describe('v02 · el texto de una versión sin terminar', () => {
+    // Determinista POR CLAVE: la misma etiqueta se rompe siempre igual. Si
+    // cambiara en cada repintado, la interfaz sería un cartel de neón
+    // parpadeando y dejaría de leerse como una versión vieja.
+    test('la misma clave da siempre lo mismo', async () => {
+        const { v02Label } = await import('@/lib/system/v02');
+        const a = v02Label('titulo', { ok: 'Archivos', raw: 'Files' });
+        const b = v02Label('titulo', { ok: 'Archivos', raw: 'Files' });
+
+        expect(a).toBe(b);
+    });
+
+    test('la mayoría de las etiquetas salen bien', async () => {
+        // Si fallaran todas sería ilegible, no vieja.
+        const { v02Label } = await import('@/lib/system/v02');
+        const claves = Array.from({ length: 60 }, (_, i) => `clave${i}`);
+        const bien = claves.filter(
+            (k) => v02Label(k, { ok: 'Texto', raw: 'Text' }) === 'Texto'
+        );
+
+        expect(bien.length).toBeGreaterThan(claves.length / 2);
+    });
+
+    test('pero algunas no', async () => {
+        const { v02Label } = await import('@/lib/system/v02');
+        const claves = Array.from({ length: 60 }, (_, i) => `clave${i}`);
+        const rotas = claves.filter(
+            (k) => v02Label(k, { ok: 'Texto', raw: 'Text' }) !== 'Texto'
+        );
+
+        expect(rotas.length).toBeGreaterThan(3);
+    });
+
+    test('nunca devuelve vacío: una etiqueta en blanco es un hueco, no un fallo', async () => {
+        const { v02Label } = await import('@/lib/system/v02');
+
+        for (let i = 0; i < 60; i += 1) {
+            expect(v02Label(`k${i}`, { ok: 'Texto', raw: 'Text' }).length).toBeGreaterThan(0);
+        }
+    });
+
+    test('sin versión en inglés, no se la inventa', async () => {
+        const { v02Label } = await import('@/lib/system/v02');
+        const salidas = Array.from({ length: 60 }, (_, i) =>
+            v02Label(`k${i}`, { ok: 'Texto' })
+        );
+
+        expect(salidas.every((s) => s.length > 0)).toBe(true);
+    });
+});

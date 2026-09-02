@@ -1,6 +1,7 @@
 // src/components/layout/Sidebar.tsx
 'use client';
 
+import { useV02T } from '@/i18n/useV02T';
 import SystemClock from '@/components/layout/SystemClock';
 import type { Note } from '@/types/note.types';
 import { formatFileSize } from '@/lib/utils/formatters';
@@ -28,13 +29,17 @@ export default function Sidebar({
     onLoadMore,
 }: SidebarProps) {
     const t = useT();
+    // El traductor degradado va aparte: `useT()` trae además `t.plural`, que el
+    // envoltorio de la v0.2 no necesita replicar — un plural mal traducido no
+    // aporta nada que no aporte ya una etiqueta mal traducida.
+    const tv = useV02T();
 
     return (
         <aside className="w-72 shrink-0 border-r border-line bg-secondary flex flex-col">
             <div className="border-b border-line p-4 flex flex-col gap-3">
-                <span className="comment">{t('sidebar.selectFile')}</span>
+                <span className="comment">{tv('sidebar.selectFile')}</span>
                 <button type="button" onClick={onNewNote} className="btn-terminal w-full">
-                    {t('sidebar.newNote')}
+                    {tv('sidebar.newNote')}
                 </button>
             </div>
 

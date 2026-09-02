@@ -1,7 +1,7 @@
 // src/app/page.tsx
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import StatusBar from '@/components/layout/StatusBar';
@@ -16,13 +16,17 @@ import PhantomError from '@/components/effects/PhantomError';
 import SystemLockout from '@/components/effects/SystemLockout';
 import PongOverlay from '@/components/effects/PongOverlay';
 import DeadPage from '@/components/effects/DeadPage';
+import V02Skin from '@/components/effects/V02Skin';
+import V02Glitches from '@/components/effects/V02Glitches';
 import CollectionView from '@/components/notes/CollectionView';
 import { splitCollectibles, markCollectible } from '@/lib/system/collectibles';
+import { createV02Note, saveV02Note } from '@/lib/system/v02Notes';
+import { useV02Notes } from '@/hooks/useV02Notes';
+import { isV02 } from '@/lib/system/v02';
 import { LOCKOUT_BOOT_ATTR } from '@/config/lockout';
 import { useNotes } from '@/hooks/useNotes';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import { useMemo } from 'react';
 import {
     markNoteTrashed,
     registerCollapse,
@@ -33,6 +37,9 @@ import { useGlitch } from '@/hooks/useGlitch';
 import { initializeCsrfToken } from '@/lib/api/client';
 import { useT } from '@/i18n';
 import type { Note, SaveState, View } from '@/types/note.types';
+
+/** Referencia constante: una lista nueva en cada render remontaría todo. */
+const VACIO: never[] = [];
 
 export default function Home() {
     const [view, setView] = useState<View>('notes');
@@ -59,7 +66,7 @@ export default function Home() {
     } = useNotes();
 
     const { undo, redo, error: historyError } = useUndoRedo();
-    const { chromaticFailure, lockedOut } = useSystemState();
+    const { chromaticFailure, lockedOut, v02 } = useSystemState();
     const glitch = useGlitch();
 
     // La línea de barrido se traba cada tantas pasadas. Es la firma de la app:
@@ -103,7 +110,10 @@ export default function Home() {
     const handleNewNote = useCallback(async () => {
         // El título por defecto sigue al idioma: una nota creada en inglés no
         // debería llamarse "Nueva nota".
-        const newNote = await createNote({ title: t('editor.newNoteTitle'), content: '' });
+        const newNote = isV02()
+            ? createV02Note(t('editor.newNoteTitle'))
+            : await createNote({ title: t('editor.newNoteTitle'), content: '' });
+
         if (newNote) {
             setSelectedNote(newNote);
             setSaveState('idle');
@@ -220,6 +230,32 @@ export default function Home() {
      */
     const { notes: misNotas, collectibles } = splitCollectibles(notes);
 
+    /**
+     * LOS ARCHIVOS DE LA v0.2 SON OTROS.
+     *
+     * Entrar por primera vez encuentra la versión vacía, y lo que escribas ahí
+     * no aparece en la v1.0 ni al revés: son dos versiones distintas del mismo
+     * programa. Viven en el navegador porque el backend no se toca para un
+     * efecto — y además es lo que cuenta la historia: la v0.2 guardaba en otro
+     * sitio y nadie migró nada.
+     */
+    const todosV02 = useV02Notes();
+    const notasV02 = v02 ? todosV02 : VACIO;
+
+    const enV02 = v02;
+    const notasVisibles = enV02 ? notasV02 : misNotas;
+    const totalVisible = enV02 ? notasV02.length : total - collectibles.length;
+
+    /** Guardar, en la versión que toque. */
+    const guardar = useCallback(
+        async (id: string, data: { title?: string; content?: string }) => {
+            if (!enV02) return updateNote(id, data);
+
+            return saveV02Note(id, data);
+        },
+        [enV02, updateNote]
+    );
+
     /** `//keep` crea la pieza y la marca. Así no pisa la nota donde estabas. */
     const guardarPieza = useCallback(
         async (title: string, content: string) => {
@@ -266,9 +302,9 @@ export default function Home() {
                         no se abren en el editor. Filtrarlas sólo de la lista
                         principal las dejaba asomando por el lado. */}
                     <Sidebar
-                        notes={misNotas}
+                        notes={notasVisibles}
                         selectedNote={selectedNote}
-                        total={total - collectibles.length}
+                        total={totalVisible}
                         hasMore={hasMore}
                         isLoadingMore={isLoadingMore}
                         onSelectNote={handleSelectNote}
@@ -285,7 +321,7 @@ export default function Home() {
                                 // que disparaba los falsos avisos de conflicto.
                                 key={selectedNote._id}
                                 note={selectedNote}
-                                onSave={updateNote}
+                                onSave={guardar}
                                 onBack={handleBackToList}
                                 onUndo={undo}
                                 onRedo={redo}
@@ -305,11 +341,11 @@ export default function Home() {
                             <CollectionView pieces={collectibles} />
                         ) : (
                             <NotesList
-                                notes={misNotas}
+                                notes={notasVisibles}
                                 isLoading={isLoading}
                                 hasMore={hasMore}
                                 isLoadingMore={isLoadingMore}
-                                total={total - collectibles.length}
+                                total={totalVisible}
                                 onSelectNote={handleSelectNote}
                                 onNewNote={handleNewNote}
                                 onLoadMore={loadMore}
@@ -319,7 +355,7 @@ export default function Home() {
                 </div>
 
                 <StatusBar
-                    notesCount={total - collectibles.length}
+                    notesCount={totalVisible}
                     isLoading={isLoading}
                     error={error ?? historyError}
                     saveState={saveState}
@@ -349,6 +385,9 @@ export default function Home() {
                 que empezara: no se llegaba a ver ni la estática ni la barra
                 trabándose. Justo la secuencia que da sentido al desenlace. */}
             {lockedOut && !collapse && <SystemLockout />}
+
+            <V02Skin />
+            <V02Glitches />
 
             {dead && <DeadPage />}
 

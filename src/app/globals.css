@@ -9,6 +9,7 @@
 @import "../styles/terminal.css" layer(components);
 @import "../styles/animations.css" layer(components);
 @import "../styles/glitch.css" layer(components);
+@import "../styles/v02.css" layer(components);
 
 /* ============================================================
    TOKENS
@@ -317,3 +318,4 @@
     border-width: 0;
   }
 }
+

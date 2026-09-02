@@ -129,3 +129,78 @@ export function halfBaked(key: string, random: () => number = Math.random): stri
     const n = Math.floor(random() * 900) + 100;
     return `${key.toUpperCase()}_${n}`;
 }
+
+/* ------------------------------------------------------------------
+   El texto de una versión sin terminar
+
+   Tres cosas distintas, y ninguna es «poner texto raro»:
+
+     · SIN TRADUCIR — quedó la cadena en inglés porque nadie la tradujo. Es el
+       fallo más común de una versión temprana y el que más se reconoce.
+     · A MEDIO HACER — sale el nombre de la variable con su número, que es lo
+       que se ve cuando el texto todavía no se escribió.
+     · MAL TRADUCIDO — alguien la tradujo palabra por palabra sin mirar qué era.
+       Es peor que no traducirla, y por eso es más gracioso.
+
+   Es DETERMINISTA por clave: la misma etiqueta se rompe siempre igual. Si
+   cambiara en cada repintado, la interfaz sería un cartel de neón parpadeando y
+   dejaría de leerse como una versión vieja para leerse como una avería.
+   ------------------------------------------------------------------ */
+
+/** De cada etiqueta, cuántas salen mal. Una de cada cuatro: se nota sin cansar. */
+const BROKEN_LABEL_ODDS = 0.26;
+
+/**
+ * Un número reproducible a partir de una clave, entre 0 y 1.
+ *
+ * ⚠ LLEVA MEZCLA FINAL, y hace falta. Con el FNV a secas, claves parecidas
+ * —`clave1`, `clave2`, `clave3`…— caían en el mismo tramo: la mitad de las
+ * etiquetas salían rotas en vez de una de cada cuatro, porque los bits altos
+ * apenas cambiaban y son los que mandan al pasar a decimal. Con la avalancha,
+ * un carácter distinto cambia el número entero.
+ *
+ * Lo cazó un test que exige que la MAYORÍA de las etiquetas salgan bien: si
+ * fallaran todas sería ilegible, no vieja.
+ */
+function ruido(clave: string): number {
+    let h = 2166136261;
+    for (let i = 0; i < clave.length; i += 1) {
+        h ^= clave.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+    }
+
+    h ^= h >>> 16;
+    h = Math.imul(h, 2246822507);
+    h ^= h >>> 13;
+    h = Math.imul(h, 3266489909);
+    h ^= h >>> 16;
+
+    return (h >>> 0) / 4294967296;
+}
+
+export interface LabelSources {
+    /** El texto bien, en el idioma que toca. */
+    ok: string;
+    /** El mismo texto en inglés, para dejarlo sin traducir. */
+    raw?: string;
+}
+
+/**
+ * Cómo sale esta etiqueta en la v0.2.
+ *
+ * `key` identifica la etiqueta y decide su suerte, siempre la misma.
+ */
+export function v02Label(key: string, sources: LabelSources): string {
+    const dado = ruido(key);
+    if (dado >= BROKEN_LABEL_ODDS) return sources.ok;
+
+    // Se reparte el tramo roto en tres, con el mismo dado: así una etiqueta
+    // concreta tiene una avería concreta y no tres posibles.
+    const cual = (dado / BROKEN_LABEL_ODDS) * 3;
+
+    if (cual < 1 && sources.raw) return sources.raw;
+    if (cual < 2) return halfBaked(key, () => ruido(key + 'n'));
+
+    // Mal traducida: se le pega el sufijo de una traducción hecha a máquina.
+    return `${sources.ok.toUpperCase()} (SIC)`;
+}

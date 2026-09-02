@@ -17,6 +17,7 @@ import { clearUsed } from '@/lib/system/commandUnlock';
 import { clearCollectibles } from '@/lib/system/collectibles';
 import { leaveV02, isV02, toggleV02 } from '@/lib/system/v02';
 import { clearDropped } from '@/lib/system/dropped';
+import { clearV02Notes } from '@/lib/system/v02Notes';
 import { forgetWord } from '@/lib/system/morse';
 import { stopDrift } from '@/lib/system/timeDrift';
 
@@ -623,6 +624,7 @@ export function resetEverything() {
     clearUsed();
     clearCollectibles();
     leaveV02();
+    clearV02Notes();
     clearDropped();
     forgetWord();
     stopDrift();

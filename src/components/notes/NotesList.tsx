@@ -1,10 +1,12 @@
 // src/components/notes/NotesList.tsx
 'use client';
 
+import V02NoteCard from '@/components/notes/V02NoteCard';
+import { useSystemState } from '@/hooks/useSystemState';
+import { useV02T } from '@/i18n/useV02T';
 import type { Note } from '@/types/note.types';
 import NoteCard from './NoteCard';
 import TypewriterText from '@/components/effects/TypewriterText';
-import { useT } from '@/i18n';
 
 interface NotesListProps {
     notes: Note[];
@@ -27,7 +29,10 @@ export default function NotesList({
     onNewNote,
     onLoadMore,
 }: NotesListProps) {
-    const t = useT();
+    // En la v0.2 una de cada cuatro etiquetas sale mal. Fuera de ella, esto es
+    // `useT()` y nada más.
+    const t = useV02T();
+    const { v02 } = useSystemState();
 
     if (isLoading) {
         return (
@@ -72,15 +77,28 @@ export default function NotesList({
                 </span>
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {notes.map((note) => (
-                    <NoteCard
-                        key={note._id}
-                        note={note}
-                        onClick={() => onSelectNote(note)}
-                    />
-                ))}
-            </div>
+            {/* En la v0.2 las tarjetas no son cajas con borde: son CUADROS
+                DIBUJADOS con `+`, `-` y `|`, y los huecos rellenos de puntos.
+                Así se hacía una tarjeta antes de que hubiera tarjetas. */}
+            {v02 ? (
+                <ul className="v02-grid">
+                    {notes.map((note) => (
+                        <li key={note._id}>
+                            <V02NoteCard note={note} onSelect={onSelectNote} />
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {notes.map((note) => (
+                        <NoteCard
+                            key={note._id}
+                            note={note}
+                            onClick={() => onSelectNote(note)}
+                        />
+                    ))}
+                </div>
+            )}
 
             <hr className="rule-dashed my-6" />
 
