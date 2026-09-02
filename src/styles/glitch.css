@@ -1257,3 +1257,24 @@
     }
 
 }
+
+/* ------------------------------------------------------------------
+   El velo del arranque bloqueado.
+
+   El bloqueo se lee en un efecto (el servidor no tiene localStorage), así que
+   durante un fotograma se pintaba la app NORMAL: al recargar en pleno fallo
+   crítico se veía la pantalla de inicio un segundo antes de volver al error, y
+   recargar parecía funcionar — que es justo lo que este estado niega.
+
+   El script en línea de `config/lockout.ts` marca <html> antes de pintar; esto
+   tapa lo que haya debajo, y la propia capa de bloqueo quita la marca al
+   montarse. Es tinta plana, no una pantalla: lo que va encima ya lo pone React.
+   ------------------------------------------------------------------ */
+[data-booting-locked] body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 10004;
+    background: var(--color-primary);
+    pointer-events: none;
+}

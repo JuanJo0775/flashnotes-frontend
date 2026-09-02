@@ -2,6 +2,7 @@
 import {
     DUMP_COLS,
     DUMP_ROWS,
+    PATTERN_LEN,
     buildDump,
     isTheOddOne,
 } from '@/lib/system/lockoutPuzzle';
@@ -104,6 +105,63 @@ describe('lockoutPuzzle - errar cambia el puzzle', () => {
                 (c, j) => c !== d.pattern[j % d.pattern.length]
             );
             expect(rotas).toHaveLength(1);
+        }
+    });
+});
+
+describe('lockoutPuzzle · por qué cuesta encontrarlo', () => {
+    // Con patrón de 5 bytes y 10 columnas, la repetición caía en COLUMNAS
+    // PERFECTAS: cada columna mostraba siempre el mismo byte y la celda rota
+    // saltaba a la vista sin buscarla. El puzzle se resolvía de un vistazo.
+    test('el patrón es primo con el ancho de la rejilla', () => {
+        const mcd = (a: number, b: number): number => (b === 0 ? a : mcd(b, a % b));
+
+        expect(mcd(PATTERN_LEN, DUMP_COLS)).toBe(1);
+    });
+
+    test('así ninguna columna repite siempre el mismo byte', () => {
+        const { cells } = buildDump(() => 0.5);
+
+        const columnaConstante = Array.from({ length: DUMP_COLS }, (_, c) =>
+            Array.from({ length: DUMP_ROWS }, (_, f) => cells[f * DUMP_COLS + c])
+        ).some((col) => new Set(col).size === 1);
+
+        expect(columnaConstante).toBe(false);
+    });
+
+    test('la celda rota se parece a la que le tocaba', () => {
+        // Un byte al azar cantaba demasiado. Cambiando UN dígito hexadecimal
+        // sigue siendo hallable —el patrón está entero alrededor— pero hay que
+        // mirar de verdad.
+        for (let i = 0; i < 50; i += 1) {
+            const dump = buildDump(() => (i * 0.019) % 1);
+            const tocaba = dump.pattern[dump.oddIndex % PATTERN_LEN];
+            const roto = dump.cells[dump.oddIndex];
+
+            const distintos = [...roto].filter((c, j) => c !== tocaba[j]).length;
+            expect(distintos).toBe(1);
+        }
+    });
+
+    test('pero sigue sin coincidir con ningún byte del patrón', () => {
+        // Si coincidiera, se leería como parte de la repetición y el puzzle no
+        // tendría solución visible. Difícil no es lo mismo que imposible.
+        for (let i = 0; i < 50; i += 1) {
+            const dump = buildDump(() => (i * 0.019) % 1);
+
+            expect(dump.pattern).not.toContain(dump.cells[dump.oddIndex]);
+        }
+    });
+
+    test('siempre hay exactamente una celda fuera de sitio', () => {
+        for (let i = 0; i < 50; i += 1) {
+            const dump = buildDump(() => (i * 0.019) % 1);
+
+            const fuera = dump.cells.filter(
+                (c, idx) => c !== dump.pattern[idx % PATTERN_LEN]
+            );
+
+            expect(fuera).toHaveLength(1);
         }
     });
 });

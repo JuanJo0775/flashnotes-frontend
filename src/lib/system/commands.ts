@@ -3,6 +3,7 @@
 import { LIMITS } from '@/config/limits';
 import { formatDuration } from '@/lib/utils/formatters';
 import { getLang } from '@/i18n';
+import { greetingFor } from '@/lib/system/greeting';
 import type { Lang } from '@/config/lang';
 
 /**
@@ -42,6 +43,13 @@ export interface CommandContext {
     /** El registro de peticiones ya formateado (ver requestLog.ts). */
     log: string;
     /**
+     * Cuántas veces seguidas se saludó, contando ÉSTA.
+     *
+     * La cuenta la lleva el almacén del sistema porque este módulo es puro: no
+     * tiene memoria ni reloj. Ver `registerGreeting`.
+     */
+    greetings: number;
+    /**
      * En qué idioma contesta el sistema.
      *
      * Es opcional para que este módulo siga probándose sin montar nada: si no
@@ -58,6 +66,8 @@ export type CommandEffect =
     | { kind: 'clear-note' }
     | { kind: 'fetch-history' }
     | { kind: 'play-pong' }
+    | { kind: 'leave-note' }
+    | { kind: 'time-drift' }
     | { kind: 'set-effects'; enabled: boolean };
 
 export interface CommandResult {
@@ -104,6 +114,21 @@ export function isCommandLine(content: string): boolean {
 
     // `//` a secas no es un comando: podría ser el principio de un comentario.
     return linea.slice(COMMAND_PREFIX.length).trim().length > 0;
+}
+
+/** El nombre del saludo, para que nadie lo escriba dos veces. */
+export const GREETING_COMMAND = '//hi';
+
+/**
+ * ¿Esta línea es el saludo?
+ *
+ * Lo necesita quien lleva la cuenta: sumar en CADA comando haría que teclear
+ * `//help` seis veces seguidas te echara de la nota, que no es la broma.
+ */
+export function isGreetingLine(content: string): boolean {
+    if (!isCommandLine(content)) return false;
+    const linea = content.trim().toLowerCase();
+    return linea === GREETING_COMMAND;
 }
 
 interface Command {
@@ -316,6 +341,43 @@ const COMMANDS: readonly Command[] = [
         summary: { es: 'romper el sistema', en: 'break the system' },
         secretId: 'collapse',
         resolve: () => ({ output: '', effect: { kind: 'collapse' } }),
+    },
+    {
+        name: '//hi',
+        summary: { es: 'saludar', en: 'say hello' },
+        secretId: 'greeting',
+        resolve: (ctx, _args, lang) => {
+            const reply = greetingFor(ctx.greetings, lang);
+            return {
+                output: reply.text,
+                effect: reply.kick ? { kind: 'leave-note' } : SIN_EFECTO,
+            };
+        },
+    },
+    {
+        name: '//date_off',
+        summary: {
+            es: 'soltar el reloj del sistema',
+            en: 'let the system clock go',
+        },
+        secretId: 'date',
+        resolve: (_ctx, _args, lang) => ({
+            output:
+                lang === 'es'
+                    ? [
+                          'REFERENCIA HORARIA LIBERADA.',
+                          '',
+                          'YA NO SÉ EN QUÉ AÑO ESTAMOS.',
+                          'RECARGUE PARA QUE VUELVA.',
+                      ].join('\n')
+                    : [
+                          'TIME REFERENCE RELEASED.',
+                          '',
+                          'I NO LONGER KNOW WHAT YEAR IT IS.',
+                          'RELOAD TO GET IT BACK.',
+                      ].join('\n'),
+            effect: { kind: 'time-drift' },
+        }),
     },
     {
         name: '//clear',

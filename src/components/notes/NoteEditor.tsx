@@ -173,12 +173,22 @@ export default function NoteEditor({
     // misma cosa: el comando nunca queda escrito en la nota.
     const clearNote = useCallback(() => setContent(''), []);
 
+    /** Salir de la nota, por referencia: `handleEscape` se declara más abajo. */
+    const salirRef = useRef<() => void>(noop);
+    const salir = useCallback(() => salirRef.current(), []);
+
     const commands = useNoteCommands({
         notes,
         onOpenDiagnostics: onOpenDiagnostics ?? noop,
         onCollapse: onCollapse ?? noop,
         onClearNote: clearNote,
         onPlayPong: onPlayPong ?? noop,
+        // `//hi` insistido de más: la máquina te echa de la nota.
+        //
+        // Va por referencia porque `handleEscape` se declara más abajo y esto
+        // se evalúa antes. El envoltorio es estable, así que no rehace el hook
+        // en cada render.
+        onLeaveNote: salir,
     });
 
     // Se sacan del objeto para poder declararlas como dependencias sin arrastrar
@@ -414,6 +424,11 @@ export default function NoteEditor({
         // para no meter en las dependencias el objeto entero, que sí cambia de
         // identidad en cada render.
     }, [respuesta, descartar, flush, onBack]);
+
+    // Guardar antes de irse: que te eche no es excusa para perder nada.
+    useEffect(() => {
+        salirRef.current = handleEscape;
+    }, [handleEscape]);
 
     useKeyboardShortcuts({
         onSave: () => void flush(),

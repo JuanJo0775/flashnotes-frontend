@@ -57,6 +57,8 @@ herramientas.
 | Borrar cinco notas para siempre | [§10 La papelera cuenta](#10--la-papelera-lleva-la-cuenta) |
 | Perder la conexión y recuperarla | [§11 La reconexión](#11--la-reconexión) |
 | `//ps` y después `//attach_6` | [§15 vsync-test](#15--vsync-test--el-pong-escondido) |
+| `//hi`, y otra vez, y otra | [§16 El saludo se agota](#16--el-saludo-se-agota) |
+| `//date_off` | [§17 El reloj se suelta](#17--el-reloj-se-suelta) |
 
 ---
 
@@ -841,6 +843,16 @@ misma**.
 
 ### El bloqueo · al sexto colapso
 
+> **El puzzle se endureció.** El patrón era de 5 bytes en una rejilla de 10
+> columnas, y 5 divide a 10: la repetición caía en columnas perfectas y la celda
+> rota saltaba a la vista sin buscarla. Ahora el patrón es de **7**, primo con
+> las 10 columnas, así que se corre una columna por fila y ninguna fila repite la
+> alineación de otra.
+>
+> Y el byte roto ya no es uno al azar —cantaba demasiado— sino **el que tocaba
+> con un solo dígito hexadecimal cambiado**. Sigue sin coincidir con ningún byte
+> del patrón: difícil no es lo mismo que imposible.
+
 **El rearranque ARRANCA y se traba.** Saltárselo era peor: la barra que empieza a
 subir y se queda clavada entre el 52 % y el 83 % cuenta el fallo mucho mejor que
 no intentarlo — primero te hace creer que vuelve. El tope se sortea para que no
@@ -1362,6 +1374,54 @@ jugás, el teclado es del juego.
 Lo que la justifica es el consentimiento. Todo el resto de los efectos *te pasan*;
 éste **lo pediste**. Escape devuelve el teclado, la nota sigue guardándose debajo,
 y el comando nunca llega a la base de datos.
+
+---
+
+# 16 · El saludo se agota
+
+`//hi`. Es la única pieza que RESPONDE a algo que le decís; todo lo demás son
+cosas que la app hace.
+
+La primera vez contesta, y bien — lleva doce piezas diciendo que está sola. El
+chiste está en insistir.
+
+| Veces | Qué contesta |
+| --- | --- |
+| 1–2 | `HOLA. HACÍA RATO QUE NADIE DECÍA NADA.` y cuatro más, al azar |
+| 3–4 | `HOLA OTRA VEZ.` · `SÍ. HOLA.` |
+| 5–6 | `DÉJEME TRABAJAR.` |
+| 7 | `...` |
+| 8 | `HASTA ACÁ LLEGAMOS.` y te saca de la nota |
+
+**Ventana de tres minutos desde el ÚLTIMO saludo, deslizante.** Medirla desde el
+primero haría que alguien saludando despacio durante una hora acabara echado sin
+haber insistido nunca — es el mismo error que volvió inalcanzable el umbral de
+diez colapsos.
+
+Sólo cuenta `//hi`. Sumar en cada comando haría que teclear `//help` ocho veces
+te echara, que no es la broma.
+
+Al echarte **guarda primero**, por la misma vía que Escape: que te eche no es
+excusa para perder nada.
+
+---
+
+# 17 · El reloj se suelta
+
+`//date_off`. La app se apoya en que el sistema «nunca se mudó» de huso —`//date`
+lo dice y se puede verificar mirando tu propio reloj—. Esto es el paso siguiente:
+ya no sabe en qué año está.
+
+La fecha avanza, retrocede y da saltos de minutos, de días y de años. Los saltos
+son **discretos**: un desfase que crece suave se lee como un reloj mal puesto;
+que la fecha salte de golpe se lee como una avería. Mismo criterio que hace que
+la aberración cromática vaya con `steps` y no con un fundido.
+
+Es **determinista**: el mismo instante da siempre el mismo disparate. Si sorteara
+en cada repintado, la pantalla temblaría de números y se leería como parpadeo.
+
+**Sólo lo arregla recargar**, como el fallo cromático. Y es sólo pintura: el
+`updatedAt` que guarda el backend no se toca. Se rompe el reloj, no tus datos.
 
 ---
 

@@ -2,6 +2,22 @@
 // ACCIÓN: REEMPLAZAR COMPLETO
 
 import { getLang, translate } from '@/i18n';
+import { driftedDate } from '@/lib/system/timeDrift';
+
+/**
+ * La fecha que toca PINTAR.
+ *
+ * Con `//date_off` el reloj del sistema se suelta y estas funciones empiezan a
+ * mostrar años que no son. Es sólo pintura: el `updatedAt` que guarda el backend
+ * no se toca y nada de lo escrito corre peligro — se rompe el reloj, no tus
+ * datos.
+ *
+ * Se lee del módulo, igual que `getLang()` más abajo. Arranca apagado, así que
+ * el servidor y el cliente coinciden en el primer render y no hay desajuste de
+ * hidratación; sólo lo enciende un comando, mucho después de montar.
+ */
+const aPintar = (date: Date | string): Date =>
+    driftedDate(typeof date === 'string' ? new Date(date) : date);
 
 /**
  * Formatea una fecha al estilo terminal: YYYY.MM.DD
@@ -18,7 +34,7 @@ import { getLang, translate } from '@/i18n';
  * la hora, pero por dentro nunca se mudó.
  */
 export function formatDate(date: Date | string): string {
-    const d = typeof date === 'string' ? new Date(date) : date;
+    const d = aPintar(date);
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
@@ -32,7 +48,7 @@ export function formatDate(date: Date | string): string {
  * nota guardada a las 22:00 tiene que decir 22:00, no 01:00 del día siguiente.
  */
 export function formatTime(date: Date | string): string {
-    const d = typeof date === 'string' ? new Date(date) : date;
+    const d = aPintar(date);
     const hours = String(d.getHours()).padStart(2, '0');
     const minutes = String(d.getMinutes()).padStart(2, '0');
     const seconds = String(d.getSeconds()).padStart(2, '0');
@@ -82,8 +98,8 @@ export function formatFileSize(bytes: number): string {
  * `getErrorMessage`.
  */
 export function formatRelativeTime(date: Date | string): string {
-    const d = typeof date === 'string' ? new Date(date) : date;
-    const now = new Date();
+    const d = aPintar(date);
+    const now = aPintar(new Date());
     const diff = now.getTime() - d.getTime();
 
     const seconds = Math.floor(diff / 1000);

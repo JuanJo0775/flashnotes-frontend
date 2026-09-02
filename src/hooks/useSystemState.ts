@@ -10,6 +10,7 @@ import {
     levelFor,
     type CollapseLevel,
 } from '@/lib/system/collapseEscalation';
+import { countGreeting } from '@/lib/system/greeting';
 
 export { ESCALATION_WINDOW_MS, LOCKOUT_AT, LOCKOUT_MS };
 export type { CollapseLevel };
@@ -119,6 +120,7 @@ export const SECRET_IDS = [
     'chaos',
     'chroma',
     'pong',
+    'greeting',
 ] as const;
 
 export type SecretId = (typeof SECRET_IDS)[number];
@@ -221,18 +223,46 @@ function readSecrets(): Set<string> {
     }
 }
 
-function readLockout(): number | null {
+interface StoredLockout {
+    /** Cuándo vence. */
+    until: number;
+    /**
+     * Si la señal ya estaba rota cuando el bloqueo empezó.
+     *
+     * El fallo cromático vive SÓLO en memoria a propósito: recargar es la salida
+     * fácil, y esa es su gracia. Pero el bloqueo sí sobrevive a la recarga, y sin
+     * guardar esto pasaba algo que no cuadraba: rompías la señal, entrabas en
+     * fallo crítico, recargabas, resolvías el puzzle — y la app volvía impecable.
+     * Resolver el puzzle acababa arreglando una avería que el puzzle no toca.
+     *
+     * Guardándolo, la señal sigue rota al salir del bloqueo, y sólo la limpia una
+     * recarga cuando ya no hay bloqueo que la sostenga.
+     */
+    chroma: boolean;
+}
+
+function readLockout(): StoredLockout | null {
     try {
         const raw = localStorage.getItem(LOCKOUT_STORAGE_KEY);
         if (!raw) return null;
 
-        const hasta = Number(raw);
+        // Se acepta el formato viejo —un número suelto— para que un bloqueo
+        // guardado antes de este cambio no se pierda ni reviente al leerse.
+        const parsed: unknown = JSON.parse(raw);
+        const registro: StoredLockout =
+            typeof parsed === 'number'
+                ? { until: parsed, chroma: false }
+                : {
+                      until: Number((parsed as StoredLockout)?.until),
+                      chroma: Boolean((parsed as StoredLockout)?.chroma),
+                  };
+
         // Un bloqueo ya vencido no revive: se limpia al leerlo.
-        if (!Number.isFinite(hasta) || hasta <= Date.now()) {
+        if (!Number.isFinite(registro.until) || registro.until <= Date.now()) {
             localStorage.removeItem(LOCKOUT_STORAGE_KEY);
             return null;
         }
-        return hasta;
+        return registro;
     } catch {
         return null;
     }
@@ -258,7 +288,23 @@ let collapseCount: number | null = null;
  * dejar que vuelva es el caso más insistente de todos, y ahí la racha sigue.
  */
 let lastRecoveryAt: number | null = null;
-let lockoutUntil = readLockout();
+const bloqueoGuardado = readLockout();
+let lockoutUntil: number | null = bloqueoGuardado?.until ?? null;
+
+/**
+ * La señal rota vuelve CON el bloqueo.
+ *
+ * Es la única vez que el fallo cromático sobrevive a una recarga, y hace falta:
+ * sin esto, romper la señal → fallo crítico → recargar → resolver el puzzle
+ * devolvía una app impecable, o sea que resolver el puzzle acababa arreglando
+ * una avería que el puzzle no toca. Recargar volvía a ser la salida fácil justo
+ * en el único estado que la niega.
+ *
+ * Seguro para la hidratación porque `SERVER_SNAPSHOT` declara `false`: el
+ * servidor y el primer render del cliente coinciden, y la corrección llega
+ * después.
+ */
+if (bloqueoGuardado?.chroma) chromaticFailure = true;
 let lockoutTimer: ReturnType<typeof setTimeout> | null = null;
 
 let state: SystemState = {
@@ -463,6 +509,24 @@ export function registerThemeToggle(): boolean {
  * escalada castiga insistir en una sesión, no volver mañana. El BLOQUEO es la
  * excepción y sí persiste (ver LOCKOUT_STORAGE_KEY).
  */
+/**
+ * Cuántas veces seguidas saludaste, y cuándo fue la última.
+ *
+ * Viven acá y no en `greeting.ts` porque ese módulo es puro: no tiene reloj ni
+ * memoria propia. Acá viven todos los contadores de sesión, y como el resto, NO
+ * se recuerdan entre recargas — volver mañana no es insistir.
+ */
+let greetings = 0;
+let lastGreetingAt: number | null = null;
+
+/** Suma un saludo y devuelve cuántos van seguidos. */
+export function registerGreeting(now: number = Date.now()): number {
+    greetings = countGreeting(greetings, lastGreetingAt, now);
+    lastGreetingAt = now;
+    markSecretFound('greeting');
+    return greetings;
+}
+
 export function registerCollapse(): CollapseLevel {
     collapseCount = countAfter(collapseCount, lastRecoveryAt, Date.now());
 
@@ -497,7 +561,10 @@ function startLockout() {
     lockoutUntil = Date.now() + LOCKOUT_MS;
 
     try {
-        localStorage.setItem(LOCKOUT_STORAGE_KEY, String(lockoutUntil));
+        localStorage.setItem(
+            LOCKOUT_STORAGE_KEY,
+            JSON.stringify({ until: lockoutUntil, chroma: chromaticFailure })
+        );
     } catch {
         // Sin persistencia el bloqueo dura lo que la pestaña. Aceptable.
     }

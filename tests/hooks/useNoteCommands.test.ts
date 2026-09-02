@@ -18,6 +18,7 @@ const opciones = () => ({
     onCollapse: jest.fn(),
     onClearNote: jest.fn(),
     onPlayPong: jest.fn(),
+    onLeaveNote: jest.fn(),
 });
 
 beforeEach(() => {

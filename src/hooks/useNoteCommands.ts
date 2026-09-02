@@ -4,15 +4,18 @@
 import { useCallback, useState } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { formatLog } from '@/lib/system/requestLog';
+import { startDrift } from '@/lib/system/timeDrift';
 import { formatFileSize, formatTime } from '@/lib/utils/formatters';
 import {
     isCommandLine,
+    isGreetingLine,
     run as runCommand,
     type CommandContext,
 } from '@/lib/system/commands';
 import {
     getSystemState,
     markSecretFound,
+    registerGreeting,
     setEffectsEnabled,
 } from '@/hooks/useSystemState';
 import { useTheme } from '@/hooks/useTheme';
@@ -40,6 +43,8 @@ interface UseNoteCommandsOptions {
     onClearNote: () => void;
     /** Abre el `vsync-test`. Sólo lo dispara `//attach_6`. */
     onPlayPong: () => void;
+    /** `//hi` insistido de más: te saca de la nota. */
+    onLeaveNote: () => void;
 }
 
 interface UseNoteCommandsReturn {
@@ -77,6 +82,7 @@ export function useNoteCommands({
     onCollapse,
     onClearNote,
     onPlayPong,
+    onLeaveNote,
 }: UseNoteCommandsOptions): UseNoteCommandsReturn {
     const [response, setResponse] = useState<string | null>(null);
     const theme = useTheme();
@@ -97,7 +103,15 @@ export function useNoteCommands({
                 secretsFound: system.secretsFound,
                 secretsTotal: system.secretsTotal,
                 log: formatLog(),
+                // Se cuenta ANTES de resolver: la respuesta depende de cuántas
+                // van, incluida ésta. Cuenta aunque el comando no sea `//hi`
+                // sólo si lo es — ver abajo.
+                greetings: 0,
             };
+
+            // La cuenta sólo se toca cuando el comando es el saludo: contar en
+            // cada comando haría que teclear `//help` seis veces te echara.
+            if (isGreetingLine(content)) ctx.greetings = registerGreeting();
 
             const result = runCommand(content, ctx);
             if (!result) return false;
@@ -118,6 +132,12 @@ export function useNoteCommands({
                     break;
                 case 'play-pong':
                     onPlayPong();
+                    break;
+                case 'leave-note':
+                    onLeaveNote();
+                    break;
+                case 'time-drift':
+                    startDrift(Date.now());
                     break;
                 case 'set-effects':
                     setEffectsEnabled(result.effect.enabled);
@@ -142,7 +162,15 @@ export function useNoteCommands({
 
             return true;
         },
-        [notes, theme, onOpenDiagnostics, onCollapse, onClearNote, onPlayPong]
+        [
+            notes,
+            theme,
+            onOpenDiagnostics,
+            onCollapse,
+            onClearNote,
+            onPlayPong,
+            onLeaveNote,
+        ]
     );
 
     const dismiss = useCallback(() => setResponse(null), []);

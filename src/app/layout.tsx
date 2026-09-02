@@ -3,6 +3,7 @@ import { JetBrains_Mono, VT323 } from 'next/font/google';
 import './globals.css';
 import { THEME_BOOT_SCRIPT } from '@/config/theme';
 import { LANG_BOOT_SCRIPT, DEFAULT_LANG } from '@/config/lang';
+import { LOCKOUT_BOOT_SCRIPT } from '@/config/lockout';
 
 const jetbrainsMono = JetBrains_Mono({
     variable: '--font-jetbrains',
@@ -42,6 +43,10 @@ export default function RootLayout({
             <head>
                 <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
                 <script dangerouslySetInnerHTML={{ __html: LANG_BOOT_SCRIPT }} />
+                {/* Y el bloqueo: sin esto, recargar en pleno fallo crítico
+                    enseñaba la pantalla de inicio un segundo antes de volver al
+                    error, y recargar parecía funcionar. */}
+                <script dangerouslySetInnerHTML={{ __html: LOCKOUT_BOOT_SCRIPT }} />
             </head>
             <body>{children}</body>
         </html>

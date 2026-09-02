@@ -23,8 +23,24 @@ import type { Random } from '@/lib/system/lore';
 export const DUMP_COLS = 10;
 export const DUMP_ROWS = 6;
 
-/** Cuántos bytes tiene el patrón que se repite. */
-const PATTERN_LEN = 5;
+/**
+ * Cuántos bytes tiene el patrón que se repite.
+ *
+ * SIETE, Y ES PRIMO CON LAS DIEZ COLUMNAS A PROPÓSITO.
+ *
+ * Eran cinco, y cinco divide a diez: la repetición caía en columnas perfectas —
+ * cada columna mostraba siempre el mismo byte— y la celda rota saltaba a la
+ * vista sin buscarla. El puzzle se resolvía de un vistazo y no era un puzzle.
+ *
+ * Con siete el patrón se corre una columna en cada fila y tarda siete filas en
+ * volver a alinearse; como el volcado tiene seis, ninguna fila repite la
+ * alineación de otra. Hay que leer el patrón de verdad en vez de escanear una
+ * columna.
+ *
+ * Un test lo fija calculando el máximo común divisor: si alguien cambia el
+ * ancho de la rejilla, salta.
+ */
+export const PATTERN_LEN = 7;
 
 export interface MemoryDump {
     /** Las celdas, en orden de lectura. */
@@ -41,6 +57,44 @@ function byte(random: Random): string {
         .toString(16)
         .toUpperCase()
         .padStart(2, '0');
+}
+
+const HEX = '0123456789ABCDEF';
+
+/**
+ * El byte que rompe el patrón: el que tocaba, con UN dígito cambiado.
+ *
+ * Antes era un byte al azar y cantaba demasiado: entre bytes repetidos, uno sin
+ * ninguna relación se ve de lejos. Cambiando un solo dígito hexadecimal sigue
+ * siendo hallable —el patrón entero está alrededor para comparar— pero hay que
+ * mirar de verdad.
+ *
+ * DIFÍCIL NO ES LO MISMO QUE IMPOSIBLE: el resultado nunca puede coincidir con
+ * otro byte del patrón, o la celda se leería como parte de la repetición y el
+ * puzzle se quedaría sin solución visible. Si ninguna variante de un dígito
+ * sirve —sólo pasa con patrones muy apretados— se cambia el otro dígito.
+ */
+function brokenByte(
+    esperado: string,
+    pattern: readonly string[],
+    random: Random
+): string {
+    const candidatos: string[] = [];
+
+    for (let pos = 0; pos < 2; pos += 1) {
+        for (const d of HEX) {
+            if (d === esperado[pos]) continue;
+            const v =
+                pos === 0 ? `${d}${esperado[1]}` : `${esperado[0]}${d}`;
+            if (!pattern.includes(v)) candidatos.push(v);
+        }
+    }
+
+    // No puede quedar vacío con un patrón de siete bytes distintos —hay treinta
+    // variantes de un dígito— pero si algún día lo quedara, no se rompe.
+    if (candidatos.length === 0) return esperado === 'FF' ? '00' : 'FF';
+
+    return candidatos[Math.floor(random() * candidatos.length) % candidatos.length];
 }
 
 export function buildDump(random: Random = Math.random): MemoryDump {
@@ -63,19 +117,7 @@ export function buildDump(random: Random = Math.random): MemoryDump {
     // qué compararla y el puzzle sería injusto.
     const oddIndex = 1 + Math.floor(random() * (total - 1));
 
-    // El byte roto tiene que ser distinto del que le tocaba, pero además NO debe
-    // coincidir con ningún otro del patrón: si coincidiera, la celda se leería
-    // como parte de la repetición y el puzzle no tendría solución visible.
-    let roto = byte(random);
-    let intento = 0;
-    while (pattern.includes(roto) && intento < 32) {
-        roto = byte(() => (random() + intento * 0.071) % 1);
-        intento += 1;
-    }
-    if (pattern.includes(roto)) roto = 'FF';
-    if (pattern.includes(roto)) roto = '00';
-
-    cells[oddIndex] = roto;
+    cells[oddIndex] = brokenByte(pattern[oddIndex % PATTERN_LEN], pattern, random);
 
     return { cells, pattern, oddIndex };
 }

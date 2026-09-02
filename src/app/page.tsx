@@ -15,6 +15,7 @@ import ChromaticFailure from '@/components/effects/ChromaticFailure';
 import PhantomError from '@/components/effects/PhantomError';
 import SystemLockout from '@/components/effects/SystemLockout';
 import PongOverlay from '@/components/effects/PongOverlay';
+import { LOCKOUT_BOOT_ATTR } from '@/config/lockout';
 import { useNotes } from '@/hooks/useNotes';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -188,6 +189,24 @@ export default function Home() {
     const glitchStyle = glitch.active
         ? ({ '--glitch-amp': `${glitch.amplitudePx}px` } as React.CSSProperties)
         : undefined;
+
+    /**
+     * Retira el velo del arranque bloqueado.
+     *
+     * Va acá y NO dentro de la capa de bloqueo: si el bloqueo venció entre el
+     * script en línea y este momento, esa capa no se monta nunca y el velo se
+     * quedaría puesto para siempre. Esto corre pase lo que pase.
+     *
+     * Agendado a la siguiente vuelta porque `useSyncExternalStore` devuelve el
+     * estado del SERVIDOR en el primer render: cuando este temporizador dispara,
+     * el bloqueo ya está leído y la capa —si toca— ya está pintada.
+     */
+    useEffect(() => {
+        const id = setTimeout(() => {
+            document.documentElement.removeAttribute(LOCKOUT_BOOT_ATTR);
+        }, 0);
+        return () => clearTimeout(id);
+    }, []);
 
     const isEditing = view === 'editor' && selectedNote !== null;
 
