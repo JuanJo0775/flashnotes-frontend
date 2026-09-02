@@ -27,6 +27,19 @@ type Localized = Readonly<Record<Lang, string>>;
 const STORAGE_KEY = 'flashnotes:art';
 
 /**
+ * Las que además se han VISTO en el catálogo.
+ *
+ * ⚠ GANARLA Y VERLA SON DOS COSAS. Una pieza ganada no brota sola en la
+ * colección: hay que teclear `//art` para que se revele.
+ *
+ * No es un trámite de más — es lo que convierte el catálogo en algo que se
+ * CONSULTA. Si apareciera sola en la pestaña, `//art` no serviría para nada:
+ * sabrías lo que tenés sin preguntar. Así, encontrar una pieza deja una pregunta
+ * abierta —«¿cuál me habrá tocado?»— hasta que vas a mirar.
+ */
+const SEEN_KEY = 'flashnotes:artSeen';
+
+/**
  * De dónde sale cada pieza.
  *
  * OCHO PIEZAS, OCHO CAMINOS, y ninguno da más de una. Si un canal diera piezas
@@ -84,29 +97,49 @@ export const ART: readonly ArtPiece[] = [
             es: 'POLILLA · HALLADA EN EL RELÉ 70, 1947',
             en: 'MOTH · FOUND IN RELAY 70, 1947',
         },
+        /*
+         * LA MEJOR DE LAS OCHO, y la que cuenta el proyecto entero. Sólo se
+         * ensanchó a la medida de la serie y se le puso el relé alrededor: la
+         * polilla no estaba suelta, estaba DENTRO de un contacto.
+         */
         art: [
-            '     \\         /     ',
-            '  .--.\\.-----./.--.  ',
-            " /    \\|     |/    \\ ",
-            '|  /\\  |  .  |  /\\  |',
-            " \\ \\/  '.___.'  \\/ / ",
-            "  '--'    |    '--'  ",
-            '          |          ',
+            '+======================================+',
+            '|  |    |    |    |    |    |    |     |',
+            '|                                      |',
+            '|      .--.       ||       .--.        |',
+            '|     (    )      ||      (    )       |',
+            '|    ( .::. )=====||=====( .::. )      |',
+            '|     (    )   .--++--.   (    )       |',
+            '|      :--:    :  ..  :    :--:        |',
+            '|              :  ..  :                |',
+            '|               :----:                 |',
+            '|                 ||                   |',
+            '|  |    |    |    |    |    |    |     |',
+            '+======================================+',
         ].join('\n'),
     },
     {
         id: 'floppy',
         source: 'v02',
         caption: { es: 'DISQUETE · 1,44 MB', en: 'FLOPPY DISK · 1.44 MB' },
+        /*
+         * SE GANA ENTRANDO EN LA v0.2, y por eso es un disquete: el soporte donde
+         * esa versión guardaba lo suyo, y que nadie migró. La etiqueta lleva su
+         * número de versión escrito a mano, como se escribían.
+         */
         art: [
-            ' .-----------------. ',
-            ' | .-------------. | ',
-            ' | |             | | ',
-            ' | |             | | ',
-            " | '-------------' | ",
-            ' |    .------.     | ',
-            ' |    |::::::|     | ',
-            " '----'------'-----' ",
+            '   +==============================+     ',
+            '   |  +========================+  |     ',
+            '   |  |                        |  |==+  ',
+            '   |  |     v 0 . 2            |  |  |  ',
+            '   |  |     ...............    |  |  |  ',
+            '   |  |                        |  |==+  ',
+            '   |  +========================+  |     ',
+            '   |                              |     ',
+            '   |     +==============+         |     ',
+            '   |     | :::::::::::: |         |     ',
+            '   |     | :::::::::::: |         |     ',
+            '   +=====+==============+=========+     ',
         ].join('\n'),
     },
     {
@@ -116,29 +149,48 @@ export const ART: readonly ArtPiece[] = [
             es: 'TERMINAL · SIN SEÑAL DESDE ENTONCES',
             en: 'TERMINAL · NO SIGNAL SINCE',
         },
+        /*
+         * El tubo, con su peana. Se ensanchó a la medida de la serie y se le
+         * puso el barrido dentro — la misma línea que cruza toda la app, aquí
+         * quieta para siempre.
+         */
         art: [
-            '  .-------------------.  ',
-            '  |  ...............  |  ',
-            '  |  .             .  |  ',
-            '  |  .   > _       .  |  ',
-            '  |  .             .  |  ',
-            '  |  ...............  |  ',
-            "  '--------.-.--------'  ",
-            "        .---'-'---.      ",
-            "       '-----------'     ",
+            '     +============================+     ',
+            '     |                            |     ',
+            '     |  ........................  |     ',
+            '     |  .                      .  |     ',
+            '     |  .  > _                 .  |     ',
+            '     |  .                      .  |     ',
+            '     |  .~~~~~~~~~~~~~~~~~~~~~~.  |     ',
+            '     |  .                      .  |     ',
+            '     |  ........................  |     ',
+            '     |                            |     ',
+            '     +=============+==+===========+     ',
+            '                   |  |                 ',
+            '           +=======+==+=======+         ',
+            '        +======================+        ',
         ].join('\n'),
     },
     {
         id: 'cassette',
         source: 'word',
         caption: { es: 'CINTA · LADO A', en: 'TAPE · SIDE A' },
+        /*
+         * Estaba APLASTADA: seis filas para algo que necesita diez para tener
+         * carretes. Ahora los tiene, y se ve la cinta pasando de uno al otro.
+         */
         art: [
-            ' .---------------------. ',
-            ' |  .--.         .--.  | ',
-            ' | (    )       (    ) | ',
-            " |  '--'         '--'  | ",
-            ' |   ...............   | ',
-            " '---------------------' ",
+            '  +==================================+  ',
+            '  |                                  |  ',
+            '  |   .------.          .------.     |  ',
+            '  |  ( ...... )        ( ...... )    |  ',
+            '  |  ( .:oo:. )========( .:oo:. )    |  ',
+            '  |  ( ...... )        ( ...... )    |  ',
+            '  |   :------:          :------:     |  ',
+            '  |                                  |  ',
+            '  |  ::::::::::::::::::::::::::::    |  ',
+            '  |                                  |  ',
+            '  +==================================+  ',
         ].join('\n'),
     },
     {
@@ -148,12 +200,27 @@ export const ART: readonly ArtPiece[] = [
             es: 'CURSOR · ESPERANDO DESDE HACE RATO',
             en: 'CURSOR · WAITING FOR A WHILE',
         },
+        /*
+         * SE GANA CON EL PONG, así que el dibujo es la pista: dos palas, la
+         * bola en medio, y el cursor esperando turno abajo.
+         *
+         * La anterior era un rectángulo con un `>` dentro y no decía nada que la
+         * app no dijera ya. Una pieza que se gana jugando tiene que enseñar la
+         * partida.
+         */
         art: [
-            '   _______________   ',
-            '  |               |  ',
-            '  |  >            |  ',
-            '  |               |  ',
-            "  '---------------'  ",
+            '+--------------------------------------+',
+            '|                                      |',
+            '|  ||                            ||    |',
+            '|  ||                            ||    |',
+            '|  ||             o              ||    |',
+            '|  ||                            ||    |',
+            '|  ||                            ||    |',
+            '|                                      |',
+            '|  ::::::::::::::::::::::::::::::::    |',
+            '|                                      |',
+            '|  > _                                 |',
+            '+--------------------------------------+',
         ].join('\n'),
     },
     {
@@ -163,15 +230,25 @@ export const ART: readonly ArtPiece[] = [
             es: 'ANTENA · NADIE DEL OTRO LADO',
             en: 'DISH · NOBODY ON THE OTHER SIDE',
         },
+        /*
+         * SE GANA EN EL TABLERO DEGRADADO, que es el difícil. Es la antena que
+         * lleva escuchando sin que conteste nadie — y las ondas que salen de ella
+         * se pierden hacia arriba.
+         */
         art: [
-            '      .-""-.      ',
-            "    .'      '.    ",
-            '   /          \\   ',
-            '  |     ..     |  ',
-            "   \\    ''    /   ",
-            "    '.      .'    ",
-            '      |    |      ',
-            '     -+----+-     ',
+            '   ~   ~   ~   ~   ~   ~   ~   ~   ~    ',
+            '     ~     ~     ~     ~     ~     ~    ',
+            '                                        ',
+            '           .------------.               ',
+            '         .-              -.             ',
+            '        (        ..        )            ',
+            '        (        ..        )            ',
+            '         :-              -:             ',
+            '           :------------:               ',
+            '                |  |                    ',
+            '                |  |                    ',
+            '             +==+==+==+                 ',
+            '            ::::::::::::                ',
         ].join('\n'),
     },
     {
@@ -181,14 +258,29 @@ export const ART: readonly ArtPiece[] = [
             es: 'PILOTO · ENCENDIDO DESDE EL PRIMER ARRANQUE',
             en: 'PILOT LAMP · ON SINCE FIRST BOOT',
         },
+        /*
+         * SE GANA ENCONTRÁNDOLOS TODOS, así que es la lámpara que lleva
+         * encendida desde el primer arranque — la que estuvo ahí mientras
+         * buscabas.
+         *
+         * La anterior parecía un bote: le faltaba la rosca. Ahora la tiene, y el
+         * halo de tildes arriba y abajo es lo que la enciende.
+         */
         art: [
-            "      .-'-.      ",
-            '     /     \\     ',
-            '    |  ...  |    ',
-            '    |  ...  |    ',
-            "     \\ ... /     ",
-            '      |___|      ',
-            '      |___|      ',
+            '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+            '                 .----.                 ',
+            '              .-:      :-.              ',
+            '             (            )             ',
+            '            (   ::::::::   )            ',
+            '            (   ::::::::   )            ',
+            '             (            )             ',
+            '              -:        :-              ',
+            '                |======|                ',
+            '                |------|                ',
+            '                |======|                ',
+            '                |------|                ',
+            '                 .----.                 ',
+            '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
         ].join('\n'),
     },
     {
@@ -198,12 +290,25 @@ export const ART: readonly ArtPiece[] = [
             es: 'LLAVE · LA CERRADURA YA NO EXISTE',
             en: 'KEY · THE LOCK IS GONE',
         },
+        /*
+         * EL SECRETO MÁS DIFÍCIL, y por eso la cerradura ya no existe: para
+         * cuando la conseguís, no queda nada que abrir.
+         *
+         * En la anterior el paletón salía a otra altura que el ojo y se veía
+         * torcida. Acá el vástago sale del centro exacto y los dientes cuelgan
+         * de él.
+         */
         art: [
-            '    .--.             ',
-            "   /    \\            ",
-            '  |  ..  |======_=_  ',
-            "   \\    /       | |  ",
-            "    '--'        '-'  ",
+            '                                        ',
+            '        .-~~~~-.                        ',
+            '      .-        -.                      ',
+            '     |    .--.    |                     ',
+            '     |   |    |   |=================+   ',
+            '     |    :--:    |              |  |   ',
+            '      -.        .-               |  |   ',
+            '        :-~~~~-:                 -  -   ',
+            '                                        ',
+            '     : : : : : : : : : : : : : : : :    ',
         ].join('\n'),
     },
 ];
@@ -241,8 +346,50 @@ export function clearFound() {
     ultima = null;
     try {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(SEEN_KEY);
     } catch {
         // Nada que hacer.
+    }
+}
+
+/** Las piezas que ya se vieron en el catálogo, y por tanto están en la colección. */
+export function readRevealed(): Set<string> {
+    try {
+        const raw = localStorage.getItem(SEEN_KEY);
+        if (!raw) return new Set();
+
+        const parsed: unknown = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return new Set();
+
+        const validos = new Set(ART.map((a) => a.id));
+        return new Set(
+            parsed.filter(
+                (id): id is string => typeof id === 'string' && validos.has(id)
+            )
+        );
+    } catch {
+        return new Set();
+    }
+}
+
+/**
+ * Consultar el catálogo revela TODO lo que tengas ganado.
+ *
+ * Todo de una vez y no de a una: consultar el inventario enseña el inventario.
+ * Ir revelando una por consulta sería un trámite, y el trámite no es la gracia.
+ *
+ * Lo que ganes DESPUÉS necesita otra consulta, que es justo lo que mantiene vivo
+ * el comando.
+ */
+export function revealArt() {
+    const found = readFound();
+    if (found.size === 0) return;
+
+    try {
+        localStorage.setItem(SEEN_KEY, JSON.stringify([...found]));
+    } catch {
+        // Sin sitio, la colección se queda como estaba. No se pierde nada
+        // ganado: eso vive en su propia clave.
     }
 }
 

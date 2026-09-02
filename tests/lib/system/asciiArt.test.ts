@@ -63,20 +63,14 @@ describe('asciiArt · sólo ASCII imprimible', () => {
         }
     });
 
-    test('ninguna es tan alta como para tener que desplazarla', () => {
-        // Un dibujo que no entra de una vez deja de ser un dibujo.
-        for (const p of ART) {
-            expect(p.art.split('\n').length).toBeLessThanOrEqual(12);
-        }
-    });
-
-    test('ni tan ancha como para romper el hueco del editor', () => {
-        for (const p of ART) {
-            for (const f of p.art.split('\n')) {
-                expect(f.length).toBeLessThanOrEqual(40);
-            }
-        }
-    });
+    /*
+     * ⚠ EL ALTO Y EL ANCHO SE COMPRUEBAN EN `artShape.test.ts`, no acá.
+     *
+     * Había dos tests midiendo lo mismo con límites distintos —doce filas acá,
+     * dieciséis allá— y al crecer las piezas a la serie de cuarenta uno pasaba y
+     * el otro no. Dos fuentes de verdad para un número es una que se va a quedar
+     * vieja, y la que se queda vieja es siempre la que nadie mira.
+     */
 });
 
 describe('asciiArt · coleccionarlas', () => {

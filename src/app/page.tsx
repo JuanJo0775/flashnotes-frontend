@@ -1,7 +1,7 @@
 // src/app/page.tsx
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import StatusBar from '@/components/layout/StatusBar';
@@ -25,6 +25,7 @@ import V02Skin from '@/components/effects/V02Skin';
 import V02Glitches from '@/components/effects/V02Glitches';
 import CollectionView from '@/components/notes/CollectionView';
 import { splitCollectibles, markCollectible } from '@/lib/system/collectibles';
+import { readRevealed } from '@/lib/system/asciiArt';
 import { markSecretFound, resetEverything } from '@/hooks/useSystemState';
 import { createV02Note, saveV02Note } from '@/lib/system/v02Notes';
 import { useV02Notes } from '@/hooks/useV02Notes';
@@ -47,6 +48,9 @@ import type { Note, SaveState, View } from '@/types/note.types';
 
 /** Referencia constante: una lista nueva en cada render remontaría todo. */
 const VACIO: never[] = [];
+
+/** No hay a qué suscribirse: sólo interesa el salto de servidor a cliente. */
+const SIN_CAMBIOS = () => () => {};
 
 export default function Home() {
     const [view, setView] = useState<View>('notes');
@@ -251,6 +255,25 @@ export default function Home() {
      */
     const { notes: misNotas, collectibles } = splitCollectibles(notes);
 
+    /*
+     * Cuántas piezas hay en la colección.
+     *
+     * Sale de las PIEZAS REVELADAS, no de las notas guardadas: `//keep` es para
+     * llevarse una copia a una nota y trastear con ella, y la colección no se
+     * entera. Y sólo cuenta lo revelado —lo que ganaste y además fuiste a mirar
+     * con `//art`— porque si brotara solo, el comando no serviría para nada.
+     */
+    const montado = useSyncExternalStore(
+        SIN_CAMBIOS,
+        () => true,
+        () => false
+    );
+
+    // Se lee del almacenamiento y no del estado de React: `useSyncExternalStore`
+    // devuelve el snapshot del servidor en el primer render del cliente, y ahí
+    // no hay `localStorage` (REGLAS · C2).
+    const piezasVistas = montado ? readRevealed().size : 0;
+
     /**
      * LOS ARCHIVOS DE LA v0.2 SON OTROS.
      *
@@ -377,7 +400,7 @@ export default function Home() {
                     currentView={view}
                     onViewChange={handleViewChange}
                     onCollapse={() => setCollapse(registerCollapse())}
-                        collectionCount={collectibles.length}
+                        collectionCount={piezasVistas}
                     />,
                     'head'
                 )}
@@ -437,7 +460,7 @@ export default function Home() {
                                 <TrashView />
                             )
                         ) : view === 'collection' ? (
-                            <CollectionView pieces={collectibles} />
+                            <CollectionView />
                         ) : (
                             <NotesList
                                 notes={notasVisibles}

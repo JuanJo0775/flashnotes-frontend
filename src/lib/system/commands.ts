@@ -4,7 +4,7 @@ import { LIMITS } from '@/config/limits';
 import { formatDuration } from '@/lib/utils/formatters';
 import { getLang, fill, pickPlural } from '@/i18n';
 import { greetingFor, chatReplyFor, KILL_AFTER_KICKS } from '@/lib/system/greeting';
-import { awardFrom, catalogRows, pieceByNumber, rememberDrawn, canKeep, lastDrawn, asNote, noteTitle } from '@/lib/system/asciiArt';
+import { awardFrom, revealArt, catalogRows, pieceByNumber, rememberDrawn, canKeep, lastDrawn, asNote, noteTitle } from '@/lib/system/asciiArt';
 import { isUnlocked, markUsed } from '@/lib/system/commandUnlock';
 import { isPrank } from '@/lib/system/wipe';
 import {
@@ -823,6 +823,11 @@ const COMMANDS: readonly Command[] = [
          * escondido.
          */
         resolve: (_ctx, _args, lang) => {
+            // CONSULTAR REVELA. Lo que ganaste no está en la colección hasta que
+            // vienes a mirar qué tenés — es lo que hace que este comando sirva
+            // para algo en vez de ser una lista de lo que ya sabés.
+            revealArt();
+
             const filas = catalogRows(lang);
 
             // SIN NINGUNA PIEZA, NO EXISTE. Un catálogo vacío anunciaría que hay
