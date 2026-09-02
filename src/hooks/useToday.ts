@@ -3,6 +3,7 @@
 
 import { useSyncExternalStore } from 'react';
 import { formatDate } from '@/lib/utils/formatters';
+import { subscribeToClock } from '@/hooks/useClock';
 
 /**
  * La fecha de hoy, pintada SÓLO en el cliente.
@@ -23,12 +24,22 @@ import { formatDate } from '@/lib/utils/formatters';
  * duplicado que se rompe por un lado y no por el otro.
  */
 
-// La fecha no cambia mientras la pestaña está abierta: no hay nada a lo que
-// suscribirse, sólo la diferencia entre el render del servidor y el del cliente.
-const subscribeToNothing = () => () => {};
+/*
+ * SE SUSCRIBE AL RELOJ, y hace falta.
+ *
+ * La fecha no cambia sola mientras la pestaña está abierta, así que antes esto
+ * no se suscribía a nada: se calculaba una vez y ahí se quedaba. Con `//date_off`
+ * eso lo dejaba INÚTIL — el reloj se volvía loco a la vista y la fecha de la
+ * cabecera seguía impasible, que es justo donde más se nota que el sistema
+ * perdió la referencia.
+ *
+ * Colgándola del latido del reloj, la fecha salta de día, de mes y de año igual
+ * que la hora. El coste es un repintado por segundo de un `<span>`, y sólo
+ * cambia de valor cuando el texto cambia de verdad.
+ */
 const getToday = () => formatDate(new Date());
 const getNoDate = () => null;
 
 export function useToday(): string | null {
-    return useSyncExternalStore(subscribeToNothing, getToday, getNoDate);
+    return useSyncExternalStore(subscribeToClock, getToday, getNoDate);
 }

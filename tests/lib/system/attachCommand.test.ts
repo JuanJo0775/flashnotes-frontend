@@ -1,4 +1,5 @@
 // tests/lib/system/attachCommand.test.ts
+import { clearUsed } from '@/lib/system/commandUnlock';
 import { run, type CommandContext } from '@/lib/system/commands';
 
 const ctx = (over: Partial<CommandContext> = {}): CommandContext => ({
@@ -19,6 +20,13 @@ const ctx = (over: Partial<CommandContext> = {}): CommandContext => ({
 /** `run` devuelve null si la línea no era un comando; acá siempre lo es. */
 // El azar en 0,5 esquiva las ramas aleatorias de `//help`.
 const corre = (linea: string) => run(linea, ctx(), () => 0.5)!;
+
+beforeEach(() => {
+    // Usar un comando escondido lo desbloquea, y eso persiste en
+    // `localStorage`: sin limpiarlo, un test contamina al siguiente.
+    localStorage.clear();
+    clearUsed();
+});
 
 describe('//ps · la única puerta al vsync-test', () => {
     // `//ps` era decoración pura: listaba cinco procesos y ya. Ahora es lo único

@@ -26,28 +26,10 @@ de error del fallo cromático suelte un `-.-.` suelto.
 
 ---
 
-# B · Los comandos escondidos
+# B · Los comandos escondidos, lo que falta
 
-## B1 · Censurados en vez de contados
-
-Hoy `//help` dice `13 COMANDOS NO LISTADOS.` Tiene que **enseñarlos tachados**,
-con letras al azar en lugar de las de verdad, como un documento censurado:
-
-```
-  //xkqm        [ILEGIBLE]
-  //vbnr        [ILEGIBLE]
-```
-
-Se ve que hay algo, se ve cuántos, y no se ve qué.
-
-## B2 · Se desbloquean al USARLOS, no al verlos
-
-Importante: encontrar el nombre no basta. **El comando pasa a estar listado sólo
-cuando lo tecleás.** Ver no es descubrir.
-
-## B3 · `//hi` pasa a la lista de escondidos
-
-Es demasiado bueno para regalarlo en la ayuda.
+B1 (tachados animados), B2 (se desbloquean al usarlos) y B3 (`//hi` escondido) ya
+están, en su sitio dentro de la lista. Queda:
 
 ## B4b · Insistir después de que te eche
 
@@ -131,4 +113,7 @@ preguntar si se hizo.
 | `//help` por niveles y sus tres fugas | [EFECTOS §19](EFECTOS.md) | `505be7c` |
 | El pong `vsync-test` | [EFECTOS §15](EFECTOS.md) | `7ff3dc5` |
 | El reloj de verdad, 24 h con segundos | [EFECTOS §20](EFECTOS.md) | pendiente |
-| Tres clics → morse, palabra por sesión | [EFECTOS §20](EFECTOS.md) | pendiente |
+| Tres clics → morse, palabra por sesión | [EFECTOS §20](EFECTOS.md) | `70fdcca` |
+| Comandos tachados que se revuelven, en su sitio | [EFECTOS §19](EFECTOS.md) | pendiente |
+| Se desbloquean al USARLOS, no al verlos | [EFECTOS §19](EFECTOS.md) | pendiente |
+| `//date_off` descontrola también la fecha | [EFECTOS §17](EFECTOS.md) | pendiente |

@@ -5,6 +5,7 @@ import { formatDuration } from '@/lib/utils/formatters';
 import { getLang, fill, pickPlural } from '@/i18n';
 import { greetingFor } from '@/lib/system/greeting';
 import { drawArt, canKeep, lastDrawn, asNote } from '@/lib/system/asciiArt';
+import { isUnlocked, markUsed } from '@/lib/system/commandUnlock';
 import type { Lang } from '@/config/lang';
 import type { Localized, LocalizedPlural, Vars } from '@/i18n';
 
@@ -64,9 +65,27 @@ export type CommandEffect =
     | { kind: 'write-note'; text: string }
     | { kind: 'set-effects'; enabled: boolean };
 
+/** Una fila de la respuesta: texto, o un nombre que no se deja leer. */
+export type ReplyRow = { text: string } | { scramble: number };
+
 export interface CommandResult {
     output: string;
     effect: CommandEffect;
+    /**
+     * La respuesta por filas, cuando alguna no es texto.
+     *
+     * La usa `//help`: los comandos que todavía no descubriste no se listan
+     * aparte ni al final, ocupan SU SITIO en la lista y se pintan
+     * revolviéndose. Descubrir uno no lo añade: destapa el hueco que ya tenía.
+     *
+     * Y se revuelven en vez de decir «ilegible» porque un rótulo fijo es la app
+     * contándote que hay algo escondido, mientras que unas letras que no paran
+     * quietas SON algo escondido.
+     *
+     * De las tachadas viaja el LARGO y no el nombre: lo que no está no se puede
+     * leer en el inspector.
+     */
+    rows?: ReplyRow[];
     /** Qué secreto queda marcado como hallado, si marca alguno. */
     secretId?: string;
 }
@@ -200,10 +219,6 @@ const T = {
     keepDone: {
         es: 'AHÍ LA TIENE. NO LA PIERDA.',
         en: 'THERE IT IS. DO NOT LOSE IT.',
-    },
-    unlisted: {
-        es: '{n} COMANDOS NO LISTADOS.',
-        en: '{n} COMMANDS NOT LISTED.',
     },
     leak: {
         es: 'UNO SE ME ESCAPÓ: {cmd}',
@@ -345,7 +360,9 @@ function pickOne(
 
 /** El nombre de uno de los escondidos, al azar. */
 function leakOne(random: () => number): string {
-    const ocultos = COMMANDS.filter((c) => c.hidden);
+    // Sólo los que siguen tachados: soltar uno que ya usaste no es una fuga.
+    const ocultos = COMMANDS.filter((c) => c.hidden && !isUnlocked(c.name));
+    if (ocultos.length === 0) return '';
     const i = Math.min(ocultos.length - 1, Math.floor(random() * ocultos.length));
     return ocultos[i].name;
 }
@@ -362,29 +379,42 @@ const COMMANDS: readonly Command[] = [
             // un desplante, no una avería.
             if (random() < SNARK_ODDS) return texto(pickOne(HELP_SNARK, lang, random));
 
-            const listados = COMMANDS.filter((c) => !c.hidden);
-            const ocultos = COMMANDS.length - listados.length;
+            // Un comando escondido pasa a listarse cuando lo USÁS. Ver no es
+            // descubrir: leer su nombre en una ventana de error no basta, hay
+            // que teclearlo.
+            const visible = (c: Command) => !c.hidden || isUnlocked(c.name);
+            const tachados = COMMANDS.filter((c) => !visible(c));
+            const soltado = tachados.length > 0 ? leakOne(random) : '';
 
-            return texto(
-                [
-                    T.availableCommands[lang],
-                    '',
-                    ...listados.map(
-                        (c) => `  ${c.name.padEnd(12)} ${c.summary[lang]}`
-                    ),
-                    '',
-                    // DICE CUÁNTOS FALTAN, PERO NO CUÁLES. Sin esto los comandos
-                    // escondidos serían inalcanzables y nada lo delataría — el
-                    // error exacto que ya se cometió con el umbral de diez
-                    // colapsos. Sabés que hay que buscar; sigue habiendo qué.
-                    fill(T.unlisted[lang], { n: ocultos }),
-                    // Y una de cada cuatro veces suelta UNO: la red que garantiza
-                    // que, insistiendo, todo acaba encontrándose.
-                    ...(random() < LEAK_ODDS
-                        ? ['', fill(T.leak[lang], { cmd: leakOne(random) })]
-                        : []),
-                ].join('\n')
-            );
+            // CADA COMANDO OCUPA SU SITIO, descubierto o no. Antes los tachados
+            // iban todos al final, y eso contaba de más: se veía de un vistazo
+            // cuáles eran nuevos y cuáles no. Con el orden de siempre,
+            // descubrir uno no lo añade a la lista — destapa el hueco que ya
+            // tenía, que es lo que de verdad pasa.
+            const filas: ReplyRow[] = [
+                { text: T.availableCommands[lang] },
+                { text: '' },
+                ...COMMANDS.map((c): ReplyRow =>
+                    visible(c)
+                        ? { text: `  ${c.name.padEnd(12)} ${c.summary[lang]}` }
+                        : { scramble: c.name.length - COMMAND_PREFIX.length }
+                ),
+                // Y una de cada cuatro veces suelta UNO entero: la red que
+                // garantiza que, insistiendo, todo acaba encontrándose.
+                ...(soltado && random() < LEAK_ODDS
+                    ? [{ text: '' }, { text: fill(T.leak[lang], { cmd: soltado }) }]
+                    : []),
+            ];
+
+            return {
+                // El texto plano es lo que se teclea y lo que mide los tiempos;
+                // las filas tachadas cuentan como una línea vacía de su ancho.
+                output: filas
+                    .map((f) => ('text' in f ? f.text : ''))
+                    .join('\n'),
+                effect: SIN_EFECTO,
+                rows: filas,
+            };
         },
     },
     {
@@ -532,6 +562,7 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//hi',
+        hidden: true,
         summary: { es: 'saludar', en: 'say hello' },
         secretId: 'greeting',
         resolve: (ctx, _args, lang) => {
@@ -710,8 +741,12 @@ export function run(
     const capturado = command.match?.exec(corto)?.[1];
     const args = capturado ?? resto.join(' ');
 
-    const { output, effect, secretId } = command.resolve(ctx, args, lang, random);
-    return { output, effect, secretId: secretId ?? command.secretId };
+    // USARLO lo desbloquea. Va acá y no dentro de cada comando para que ninguno
+    // pueda olvidarse de hacerlo.
+    if (command.hidden) markUsed(command.name);
+
+    const { output, effect, secretId, rows } = command.resolve(ctx, args, lang, random);
+    return { output, effect, rows, secretId: secretId ?? command.secretId };
 }
 
 // ------------------------------------------------------------------

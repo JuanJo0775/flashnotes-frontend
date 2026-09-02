@@ -496,7 +496,19 @@
    Dos clases suben la especificidad por encima y el orden deja de importar. */
 .editor-placeholder.editor-reply {
     color: var(--color-body);
-    z-index: 1;
+
+    /* ⚠ TIENE QUE GANARLE AL TEXTAREA, y por eso es 2 y no 1.
+       El textarea es `position: relative; z-index: 1`, y la respuesta era
+       `absolute; z-index: 1`: a igualdad de z-index gana el que va DESPUÉS en el
+       documento, y el textarea va después. Resultado: la barra de desplazamiento
+       aparecía, pero la rueda del ratón se la comía el textarea y la respuesta
+       no bajaba.
+ 
+       Se diagnosticó con `document.elementFromPoint()` sobre el centro de la
+       respuesta, que devolvía `TEXTAREA`. Disparar un `wheel` sobre el elemento
+       a mano NO lo detecta: salta el impacto del ratón y prueba el mecanismo en
+       vez del camino. */
+    z-index: 2;
 
     /* SE DESBORDABA. La respuesta se pinta con `position: absolute; inset: 0`
        encima del editor, así que una salida larga —`//help` lista quince
@@ -671,4 +683,31 @@
 .system-clock.is-morse {
     letter-spacing: 0.12em;
     min-width: 0;
+}
+
+/* Los comandos todavía no descubiertos, en la respuesta de `//help`.
+
+   Uno por línea y con el mismo sangrado que los listados, para que se lean como
+   parte de la misma lista — que es lo que son: la parte que no se deja leer. */
+.reply-redacted {
+    display: block;
+    margin-top: 1em;
+}
+
+.scramble {
+    display: block;
+    padding-left: 2ch;
+    opacity: 0.55;
+    /* Sin esto, cada cambio de letra movería el bloque un pelo: los dígitos y
+       las letras miden igual en monoespaciada, pero el navegador puede
+       reajustar si el contenedor no está fijado. */
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+}
+
+/* Una fila de la respuesta por filas (`//help`). Bloque para que cada una ocupe
+   su línea sin depender de saltos dentro del texto. */
+.reply-row {
+    display: block;
+    white-space: pre;
 }

@@ -1,4 +1,5 @@
 // tests/lib/system/artCommands.test.ts
+import { clearUsed } from '@/lib/system/commandUnlock';
 import { run, type CommandContext } from '@/lib/system/commands';
 import { ART_TOTAL, clearFound } from '@/lib/system/asciiArt';
 
@@ -21,6 +22,9 @@ const corre = (linea: string, random = () => 0) => run(linea, ctx(), random)!;
 beforeEach(() => {
     localStorage.clear();
     clearFound();
+    // Usar un comando escondido lo desbloquea, y eso persiste: sin limpiarlo,
+    // un test contamina al siguiente.
+    clearUsed();
 });
 
 describe('//art · las piezas', () => {

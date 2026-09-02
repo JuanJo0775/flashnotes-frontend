@@ -12,6 +12,7 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useT, useLang } from '@/i18n';
 import BootPrompt from '@/components/effects/BootPrompt';
+import CommandRows from '@/components/effects/CommandRows';
 import { replyTimings } from '@/lib/system/replyTiming';
 import LinePrompts from '@/components/notes/LinePrompts';
 import { isCommandLine } from '@/lib/system/commands';
@@ -146,7 +147,7 @@ export default function NoteEditor({
 
     // Se sacan del objeto para poder declararlas como dependencias sin arrastrar
     // el objeto entero, que cambia de identidad en cada render.
-    const { response: respuesta, dismiss: descartar } = commands;
+    const { response: respuesta, rows, dismiss: descartar } = commands;
 
     const contentRef = useRef<HTMLTextAreaElement>(null);
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -502,13 +503,27 @@ export default function NoteEditor({
                                     contentRef.current?.focus();
                                 }}
                             >
-                                <BootPrompt
-                                    key={commands.response}
-                                    text={commands.response}
-                                    wakeMs={0}
-                                    {...replyTimings(commands.response)}
-                                    onDone={commands.dismiss}
-                                />
+                                {/* Con filas —sólo `//help` por ahora— la
+                                    respuesta se revela línea a línea y las que
+                                    no se dejan leer se revuelven en su sitio.
+                                    Sin filas, se teclea letra a letra como
+                                    siempre. */}
+                                {rows ? (
+                                    <CommandRows
+                                        key={commands.response}
+                                        rows={rows}
+                                        holdMs={replyTimings(commands.response).holdMs}
+                                        onDone={commands.dismiss}
+                                    />
+                                ) : (
+                                    <BootPrompt
+                                        key={commands.response}
+                                        text={commands.response}
+                                        wakeMs={0}
+                                        {...replyTimings(commands.response)}
+                                        onDone={commands.dismiss}
+                                    />
+                                )}
                             </span>
                         </p>
                     )}

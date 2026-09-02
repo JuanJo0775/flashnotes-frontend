@@ -1427,13 +1427,19 @@ excusa para perder nada.
 lo dice y se puede verificar mirando tu propio reloj—. Esto es el paso siguiente:
 ya no sabe en qué año está.
 
-La fecha avanza, retrocede y da saltos de minutos, de días y de años. Los saltos
+La fecha avanza, retrocede y da saltos de minutos, de días y de años. Medido en
+el navegador: **19 fechas distintas en 36 segundos**, entre 2021 y 2032. Los saltos
 son **discretos**: un desfase que crece suave se lee como un reloj mal puesto;
 que la fecha salte de golpe se lee como una avería. Mismo criterio que hace que
 la aberración cromática vaya con `steps` y no con un fundido.
 
 Es **determinista**: el mismo instante da siempre el mismo disparate. Si sorteara
 en cada repintado, la pantalla temblaría de números y se leería como parpadeo.
+
+> **Y se ve en la cabecera porque la fecha late.** `useToday` no se suscribía a
+> nada —la fecha no cambia sola— así que se calculaba una vez y ahí se quedaba:
+> el reloj se volvía loco a la vista y la fecha seguía impasible, justo donde más
+> se nota que el sistema perdió la referencia. Ahora cuelga del latido del reloj.
 
 **Sólo lo arregla recargar**, como el fallo cromático. Y es sólo pintura: el
 `updatedAt` que guarda el backend no se toca. Se rompe el reloj, no tus datos.
@@ -1496,7 +1502,36 @@ quedara nada por descubrir: las piezas dejaban de ser secretos y pasaban a ser u
 menú.
 
 Ahora lista **sólo lo básico** —lo que alguien podría querer de una app de notas,
-más las puertas de entrada— y calla el resto.
+más las puertas de entrada— y los demás salen **revolviéndose**, cada uno en SU
+SITIO de la lista:
+
+```
+COMANDOS DISPONIBLES
+
+  //help       esta lista
+  //version    quién dice ser este sistema
+  //uvb1dg
+  //3t2g
+  //nsdl2z
+  //date       la hora acá y la hora del sistema
+  ...
+```
+
+Las letras cambian solas, sin parar. **Un rótulo fijo que diga «ilegible» es la
+app contándote que hay algo escondido; unas letras que no paran quietas SON algo
+escondido.** Lo primero se lee y se olvida; lo segundo pide que lo mires.
+
+**Cada comando ocupa su sitio, descubierto o no.** Agrupando los tachados al
+final se veía de un vistazo cuáles eran nuevos, que es contar de más. Descubrir
+uno no lo añade a la lista: destapa el hueco que ya tenía.
+
+**Se desbloquean al USARLOS, no al verlos.** Leer el nombre en una ventana de
+error no basta: hay que teclearlo. Ver no es descubrir, y un comando que se
+desbloqueara con sólo leerlo convertiría cualquier fuga en una entrega.
+
+Del tachado viaja **el largo y no el nombre**: lo que no está no se puede leer en
+el inspector. Y el largo es una pista de verdad — saber que un comando mide cinco
+letras se cruza con lo que sueltan las ventanas de error.
 
 | Anunciados | Escondidos |
 | ---------- | ---------- |

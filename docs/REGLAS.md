@@ -153,6 +153,23 @@ número, mirar los que ya hay:
 10005       barrido CRT  ← es del tubo, va sobre todo
 ```
 
+### C7b · Comprobar quién recibe el ratón, no si el elemento «puede» recibirlo
+
+La respuesta de un comando enseñaba barra de desplazamiento y no bajaba. El
+elemento tenía `overflow-y: auto` y `pointer-events: auto` — todo correcto — pero
+el textarea, con el MISMO `z-index: 1` y más abajo en el documento, quedaba
+encima y se comía la rueda.
+
+**La comprobación que sirve** es preguntar qué hay en ese punto de la pantalla:
+
+```js
+document.elementFromPoint(cx, cy);   // -> TEXTAREA, no la respuesta
+```
+
+**La que no sirve** —y la que hice primero— es disparar el evento sobre el
+elemento a mano: `el.dispatchEvent(new WheelEvent('wheel'))` salta el impacto del
+ratón y confirma el mecanismo en vez del camino. Dio verde con el defecto puesto.
+
 ### C8 · Sólo los glifos que la fuente EMBARCA son de fiar
 
 JetBrains Mono no trae los bloques (`█ ▌ ▓ ░ ● ┊`): los pinta una reserva con

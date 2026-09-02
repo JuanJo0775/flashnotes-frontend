@@ -1,4 +1,5 @@
 // tests/lib/system/commands.test.ts
+import { clearUsed } from '@/lib/system/commandUnlock';
 import {
     isCommandLine,
     run,
@@ -29,6 +30,13 @@ const ctx = (over: Partial<CommandContext> = {}): CommandContext => ({
     // tenga configurado quien las corre.
     lang: 'es' as const,
     ...over,
+});
+
+beforeEach(() => {
+    // Usar un comando escondido lo desbloquea, y eso persiste en
+    // `localStorage`: sin limpiarlo, un test contamina al siguiente.
+    localStorage.clear();
+    clearUsed();
 });
 
 describe('commands - la condición de activación', () => {
@@ -100,12 +108,63 @@ describe('commands - comandos que responden texto', () => {
         }
     });
 
-    test('//help dice CUÁNTOS faltan, para que se puedan buscar', () => {
-        // Sin esto serían inalcanzables y nada lo delataría — el error exacto
-        // que ya se cometió con el umbral de diez colapsos.
-        const salida = run('//help', ctx(), LISTA)!.output;
+    /** Los largos de las filas que no se dejan leer. */
+    const tachados = (r: ReturnType<typeof run>) =>
+        (r?.rows ?? [])
+            .filter((f): f is { scramble: number } => 'scramble' in f)
+            .map((f) => f.scramble);
 
-        expect(salida).toMatch(/\d+ COMANDOS NO LISTADOS|\d+ COMMANDS NOT LISTED/);
+    test('//help entrega filas, no sólo texto', () => {
+        // Los que faltan no son texto: se pintan revolviéndose, con las letras
+        // cambiando solas. Un rótulo fijo que diga «ilegible» es la app
+        // contándote que hay algo escondido; unas letras que no paran quietas
+        // SON algo escondido.
+        expect(tachados(run('//help', ctx(), LISTA)).length).toBeGreaterThan(5);
+    });
+
+    test('cada comando ocupa SU SITIO, descubierto o no', () => {
+        // Agrupando los tachados al final se veía de un vistazo cuáles eran
+        // nuevos, que es contar de más. Descubrir uno no lo añade a la lista:
+        // destapa el hueco que ya tenía.
+        const filas = run('//help', ctx(), LISTA)!.rows!;
+        const posicion = (nombre: string) =>
+            filas.findIndex((f) => 'text' in f && f.text.includes(nombre));
+
+        // `//version` va antes que `//date` en la lista, y entre medias hay
+        // escondidos: si se agruparan, no habría ninguno entre los dos.
+        const entreMedias = filas
+            .slice(posicion('//version'), posicion('//date'))
+            .filter((f) => 'scramble' in f);
+
+        expect(entreMedias.length).toBeGreaterThan(0);
+    });
+
+    test('los largos son los de los nombres de verdad', () => {
+        // Saber que un comando mide cinco letras es una pista real —se cruza con
+        // lo que sueltan las ventanas de error— sin regalar nada.
+        const largos = tachados(run('//help', ctx(), LISTA));
+
+        expect(largos).toContain(5); // //panic
+        expect(largos).toContain(2); // //ps
+    });
+
+    test('y sus nombres NO viajan en la respuesta', () => {
+        // Lo que no está no se puede leer en el inspector.
+        const r = run('//help', ctx(), LISTA)!;
+
+        for (const c of ['panic', 'chaos', 'diag']) {
+            expect(r.output).not.toContain(c);
+            expect(JSON.stringify(r.rows)).not.toContain(c);
+        }
+    });
+
+    test('usar uno escondido lo saca del tachón', () => {
+        // Ver no es descubrir: hay que teclearlo.
+        expect(run('//help', ctx(), LISTA)!.output).not.toContain('//panic');
+
+        run('//panic', ctx(), LISTA);
+
+        expect(run('//help', ctx(), LISTA)!.output).toContain('//panic');
     });
 
     test('de vez en cuando no está para listas', () => {

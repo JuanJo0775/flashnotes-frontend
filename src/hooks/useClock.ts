@@ -48,7 +48,7 @@ function publicar() {
     listeners.forEach((l) => l());
 }
 
-function subscribe(listener: () => void) {
+export function subscribeToClock(listener: () => void) {
     listeners.add(listener);
 
     if (latido === null) {
@@ -81,5 +81,5 @@ const getSnapshot = () => ahora;
 const getServerSnapshot = () => CLOCK_PLACEHOLDER;
 
 export function useClock(): string {
-    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+    return useSyncExternalStore(subscribeToClock, getSnapshot, getServerSnapshot);
 }

@@ -11,6 +11,7 @@ import {
     isGreetingLine,
     run as runCommand,
     type CommandContext,
+    type ReplyRow,
 } from '@/lib/system/commands';
 import {
     getSystemState,
@@ -65,6 +66,8 @@ interface UseNoteCommandsOptions {
 interface UseNoteCommandsReturn {
     /** La respuesta que hay que mostrar ahora mismo, o null. */
     response: string | null;
+    /** La respuesta por filas, cuando alguna no es texto. */
+    rows: ReplyRow[] | null;
     /** Ejecuta el contenido si es un comando. Devuelve si lo era. */
     run: (content: string, noteId: string) => Promise<boolean>;
     dismiss: () => void;
@@ -99,6 +102,7 @@ export function useNoteCommands({
     onWriteNote,
 }: UseNoteCommandsOptions): UseNoteCommandsReturn {
     const [response, setResponse] = useState<string | null>(null);
+    const [rows, setRows] = useState<ReplyRow[] | null>(null);
     const theme = useTheme();
 
     const run = useCallback(
@@ -133,6 +137,7 @@ export function useNoteCommands({
             if (result.secretId) markSecretFound(result.secretId);
 
             setResponse(result.output || null);
+            setRows(result.rows ?? null);
 
             switch (result.effect.kind) {
                 case 'open-diagnostics':
@@ -189,7 +194,10 @@ export function useNoteCommands({
         ]
     );
 
-    const dismiss = useCallback(() => setResponse(null), []);
+    const dismiss = useCallback(() => {
+        setResponse(null);
+        setRows(null);
+    }, []);
 
-    return { response, run, dismiss };
+    return { response, rows, run, dismiss };
 }
