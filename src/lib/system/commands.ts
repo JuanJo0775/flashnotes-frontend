@@ -6,6 +6,7 @@ import { getLang, fill, pickPlural } from '@/i18n';
 import { greetingFor, chatReplyFor, KILL_AFTER_KICKS } from '@/lib/system/greeting';
 import { drawArt, canKeep, lastDrawn, asNote, noteTitle } from '@/lib/system/asciiArt';
 import { isUnlocked, markUsed } from '@/lib/system/commandUnlock';
+import { isPrank } from '@/lib/system/wipe';
 import {
     askConfirm,
     clearConfirm,
@@ -86,6 +87,8 @@ export type CommandEffect =
     | { kind: 'reset-all' }
     | { kind: 'kill-page' }
     | { kind: 'toggle-v02'; entering: boolean; word: string }
+    /** Enseña el borrado entero y no borra nada. La broma del «no». */
+    | { kind: 'reset-prank' }
     | { kind: 'recover'; text: string }
     | { kind: 'set-effects'; enabled: boolean };
 
@@ -1042,6 +1045,24 @@ export const COMMAND_NAMES: readonly string[] = COMMANDS.filter(
  * Devuelve `null` si el contenido no cumple la condición de activación, que es
  * la señal de "esto no era para mí, dejá que Enter haga lo de siempre".
  */
+/**
+ * ¿Esto que hay escrito hay que EJECUTARLO al pulsar Enter?
+ *
+ * Es `isCommandLine` más las respuestas a un `[y/n]` pendiente, y existe porque
+ * la pregunta de `//reset` no funcionaba: el editor consultaba `isCommandLine`
+ * por su cuenta antes de llamar a `run`, así que una `y` suelta —que no es una
+ * línea de comando— no llegaba nunca. `run` la habría entendido; nadie se la
+ * daba.
+ *
+ * La lección, otra vez la de siempre: cuando la misma decisión se toma en dos
+ * sitios, tarde o temprano dejan de decir lo mismo (REGLAS · B5).
+ */
+export function isExecutable(content: string): boolean {
+    if (isCommandLine(content)) return true;
+
+    return pendingConfirm() !== null && readAnswer(content) !== null;
+}
+
 export function run(
     content: string,
     ctx: CommandContext,
@@ -1067,9 +1088,27 @@ export function run(
         if (respuesta !== null) {
             clearConfirm();
 
-            return respuesta === 'yes'
-                ? { output: T.resetDone[lang], effect: { kind: 'reset-all' } }
-                : { output: T.resetCancel[lang], effect: SIN_EFECTO };
+            if (respuesta === 'yes') {
+                return { output: '', effect: { kind: 'reset-all' } };
+            }
+
+            /*
+             * DECIR QUE NO TAMBIÉN TIENE PREMIO, de vez en cuando.
+             *
+             * Una de cada cinco veces el «no» enseña el borrado ENTERO —el mismo,
+             * sin trampa— y remata con un «era broma» sin haber tocado nada. Es
+             * la única forma de que la respuesta prudente no sea siempre la
+             * aburrida.
+             *
+             * Y sólo pasa con el «no». Con el «sí» no hay sorteo: pedir que
+             * borre y que a veces no borre sería una app que no hace lo que le
+             * pedís, y eso no es un secreto, es un fallo.
+             */
+            if (isPrank(random)) {
+                return { output: '', effect: { kind: 'reset-prank' } };
+            }
+
+            return { output: T.resetCancel[lang], effect: SIN_EFECTO };
         }
     }
 

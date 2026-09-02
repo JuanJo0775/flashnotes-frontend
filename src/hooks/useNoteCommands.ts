@@ -5,11 +5,10 @@ import { useCallback, useState } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { formatLog } from '@/lib/system/requestLog';
 import { startDrift } from '@/lib/system/timeDrift';
-import { pendingConfirm, readAnswer } from '@/lib/system/confirm';
 
 import { formatFileSize, formatTime } from '@/lib/utils/formatters';
 import {
-    isCommandLine,
+    isExecutable,
     isGreetingLine,
     isChatLine,
     run as runCommand,
@@ -73,6 +72,13 @@ interface UseNoteCommandsOptions {
     onKillPage: () => void;
     /** `//keep`: guarda la pieza en la colección, no entre tus notas. */
     onKeepArt: (title: string, text: string) => void;
+    /**
+     * Enseña la pantalla de borrado.
+     *
+     * `prank` distingue las dos: con `false` ya se borró todo y esto lo cuenta;
+     * con `true` no se tocó nada y es teatro.
+     */
+    onWipe: (prank: boolean) => void;
 }
 
 interface UseNoteCommandsReturn {
@@ -114,6 +120,7 @@ export function useNoteCommands({
     onWriteNote,
     onKillPage,
     onKeepArt,
+    onWipe,
 }: UseNoteCommandsOptions): UseNoteCommandsReturn {
     const [response, setResponse] = useState<string | null>(null);
     const [rows, setRows] = useState<ReplyRow[] | null>(null);
@@ -121,14 +128,10 @@ export function useNoteCommands({
 
     const run = useCallback(
         async (content: string, noteId: string): Promise<boolean> => {
-            // La respuesta a un `[y/n]` NO lleva prefijo: una terminal que
-            // pregunta espera una letra, no otro comando. Si `y` tuviera que
-            // escribirse `//y`, dejaría de parecer una terminal y pasaría a
-            // parecer un formulario.
-            const contestando =
-                pendingConfirm() !== null && readAnswer(content) !== null;
-
-            if (!contestando && !isCommandLine(content)) return false;
+            // `isExecutable` y no `isCommandLine`: la respuesta a un `[y/n]` no
+            // lleva prefijo, porque una terminal que pregunta espera una letra y
+            // no otro comando.
+            if (!isExecutable(content)) return false;
 
             const system = getSystemState();
 
@@ -190,7 +193,14 @@ export function useNoteCommands({
                     onWriteNote(result.effect.text);
                     break;
                 case 'reset-all':
+                    // Se borra AHORA y la pantalla lo cuenta después. Si los
+                    // datos se fueran yendo al ritmo de los fotogramas, cerrar
+                    // la pestaña a mitad dejaría medio limpio y medio no.
                     resetEverything();
+                    onWipe(false);
+                    break;
+                case 'reset-prank':
+                    onWipe(true);
                     break;
                 case 'kill-page':
                     registerKick();
@@ -244,6 +254,7 @@ export function useNoteCommands({
             onWriteNote,
             onKillPage,
             onKeepArt,
+            onWipe,
         ]
     );
 

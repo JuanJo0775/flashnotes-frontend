@@ -15,7 +15,7 @@ import BootPrompt from '@/components/effects/BootPrompt';
 import CommandRows from '@/components/effects/CommandRows';
 import { replyTimings } from '@/lib/system/replyTiming';
 import LinePrompts from '@/components/notes/LinePrompts';
-import { isCommandLine } from '@/lib/system/commands';
+import { isCommandLine, isExecutable } from '@/lib/system/commands';
 import { useNoteCommands } from '@/hooks/useNoteCommands';
 import { pickBootPhrase } from '@/lib/system/lore';
 import { getSystemState, useSystemState } from '@/hooks/useSystemState';
@@ -61,6 +61,8 @@ interface NoteEditorProps {
     onKillPage?: () => void;
     /** `//keep`: guarda la pieza en la colección. */
     onKeepArt?: (title: string, text: string) => void;
+    /** Enseña la pantalla de borrado. `prank` = teatro, no se tocó nada. */
+    onWipe?: (prank: boolean) => void;
 }
 
 export default function NoteEditor({
@@ -78,6 +80,7 @@ export default function NoteEditor({
     onPlayPong,
     onKillPage,
     onKeepArt,
+    onWipe,
 }: NoteEditorProps) {
     const { isFullyOperational } = useNetworkStatus();
     const t = useT();
@@ -161,6 +164,7 @@ export default function NoteEditor({
         onWriteNote: setContent,
         onKillPage: onKillPage ?? noop,
         onKeepArt: onKeepArt ?? noop,
+        onWipe: onWipe ?? noop,
     });
 
     // Se sacan del objeto para poder declararlas como dependencias sin arrastrar
@@ -443,7 +447,7 @@ export default function NoteEditor({
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
             if (e.key !== 'Enter' || e.shiftKey) return;
-            if (!isCommandLine(content)) return;
+            if (!isExecutable(content)) return;
 
             e.preventDefault();
             setIsBooting(false);

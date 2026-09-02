@@ -809,3 +809,44 @@
     align-self: flex-start;
     letter-spacing: 0.08em;
 }
+
+/* ------------------------------------------------------------
+   La pantalla que se come a sí misma
+   ------------------------------------------------------------ */
+
+/* Tapa TODO, incluido el editor: lo que se está contando es que ya no hay nada,
+   y dejar la interfaz asomando por detrás lo desmentiría. */
+.wipe-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    font-family: var(--font-mono);
+}
+
+.wipe-list,
+.wipe-dots {
+    margin: 0;
+    font-family: inherit;
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    white-space: pre;
+}
+
+/* Los tres puntos, grandes y solos: es la pausa antes de volver a empezar, y
+   una pausa pequeña no se lee como una pausa. */
+.wipe-dots {
+    font-size: 2rem;
+    letter-spacing: 0.3em;
+}
+
+.wipe-footer {
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+}

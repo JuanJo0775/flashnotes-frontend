@@ -9,6 +9,7 @@ import NoteEditor from '@/components/notes/NoteEditor';
 import NotesList from '@/components/notes/NotesList';
 import { trashV02Note } from '@/lib/system/v02Notes';
 import TrashView from '@/components/notes/TrashView';
+import WipeScreen from '@/components/effects/WipeScreen';
 import V02TrashView from '@/components/notes/V02TrashView';
 import DiagnosticPanel from '@/components/system/DiagnosticPanel';
 import GlitchLayer from '@/components/effects/GlitchLayer';
@@ -266,6 +267,14 @@ export default function Home() {
     );
 
     /** `//keep` crea la pieza y la marca. Así no pisa la nota donde estabas. */
+    /**
+     * La pantalla de borrado, si está en marcha.
+     *
+     * `null` = no hay ninguna. `false` = borró de verdad y esto lo cuenta.
+     * `true` = la broma: no se tocó nada.
+     */
+    const [wipe, setWipe] = useState<boolean | null>(null);
+
     const guardarPieza = useCallback(
         async (title: string, content: string) => {
             const creada = await createNote({ title, content });
@@ -368,6 +377,7 @@ export default function Home() {
                                 onPlayPong={() => setPlayingPong(true)}
                                 onKillPage={() => setDead(true)}
                                 onKeepArt={guardarPieza}
+                                onWipe={setWipe}
                             />
                         ) : view === 'trash' ? (
                             // CADA VERSIÓN TIENE SU PAPELERA. La de la v0.2
@@ -440,6 +450,21 @@ export default function Home() {
 
             <V02Skin />
             <V02Glitches />
+
+            {/* EL BORRADO TAPA TODO, y al acabar devuelve al inicio: es lo
+                que convierte «se borró» en «empezás de nuevo». Va antes que la
+                página muerta porque ésa no vuelve de ningún sitio. */}
+            {wipe !== null && (
+                <WipeScreen
+                    footer={wipe ? t('reset.prank') : undefined}
+                    onDone={() => {
+                        setWipe(null);
+                        setSelectedNote(null);
+                        setView('notes');
+                        void refreshNotes();
+                    }}
+                />
+            )}
 
             {dead && <DeadPage />}
 

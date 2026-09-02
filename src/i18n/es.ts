@@ -128,6 +128,9 @@ export const es = {
     'trash.deleted': 'Eliminada',
     // Las de la v0.2 son otras: texto con un `>` delante, sin corchetes
     // ni flechas. El cromo llegó después.
+    // El remate de la broma del «no». Los puntos suspensivos del
+    // principio enganchan con los tres que acaban de salir en pantalla.
+    'reset.prank': '... ERA BROMA. NO SE BORRÓ NADA.',
     'trash.v02Restore': '> recuperar',
     'trash.v02Delete': '> borrar',
     'trash.restore': '[↶] Restaurar',
