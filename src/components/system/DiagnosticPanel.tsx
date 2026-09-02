@@ -10,7 +10,9 @@ import {
     setEffectsEnabled,
     markSecretFound,
 } from '@/hooks/useSystemState';
-import { coreTemperature, coreRatio, CORE_MAX_C } from '@/lib/system/diagnostics';
+import { coreTemperature, CORE_MAX_C, CORE_MIN_C } from '@/lib/system/diagnostics';
+import { strainedCore, strainedIntegrity } from '@/lib/system/strain';
+import { useGlitch } from '@/hooks/useGlitch';
 import { secretsBar, secretsRank } from '@/lib/system/secretsRank';
 import { formatDuration, formatFileSize } from '@/lib/utils/formatters';
 import { readScores, type Board, type Scores } from '@/lib/system/pongScores';
@@ -65,6 +67,22 @@ export default function DiagnosticPanel({
     const theme = useTheme();
     const t = useT();
     const lang = useLang();
+    const glitch = useGlitch();
+
+    /*
+     * Lo que cuesta lo que está pasando.
+     *
+     * La integridad BAJA y el núcleo SUBE, a propósito: una dice cuánto queda
+     * sano, el otro cuánto se está gastando en sostenerlo. Con una sola lectura
+     * no se distinguiría «roto» de «forzado».
+     */
+    const desgaste = {
+        chromaticFailure: system.chromaticFailure,
+        glitching: glitch.active,
+        clicks: system.labelClicks,
+    };
+
+    const integridad = strainedIntegrity(system.integrity, desgaste);
 
     // El tiempo activo tiene que correr mientras el panel está abierto: un
     // diagnóstico con el reloj congelado se nota enseguida. Sólo tictaquea con
@@ -113,7 +131,9 @@ export default function DiagnosticPanel({
     }, [open]);
 
     const uptime = formatDuration(now - system.sessionStart);
-    const temp = coreTemperature(charsPerMinute);
+    // El ritmo de escritura lo calienta, y las averías también: forzar la
+    // máquina cuesta, y el núcleo es donde se lee ese coste.
+    const temp = strainedCore(coreTemperature(charsPerMinute), desgaste);
 
     /**
      * Los marcadores del `vsync-test`.
@@ -173,7 +193,12 @@ export default function DiagnosticPanel({
                     <Reading label={t('diag.uptime')}>{uptime}</Reading>
                     <Reading label={t('diag.notesCreated')}>{notesCount}</Reading>
                     <Reading label={t('diag.bytesWritten')}>{formatFileSize(bytesWritten)}</Reading>
-                    <Reading label={t('diag.integrity')}>{system.integrity}%</Reading>
+                    {/* LOS INSTRUMENTOS SE MUEVEN. Decían 100 % y 38 °C con la
+                        señal rota y el rótulo aporreado: un panel que marca lo
+                        mismo pase lo que pase no es un instrumento, es un adorno
+                        con números. Y es el único sitio donde la avería queda
+                        registrada. */}
+                    <Reading label={t('diag.integrity')}>{integridad}%</Reading>
                     <Reading label={t('diag.theme')}>
                         {t(theme === 'dark' ? 'theme.dark' : 'theme.light')}
                     </Reading>
@@ -211,7 +236,15 @@ export default function DiagnosticPanel({
                         <span className="flex items-center gap-2">
                             <span>{temp}°C</span>
                             <ProgressBar
-                                value={coreRatio(charsPerMinute) * 100}
+                                // La barra se dibuja contra la temperatura que
+                                // se ENSEÑA, no contra el ritmo pelado: si no,
+                                // el número subía con la avería y la barra se
+                                // quedaba donde estaba.
+                                value={
+                                    ((temp - CORE_MIN_C) /
+                                        (CORE_MAX_C - CORE_MIN_C)) *
+                                    100
+                                }
                                 name={t('diag.coreMeter', { temp, max: CORE_MAX_C })}
                             />
                         </span>

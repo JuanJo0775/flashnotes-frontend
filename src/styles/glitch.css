@@ -196,6 +196,25 @@
         transparent
     );
     mix-blend-mode: difference;
+
+    /* ⚠ Y MÁS RÁPIDO, QUE ERA EL PROBLEMA DE VERDAD.
+     *
+     * En la app el barrido tarda NUEVE SEGUNDOS en cruzar, y eso está bien:
+     * es un tic de fondo que no debe distraer de lo que estás escribiendo.
+     *
+     * Pero estas pantallas duran entre medio segundo y ocho. Con el ciclo largo,
+     * la línea podía perfectamente no pasar ni una vez mientras se veían — y
+     * entonces la regla de que el barrido está SIEMPRE deja de cumplirse, no
+     * porque no esté, sino porque no llega a asomar.
+     *
+     * Dos segundos y medio garantizan que cruce varias veces incluso en el
+     * arranque más corto. Y acá sí puede llamar la atención: no hay nada que
+     * leer, es una pantalla de máquina. */
+    animation-duration: 2.5s;
+
+    /* Y más gruesa: sobre una pantalla de barras de color, dos píxeles se pierden
+       entre los bordes de las franjas. */
+    height: 4px;
 }
 
 /* --- Rebanadas desplazadas ---

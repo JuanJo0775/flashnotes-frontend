@@ -228,6 +228,8 @@ export interface SystemState {
      * Sobrevive a recargar la página.
      */
     lockedOut: boolean;
+    /** Cuántos golpes lleva el rótulo dentro de la ventana. Lo mide el panel. */
+    labelClicks: number;
     /**
      * Estás en la versión de antes.
      *
@@ -359,6 +361,9 @@ let lockoutUntil: number | null = bloqueoGuardado?.until ?? null;
 if (bloqueoGuardado?.chroma) chromaticFailure = true;
 let lockoutTimer: ReturnType<typeof setTimeout> | null = null;
 
+/** Cuántos golpes lleva el rótulo. El panel lo usa para medir el desgaste. */
+let clickCount = 0;
+
 let state: SystemState = {
     integrity,
     effectsEnabled,
@@ -369,12 +374,11 @@ let state: SystemState = {
     noteTrashedAt,
     chromaticFailure,
     lockedOut: lockoutUntil !== null,
+    labelClicks: clickCount,
     v02: isV02(),
 };
 
 const listeners = new Set<() => void>();
-
-let clickCount = 0;
 let clickResetTimer: ReturnType<typeof setTimeout> | null = null;
 
 function publish() {
@@ -388,6 +392,7 @@ function publish() {
         noteTrashedAt,
         chromaticFailure,
         lockedOut: lockoutUntil !== null,
+        labelClicks: clickCount,
         v02: isV02(),
     };
 
@@ -399,7 +404,8 @@ function publish() {
         next.noteTrashedAt === state.noteTrashedAt &&
         next.chromaticFailure === state.chromaticFailure &&
         next.v02 === state.v02 &&
-        next.lockedOut === state.lockedOut;
+        next.lockedOut === state.lockedOut &&
+        next.labelClicks === state.labelClicks;
 
     if (unchanged) return;
 
@@ -796,6 +802,7 @@ const SERVER_SNAPSHOT: SystemState = {
     noteTrashedAt: null,
     chromaticFailure: false,
     lockedOut: false,
+    labelClicks: 0,
     // El servidor nunca está en la v0.2: la bandera vive en el navegador, así
     // que el primer render del cliente tiene que coincidir con esto.
     v02: false,
