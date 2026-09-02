@@ -4,7 +4,7 @@ import { LIMITS } from '@/config/limits';
 import { formatDuration } from '@/lib/utils/formatters';
 import { getLang, fill, pickPlural } from '@/i18n';
 import { greetingFor, chatReplyFor, KILL_AFTER_KICKS } from '@/lib/system/greeting';
-import { drawArt, canKeep, lastDrawn, asNote, noteTitle } from '@/lib/system/asciiArt';
+import { awardFrom, catalogRows, pieceByNumber, rememberDrawn, canKeep, lastDrawn, asNote, noteTitle } from '@/lib/system/asciiArt';
 import { isUnlocked, markUsed } from '@/lib/system/commandUnlock';
 import { isPrank } from '@/lib/system/wipe';
 import {
@@ -349,15 +349,25 @@ const T = {
             'THE SECRETS, THE PIECES, THE SCORES.\n' +
             'NOT YOUR NOTES. THOSE ARE YOURS.',
     },
-    artNew: { es: 'PIEZA NUEVA · {n}/{total}', en: 'NEW PIECE · {n}/{total}' },
-    artSeen: { es: 'YA LA TENÍAS · {n}/{total}', en: 'ALREADY YOURS · {n}/{total}' },
-    artKeepHint: {
-        es: 'PUEDE QUEDÁRSELA CON //keep',
-        en: 'YOU CAN KEEP IT WITH //keep',
+    artEarned: {
+        es: '[+] PIEZA RECUPERADA: {name}',
+        en: '[+] PIECE RECOVERED: {name}',
+    },
+    artCatalog: {
+        es: 'PIEZAS RECUPERADAS: {n} DE {total}',
+        en: 'PIECES RECOVERED: {n} OF {total}',
+    },
+    artDrawHint: {
+        es: '// USE //art_<n> PARA VERLA',
+        en: '// USE //art_<n> TO SEE IT',
     },
     artComplete: {
         es: 'NO QUEDA NINGUNA MÁS. ERA TODO LO QUE GUARDABA.',
         en: 'THERE ARE NO MORE. THAT WAS EVERYTHING I KEPT.',
+    },
+    artKeepHint: {
+        es: '// //keep LA DEJA EN UNA NOTA, PARA TOCARLA',
+        en: '// //keep LEAVES IT IN A NOTE, TO PLAY WITH',
     },
     keepNothing: {
         es: 'NO HAY NADA QUE GUARDAR TODAVÍA.',
@@ -798,23 +808,105 @@ const COMMANDS: readonly Command[] = [
         hidden: true,
         summary: { es: 'lo que quedó dibujado', en: 'what was left drawn' },
         secretId: 'art',
-        resolve: (_ctx, _args, lang, random = Math.random) => {
-            const { piece, found, total, isNew } = drawArt(random);
+        /*
+         * ⚠ ES EL CATÁLOGO. NO DA PIEZAS.
+         *
+         * Antes sacaba una cada vez que se tecleaba, y eso convertía la
+         * colección en ocho pulsaciones de Enter: la pestaña con estrella no
+         * significaba nada. Ahora cada pieza se gana por su camino —el ente, la
+         * v0.2, los dos marcadores del pong, los secretos— y esto sólo dice
+         * cuáles llevás.
+         *
+         * Las que faltan salen revueltas, con la misma animación de `//help` y
+         * por el mismo motivo: un rótulo que diga «bloqueado» es la app
+         * contándote que hay algo; unas letras que no paran quietas SON algo
+         * escondido.
+         */
+        resolve: (_ctx, _args, lang) => {
+            const filas = catalogRows(lang);
 
-            const pie = isNew
-                ? fill(T.artNew[lang], { n: found, total })
-                : fill(T.artSeen[lang], { n: found, total });
+            // SIN NINGUNA PIEZA, NO EXISTE. Un catálogo vacío anunciaría que hay
+            // una colección que llenar, y encontrar la primera es parte de lo
+            // que se descubre.
+            if (filas.length === 0) {
+                return {
+                    ...texto(say(T.unknownCommand, lang, { name: '//ART' })),
+                    denied: true,
+                };
+            }
+
+            const tengo = filas.filter((f) => f.found).length;
+
+            const rows: ReplyRow[] = [
+                {
+                    text: say(T.artCatalog, lang, {
+                        n: tengo,
+                        total: filas.length,
+                    }),
+                },
+                { text: '' },
+                ...filas.map((f): ReplyRow =>
+                    f.found
+                        ? { text: `  ${f.number}/${filas.length}  ${f.label}` }
+                        : // De las que faltan viaja el LARGO y no el nombre: lo
+                          // que no está no se puede leer en el inspector.
+                          { scramble: f.length }
+                ),
+                { text: '' },
+                {
+                    text:
+                        tengo === filas.length
+                            ? T.artComplete[lang]
+                            : T.artDrawHint[lang],
+                },
+            ];
+
+            return {
+                output: rows
+                    .map((r) => ('text' in r ? r.text : ''))
+                    .join('\n'),
+                effect: SIN_EFECTO,
+                rows,
+            };
+        },
+    },
+    {
+        /*
+         * Dibuja la que elijas, y sólo si te la ganaste.
+         *
+         * Con un número que no tenés contesta lo MISMO que con uno que no
+         * existe: decir «esa existe pero no es tuya» sería un cartel. Es el
+         * mismo trato que `//attach_*` con los PID.
+         */
+        name: '//art_1',
+        notInV02: true,
+        match: /^art_(\d+)$/,
+        hidden: true,
+        summary: { es: '—', en: '—' },
+        resolve: (_ctx, args, lang) => {
+            const piece = pieceByNumber(Number(args));
+
+            if (!piece) {
+                return {
+                    ...texto(
+                        say(T.unknownCommand, lang, {
+                            name: `//art_${args}`.toUpperCase(),
+                        })
+                    ),
+                    denied: true,
+                };
+            }
+
+            // Se recuerda cuál fue, para que `//keep` pueda encadenarse.
+            rememberDrawn(piece);
 
             return texto(
                 [
                     piece.art,
                     '',
                     `-- ${piece.caption[lang]}`,
-                    pie,
-                    // La primera pieza desbloquea guardarla. Decirlo sólo cuando
-                    // ocurre: repetirlo en cada tirada sería un tutorial.
-                    ...(isNew && found === 1 ? ['', T.artKeepHint[lang]] : []),
-                    ...(found === total && isNew ? ['', T.artComplete[lang]] : []),
+                    '',
+                    T.artKeepHint[lang],
                 ].join('\n')
             );
         },
@@ -1170,8 +1262,16 @@ export function run(
         : isSessionWord(corto) || corto.toUpperCase() === v02Word();
 
     if (abre) {
+        // ENTRAR EN LA v0.2 DA SU PIEZA, y sólo la primera vez. Es un disquete:
+        // el soporte donde esa versión guardaba sus cosas, y que nadie migró.
+        const ganada = entrando ? awardFrom('v02') : null;
+
         return {
-            output: entrando ? T.v02Enter[lang] : T.v02Leave[lang],
+            output:
+                (entrando ? T.v02Enter[lang] : T.v02Leave[lang]) +
+                (ganada ? `
+
+${say(T.artEarned, lang, { name: ganada.caption[lang] })}` : ''),
             // Descifrar el morse y CRUZAR la puerta son dos cosas distintas, y
             // la segunda merece contarse aparte: mucha gente va a leer el código
             // sin llegar a teclear la palabra.

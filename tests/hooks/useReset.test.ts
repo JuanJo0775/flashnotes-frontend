@@ -40,7 +40,7 @@ describe('//reset · lo deja todo como la primera vez', () => {
 
     test('olvida las piezas de arte', async () => {
         const { system, art } = await load();
-        art.drawArt(() => 0);
+        art.awardPiece('moth');
         expect(art.readFound().size).toBe(1);
 
         system.resetEverything();

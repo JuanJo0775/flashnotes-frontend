@@ -26,10 +26,43 @@ type Localized = Readonly<Record<Lang, string>>;
 
 const STORAGE_KEY = 'flashnotes:art';
 
+/**
+ * De dónde sale cada pieza.
+ *
+ * OCHO PIEZAS, OCHO CAMINOS, y ninguno da más de una. Si un canal diera piezas
+ * cada vez, con insistir veinte veces se tendrían las ocho y la colección
+ * volvería a no costar nada.
+ *
+ * Y como cada pieza tiene un origen FIJO, el dibujo puede hablar de dónde salió:
+ * la que se gana entrando en la v0.2 es un disquete, la del pong es un cursor
+ * esperando. La colección completa acaba siendo un mapa de todo lo que hay
+ * escondido en la app — que es la única razón que justifica que tenga sección
+ * propia.
+ */
+export type ArtSource =
+    /** Hablar con lo que hay detrás de `//hi`. */
+    | 'entity'
+    /** Entrar en la v0.2 por primera vez. */
+    | 'v02'
+    /** Un comando escondido, por asignar. */
+    | 'command'
+    /** Una palabra secreta, por asignar. */
+    | 'word'
+    /** Marcador del pong, tablero limpio. */
+    | 'pong'
+    /** Marcador del pong, tablero degradado — que es más difícil. */
+    | 'pong-degraded'
+    /** Haber encontrado todos los comandos escondidos. */
+    | 'all-commands'
+    /** El secreto más difícil que quede, por asignar. */
+    | 'hardest';
+
 export interface ArtPiece {
     id: string;
     /** El pie: qué es esto. */
     caption: Localized;
+    /** Cómo se gana. Uno por pieza, y ninguno repetido. */
+    source: ArtSource;
     art: string;
 }
 
@@ -43,6 +76,7 @@ export interface ArtPiece {
 export const ART: readonly ArtPiece[] = [
     {
         id: 'moth',
+        source: 'entity',
         // La primera avería informática documentada fue una polilla dentro de un
         // relé, en 1947. De ahí viene «bug». Es la pieza que mejor explica por
         // qué esta app habla todo el rato de fallos.
@@ -62,6 +96,7 @@ export const ART: readonly ArtPiece[] = [
     },
     {
         id: 'floppy',
+        source: 'v02',
         caption: { es: 'DISQUETE · 1,44 MB', en: 'FLOPPY DISK · 1.44 MB' },
         art: [
             ' .-----------------. ',
@@ -76,6 +111,7 @@ export const ART: readonly ArtPiece[] = [
     },
     {
         id: 'crt',
+        source: 'command',
         caption: {
             es: 'TERMINAL · SIN SEÑAL DESDE ENTONCES',
             en: 'TERMINAL · NO SIGNAL SINCE',
@@ -94,6 +130,7 @@ export const ART: readonly ArtPiece[] = [
     },
     {
         id: 'cassette',
+        source: 'word',
         caption: { es: 'CINTA · LADO A', en: 'TAPE · SIDE A' },
         art: [
             ' .---------------------. ',
@@ -106,6 +143,7 @@ export const ART: readonly ArtPiece[] = [
     },
     {
         id: 'cursor',
+        source: 'pong',
         caption: {
             es: 'CURSOR · ESPERANDO DESDE HACE RATO',
             en: 'CURSOR · WAITING FOR A WHILE',
@@ -120,6 +158,7 @@ export const ART: readonly ArtPiece[] = [
     },
     {
         id: 'dish',
+        source: 'pong-degraded',
         caption: {
             es: 'ANTENA · NADIE DEL OTRO LADO',
             en: 'DISH · NOBODY ON THE OTHER SIDE',
@@ -137,6 +176,7 @@ export const ART: readonly ArtPiece[] = [
     },
     {
         id: 'bulb',
+        source: 'all-commands',
         caption: {
             es: 'PILOTO · ENCENDIDO DESDE EL PRIMER ARRANQUE',
             en: 'PILOT LAMP · ON SINCE FIRST BOOT',
@@ -153,6 +193,7 @@ export const ART: readonly ArtPiece[] = [
     },
     {
         id: 'key',
+        source: 'hardest',
         caption: {
             es: 'LLAVE · LA CERRADURA YA NO EXISTE',
             en: 'KEY · THE LOCK IS GONE',
@@ -205,29 +246,12 @@ export function clearFound() {
     }
 }
 
-export interface ArtDraw {
-    piece: ArtPiece;
-    /** Cuántas van, contando ésta. */
-    found: number;
-    total: number;
-    /** Si ésta era nueva. */
-    isNew: boolean;
-}
-
 /**
- * Saca una pieza.
- *
- * PRIORIZA LAS QUE FALTAN. Sorteando entre las ocho a ciegas, conseguir la
- * última pedía una media de veinte intentos y la colección se volvía un trámite;
- * dando primero las que no tenés, cada `//art` avanza hasta completarla y sólo
- * entonces empieza a repetir.
- */
-/**
- * La última que salió, para que `//keep` sepa cuál guardar.
+ * La última que se dibujó, para que `//keep` sepa cuál guardar.
  *
  * En memoria y no en `localStorage`: guardar una pieza es un gesto del momento
- * —«ésta me gusta»— y recordar entre sesiones cuál viste hace tres días haría
- * que `//keep` guardara algo que ya no tenés delante.
+ * —«ésta la quiero tocar»— y recordar entre sesiones cuál viste hace tres días
+ * haría que `//keep` guardara algo que ya no tenés delante.
  */
 let ultima: ArtPiece | null = null;
 
@@ -235,21 +259,101 @@ export function lastDrawn(): ArtPiece | null {
     return ultima;
 }
 
-export function drawArt(random: () => number = Math.random): ArtDraw {
-    const found = readFound();
-    const faltan = ART.filter((a) => !found.has(a.id));
-    const bolsa = faltan.length > 0 ? faltan : ART;
-
-    const piece = bolsa[Math.min(bolsa.length - 1, Math.floor(random() * bolsa.length))];
-    const isNew = !found.has(piece.id);
-
-    if (isNew) {
-        found.add(piece.id);
-        store(found);
-    }
-
+/** Lo usa `//art_<n>` al dibujar, para que `//keep` pueda encadenarse. */
+export function rememberDrawn(piece: ArtPiece | null) {
     ultima = piece;
-    return { piece, found: found.size, total: ART_TOTAL, isNew };
+}
+
+/**
+ * El mapa de caminos, derivado de las propias piezas.
+ *
+ * Se deriva y no se escribe aparte: con el mapa en dos sitios, uno se queda
+ * viejo — y el que se quedaría viejo es siempre el que nadie mira.
+ */
+export const ART_SOURCES = Object.fromEntries(
+    ART.map((p) => [p.source, p.id])
+) as Record<ArtSource, string>;
+
+/**
+ * GANARSE una pieza. Devuelve la pieza si era nueva, o `null` si ya la tenías.
+ *
+ * ⚠ NO DA NADA LA SEGUNDA VEZ, y ésa es la mitad importante. Si un canal diera
+ * piezas cada vez que se usa, con insistir veinte veces se tendrían las ocho y la
+ * colección volvería a ser lo que era: ocho pulsaciones de Enter.
+ *
+ * Devolver `null` en vez de la pieza deja que quien llama sepa si hay algo que
+ * celebrar. Volver a hablar con el ente contesta, pero no vuelve a regalar.
+ */
+export function awardPiece(id: string): ArtPiece | null {
+    const piece = ART.find((p) => p.id === id);
+    if (!piece) return null;
+
+    const found = readFound();
+    if (found.has(id)) return null;
+
+    found.add(id);
+    store(found);
+
+    return piece;
+}
+
+/** Atajo por camino, para no repetir identificadores por toda la app. */
+export function awardFrom(source: ArtSource): ArtPiece | null {
+    return awardPiece(ART_SOURCES[source]);
+}
+
+export interface CatalogRow {
+    /** Su sitio fijo, del 1 al total. La 6 es la 6 la tengas o no. */
+    number: number;
+    found: boolean;
+    /** El nombre, si la tenés. Vacío si no. */
+    label: string;
+    /**
+     * Cuánto mide el nombre tapado.
+     *
+     * De las que faltan viaja el LARGO y no el nombre: lo que no está no se
+     * puede leer en el inspector. Y el largo es una pista de verdad, igual que
+     * en `//help`.
+     */
+    length: number;
+}
+
+/**
+ * El catálogo que enseña `//art`.
+ *
+ * ⚠ VACÍO SI NO TENÉS NINGUNA, y entonces `//art` contesta «comando
+ * desconocido». Un catálogo vacío anunciaría que hay una colección que llenar, y
+ * encontrar la primera pieza es parte de lo que se descubre.
+ */
+export function catalogRows(lang: Lang = 'es'): CatalogRow[] {
+    const found = readFound();
+    if (found.size === 0) return [];
+
+    return ART.map((piece, i) => {
+        const tengo = found.has(piece.id);
+        const nombre = piece.caption[lang];
+
+        return {
+            number: i + 1,
+            found: tengo,
+            label: tengo ? nombre : '',
+            length: nombre.length,
+        };
+    });
+}
+
+/**
+ * La pieza número `n`, si la tenés.
+ *
+ * `null` cuando no la tenés o cuando el número no existe, y la diferencia no se
+ * cuenta: `//art_9` y `//art_3` sin tenerla contestan lo mismo. Decir «esa
+ * existe pero no es tuya» sería un cartel.
+ */
+export function pieceByNumber(n: number): ArtPiece | null {
+    const piece = ART[n - 1];
+    if (!piece) return null;
+
+    return readFound().has(piece.id) ? piece : null;
 }
 
 /**

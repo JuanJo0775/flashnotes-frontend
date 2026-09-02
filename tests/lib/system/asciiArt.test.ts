@@ -5,7 +5,7 @@ import {
     asNote,
     canKeep,
     clearFound,
-    drawArt,
+    awardPiece,
     readFound,
 } from '@/lib/system/asciiArt';
 
@@ -80,53 +80,26 @@ describe('asciiArt · sólo ASCII imprimible', () => {
 });
 
 describe('asciiArt · coleccionarlas', () => {
+    /*
+     * ⚠ ACÁ HABÍA SIETE TESTS DE UN SORTEO QUE YA NO EXISTE.
+     *
+     * `drawArt` sacaba una pieza cada vez que se llamaba, priorizando las que
+     * faltaban, y se completaba la colección en ocho tiradas. Eso convertía la
+     * colección en ocho pulsaciones de Enter.
+     *
+     * Ahora cada pieza se GANA por un camino distinto —el ente, la v0.2, los dos
+     * marcadores del pong, los secretos— y de eso se ocupa `artEarned.test.ts`.
+     * Lo que queda acá es lo que no cambió: que la cuenta sobreviva y que un
+     * almacenamiento roto no tumbe nada.
+     */
     test('al principio no hay ninguna', () => {
         expect(readFound().size).toBe(0);
-    });
-
-    test('sacar una la deja registrada', () => {
-        const { piece } = drawArt(() => 0);
-
-        expect(readFound().has(piece.id)).toBe(true);
-    });
-
-    test('la primera es nueva', () => {
-        expect(drawArt(() => 0).isNew).toBe(true);
-    });
-
-    test('informa de cuántas van', () => {
-        const r = drawArt(() => 0);
-
-        expect(r.found).toBe(1);
-        expect(r.total).toBe(ART_TOTAL);
-    });
-
-    test('prioriza las que faltan: se completan en ART_TOTAL tiradas', () => {
-        // Sorteando entre todas a ciegas, la última pedía una media de veinte
-        // intentos y coleccionar se volvía un trámite.
-        for (let i = 0; i < ART_TOTAL; i += 1) drawArt(() => 0);
-
-        expect(readFound().size).toBe(ART_TOTAL);
-    });
-
-    test('cada tirada hasta completar es nueva', () => {
-        for (let i = 0; i < ART_TOTAL; i += 1) {
-            expect(drawArt(() => 0).isNew).toBe(true);
-        }
-    });
-
-    test('completada, empieza a repetir y ya no suma', () => {
-        for (let i = 0; i < ART_TOTAL; i += 1) drawArt(() => 0);
-
-        const otra = drawArt(() => 0.5);
-        expect(otra.isNew).toBe(false);
-        expect(otra.found).toBe(ART_TOTAL);
     });
 
     test('sobrevive a recargar', () => {
         // La colección vive en `localStorage`: releerla de cero tiene que dar lo
         // mismo, que es lo que pasa al volver a abrir la pestaña.
-        drawArt(() => 0);
+        awardPiece(ART[0].id);
 
         expect(readFound().size).toBe(1);
         expect(readFound().size).toBe(1);
@@ -136,7 +109,7 @@ describe('asciiArt · coleccionarlas', () => {
         localStorage.setItem('flashnotes:art', 'no soy json');
 
         expect(readFound().size).toBe(0);
-        expect(() => drawArt(() => 0)).not.toThrow();
+        expect(() => awardPiece(ART[0].id)).not.toThrow();
     });
 
     test('un identificador que ya no existe se ignora', () => {
@@ -154,7 +127,7 @@ describe('asciiArt · guardar una', () => {
     test('con la primera ya se puede', () => {
         // Esperar a tenerlas todas dejaría el comando inútil justo mientras se
         // colecciona, que es cuando dan ganas de guardar una.
-        drawArt(() => 0);
+        awardPiece(ART[0].id);
 
         expect(canKeep()).toBe(true);
     });
