@@ -8,6 +8,22 @@ cómo construirlo, en [`REGLAS.md`](REGLAS.md).
 
 ---
 
+# ⭑ Las piezas · lo que viene ahora
+
+**Diseñado entero y sin construir.** Está en su propio documento porque no es una
+idea suelta: es un rediseño de cómo se consiguen las ocho piezas, y cambia tres
+comandos.
+
+→ [`specs/2026-09-02-arte.md`](specs/2026-09-02-arte.md)
+
+En una frase: **el arte deja de regalarse**. `//art` pasa a ser un catálogo con
+las que faltan revueltas, `//art_<n>` dibuja, `//keep` guarda como nota, y cada
+pieza se gana por un camino distinto — el ente, la v0.2, el pong, los secretos.
+
+Quedan cinco decisiones sin tomar, listadas en la sección F de ese documento.
+
+---
+
 # A · El morse, lo que falta
 
 El reloj y los tres clics ya están (ver [SECRETOS §20](SECRETOS.md)). Queda:
