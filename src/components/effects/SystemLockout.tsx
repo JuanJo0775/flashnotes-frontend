@@ -103,7 +103,10 @@ export default function SystemLockout() {
                         </div>
                         <div className="diag-row">
                             <span className="diag-label">INTENTOS</span>
-                            <span className="diag-value lockout-tries">
+                            <span
+                                className="diag-value lockout-tries"
+                                data-testid="lockout-tries"
+                            >
                                 {String(tries).padStart(2, '0')}
                             </span>
                         </div>

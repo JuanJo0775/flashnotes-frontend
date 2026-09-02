@@ -62,6 +62,8 @@ herramientas.
 | `//art`, y otra vez | [§18 Las piezas que quedaron](#18--las-piezas-que-quedaron) |
 | `//help` unas cuantas veces | [§19 La ayuda no lo dice todo](#19--la-ayuda-no-lo-dice-todo) |
 | Tres clics en la hora | [§20 El reloj esconde algo](#20--el-reloj-esconde-algo) |
+| `//hi` y enseguida `//whoareu` | [§21 La conversación se agota](#21--la-conversación-se-agota) |
+| `//reset` | [§22 Empezar de cero](#22--empezar-de-cero) |
 
 ---
 
@@ -1621,6 +1623,70 @@ se descifra con una tabla que cualquiera puede buscar.
 
 > **La puerta está, la habitación no.** Teclear la palabra todavía no hace nada:
 > abre la v0.2, que está por construirse. Ver [`IDEAS.md`](IDEAS.md) · E.
+
+---
+
+# 21 · La conversación se agota
+
+`//whoareu`, y sólo **justo después de un `//hi`**. Fuera de esa ventana el
+comando no existe: no se niega, no está.
+
+| Veces | Qué contesta |
+| --- | --- |
+| 1 | `ESTOY BIEN. UN POCO OCUPADO.` |
+| 2 | `OCUPADO.` |
+| 3 | `COMANDO DESCONOCIDO: WHOAREU. PROBÁ //help.` |
+
+Es la escalada de `//hi` pero **en horizontal**: allá se cansa de que la saluden,
+acá de que le pregunten. Y la salida es mejor que un desplante — el comando no se
+niega, **desaparece**. Como si nunca hubiera estado.
+
+Ese último texto es **exactamente** el que da cualquier palabra inventada, y un
+test lo fija. Si se distinguiera, se notaría que ahí había algo, y lo que cuenta
+es que parezca que nunca estuvo.
+
+La ventana es de **un minuto**, más corta que los tres del saludo: volver a
+saludar a los dos minutos sigue siendo insistir, pero preguntarle algo dos
+minutos después ya es otra conversación. Y saludar de nuevo **reinicia la
+cuenta**: es una charla nueva.
+
+### Insistir después de que te eche
+
+`//hi` te saca de la nota a la octava. Si volvés e insistís hasta que te eche
+**tres veces**, la página se queda **negra y vacía**.
+
+> ⚠ **No se puede cerrar la pestaña.** Los navegadores sólo permiten
+> `window.close()` en pestañas que abrió un script; la que abriste vos está
+> protegida. Se intenta igual, por si acaso, y si no queda esto.
+>
+> **Y es mejor:** una pestaña cerrada no cuenta nada porque ya no está. Un
+> rectángulo negro donde estaba tu bloc de notas se queda mirándote.
+
+**No se pierde nada:** la nota se guardó antes de echarte, igual que con Escape.
+Recargar devuelve la app entera. Y el barrido del tubo sigue pasando por encima
+de la nada, que es medio chiste y medio escalofrío.
+
+---
+
+# 22 · Empezar de cero
+
+`//reset`. Los secretos, las piezas, los marcadores, los comandos desbloqueados,
+la palabra en morse, el reloj suelto, el bloqueo, la integridad. Todo a cero.
+
+```
+TODO A CERO.
+
+LOS SECRETOS, LAS PIEZAS, LOS MARCADORES.
+SUS NOTAS NO. ESAS SON SUYAS.
+```
+
+**No toca las notas, y eso es lo importante de esta pieza.** Reiniciar el juego
+no es reiniciar tu trabajo: un comando escondido que se lleve por delante lo que
+escribiste no es un huevo de pascua, es una pérdida de datos — la primera regla
+del proyecto. Dos tests lo fijan.
+
+Tampoco toca si apagaste los efectos: eso es una preferencia tuya, no una parte
+del juego que se gane.
 
 ---
 

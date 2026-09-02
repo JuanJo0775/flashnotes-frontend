@@ -119,7 +119,22 @@ export function recordRally(board: Board, rally: number): Scores {
     return siguiente;
 }
 
-/** Tira la caché para que la próxima lectura vuelva al almacenamiento. */
+/**
+ * Tira la CACHÉ, no lo guardado.
+ *
+ * Es lo que hace falta para releer del almacenamiento como si acabaras de abrir
+ * la pestaña. Para borrar de verdad está `resetScores`.
+ */
 export function clearScores() {
     cache = null;
+}
+
+/** Borra los marcadores de verdad. Lo usa `//reset`. */
+export function resetScores() {
+    cache = null;
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch {
+        // Nada que hacer.
+    }
 }

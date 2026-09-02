@@ -20,6 +20,7 @@ const opciones = () => ({
     onPlayPong: jest.fn(),
     onLeaveNote: jest.fn(),
     onWriteNote: jest.fn(),
+    onKillPage: jest.fn(),
 });
 
 beforeEach(() => {

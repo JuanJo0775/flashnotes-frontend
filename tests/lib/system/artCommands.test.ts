@@ -14,6 +14,8 @@ const ctx = (): CommandContext => ({
     secretsTotal: 18,
     log: '',
     greetings: 0,
+    whoareu: 0,
+    kicks: 0,
     lang: 'es' as const,
 });
 

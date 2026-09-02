@@ -10,7 +10,12 @@ import {
     levelFor,
     type CollapseLevel,
 } from '@/lib/system/collapseEscalation';
-import { countGreeting } from '@/lib/system/greeting';
+import { countGreeting, WHOAREU_WINDOW_MS } from '@/lib/system/greeting';
+import { clearFound as clearArt } from '@/lib/system/asciiArt';
+import { resetScores } from '@/lib/system/pongScores';
+import { clearUsed } from '@/lib/system/commandUnlock';
+import { forgetWord } from '@/lib/system/morse';
+import { stopDrift } from '@/lib/system/timeDrift';
 
 export { ESCALATION_WINDOW_MS, LOCKOUT_AT, LOCKOUT_MS };
 export type { CollapseLevel };
@@ -526,7 +531,90 @@ export function registerGreeting(now: number = Date.now()): number {
     greetings = countGreeting(greetings, lastGreetingAt, now);
     lastGreetingAt = now;
     markSecretFound('greeting');
+
+    // La conversación empieza de cero con cada saludo: preguntarle algo después
+    // de volver a saludar es una charla nueva, no la misma insistencia.
+    whoareu = 0;
     return greetings;
+}
+
+/**
+ * Cuántas veces te ha echado de la nota.
+ *
+ * A la primera te saca. Si volvés y volvés a insistir hasta que te eche tres
+ * veces, la página se queda muerta.
+ */
+let kicks = 0;
+
+export function registerKick(): number {
+    kicks += 1;
+    return kicks;
+}
+
+export function kickCount(): number {
+    return kicks;
+}
+
+/**
+ * La cuenta de `//whoareu`, y si la conversación sigue en pie.
+ *
+ * Fuera de la ventana el comando NO EXISTE: no es que se niegue, es que ahí no
+ * hay nada. Devuelve 0 para que quien llama dé el mismo «comando desconocido»
+ * que daría cualquier palabra inventada.
+ */
+let whoareu = 0;
+
+export function registerWhoAreYou(now: number = Date.now()): number {
+    const enConversacion =
+        lastGreetingAt !== null && now - lastGreetingAt < WHOAREU_WINDOW_MS;
+
+    if (!enConversacion) {
+        whoareu = 0;
+        return 0;
+    }
+
+    whoareu += 1;
+    return whoareu;
+}
+
+/**
+ * Devuelve el sistema a como estaba la primera vez.
+ *
+ * Los secretos, las piezas, los marcadores, los comandos desbloqueados, la
+ * palabra en morse, el reloj suelto, el bloqueo, la integridad. Todo.
+ *
+ * ⚠ NO TOCA LAS NOTAS, y no es un descuido: reiniciar el juego no es reiniciar
+ * tu trabajo. Un comando escondido que borre lo que escribiste no es un huevo de
+ * pascua, es una pérdida de datos — la primera regla del proyecto.
+ */
+export function resetEverything() {
+    secrets.clear();
+    integrity = 100;
+    permanentDeletes = 0;
+    noteTrashedAt = null;
+    chromaticFailure = false;
+    themeClicks = 0;
+    greetings = 0;
+    lastGreetingAt = null;
+    whoareu = 0;
+    kicks = 0;
+    collapseCount = null;
+    lastRecoveryAt = null;
+
+    clearLockout();
+    clearArt();
+    resetScores();
+    clearUsed();
+    forgetWord();
+    stopDrift();
+
+    try {
+        localStorage.removeItem(SECRETS_STORAGE_KEY);
+    } catch {
+        // Nada que hacer.
+    }
+
+    publish();
 }
 
 export function registerCollapse(): CollapseLevel {

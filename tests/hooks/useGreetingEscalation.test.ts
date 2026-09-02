@@ -28,6 +28,8 @@ const ctx = (greetings: number) => ({
     secretsTotal: 16,
     log: '',
     greetings,
+    whoareu: 0,
+    kicks: 0,
     lang: 'es' as const,
 });
 

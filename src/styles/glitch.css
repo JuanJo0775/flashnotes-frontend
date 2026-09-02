@@ -1278,3 +1278,25 @@
     background: var(--color-primary);
     pointer-events: none;
 }
+
+/* ------------------------------------------------------------------
+   La página muerta.
+
+   `//hi` insistido hasta que te echa tres veces. Negro, vacío, sin interfaz —
+   como una pestaña que se cerró y quedó el hueco.
+
+   No se puede cerrar la pestaña de verdad: los navegadores sólo lo permiten en
+   las que abrió un script. Y esto es MEJOR: una pestaña cerrada no cuenta nada
+   porque ya no está, mientras que un rectángulo negro donde estaba tu bloc de
+   notas se queda mirándote.
+
+   Va por encima de todo menos del barrido (10005): el tubo sigue refrescando
+   aunque no haya nada que refrescar, y ese detalle es medio chiste medio
+   escalofrío.
+   ------------------------------------------------------------------ */
+.dead-page {
+    position: fixed;
+    inset: 0;
+    z-index: 10004;
+    background: #000;
+}

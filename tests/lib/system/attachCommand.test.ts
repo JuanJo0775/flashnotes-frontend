@@ -13,6 +13,8 @@ const ctx = (over: Partial<CommandContext> = {}): CommandContext => ({
     secretsTotal: 15,
     log: '',
     greetings: 0,
+    whoareu: 0,
+    kicks: 0,
     lang: 'es' as const,
     ...over,
 });

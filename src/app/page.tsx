@@ -15,6 +15,7 @@ import ChromaticFailure from '@/components/effects/ChromaticFailure';
 import PhantomError from '@/components/effects/PhantomError';
 import SystemLockout from '@/components/effects/SystemLockout';
 import PongOverlay from '@/components/effects/PongOverlay';
+import DeadPage from '@/components/effects/DeadPage';
 import { LOCKOUT_BOOT_ATTR } from '@/config/lockout';
 import { useNotes } from '@/hooks/useNotes';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
@@ -74,6 +75,8 @@ export default function Home() {
      * entera: dentro del editor quedaría recortado por su caja.
      */
     const [playingPong, setPlayingPong] = useState(false);
+    /** La página muerta: sólo se llega insistiendo con `//hi` hasta el final. */
+    const [dead, setDead] = useState(false);
 
     // Lo mínimo que los comandos y el panel necesitan saber de las notas: nombre
     // y tamaño. No se les pasa el contenido — lo que escribís no se lee.
@@ -271,6 +274,7 @@ export default function Home() {
                                 onOpenDiagnostics={() => setShowDiagnostics(true)}
                                 onCollapse={() => setCollapse(registerCollapse())}
                                 onPlayPong={() => setPlayingPong(true)}
+                                onKillPage={() => setDead(true)}
                             />
                         ) : view === 'trash' ? (
                             <TrashView />
@@ -320,6 +324,8 @@ export default function Home() {
                 que empezara: no se llegaba a ver ni la estática ni la barra
                 trabándose. Justo la secuencia que da sentido al desenlace. */}
             {lockedOut && !collapse && <SystemLockout />}
+
+            {dead && <DeadPage />}
 
             <PongOverlay
                 open={playingPong}

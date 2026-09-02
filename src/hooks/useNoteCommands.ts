@@ -9,6 +9,7 @@ import { formatFileSize, formatTime } from '@/lib/utils/formatters';
 import {
     isCommandLine,
     isGreetingLine,
+    isWhoAreYouLine,
     run as runCommand,
     type CommandContext,
     type ReplyRow,
@@ -17,6 +18,10 @@ import {
     getSystemState,
     markSecretFound,
     registerGreeting,
+    registerWhoAreYou,
+    registerKick,
+    kickCount,
+    resetEverything,
     setEffectsEnabled,
 } from '@/hooks/useSystemState';
 import { useTheme } from '@/hooks/useTheme';
@@ -61,6 +66,8 @@ interface UseNoteCommandsOptions {
     onLeaveNote: () => void;
     /** `//keep`: deja el dibujo escrito en la nota abierta. */
     onWriteNote: (text: string) => void;
+    /** Insististe hasta que te echó tres veces: la página se queda muerta. */
+    onKillPage: () => void;
 }
 
 interface UseNoteCommandsReturn {
@@ -100,6 +107,7 @@ export function useNoteCommands({
     onPlayPong,
     onLeaveNote,
     onWriteNote,
+    onKillPage,
 }: UseNoteCommandsOptions): UseNoteCommandsReturn {
     const [response, setResponse] = useState<string | null>(null);
     const [rows, setRows] = useState<ReplyRow[] | null>(null);
@@ -125,11 +133,20 @@ export function useNoteCommands({
                 // van, incluida ésta. Cuenta aunque el comando no sea `//hi`
                 // sólo si lo es — ver abajo.
                 greetings: 0,
+                whoareu: 0,
+                kicks: 0,
             };
 
             // La cuenta sólo se toca cuando el comando es el saludo: contar en
             // cada comando haría que teclear `//help` seis veces te echara.
             if (isGreetingLine(content)) ctx.greetings = registerGreeting();
+            // La conversación sólo existe justo después de un saludo. Fuera de
+            // ahí `registerWhoAreYou` devuelve 0 y el comando no existe.
+            if (isWhoAreYouLine(content)) ctx.whoareu = registerWhoAreYou();
+
+            // La cuenta de expulsiones se lee ANTES de resolver, porque decide
+            // si esta vez te echa o si ya no hay a dónde echarte.
+            ctx.kicks = kickCount() + 1;
 
             const result = runCommand(content, ctx);
             if (!result) return false;
@@ -153,10 +170,18 @@ export function useNoteCommands({
                     onPlayPong();
                     break;
                 case 'leave-note':
+                    registerKick();
                     onLeaveNote();
                     break;
                 case 'write-note':
                     onWriteNote(result.effect.text);
+                    break;
+                case 'reset-all':
+                    resetEverything();
+                    break;
+                case 'kill-page':
+                    registerKick();
+                    onKillPage();
                     break;
                 case 'time-drift':
                     startDrift(Date.now());
@@ -191,6 +216,7 @@ export function useNoteCommands({
             onPlayPong,
             onLeaveNote,
             onWriteNote,
+            onKillPage,
         ]
     );
 

@@ -25,6 +25,8 @@ const ctx = (over: Partial<CommandContext> = {}): CommandContext => ({
     secretsTotal: 12,
     log: '14:52:03  GET     /health  200  19ms',
     greetings: 0,
+    whoareu: 0,
+    kicks: 0,
     // El idioma se fija a mano: `commands` lo acepta en el contexto justamente
     // para que estas pruebas sigan siendo puras y no dependan de qué idioma
     // tenga configurado quien las corre.

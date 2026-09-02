@@ -121,3 +121,62 @@ export function greetingFor(
     if (count >= 3) return { text: pick(DRY, lang, random), kick: false };
     return { text: pick(WARM, lang, random), kick: false };
 }
+
+/* ------------------------------------------------------------------
+   `//whoareu` · la otra mitad de la conversación
+
+   No es un comando que existe siempre: existe MIENTRAS estás hablando con ella.
+   Justo después de un `//hi` contesta; insistiendo se seca; y al tercero deja de
+   reconocerlo, con el mismo «comando desconocido» que daría cualquier palabra
+   inventada.
+
+   Es la escalada de `//hi` pero en horizontal: allá se cansa de que la saluden,
+   acá se cansa de que le pregunten. Y la salida es mejor que un desplante —
+   el comando no se niega, DESAPARECE. Como si nunca hubiera estado.
+   ------------------------------------------------------------------ */
+
+/**
+ * Cuánto sigue en pie la conversación después de saludar.
+ *
+ * Un minuto. Más corto que la ventana del saludo (tres minutos) a propósito:
+ * saludar de nuevo a los dos minutos sigue siendo insistir, pero preguntarle algo
+ * dos minutos después ya no es la misma conversación, es empezar otra.
+ */
+export const WHOAREU_WINDOW_MS = 60_000;
+
+/** A la tercera deja de existir. */
+export const WHOAREU_GONE_AT = 3;
+
+const WHOAREU_REPLIES: readonly Localized[] = [
+    { es: 'ESTOY BIEN. UN POCO OCUPADO.', en: 'I AM FINE. A LITTLE BUSY.' },
+    { es: 'OCUPADO.', en: 'BUSY.' },
+];
+
+export interface WhoAreYouReply {
+    /** Qué contesta, o `null` si ya ni lo reconoce. */
+    text: string | null;
+}
+
+/**
+ * Qué contesta a esta pregunta.
+ *
+ * `count` es cuántas van seguidas, contando ésta. `null` significa que el
+ * comando ya no existe y quien llama tiene que dar el mismo «comando
+ * desconocido» que daría cualquier palabra inventada — un test fija que sea
+ * exactamente el mismo texto, porque si se distinguiera se notaría que ahí hay
+ * algo.
+ */
+export function whoAreYouFor(count: number, lang: Lang): WhoAreYouReply {
+    if (count >= WHOAREU_GONE_AT) return { text: null };
+
+    const i = Math.min(WHOAREU_REPLIES.length - 1, Math.max(0, count - 1));
+    return { text: WHOAREU_REPLIES[i][lang] };
+}
+
+/**
+ * Cuántas veces te ha echado de la nota.
+ *
+ * A la primera te saca. Si volvés y volvés a insistir hasta que te eche otras
+ * dos veces, la página se queda muerta.
+ */
+export const KILL_AFTER_KICKS = 3;

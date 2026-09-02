@@ -3,7 +3,7 @@
 import { LIMITS } from '@/config/limits';
 import { formatDuration } from '@/lib/utils/formatters';
 import { getLang, fill, pickPlural } from '@/i18n';
-import { greetingFor } from '@/lib/system/greeting';
+import { greetingFor, whoAreYouFor, KILL_AFTER_KICKS } from '@/lib/system/greeting';
 import { drawArt, canKeep, lastDrawn, asNote } from '@/lib/system/asciiArt';
 import { isUnlocked, markUsed } from '@/lib/system/commandUnlock';
 import type { Lang } from '@/config/lang';
@@ -44,6 +44,15 @@ export interface CommandContext {
      */
     greetings: number;
     /**
+     * Cuántos `//whoareu` seguidos van, contando ÉSTE.
+     *
+     * `0` significa que no hay conversación en pie: el comando no existe ahí, y
+     * tiene que contestar como cualquier palabra inventada.
+     */
+    whoareu: number;
+    /** Cuántas veces te ha echado de la nota, contando ÉSTA si toca. */
+    kicks: number;
+    /**
      * En qué idioma contesta el sistema.
      *
      * Es opcional para que este módulo siga probándose sin montar nada: si no
@@ -63,6 +72,8 @@ export type CommandEffect =
     | { kind: 'leave-note' }
     | { kind: 'time-drift' }
     | { kind: 'write-note'; text: string }
+    | { kind: 'reset-all' }
+    | { kind: 'kill-page' }
     | { kind: 'set-effects'; enabled: boolean };
 
 /** Una fila de la respuesta: texto, o un nombre que no se deja leer. */
@@ -138,10 +149,29 @@ export const GREETING_COMMAND = '//hi';
  * Lo necesita quien lleva la cuenta: sumar en CADA comando haría que teclear
  * `//help` seis veces seguidas te echara de la nota, que no es la broma.
  */
+/**
+ * El «comando desconocido», tal cual.
+ *
+ * Se exporta porque `//whoareu` lo necesita: cuando la conversación se agota, el
+ * comando no se niega — DESAPARECE, y tiene que dar exactamente el mismo texto
+ * que daría cualquier palabra inventada. Si se distinguiera, se notaría que ahí
+ * hay algo, y lo que cuenta es que parezca que nunca estuvo.
+ */
+export function unknownCommand(name: string, lang: Lang): string {
+    return fill(T.unknown[lang], { name: name.toUpperCase() });
+}
+
 export function isGreetingLine(content: string): boolean {
     if (!isCommandLine(content)) return false;
-    const linea = content.trim().toLowerCase();
-    return linea === GREETING_COMMAND;
+    return content.trim().toLowerCase() === GREETING_COMMAND;
+}
+
+export const WHOAREU_COMMAND = '//whoareu';
+
+/** ¿Esta línea es la pregunta? La cuenta sólo se toca con ella. */
+export function isWhoAreYouLine(content: string): boolean {
+    if (!isCommandLine(content)) return false;
+    return content.trim().toLowerCase() === WHOAREU_COMMAND;
 }
 
 interface Command {
@@ -202,6 +232,24 @@ const texto = (output: string) => ({ output, effect: SIN_EFECTO });
  * las dos versiones.
  */
 const T = {
+    unknown: {
+        es: 'COMANDO DESCONOCIDO: {name}. PROBÁ //help.',
+        en: 'UNKNOWN COMMAND: {name}. TRY //help.',
+    },
+    enough: {
+        es: 'YA ESTÁ.',
+        en: 'THAT IS IT.',
+    },
+    resetDone: {
+        es:
+            'TODO A CERO.\n\n' +
+            'LOS SECRETOS, LAS PIEZAS, LOS MARCADORES.\n' +
+            'SUS NOTAS NO. ESAS SON SUYAS.',
+        en:
+            'EVERYTHING BACK TO ZERO.\n\n' +
+            'THE SECRETS, THE PIECES, THE SCORES.\n' +
+            'NOT YOUR NOTES. THOSE ARE YOURS.',
+    },
     artNew: { es: 'PIEZA NUEVA · {n}/{total}', en: 'NEW PIECE · {n}/{total}' },
     artSeen: { es: 'YA LA TENÍAS · {n}/{total}', en: 'ALREADY YOURS · {n}/{total}' },
     artKeepHint: {
@@ -567,10 +615,34 @@ const COMMANDS: readonly Command[] = [
         secretId: 'greeting',
         resolve: (ctx, _args, lang) => {
             const reply = greetingFor(ctx.greetings, lang);
+            if (!reply.kick) return texto(reply.text);
+
+            // A la tercera vez que te echa ya no te echa: la página se muere.
+            // Insistir después de que te haya sacado dos veces es el caso más
+            // testarudo que hay, y merece la respuesta más fuerte que la
+            // plataforma permite.
+            const veces = ctx.kicks;
             return {
-                output: reply.text,
-                effect: reply.kick ? { kind: 'leave-note' } : SIN_EFECTO,
+                output: veces >= KILL_AFTER_KICKS ? T.enough[lang] : reply.text,
+                effect:
+                    veces >= KILL_AFTER_KICKS
+                        ? { kind: 'kill-page' }
+                        : { kind: 'leave-note' },
             };
+        },
+    },
+    {
+        name: '//whoareu',
+        hidden: true,
+        summary: { es: 'preguntarle cómo va', en: 'ask how it is doing' },
+        secretId: 'greeting',
+        resolve: (ctx, _args, lang) => {
+            const r = whoAreYouFor(ctx.whoareu, lang);
+
+            // Agotada la conversación, el comando DESAPARECE: mismo texto que
+            // daría cualquier palabra inventada, para que no se note que ahí
+            // había algo.
+            return texto(r.text ?? unknownCommand('whoareu', lang));
         },
     },
     {
@@ -628,6 +700,18 @@ const COMMANDS: readonly Command[] = [
                 secretId: 'art-keep',
             };
         },
+    },
+    {
+        name: '//reset',
+        hidden: true,
+        summary: {
+            es: 'empezar de cero, como la primera vez',
+            en: 'start over, like the first time',
+        },
+        resolve: (_ctx, _args, lang) => ({
+            output: T.resetDone[lang],
+            effect: { kind: 'reset-all' },
+        }),
     },
     {
         name: '//clear',

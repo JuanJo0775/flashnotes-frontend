@@ -60,10 +60,20 @@ describe('SystemLockout · la pantalla', () => {
     });
 
     test('lleva la cuenta de los intentos fallidos', async () => {
+        // ⚠ SE MIRA EL CONTADOR, NO EL TEXTO «01».
+        //
+        // `getByText('01')` fallaba una de cada dos veces, y no porque nada
+        // estuviera roto: el volcado son bytes en hexadecimal, así que `01`
+        // puede salir TAMBIÉN como una celda del patrón — y entonces hay dos
+        // elementos con ese texto. Es un test aleatorio por construcción, justo
+        // lo que prohíbe REGLAS · D1.
         const { SystemLockout, store, render, screen, fireEvent } = await load();
         bloquear(store);
 
         render(<SystemLockout />);
+
+        // Una celda cuyo byte se repite: la rota es la única que no se repite,
+        // así que ésta seguro que es incorrecta.
         const celdas = screen.getAllByRole('button');
         const cuenta = new Map<string, number>();
         for (const c of celdas) {
@@ -72,7 +82,9 @@ describe('SystemLockout · la pantalla', () => {
         }
         fireEvent.click(celdas.find((c) => (cuenta.get(c.textContent ?? '') ?? 0) > 1)!);
 
-        expect(screen.getByText('01')).toBeInTheDocument();
+        // La clase `.lockout-tries` está en dos filas —es de estilo, no un
+        // identificador— así que se apunta al contador por su testid.
+        expect(screen.getByTestId('lockout-tries')).toHaveTextContent('01');
     });
 
     test('el volcado no cambia entre renders', async () => {

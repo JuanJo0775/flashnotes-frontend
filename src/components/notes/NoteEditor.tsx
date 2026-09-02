@@ -54,6 +54,8 @@ interface NoteEditorProps {
     onCollapse?: () => void;
     /** Abre el `vsync-test`: sólo lo pide `//attach_6`. */
     onPlayPong?: () => void;
+    /** Insististe hasta que te echó tres veces. */
+    onKillPage?: () => void;
 }
 
 export default function NoteEditor({
@@ -69,6 +71,7 @@ export default function NoteEditor({
     onOpenDiagnostics,
     onCollapse,
     onPlayPong,
+    onKillPage,
 }: NoteEditorProps) {
     const { isFullyOperational } = useNetworkStatus();
     const t = useT();
@@ -143,6 +146,7 @@ export default function NoteEditor({
         // `//keep` deja el dibujo escrito donde estabas. Sólo puede pasar con la
         // nota en blanco —el comando ES todo el contenido— así que no pisa nada.
         onWriteNote: setContent,
+        onKillPage: onKillPage ?? noop,
     });
 
     // Se sacan del objeto para poder declararlas como dependencias sin arrastrar

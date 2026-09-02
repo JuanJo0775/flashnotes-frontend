@@ -31,32 +31,6 @@ de error del fallo cromático suelte un `-.-.` suelto.
 B1 (tachados animados), B2 (se desbloquean al usarlos) y B3 (`//hi` escondido) ya
 están, en su sitio dentro de la lista. Queda:
 
-## B4b · Insistir después de que te eche
-
-Hoy `//hi` te saca de la nota a la octava. Si volvés a entrar e insistís **dos
-veces más**, cierra LA PESTAÑA de FlashNotes.
-
-⚠ **`window.close()` no puede cerrar esta pestaña.** Los navegadores sólo lo
-permiten en pestañas que abrió un script; la que abrió el usuario está protegida,
-y da igual que sea pestaña o ventana. Se intenta igual —por si acaso— pero hay
-que tener plan B.
-
-**Plan B, y creo que es mejor:** la página se queda **en negro y muerta**, sin
-interfaz, sin barra, sin nada. Como una pestaña que se cerró y quedó el hueco.
-Recargar es la única salida. Se lee igual de fuerte, y encima queda algo que
-mirar — una pestaña cerrada de verdad no cuenta nada, porque ya no está.
-
-## B4 · La conversación con `//whoareu`
-
-Encadenado con `//hi`: si justo después del `¿NECESITA ALGO?` tecleás `//whoareu`,
-contesta que está bien pero un poco ocupado. Si insistís, sólo `OCUPADO`. Si
-seguís, deja de reconocerlo: `COMANDO DESCONOCIDO`.
-
-Es la misma idea que la escalada de `//hi` pero en horizontal: **una conversación
-que se agota, no un comando que se repite.**
-
----
-
 # C · Los coleccionables
 
 ## C1 · El título es el nombre de la pieza
@@ -71,8 +45,6 @@ NOTAS y PAPELERA, marcada con una estrella o un cuadrito, y ahí se ven como lo
 que son: una colección.
 
 ---
-
-# D · Empezar de cero
 
 ## D1 · Un comando que reinicia todo
 
@@ -116,4 +88,7 @@ preguntar si se hizo.
 | Tres clics → morse, palabra por sesión | [EFECTOS §20](EFECTOS.md) | `70fdcca` |
 | Comandos tachados que se revuelven, en su sitio | [EFECTOS §19](EFECTOS.md) | pendiente |
 | Se desbloquean al USARLOS, no al verlos | [EFECTOS §19](EFECTOS.md) | pendiente |
-| `//date_off` descontrola también la fecha | [EFECTOS §17](EFECTOS.md) | pendiente |
+| `//date_off` descontrola también la fecha | [EFECTOS §17](EFECTOS.md) | `ad95f3c` |
+| La conversación `//whoareu` que se agota | [EFECTOS §21](EFECTOS.md) | pendiente |
+| Insistir tres veces deja la página muerta | [EFECTOS §21](EFECTOS.md) | pendiente |
+| `//reset`, que no toca las notas | [EFECTOS §22](EFECTOS.md) | pendiente |
