@@ -142,8 +142,8 @@ describe('NoteEditor · comandos', () => {
 
 describe('NoteEditor · el comando no se guarda', () => {
     // La promesa del diseño: ni el comando ni su respuesta llegan a la base de
-    // datos. Con el auto-guardado a 2,5 s, escribir `>help` y tardar tres
-    // segundos en pulsar Enter bastaba para que `>help` quedara guardado y
+    // datos. Con el auto-guardado a 2,5 s, escribir `//help` y tardar tres
+    // segundos en pulsar Enter bastaba para que `//help` quedara guardado y
     // consumiera un punto de historial. Esta es LA prueba de esta pieza.
     test('escribir un comando no programa el auto-guardado', () => {
         const { props } = setup();

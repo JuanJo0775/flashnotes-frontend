@@ -153,7 +153,7 @@ Lo que hace que la interfaz se lea como un sistema y no como una app cualquiera:
 
   Lo único igual en los dos idiomas es el nombre del producto
   (`FLASH-NOTES v1.0`), las extensiones (`.txt`), el nombre de archivo
-  `SYSTEM.LOG` y los nombres de los comandos (`>help`, `>diag`), que son la
+  `SYSTEM.LOG` y los nombres de los comandos (`//help`, `//diag`), que son la
   interfaz de la terminal y no prosa.
   Ver `docs/specs/2026-09-01-bilingue-y-atajo-esc.md`.
 - **Comentarios de código como etiquetas de sección.** La clase `.comment`

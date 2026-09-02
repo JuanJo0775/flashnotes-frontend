@@ -50,7 +50,7 @@ export function formatDateTime(date: Date | string): string {
  * Formatea una duración como HH:MM:SS.
  *
  * A diferencia del resto de este archivo, esto NO es una fecha: es un intervalo,
- * así que no le afecta el huso. La comparten el comando `>uptime` y la fila
+ * así que no le afecta el huso. La comparten el comando `//uptime` y la fila
  * TIEMPO ACTIVO del panel de diagnóstico, y viven juntas justamente para que las
  * dos no puedan divergir.
  */

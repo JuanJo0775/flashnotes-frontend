@@ -8,10 +8,10 @@ import type { Lang } from '@/config/lang';
 /**
  * Un texto de la terminal en los dos idiomas.
  *
- * Los NOMBRES de los comandos (`>help`, `>diag`) NO se traducen: son la interfaz
+ * Los NOMBRES de los comandos (`//help`, `//diag`) NO se traducen: son la interfaz
  * de la terminal, igual que `ls` o `df` en un shell de verdad, y traducirlos
  * rompería el músculo de quien ya los sabe. Lo que se traduce es todo lo que el
- * sistema RESPONDE, más los resúmenes que lista `>help`.
+ * sistema RESPONDE, más los resúmenes que lista `//help`.
  */
 type Localized = Readonly<Record<Lang, string>>;
 
@@ -106,7 +106,7 @@ export function isCommandLine(content: string): boolean {
 }
 
 interface Command {
-    /** Cómo se escribe, con el prompt incluido. Es lo que lista `>help`. */
+    /** Cómo se escribe, con el prompt incluido. Es lo que lista `//help`. */
     name: string;
     /** Una línea para el listado de ayuda, en los dos idiomas. */
     summary: Localized;
@@ -285,7 +285,7 @@ const COMMANDS: readonly Command[] = [
                 };
             }
 
-            // Sin argumento no cambia nada: informa. Un `>chaos` suelto que
+            // Sin argumento no cambia nada: informa. Un `//chaos` suelto que
             // apagara los efectos sería una sorpresa desagradable.
             const uso = lang === 'es' ? 'USÁ' : 'USE';
             return texto(

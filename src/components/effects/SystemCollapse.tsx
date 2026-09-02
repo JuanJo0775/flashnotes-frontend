@@ -11,7 +11,7 @@ import type { CollapseLevel } from '@/lib/system/collapseEscalation';
 /**
  * El colapso del sistema. El clímax.
  *
- * Se dispara con la integridad a 0 (nueve clics en el rótulo) o con `>panic`.
+ * Se dispara con la integridad a 0 (nueve clics en el rótulo) o con `//panic`.
  *
  * LO QUE MÁS IMPORTA NO SE VE: esto ocurre entero en una capa POR ENCIMA de la
  * app. Debajo, el editor sigue montado, el auto-guardado sigue su curso y el

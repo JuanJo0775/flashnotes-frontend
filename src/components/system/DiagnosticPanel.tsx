@@ -16,7 +16,7 @@ import { useT } from '@/i18n';
 /**
  * El panel de diagnóstico: un listado de lecturas del sistema.
  *
- * Se abre con el comando `>diag` o con Alt+clic (⌥+clic) sobre `[SYSTEM_OK]`.
+ * Se abre con el comando `//diag` o con Alt+clic (⌥+clic) sobre `[SYSTEM_OK]`.
  * NO con Ctrl+clic: en macOS Ctrl+clic es el clic secundario y abre el menú
  * contextual.
  *

@@ -9,7 +9,7 @@ import { getLang } from '@/i18n';
  * (ver requestLogger.js). El cliente no guardaba nada equivalente, así que la
  * app no tenía forma de contarte lo que ella misma acababa de hacer.
  *
- * Esto es lo que leen `>log` y el archivo fantasma. Su valor está en que NO es
+ * Esto es lo que leen `//log` y el archivo fantasma. Su valor está en que NO es
  * decoración: cada línea ocurrió de verdad.
  *
  * QUÉ NO GUARDA: cuerpos de petición ni de respuesta. La regla del proyecto es
@@ -90,7 +90,7 @@ function pad(n: number): string {
  * La hora es la LOCAL del dispositivo, no UTC: es la que el usuario tiene en su
  * reloj, y este registro está para que pueda reconocer lo que acaba de hacer.
  * (`formatters.ts` sigue en UTC; esa diferencia es deliberada y es lo que
- * responde el comando `>date`.)
+ * responde el comando `//date`.)
  */
 export function formatEntry(entry: RequestLogEntry): string {
     const hora = `${pad(entry.at.getHours())}:${pad(entry.at.getMinutes())}:${pad(

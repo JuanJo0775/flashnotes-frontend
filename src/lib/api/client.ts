@@ -58,7 +58,7 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
  * Registro de peticiones.
  *
  * El backend loguea cada llamada en su consola (requestLogger.js); esto es el
- * espejo del lado del cliente, y es lo que leen el comando `>log` y el archivo
+ * espejo del lado del cliente, y es lo que leen el comando `//log` y el archivo
  * SYSTEM.LOG de la papelera. Su gracia está en que no es decoración: cada línea
  * ocurrió de verdad.
  *

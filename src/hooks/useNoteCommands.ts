@@ -24,7 +24,7 @@ import { getLang } from '@/i18n';
  *
  * Vive en un hook y no en el componente por la regla de siempre: los componentes
  * pintan y reciben props, los hooks tienen el estado y hablan con `lib/api`.
- * `>history` sale a la red, así que le toca estar de este lado.
+ * `//history` sale a la red, así que le toca estar de este lado.
  *
  * La decisión de SI algo es un comando es puramente sintáctica y está en
  * `lib/system/commands` (`isCommandLine`): el editor la consulta él mismo, de
@@ -33,7 +33,7 @@ import { getLang } from '@/i18n';
  */
 
 interface UseNoteCommandsOptions {
-    /** Las notas de la sesión, para `>ls` y `>df`. */
+    /** Las notas de la sesión, para `//ls` y `//df`. */
     notes: readonly { title: string; chars: number }[];
     onOpenDiagnostics: () => void;
     onCollapse: () => void;
@@ -117,7 +117,7 @@ export function useNoteCommands({
                     setEffectsEnabled(result.effect.enabled);
                     break;
                 case 'fetch-history':
-                    // `>history` deja primero un "CONSULTANDO ACTAS…" y lo
+                    // `//history` deja primero un "CONSULTANDO ACTAS…" y lo
                     // reemplaza al volver. Si falla, lo dice: quedarse con el
                     // mensaje de espera parecería que la app se colgó.
                     try {

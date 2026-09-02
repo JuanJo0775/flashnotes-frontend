@@ -3,7 +3,7 @@ import { formatDuration } from '@/lib/utils/formatters';
 import { coreTemperature, CORE_MIN_C, CORE_MAX_C } from '@/lib/system/diagnostics';
 
 describe('formatDuration', () => {
-    // La comparte `>uptime` y la fila TIEMPO ACTIVO del panel: una sola función
+    // La comparte `//uptime` y la fila TIEMPO ACTIVO del panel: una sola función
     // para que las dos digan exactamente lo mismo.
     test('cuenta horas, minutos y segundos', () => {
         expect(formatDuration(47 * 60_000 + 12_000)).toBe('00:47:12');

@@ -48,7 +48,7 @@ export interface NoteWithHistory extends Note {
  *
  * El backend viene guardando estas versiones desde siempre y hasta ahora nadie
  * las había pedido: la ruta existía, estaba probada, y el frontend no la
- * llamaba. Es lo que muestra el comando `>history`.
+ * llamaba. Es lo que muestra el comando `//history`.
  */
 export interface NoteHistory {
     versions: NoteVersion[];

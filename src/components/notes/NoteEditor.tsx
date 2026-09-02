@@ -39,7 +39,7 @@ const AUTOSAVE_DELAY_MS = 2500;
  * máquina contestando algo que le preguntaste, y una terminal contesta rápido.
  *
  * EL RITMO SE ADAPTA AL LARGO, y hace falta. Con 18 ms fijos por carácter, la
- * lista de `>help` —unos 450 caracteres— tardaba OCHO SEGUNDOS en aparecer y
+ * lista de `//help` —unos 450 caracteres— tardaba OCHO SEGUNDOS en aparecer y
  * catorce en cerrar su arco: imposible de usar, y encima se borraba antes de que
  * te diera tiempo a leerla. Sólo se notó usando la app.
  *
@@ -80,7 +80,7 @@ interface NoteEditorProps {
     onSaveStateChange: (state: SaveState) => void;
     /** Informa al padre de cuántos caracteres tiene la nota abierta. */
     onLengthChange?: (length: number) => void;
-    /** Las notas de la sesión, para que `>ls` y `>df` puedan contarlas. */
+    /** Las notas de la sesión, para que `//ls` y `//df` puedan contarlas. */
     notes?: readonly { title: string; chars: number }[];
     onOpenDiagnostics?: () => void;
     onCollapse?: () => void;
@@ -246,7 +246,7 @@ export default function NoteEditor({
         //
         // Sin esto, la promesa de que "ni el comando ni su respuesta llegan a la
         // base de datos" es falsa: el auto-guardado corre a los 2,5 s de la
-        // última tecla, así que escribir `>help` y tardar tres segundos en
+        // última tecla, así que escribir `//help` y tardar tres segundos en
         // pulsar Enter bastaba para guardarlo Y gastar un punto de historial.
         if (isCommandLine(content)) return;
 
