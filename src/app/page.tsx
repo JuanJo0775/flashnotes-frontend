@@ -49,8 +49,26 @@ import type { Note, SaveState, View } from '@/types/note.types';
 /** Referencia constante: una lista nueva en cada render remontaría todo. */
 const VACIO: never[] = [];
 
-/** Cuánto hay que haber escrito para que salga la flor. Unas dos páginas. */
-const FLOR_DESDE = 5_000;
+/** Cuánto hay que haber escrito para que salga el arbusto. Unas dos páginas. */
+const ARBUSTO_DESDE = 5_000;
+
+/**
+ * Cuántas notas hay que juntar para la biblioteca.
+ *
+ * Doce: bastantes para que no salgan de una tarde, pocas para que salgan de usar
+ * la app un tiempo. Es la cuenta de quien VUELVE, no la de quien escribe mucho
+ * de golpe — de eso ya se ocupa el arbusto.
+ */
+const BIBLIOTECA_DESDE = 12;
+
+/**
+ * Cuánto hay que estar quieto para que salga el ojo.
+ *
+ * Cinco minutos: lo bastante para que no salga mientras pensás una frase, lo
+ * bastante poco para que salga en la primera tarde en que te vas a hacer un café
+ * y la dejás abierta.
+ */
+const OJO_TRAS_MS = 5 * 60_000;
 
 /** No hay a qué suscribirse: sólo interesa el salto de servidor a cliente. */
 const SIN_CAMBIOS = () => () => {};
@@ -133,8 +151,39 @@ export default function Home() {
      * que no salga por probar, lo bastante poco para que salga usándola.
      */
     useEffect(() => {
-        if (bytesWritten >= FLOR_DESDE) awardFrom('written');
+        if (bytesWritten >= ARBUSTO_DESDE) awardFrom('written');
     }, [bytesWritten]);
+
+    /*
+     * DEJAR LA PESTAÑA QUIETA DA EL OJO.
+     *
+     * Todas las demás piezas premian HACER algo; ésta premia no hacer nada. Lo
+     * que cuenta es que la máquina siguió ahí mientras tanto — y por eso el
+     * temporizador se reinicia con cualquier tecla o clic: si sobreviviera a la
+     * actividad, la daría por estar la app abierta, que no es lo mismo que
+     * estar ausente.
+     */
+    useEffect(() => {
+        let id: ReturnType<typeof setTimeout>;
+
+        const rearmar = () => {
+            clearTimeout(id);
+            id = setTimeout(() => awardFrom('idle'), OJO_TRAS_MS);
+        };
+
+        rearmar();
+
+        for (const evento of ['keydown', 'pointerdown'] as const) {
+            window.addEventListener(evento, rearmar);
+        }
+
+        return () => {
+            clearTimeout(id);
+            for (const evento of ['keydown', 'pointerdown'] as const) {
+                window.removeEventListener(evento, rearmar);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         void initializeCsrfToken();
@@ -291,6 +340,18 @@ export default function Home() {
     // devuelve el snapshot del servidor en el primer render del cliente, y ahí
     // no hay `localStorage` (REGLAS · C2).
     const piezasVistas = montado ? readRevealed().size : 0;
+
+    /*
+     * MUCHAS NOTAS DAN LA BIBLIOTECA.
+     *
+     * Es la hermana del arbusto: aquélla premia haber escrito mucho DE UNA VEZ,
+     * ésta haber VUELTO muchas veces. Dos formas distintas de usar una libreta,
+     * y ninguna se consigue haciendo lo de la otra.
+     */
+    useEffect(() => {
+        if (misNotas.length >= BIBLIOTECA_DESDE) awardFrom('many-notes');
+    }, [misNotas.length]);
+
 
     /**
      * LOS ARCHIVOS DE LA v0.2 SON OTROS.

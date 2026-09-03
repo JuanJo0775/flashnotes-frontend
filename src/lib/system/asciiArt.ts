@@ -119,7 +119,30 @@ export type ArtSource =
      * señal aunque no haya nadie mirando, que es lo que la máquina lleva
      * haciendo desde antes de que llegaras.
      */
-    | 'lockout';
+    | 'lockout'
+    /**
+     * HABER DICHO QUE NO Y QUE TE GASTARAN LA BROMA.
+     *
+     * Su pieza es una carita: es el único momento en que la máquina se ríe con
+     * vos y no de vos. Se gana justo después del susto, y sólo la ve quien tuvo
+     * el valor de teclear `//reset` y la prudencia de decir que no.
+     */
+    | 'prank'
+    /**
+     * HABER DEJADO LA PESTAÑA ABIERTA SIN ESCRIBIR.
+     *
+     * Su pieza es un ojo. Todas las demás premian hacer algo; ésta premia NO
+     * hacer nada — y lo que cuenta es que la máquina siguió ahí mientras tanto,
+     * mirando.
+     */
+    | 'idle'
+    /**
+     * HABER JUNTADO MUCHAS NOTAS.
+     *
+     * Su pieza es una biblioteca. Es la hermana del arbusto: aquélla premia
+     * haber escrito mucho de una vez, ésta haber vuelto muchas veces.
+     */
+    | 'many-notes';
 
 export interface ArtPiece {
     id: string;
@@ -555,6 +578,143 @@ export const ART: readonly ArtPiece[] = [
             '            /           \\               ',
             '           "-------------"              ',
             '      ~~~~~~~~~~~~~~~~~~~~~~~~          ',
+        ].join('\n'),
+    },
+    {
+        id: 'smile',
+        source: 'prank',
+        caption: {
+            es: 'CARITA · ERA BROMA, YA LE DIJE',
+            en: 'SMILEY · IT WAS A JOKE, I TOLD YOU',
+        },
+        /*
+         * SE GANA CON LA BROMA DEL BORRADO: dijiste que no, te enseñó el borrado
+         * entero igual, y al final confesó.
+         *
+         * Es el único momento en que la máquina se ríe CON vos y no de vos, y la
+         * única pieza que sale de un alivio. Por eso la sonrisa es ancha y los
+         * ojos están cerrados — está riéndose, no observando. Un ojo abierto la
+         * habría vuelto inquietante, que es el trabajo de otra pieza.
+         */
+        /*
+         * ⚠ ES UN `:)` DE LADO, no una cara de frente.
+         *
+         * Una cara redonda con dos ojos y una boca es un emoticono de los de
+         * después. Éste es el de ANTES: dos puntos y un paréntesis, que es lo que
+         * se tecleaba cuando no había otra cosa — y encaja con una app que se
+         * pasa el día escribiendo con caracteres.
+         *
+         * Los dos puntos van a la izquierda y el arco a la derecha, girado
+         * noventa grados. Hay que inclinar la cabeza para verlo, que es
+         * exactamente lo que había que hacer con los originales.
+         *
+         * ⚠ SON LOS DOS CARACTERES, GRANDES. No una cara con ojos y boca: el
+         * `:` es un `:` y el `)` es un `)`, dibujados a tamaño de pieza. Un
+         * primer intento puso ojos redondos con pupila y dejó de ser un
+         * emoticono para ser una cara de perfil, que es otra cosa.
+         *
+         * ⚠ Y EL ARCO ABOMBA HACIA LA DERECHA. Un intento lo puso al revés
+         * —extremos a la derecha, panza a la izquierda— y eso es un `(`: el
+         * dibujo decía `:(`. La diferencia entre esta pieza y su contraria es
+         * hacia qué lado se curva una línea, y no se ve hasta que alguien lo
+         * lee como una cara.
+         */
+        art: [
+            '                 :::                    ',
+            '                    :::                 ',
+            '     :::::             :::              ',
+            '     :::::                :::           ',
+            '     :::::                   ::         ',
+            '                             ::         ',
+            '                             ::         ',
+            '                             ::         ',
+            '     :::::                   ::         ',
+            '     :::::                :::           ',
+            '     :::::             :::              ',
+            '                    :::                 ',
+            '                 :::                    ',
+        ].join('\n'),
+    },
+    {
+        id: 'eye',
+        source: 'idle',
+        caption: {
+            es: 'OJO · SIGUIÓ ABIERTO MIENTRAS USTED NO ESTABA',
+            en: 'EYE · IT STAYED OPEN WHILE YOU WERE AWAY',
+        },
+        /*
+         * SE GANA NO HACIENDO NADA: dejar la pestaña abierta un buen rato sin
+         * escribir. Todas las demás premian hacer algo; ésta premia lo contrario,
+         * y lo que cuenta es que la máquina siguió ahí mientras tanto.
+         *
+         * La pupila va CERRADA y llena —un punto sólido, no un anillo— porque un
+         * ojo con el centro hueco parece una rosquilla. Y las pestañas de arriba
+         * son lo único que impide que se lea como una almendra.
+         */
+        /*
+         * ⚠ HECHO DE UNOS Y CEROS, y el ojo aparece por AUSENCIA.
+         *
+         * No está dibujado con líneas: es un campo de dígitos con un hueco
+         * dentro, y el hueco tiene forma de ojo. Es lo mismo que hace la máquina
+         * — no te mira con un ojo, te mira con lo que guarda de vos.
+         *
+         * La pupila es el único sitio donde los dígitos VUELVEN, y va llena: un
+         * centro hueco se lee como una rosquilla. El contraste entre el campo
+         * lleno, el blanco del iris y la pupila llena es lo único que hace que la
+         * forma se vea.
+         */
+        art: [
+            '1 0 1 1 0 1 0 1 1 0 1 0 1 1 0 1 0 1 1 0 ',
+            '0 1 0 1 1 0 1 0 1 1 0 1 0 1 1 0 1 0 1 1 ',
+            '1 0 1 0 1 1         0 1 1 0 1 0 1 1 0 1 ',
+            '0 1 1 0 1                     1 0 1 0 1 ',
+            '1 0 1 0         0 1 1 0         0 1 1 0 ',
+            '0 1 1         1 0 1 1 0 1         1 0 1 ',
+            '1 0 1         0 1 1 0 1 0         0 1 0 ',
+            '0 1 1 0         1 0 0 1         1 0 1 1 ',
+            '1 0 1 0 1                     0 1 0 1 0 ',
+            '0 1 1 0 1 0 1       1 0 1 0 1 1 0 1 0 1 ',
+            '1 0 1 0 1 1 0 1 0 1 1 0 1 0 1 1 0 1 0 1 ',
+            '0 1 1 0 1 0 1 1 0 1 0 1 1 0 1 0 1 1 0 1 ',
+        ].join('\n'),
+    },
+    {
+        id: 'library',
+        source: 'many-notes',
+        caption: {
+            es: 'BIBLIOTECA · TODO LO QUE USTED VOLVIÓ A ESCRIBIR',
+            en: 'LIBRARY · EVERYTHING YOU CAME BACK TO WRITE',
+        },
+        /*
+         * SE GANA JUNTANDO MUCHAS NOTAS, y es la hermana del arbusto: aquélla
+         * premia haber escrito mucho de una vez, ésta haber VUELTO muchas veces.
+         *
+         * Dos baldas y no una: una fila de lomos es un estante, dos son una
+         * biblioteca. Y los lomos tienen anchos distintos porque una fila de
+         * libros iguales se lee como una reja.
+         */
+        /*
+         * LOS LOMOS SON TODOS DISTINTOS, y eso es lo único que la hace leerse.
+         *
+         * Una fila de libros iguales es una reja. Acá cada uno lleva su marca —
+         * rayas, ondas, dos puntos, comas— con anchos distintos, como una
+         * estantería de verdad donde no hay dos libros del mismo grosor.
+         *
+         * Dos baldas y no una: una fila de lomos es un estante, dos son una
+         * biblioteca.
+         */
+        art: [
+            ' +====================================+ ',
+            ' | |=| |~~| |:| |^^| |==| |o| |,,| |~|| ',
+            ' | | |  ||  | | | ||  |  | | |  ||  ||| ',
+            ' | |=| |~~| |:| |^^| |==| |o| |,,| |~|| ',
+            ' | |_| |__| |_| |__| |__| |_| |__| |_|| ',
+            ' +====================================+ ',
+            ' | |~| |==| |,| |::| |^^| |=| |~~| |o|| ',
+            ' | | |  ||  | | | ||  |  | | |  ||  ||| ',
+            ' | |~| |==| |,| |::| |^^| |=| |~~| |o|| ',
+            ' | |_| |__| |_| |__| |__| |_| |__| |_|| ',
+            ' +====================================+ ',
         ].join('\n'),
     },
     {

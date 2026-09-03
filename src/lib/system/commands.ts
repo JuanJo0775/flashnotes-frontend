@@ -1237,6 +1237,10 @@ export function run(
              * pedís, y eso no es un secreto, es un fallo.
              */
             if (isPrank(random)) {
+                // Y da su pieza: una carita. Es el único momento en que la
+                // máquina se ríe CON vos y no de vos.
+                awardFrom('prank');
+
                 return {
                     output: '',
                     effect: { kind: 'reset-prank' },
