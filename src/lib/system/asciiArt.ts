@@ -226,7 +226,10 @@ export const ART: readonly ArtPiece[] = [
          */
         art: [
             '+======================================+',
-            '|  00                            00    |',
+            // 03–02. Un doble cero es una pista que nadie empezó; un marcador
+            // apretado es una partida en marcha, que es lo que la bola con
+            // estela ya está contando.
+            '|  03                            02    |',
             '|  ==                            ==    |',
             '|                  :                   |',
             '|   ||             :               ||  |',
@@ -383,15 +386,16 @@ export const ART: readonly ArtPiece[] = [
          */
         art: [
             '                                        ',
-            '        .-~~~~-.                        ',
-            '      .-        -.                      ',
-            '     |    .--.    |                     ',
-            '     |   |    |   |=================+   ',
-            '     |    :--:    |              |  |   ',
-            '      -.        .-               |  |   ',
-            '        :-~~~~-:                 -  -   ',
+            '        .-""-.                          ',
+            '      .:      :.                        ',
+            '     /    .--.    \\                     ',
+            '    |    ( ** )    |==============+     ',
+            '    |     :--:     |    |   |   | |     ',
+            '     \\            /     |   |   | |     ',
+            '      ":.      .:"      "   "   " "     ',
+            '        "-..-"                          ',
             '                                        ',
-            '     : : : : : : : : : : : : : : : :    ',
+            '   : : : : : : : : : : : : : : : : :    ',
         ].join('\n'),
     },
 ];
