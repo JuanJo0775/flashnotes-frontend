@@ -16,7 +16,6 @@ import { clearFound as clearArt, onlyMissing, ART_SOURCES } from '@/lib/system/a
 import { forgetHint } from '@/lib/system/helpHint';
 import { resetScores } from '@/lib/system/pongScores';
 import { clearUsed } from '@/lib/system/commandUnlock';
-import { clearCollectibles } from '@/lib/system/collectibles';
 import { leaveV02, isV02, toggleV02, forgetV02Trip } from '@/lib/system/v02';
 import { clearDropped } from '@/lib/system/dropped';
 import { clearV02Notes } from '@/lib/system/v02Notes';
@@ -700,7 +699,6 @@ export function resetEverything() {
     clearArt();
     resetScores();
     clearUsed();
-    clearCollectibles();
     leaveV02();
     forgetV02Trip();
     // ⚠ ESTO FALTABA: era la única clave que el borrado no tocaba, y el faro

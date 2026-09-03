@@ -49,9 +49,18 @@ interface Props {
     /** Cuántas letras tiene el nombre de verdad, sin el prefijo. */
     length: number;
     prefix?: string;
+    /**
+     * Si va DENTRO de otra cosa en vez de ocupar su renglón.
+     *
+     * En `//help` cada revuelto es una fila, y por eso el estilo es de bloque. En
+     * la pestaña de colección va entre los corchetes del rótulo, y de bloque
+     * partía el botón en TRES LÍNEAS —`[★`, el revuelto, y `]` cada uno por su
+     * lado—: se leía como un botón roto, no como algo por descubrir.
+     */
+    inline?: boolean;
 }
 
-export default function ScrambleLine({ length, prefix = '//' }: Props) {
+export default function ScrambleLine({ length, prefix = '//', inline = false }: Props) {
     const reducedMotion = usePrefersReducedMotion();
     const [texto, setTexto] = useState(() => 'x'.repeat(length));
 
@@ -80,7 +89,10 @@ export default function ScrambleLine({ length, prefix = '//' }: Props) {
     }, [length, reducedMotion]);
 
     return (
-        <span className="scramble" data-testid="scramble">
+        <span
+            className={inline ? 'scramble scramble-inline' : 'scramble'}
+            data-testid="scramble"
+        >
             {prefix}
             {texto}
         </span>

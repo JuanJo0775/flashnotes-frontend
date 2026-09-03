@@ -15,6 +15,9 @@ import { strainedCore, strainedIntegrity } from '@/lib/system/strain';
 import { useGlitch } from '@/hooks/useGlitch';
 import { secretsBar, secretsRank } from '@/lib/system/secretsRank';
 import { ART_TOTAL, readFound } from '@/lib/system/asciiArt';
+
+/** El adorno de cabecera que esconde un comando. Ver el comentario de abajo. */
+const PS_HINT = '//ps//';
 import { formatDuration, formatFileSize } from '@/lib/utils/formatters';
 import { readScores, type Board, type Scores } from '@/lib/system/pongScores';
 import { useT } from '@/i18n';
@@ -188,8 +191,38 @@ export default function DiagnosticPanel({
                 onClose();
             }}
         >
-            <h2 id="diag-title" className="dialog-title">
-                {t('diag.title')}
+            {/*
+             * ⚠ LA PISTA DE `//ps`, Y VA DISFRAZADA A PROPÓSITO.
+             *
+             * `//ps` es una PUERTA —desbloquea `//attach_6`— así que se sacó de
+             * la fuga de `//help`: regalarla es regalar la capa que abre. Pero
+             * entonces no quedaba NINGUNA forma de llegar a ella, y un comando
+             * que no se puede encontrar es un comando que no existe.
+             *
+             * Va al lado del título, en gris y a la derecha, y envuelto en
+             * barras: `//ps//` se lee como un adorno de cabecera, de esos que
+             * ponen los programas viejos. El comando son los cuatro primeros
+             * caracteres, enteros y tecleables — un `// ps` con espacio sería
+             * más bonito y no serviría para nada.
+             *
+             * No pasa por las traducciones porque no es una frase: es un token,
+             * y es el MISMO en los dos idiomas.
+             */}
+            <h2
+                id="diag-title"
+                className="dialog-title flex items-baseline justify-between gap-4"
+            >
+                <span>{t('diag.title')}</span>
+                {/* Dentro del rótulo, no debajo: la barra invertida ES el
+                    `h2`, así que colgarlo fuera lo dejaba sobre el fondo del
+                    panel y se leía como un dato más. */}
+                <span
+                    className="mono text-sm opacity-60"
+                    data-testid="diag-leftover"
+                    aria-hidden="true"
+                >
+                    {PS_HINT}
+                </span>
             </h2>
 
             <div className="dialog-body">
@@ -247,6 +280,14 @@ export default function DiagnosticPanel({
                             <span data-testid="diag-pieces">
                                 {piezas}/{ART_TOTAL}
                             </span>
+                            {/* El `·` y la coletilla NO son adorno: sin
+                                ellos esta fila queda más corta que la de
+                                arriba y las dos cuentas dejan de alinearse.
+                                Y de paso dice lo único que la máquina sabe
+                                de los dibujos: le parecen bonitos. */}
+                            <span className="dim">
+                                · {t('diag.piecesNote')}
+                            </span>
                         </span>
                     </Reading>
                     <Reading label={t('diag.pongClean')}>
@@ -274,6 +315,7 @@ export default function DiagnosticPanel({
                             />
                         </span>
                     </Reading>
+
                 </div>
 
                 <div className="dialog-actions">

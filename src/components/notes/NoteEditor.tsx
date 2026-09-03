@@ -61,7 +61,6 @@ interface NoteEditorProps {
     /** Insististe hasta que te echó tres veces. */
     onKillPage?: () => void;
     /** `//keep`: guarda la pieza en la colección. */
-    onKeepArt?: (title: string, text: string) => void;
     /** Enseña la pantalla de borrado. `prank` = teatro, no se tocó nada. */
     onWipe?: (prank: boolean) => void;
 }
@@ -80,7 +79,6 @@ export default function NoteEditor({
     onCollapse,
     onPlayPong,
     onKillPage,
-    onKeepArt,
     onWipe,
 }: NoteEditorProps) {
     const { isFullyOperational } = useNetworkStatus();
@@ -160,11 +158,22 @@ export default function NoteEditor({
         // se evalúa antes. El envoltorio es estable, así que no rehace el hook
         // en cada render.
         onLeaveNote: salir,
-        // `//keep` deja el dibujo escrito donde estabas. Sólo puede pasar con la
-        // nota en blanco —el comando ES todo el contenido— así que no pisa nada.
-        onWriteNote: setContent,
+        /*
+         * `//keep` deja el dibujo escrito donde estabas, con su ficha por
+         * título: `POLILLA · 1/16`, no «Nueva nota». La pieza deja de ser una
+         * nota tuya cualquiera para ser una del catálogo, y el título es lo que
+         * lo dice en la lista lateral, donde el dibujo no se ve.
+         *
+         * Sólo puede pasar con la nota en blanco —el comando ES todo el
+         * contenido— así que no pisa nada de lo que hayas escrito. Y el título
+         * llega OPCIONAL porque `//recover` usa esta misma vía: aquél devuelve
+         * TU texto, y renombrarte la nota sería tocar algo que no pediste.
+         */
+        onWriteNote: (texto: string, titulo?: string) => {
+            setContent(texto);
+            if (titulo) setTitle(titulo);
+        },
         onKillPage: onKillPage ?? noop,
-        onKeepArt: onKeepArt ?? noop,
         onWipe: onWipe ?? noop,
     });
 

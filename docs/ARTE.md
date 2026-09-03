@@ -127,7 +127,7 @@ Son **16**, todas de **40 caracteres** de ancho.
   "---------"                           
 ```
 
-## 7/16 · BOMBILLA · NI ENCENDIDA NI APAGADA
+## 7/16 · FOCO · NI ENCENDIDO NI APAGADO
 
 **Se gana:** `theme-glitch` · **id:** `bulb`
 

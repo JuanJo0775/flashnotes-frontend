@@ -150,8 +150,24 @@ export const en: Dictionary = {
     'diag.bytesWritten': 'BYTES WRITTEN',
     'diag.integrity': 'INTEGRITY',
     'diag.theme': 'THEME',
-    'diag.secrets': 'SECRETS',
+    /*
+     * ⚠ NO DICE «SECRETOS», Y NO ES UNA BROMA SUELTA.
+     *
+     * La máquina NO SABE que son secretos. Para ella son cosas que pasaron y
+     * no supo explicar, así que las etiqueta como las etiquetaría alguien que
+     * se queda mirando un registro sin entenderlo. Poner «SECRETOS» era la app
+     * hablándole al jugador por encima del panel, y rompía la ficción justo en
+     * el sitio donde más cuesta sostenerla: un instrumento que se explica a sí
+     * mismo deja de ser un instrumento.
+     *
+     * Es igual en los dos idiomas porque no es una palabra: es un ruido.
+     */
+    'diag.secrets': 'MMMM?',
     'diag.pieces': 'PIECES',
+    // Lo único que la máquina sabe decir de los dibujos. No entiende qué
+    // son ni de dónde salieron; le parecen bonitos y ahí se acaba su
+    // análisis. Es la misma voz que el `MMMM?` de arriba.
+    'diag.piecesNote': 'CUTE',
     'diag.core': 'CORE',
     'diag.coreMeter': 'Core temperature: {temp} of {max} degrees',
     'diag.effects': '[EFFECTS: {state}]',

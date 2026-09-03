@@ -2,7 +2,14 @@
 'use client';
 
 import { useLang, useT } from '@/i18n';
-import { ART, ART_TOTAL, readRevealed } from '@/lib/system/asciiArt';
+import {
+    ART,
+    ART_TOTAL,
+    artOf,
+    captionKnown,
+    readRevealed,
+} from '@/lib/system/asciiArt';
+import { UNNAMED } from '@/lib/system/asciiArt';
 
 /**
  * Las piezas que te ganaste, y que además fuiste a mirar.
@@ -32,12 +39,20 @@ export default function CollectionView() {
 
     return (
         <section className="collection-view" aria-label={t('collection.title')}>
-            <header className="collection-header">
-                <h2 className="section-title">{t('collection.title')}</h2>
-                <span className="mono text-xs dim" data-testid="collection-count">
+            {/* ⚠ EL MISMO RÓTULO QUE NOTAS Y PAPELERA, con sus clases y todo.
+                Tenía uno propio —`collection-header` con `section-title`— y se
+                veía distinto: otra letra, otro tamaño, sin la línea de abajo. Tres
+                vistas hermanas con tres cabeceras distintas se leen como tres
+                aplicaciones, no como tres pestañas de la misma. */}
+            <h2 className="section-header flex items-baseline justify-between gap-4">
+                <span>{t('collection.title')}</span>
+                <span
+                    className="mono text-xs text-meta tabular-nums"
+                    data-testid="collection-count"
+                >
                     {vistas.size}/{ART_TOTAL}
                 </span>
-            </header>
+            </h2>
 
             {vistas.size === 0 && (
                 <p className="collection-empty mono text-sm dim">
@@ -73,10 +88,18 @@ export default function CollectionView() {
                                 {ficha}
                             </span>
                             {/* El dibujo entero, sin recortar: una pieza cortada a
-                                tres líneas no es una pieza. */}
-                            <pre className="collection-art">{piece.art}</pre>
+                                tres líneas no es una pieza.
+
+                                ⚠ Y SALE DE `artOf`, NO DE `piece.art`. Las piezas
+                                con nombre por ganar se enseñan A MEDIO RECUPERAR
+                                —el manipulador, hasta que usás el código para
+                                entrar y salir de la v0.2— y acá se pintaba el
+                                dibujo entero mientras el catálogo lo tapaba: dos
+                                sitios contando cosas distintas de la misma
+                                pieza. */}
+                            <pre className="collection-art">{artOf(piece)}</pre>
                             <p className="collection-name mono text-2xs">
-                                {piece.caption[lang]}
+                                {captionKnown(piece) ? piece.caption[lang] : UNNAMED}
                             </p>
                         </li>
                     );

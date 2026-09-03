@@ -25,7 +25,6 @@ import DeadPage from '@/components/effects/DeadPage';
 import V02Skin from '@/components/effects/V02Skin';
 import V02Glitches from '@/components/effects/V02Glitches';
 import CollectionView from '@/components/notes/CollectionView';
-import { splitCollectibles, markCollectible } from '@/lib/system/collectibles';
 import { awardFrom, readRevealed } from '@/lib/system/asciiArt';
 import { markSecretFound, resetEverything } from '@/hooks/useSystemState';
 import { createV02Note, saveV02Note } from '@/lib/system/v02Notes';
@@ -253,6 +252,20 @@ export default function Home() {
             setOpenNoteLength(undefined);
             setView(next);
             if (next === 'notes') void refreshNotes();
+
+            /*
+             * ABRIR LA COLECCIÓN ES UN HALLAZGO APARTE.
+             *
+             * ⚠ ANTES COLGABA DE `//keep`: se marcaba al crear la nota de la pieza
+             * guardada. Cuando `//keep` pasó a escribir en la nota abierta ya no
+             * se creaba nada, y el secreto se quedaba sin marcar para siempre —el
+             * contador nunca podía llegar a su total, así que el cuaderno se
+             * volvía inalcanzable sin que nada fallara.
+             *
+             * Descubrir que las piezas tienen SITIO PROPIO es distinto de haber
+             * sacado una con `//art`, y ese momento es exactamente éste.
+             */
+            if (next === 'collection') markSecretFound('collection');
         },
         [refreshNotes]
     );
@@ -339,12 +352,19 @@ export default function Home() {
         return () => clearTimeout(id);
     }, []);
 
-    /**
-     * Las piezas viven en la misma colección del backend que tus notas —no hay
-     * otro sitio— pero se separan acá: no son notas y no se tratan como notas.
-     * La marca vive en el navegador porque el backend no se toca para un efecto.
+    /*
+     * ⚠ ACÁ SE SEPARABAN LAS PIEZAS DE LAS NOTAS, Y YA NO HACE FALTA.
+     *
+     * `//keep` creaba una nota-pieza aparte, marcada para no contarla entre tus
+     * archivos. Ahora escribe en la nota abierta: la pieza ES tu nota, con tu
+     * título y tu texto alrededor, así que separarla sería esconder algo que
+     * escribiste vos.
+     *
+     * Con eso `collectibles.ts` se quedó sin nadie que marcara nada —seguía
+     * corriendo, seguía limpiándose en `//reset`, y no hacía absolutamente nada—
+     * así que se fue entero.
      */
-    const { notes: misNotas, collectibles } = splitCollectibles(notes);
+    const misNotas = notes;
 
     /*
      * Cuántas piezas hay en la colección.
@@ -391,7 +411,7 @@ export default function Home() {
 
     const enV02 = v02;
     const notasVisibles = enV02 ? notasV02 : misNotas;
-    const totalVisible = enV02 ? notasV02.length : total - collectibles.length;
+    const totalVisible = enV02 ? notasV02.length : total;
 
     /** Guardar, en la versión que toque. */
     const guardar = useCallback(
@@ -447,21 +467,6 @@ export default function Home() {
         resetEverything();
         setWipe(false);
     }, []);
-
-    const guardarPieza = useCallback(
-        async (title: string, content: string) => {
-            const creada = await createNote({ title, content });
-            if (!creada) return;
-
-            markCollectible(creada._id);
-
-            // La pestaña con estrella aparece con la primera pieza guardada, y
-            // ese momento —descubrir que las piezas tienen sitio propio— es un
-            // hallazgo distinto de haber sacado una con `//art`.
-            markSecretFound('collection');
-        },
-        [createNote]
-    );
 
     /**
      * Dibuja la caja alrededor, pero SÓLO en la v0.2.
@@ -549,7 +554,6 @@ export default function Home() {
                                 onCollapse={() => setCollapse(registerCollapse())}
                                 onPlayPong={() => setPlayingPong(true)}
                                 onKillPage={() => setDead(true)}
-                                onKeepArt={guardarPieza}
                                 onWipe={alBorrar}
                             />
                         ) : view === 'trash' ? (

@@ -2,6 +2,8 @@
 'use client';
 
 import { idleMs } from '@/lib/system/idle';
+import { BRAG, isBragging, subscribeHints } from '@/lib/system/artHints';
+import { getLang } from '@/i18n';
 import { useSyncExternalStore } from 'react';
 import { pickFragment } from '@/lib/system/lore';
 import { getSystemState } from '@/hooks/useSystemState';
@@ -114,5 +116,27 @@ export function getFragment(): string | null {
 const getServerSnapshot = (): string | null => null;
 
 export function useSystemFragment(): string | null {
-    return useSyncExternalStore(subscribe, getFragment, getServerSnapshot);
+    const fragmento = useSyncExternalStore(subscribe, getFragment, getServerSnapshot);
+
+    /*
+     * ⚠ AL GANAR UNA PIEZA, LA BARRA PRESUME UNOS SEGUNDOS.
+     *
+     * `[TODO_BIEN?]` se cambia por `[BUEN ARTE]` y vuelve solo. Es la TERCERA y
+     * más descarada de las pistas que llevan a `//art`: la primera es el destello
+     * de la pestaña, la segunda el resto en la papelera, y ésta salta sólo si las
+     * dos anteriores no se vieron.
+     *
+     * PISA el fragmento en vez de meterse en el sorteo, y por dos razones: en el
+     * sorteo podría no salir nunca —justo cuando más falta hace— y además tiene
+     * que durar lo suyo y no lo que dure un fragmento cualquiera.
+     */
+    const alardeando = useSyncExternalStore(
+        subscribeHints,
+        () => isBragging(),
+        () => false
+    );
+
+    if (alardeando) return BRAG[getLang()];
+
+    return fragmento;
 }

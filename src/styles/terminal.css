@@ -709,6 +709,20 @@
     user-select: none;
 }
 
+/*
+ * El mismo revuelto, pero DENTRO de otra cosa.
+ *
+ * `.scramble` es de bloque porque en `//help` cada uno ocupa su renglón. En
+ * la pestaña de colección va dentro del rótulo, entre los corchetes, y de
+ * bloque partía el botón en TRES LÍNEAS: `[★`, el revuelto, y `]` cada uno
+ * por su lado. Se leía como un botón roto, no como algo por descubrir.
+ */
+.scramble-inline {
+    display: inline;
+    padding-left: 0;
+    white-space: nowrap;
+}
+
 /* Una fila de la respuesta por filas (`//help`). Bloque para que cada una ocupe
    su línea sin depender de saltos dentro del texto. */
 .reply-row {
@@ -726,32 +740,86 @@
     padding: 1.5rem;
 }
 
-.collection-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
 
+/*
+ * ⚠ LA REJILLA SE MIDE EN COLUMNAS DE TEXTO, NO EN `rem`.
+ *
+ * Todas las piezas son de CUARENTA caracteres de ancho, así que la tarjeta se
+ * dimensiona contra eso: `40ch` del dibujo más el aire de los lados. Con
+ * `minmax(16rem, …)` las celdas se estiraban a lo que sobrara y el dibujo
+ * quedaba nadando o recortado según el ancho de la ventana.
+ *
+ * `auto-fill` con un tamaño FIJO —y no `1fr`— es lo que impide que las columnas
+ * crezcan: entran las que quepan y el resto es margen.
+ *
+ * ⚠ Y SIN CENTRAR. Un `justify-content: center` reparte el sobrante a los dos
+ * lados y mete un margen izquierdo que ninguna otra vista tiene: la colección
+ * dejaría de alinear con las notas y con la papelera. Empaquetadas a la
+ * izquierda, el sobrante se va todo a la derecha y el borde es el de siempre.
+ */
 .collection-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-    gap: 1rem;
+    /*
+     * ⚠ CUATRO COLUMNAS FIJAS, no `auto-fill`.
+     *
+     * Con `auto-fill` el número sale de una cuenta —cuántas caben— y esa
+     * cuenta se perdía por DIEZ PÍXELES: la rejilla dispone de 1186 y cuatro
+     * tarjetas piden 1196, así que caía a tres. Ajustar el ancho de la tarjeta
+     * hasta que cuadre es perseguir un número que cambia con la ventana, con
+     * el relleno del contenedor y con la barra lateral.
+     *
+     * Cuatro columnas se piden y ya. `minmax(0, …)` es lo que las deja
+     * encogerse en una ventana estrecha en vez de desbordar y obligar a
+     * desplazar de lado.
+     */
+    grid-template-columns: repeat(4, minmax(0, var(--collection-card-w)));
+    gap: 0.75rem;
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
+/*
+ * ⚠ TODAS LAS TARJETAS MIDEN LO MISMO, tenga pieza o no.
+ *
+ * Antes la encontrada era más grande que los huecos y la rejilla daba saltos
+ * cada vez que descubrías una: las filas se recolocaban y la colección parecía
+ * otra. Lo que hace que coleccionar se sienta es ver el hueco EN SU SITIO, y para
+ * eso el sitio no puede cambiar de tamaño.
+ *
+ * El alto sale de lo que ocupa la pieza más alta —catorce filas a `0.7rem` con
+ * interlínea 1,15— más el número, el pie y los espacios. Se fija en una variable
+ * porque lo comparten la tarjeta y la rejilla.
+ */
+:root {
+    /*
+     * ⚠ NO SE PUEDE ESCRIBIR `40ch` ACÁ y esperar que salga bien: `ch` se resuelve
+     * con la letra del elemento que USA la variable —la tarjeta— y el dibujo se
+     * pinta a `0.7rem`. Saldría casi el doble de ancho.
+     *
+     * Así que se deja la cuenta escrita: cuarenta caracteres, a `0.7rem`, con el
+     * avance de 0,6 em que tienen las monoespaciadas de la pila. Más el relleno de
+     * los lados y los dos bordes.
+     *
+     * ⚠ EL RELLENO LATERAL ES DE MEDIO `rem`, NO DE TRES CUARTOS, y ésa es toda
+     * la diferencia entre cuatro tarjetas por fila y tres. Con 0,75 la cuarta se
+     * pasaba por CINCO PÍXELES en una pantalla normal y la rejilla caía a tres.
+     * El dibujo no se toca: lo que sobra es el aire de los lados.
+     */
+    --collection-card-w: calc(40 * 0.7rem * 0.6 + 1rem + 2px);
+    --collection-card-h: 15.5rem;
+}
+
 .collection-card {
     border: 1px solid var(--color-line);
-    padding: 1rem 0.75rem;
+    padding: 1rem 0.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    min-height: 12rem;
+    height: var(--collection-card-h);
+    overflow: hidden;
 }
 
 /* El dibujo lleva su propia pila de fuentes por el mismo motivo que el corte
@@ -759,6 +827,9 @@
    reserva de otras métricas y el dibujo se descuadraría fila a fila.
    Hoy son todas ASCII, pero esto lo deja a salvo del día que no lo sean. */
 .collection-art {
+    /* Cuarenta columnas exactas: es el ancho de TODAS las piezas, y fijarlo acá
+       impide que el contenedor lo estruje en pantallas estrechas. */
+    width: 40ch;
     font-family: ui-monospace, "Cascadia Mono", Consolas, "DejaVu Sans Mono",
         "Liberation Mono", Menlo, monospace;
     font-size: 0.7rem;

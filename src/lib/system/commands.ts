@@ -4,7 +4,7 @@ import { LIMITS } from '@/config/limits';
 import { formatDuration } from '@/lib/utils/formatters';
 import { getLang, fill, pickPlural } from '@/i18n';
 import { greetingFor, chatReplyFor, KILL_AFTER_KICKS } from '@/lib/system/greeting';
-import { awardFrom, revealArt, markOpened, catalogRows, pieceByNumber, rememberDrawn, canKeep, lastDrawn, asNote, noteTitle, captionKnown } from '@/lib/system/asciiArt';
+import { awardFrom, revealArt, markOpened, catalogRows, pieceByNumber, rememberDrawn, canKeep, lastDrawn, asNote, noteTitle, captionKnown, artOf } from '@/lib/system/asciiArt';
 import { isUnlocked, markUsed } from '@/lib/system/commandUnlock';
 import { markV02RoundTrip } from '@/lib/system/v02';
 import { rememberHint, sawHint } from '@/lib/system/helpHint';
@@ -84,8 +84,15 @@ export type CommandEffect =
     | { kind: 'play-pong' }
     | { kind: 'leave-note' }
     | { kind: 'time-drift' }
-    | { kind: 'write-note'; text: string }
-    | { kind: 'keep-art'; title: string; text: string }
+    /**
+     * Texto que va a la NOTA ABIERTA.
+     *
+     * `title` sólo lo manda `//keep`: la pieza necesita ficha —«POLILLA · 1/16»—
+     * porque deja de ser una nota tuya cualquiera para ser una del catálogo.
+     * `//recover` no lo manda, y con razón: devuelve TU texto, y renombrarte la
+     * nota sería tocar algo que no le pediste.
+     */
+    | { kind: 'write-note'; text: string; title?: string }
     | { kind: 'reset-all' }
     | { kind: 'kill-page' }
     | { kind: 'toggle-v02'; entering: boolean; word: string }
@@ -513,8 +520,55 @@ const WRITTEN: LocalizedPlural = {
 /** Cada cuántas veces `//help` se niega a listar nada. */
 const SNARK_ODDS = 1 / 6;
 
-/** Y cada cuántas suelta el nombre de uno de los escondidos. */
-const LEAK_ODDS = 1 / 4;
+/**
+ * Y cada cuántas suelta el nombre de uno de los escondidos.
+ *
+ * Una de cada ocho. Estuvo en una de cada cuatro y a esa frecuencia la fuga
+ * dejaba de ser una fuga: pidiendo ayuda tres veces salían casi todos, y lo que
+ * es la RED del proyecto —insistiendo, todo se encuentra— pasaba a ser el camino
+ * principal. Sigue garantizando que nada quede inalcanzable, sólo que hay que
+ * quererlo.
+ */
+const LEAK_ODDS = 1 / 8;
+
+/**
+ * Los ÚNICOS que la fuga puede soltar: callejones sin salida.
+ *
+ * ⚠ ANTES SOLTABA CUALQUIER ESCONDIDO, y eso rompía tres cosas de distinta
+ * gravedad:
+ *
+ *   · `//reset` BORRA TU PROGRESO. Es el único comando destructivo de la app y
+ *     llegaba de regalo, sin contexto y sin haberlo buscado.
+ *   · Los ESLABONES INTERMEDIOS salían sueltos —`//attach_6` antes que `//ps`,
+ *     `//art_1` antes que `//art`—. Se niegan a existir fuera de orden, así que
+ *     la fuga regalaba un nombre que todavía no servía para nada, y para cuando
+ *     servía ya no te acordabas.
+ *   · Las PUERTAS —`//hi`, `//diag`, `//art`, `//history`, `//panic`, `//ps`—
+ *     abren capas enteras, y cada una tiene ya su propio camino para
+ *     descubrirse. Regalarlas es regalar el juego.
+ *
+ * Lo que queda es lo que se lee, se sonríe, y ahí termina.
+ */
+export const LEAKABLE: readonly string[] = [
+    '//uptime',
+    '//sudo',
+    '//log',
+    '//diag',
+    '//date_off',
+    '//history',
+];
+
+/**
+ * ⚠ LOS CUATRO DEL ENTE ESTÁN RESERVADOS: `//hi`, `//whoareu`, `//howareu` y
+ * `//whoami`.
+ *
+ * Son la cadena del lore profundo, y una fuga los soltaría fuera de contexto —
+ * un nombre suelto que no significa nada hasta que sabés a quién le estás
+ * hablando. Se descubren por su propio camino o no se descubren.
+ *
+ * `//diag` y `//history` SÍ pueden filtrarse aunque abran algo: el panel sólo
+ * MIRA y el historial enseña lo que ya escribiste. Ninguno destapa un secreto.
+ */
 
 /**
  * Cuando no está para listas.
@@ -548,12 +602,23 @@ function pickOne(
     return repertorio[i][lang];
 }
 
+/**
+ * Los de `LEAKABLE` que además EXISTEN.
+ *
+ * Se deriva de los comandos de verdad en vez de confiar en la lista: un nombre
+ * mal escrito ahí arriba dejaría la fuga muda para siempre sin que nada fallara.
+ */
+export function leakableCommands(): string[] {
+    return COMMANDS.filter((c) => LEAKABLE.includes(c.name)).map((c) => c.name);
+}
+
 /** El nombre de uno de los escondidos, al azar. */
 function leakOne(random: () => number): string {
     // Sólo los que siguen tachados: soltar uno que ya usaste no es una fuga.
     const ocultos = COMMANDS.filter(
         (c) =>
             c.hidden &&
+            LEAKABLE.includes(c.name) &&
             !isUnlocked(c.name) &&
             (isV02() ? !c.notInV02 : !c.onlyV02)
     );
@@ -1018,7 +1083,9 @@ const COMMANDS: readonly Command[] = [
             // soltar acá el nombre sería dar la pista ya resuelta.
             return texto(
                 [
-                    piece.art,
+                    // Con el nombre por ganar, el dibujo TAMPOCO está entero:
+                    // ver el morse no es entenderlo. Ver `artOf`.
+                    artOf(piece),
                     '',
                     `-- ${captionKnown(piece) ? piece.caption[lang] : T.artUnnamed[lang]}`,
                     '',
@@ -1038,15 +1105,30 @@ const COMMANDS: readonly Command[] = [
             const ultima = lastDrawn();
             if (!ultima) return texto(T.keepNothing[lang]);
 
-            // CREA UNA PIEZA, no escribe en la nota abierta. Escribir encima
-            // obligaría a tener una nota en blanco a mano para poder guardar, y
-            // la pieza acabaría mezclada entre tus archivos como una nota más.
+            /*
+             * SE DIBUJA EN LA NOTA ABIERTA, y ahí queda guardada.
+             *
+             * ⚠ ANTES CREABA UNA NOTA APARTE. El razonamiento de entonces era que
+             * escribir encima obligaría a tener una nota en blanco a mano — pero
+             * eso convirtió `//keep` en un botón que hacía algo en OTRO sitio: lo
+             * ejecutabas y no pasaba nada donde estabas mirando. Se sentía roto
+             * aunque funcionara, que es peor que estarlo.
+             *
+             * Escribiéndola acá la pieza es tuya de verdad: está en tu archivo, se
+             * puede editar, se le puede poner texto alrededor y se borra como
+             * cualquier cosa que hayas escrito. Eso es quedársela.
+             *
+             * Va por la misma vía que `//recover`, que ya devolvía texto a la nota
+             * abierta.
+             */
             return {
                 output: T.keepDone[lang],
                 effect: {
-                    kind: 'keep-art',
-                    title: noteTitle(ultima, lang),
+                    kind: 'write-note',
                     text: asNote(ultima, lang),
+                    // Y con su ficha de catálogo: `POLILLA · 1/16`, no «Nueva
+                    // nota». Dice qué pieza es y cuántas hay.
+                    title: noteTitle(ultima, lang),
                 },
                 secretId: 'art-keep',
             };

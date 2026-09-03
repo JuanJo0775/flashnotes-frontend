@@ -141,39 +141,36 @@ describe('//keep · quedarse una', () => {
         expect(r.output).toMatch(/NADA QUE GUARDAR/);
     });
 
-    test('después de ver una, la guarda en la colección', () => {
-        // CREA UNA PIEZA, no escribe en la nota abierta: escribir encima
-        // obligaría a tener una nota en blanco a mano, y la pieza acabaría
-        // mezclada entre tus archivos como una nota más.
+    test('la DIBUJA EN LA NOTA ABIERTA', () => {
+        /*
+         * ⚠ ANTES CREABA UNA NOTA APARTE, y el razonamiento de entonces era que
+         * escribir encima obligaría a tener una en blanco a mano.
+         *
+         * Pero eso convertía `//keep` en un botón que hacía algo en OTRO sitio:
+         * lo ejecutabas y no pasaba nada donde estabas mirando. Se sentía roto
+         * aunque funcionara, que es peor que estarlo.
+         *
+         * Escribiéndola acá la pieza es tuya de verdad: está en tu archivo, se
+         * puede editar, se le puede poner texto alrededor y se borra como
+         * cualquier cosa que hayas escrito. Eso es quedársela.
+         */
         awardPiece(ART[0].id);
         corre('//art_1');
         const r = corre('//keep');
 
-        expect(r.effect.kind).toBe('keep-art');
+        expect(r.effect.kind).toBe('write-note');
     });
 
-    test('lo que guarda es el dibujo con su pie', () => {
+    test('lo que escribe es el dibujo con su pie', () => {
         awardPiece(ART[0].id);
         const dibujo = corre('//art_1').output;
         const r = corre('//keep');
 
-        if (r.effect.kind !== 'keep-art') throw new Error('no guardó nada');
+        if (r.effect.kind !== 'write-note') throw new Error('no escribió nada');
         expect(r.effect.text).toContain(dibujo.split('\n')[0]);
     });
 
-    test('el título es el nombre de la pieza y su número', () => {
-        // `POLILLA · 1/8`, no «Nueva nota». Es una ficha de catálogo: dice qué
-        // pieza es y cuántas hay.
-        awardPiece(ART[0].id);
-        corre('//art_1');
-        const r = corre('//keep');
-
-        if (r.effect.kind !== 'keep-art') throw new Error('no guardó nada');
-        expect(r.effect.title).toContain(`/${ART_TOTAL}`);
-        expect(r.effect.title).not.toMatch(/nueva nota/i);
-    });
-
-    test('guarda la ÚLTIMA que se dibujó, no una cualquiera', () => {
+    test('escribe la ÚLTIMA que se dibujó, no una cualquiera', () => {
         awardPiece(ART[0].id);
         awardPiece(ART[3].id);
 
@@ -182,8 +179,21 @@ describe('//keep · quedarse una', () => {
 
         const r = corre('//keep');
 
-        if (r.effect.kind !== 'keep-art') throw new Error('no guardó nada');
+        if (r.effect.kind !== 'write-note') throw new Error('no escribió nada');
         expect(r.effect.text).toContain(segunda);
+    });
+
+    test('y la nota queda con la FICHA por título', () => {
+        // `POLILLA · 1/16`, no «Nueva nota». La pieza deja de ser una nota tuya
+        // cualquiera para ser una del catálogo, y el título es lo que lo dice en
+        // la lista lateral, donde el dibujo no se ve.
+        awardPiece(ART[0].id);
+        corre('//art_1');
+        const r = corre('//keep');
+
+        if (r.effect.kind !== 'write-note') throw new Error('no escribió nada');
+        expect(r.effect.title).toContain(`/${ART_TOTAL}`);
+        expect(r.effect.title).not.toMatch(/nueva nota/i);
     });
 
     test('cuenta como secreto aparte', () => {

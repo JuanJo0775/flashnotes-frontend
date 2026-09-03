@@ -38,6 +38,10 @@ describe('los diccionarios', () => {
         // Las claves que legítimamente comparten valor en los dos idiomas: cifras,
         // símbolos y marcadores de posición.
         const iguales = new Set([
+            // `MMMM?` no es una palabra, es un RUIDO: la máquina no sabe cómo
+            // llamar a lo que lleva registrado. Traducirlo sería darle un
+            // nombre, que es justo lo que el rótulo dice que no tiene.
+            'diag.secrets',
             'common.dash',
             'nav.datePlaceholder',
             'sidebar.noTime',

@@ -67,11 +67,9 @@ interface UseNoteCommandsOptions {
     /** `//hi` insistido de más: te saca de la nota. */
     onLeaveNote: () => void;
     /** `//keep`: deja el dibujo escrito en la nota abierta. */
-    onWriteNote: (text: string) => void;
+    onWriteNote: (text: string, title?: string) => void;
     /** Insististe hasta que te echó tres veces: la página se queda muerta. */
     onKillPage: () => void;
-    /** `//keep`: guarda la pieza en la colección, no entre tus notas. */
-    onKeepArt: (title: string, text: string) => void;
     /**
      * Enseña la pantalla de borrado.
      *
@@ -119,7 +117,6 @@ export function useNoteCommands({
     onLeaveNote,
     onWriteNote,
     onKillPage,
-    onKeepArt,
     onWipe,
 }: UseNoteCommandsOptions): UseNoteCommandsReturn {
     const [response, setResponse] = useState<string | null>(null);
@@ -169,8 +166,24 @@ export function useNoteCommands({
 
             if (result.secretId) markSecretFound(result.secretId);
 
-            setResponse(result.output || null);
-            setRows(result.rows ?? null);
+            /*
+             * ⚠ UN COMANDO QUE ESCRIBE EN LA NOTA NO DEJA RESPUESTA.
+             *
+             * La respuesta se pinta en el hueco del MARCADOR DE POSICIÓN, encima
+             * del área de texto: funciona porque los comandos se ejecutan con la
+             * nota vacía y ahí no tapa nada. Pero `//keep` y `//recover` escriben
+             * contenido en esa misma nota, así que la respuesta caía justo encima
+             * de la primera línea de lo que acababan de escribir — el dibujo salía
+             * con el renglón de arriba pisado por un «AHÍ LA TIENE.».
+             *
+             * Y callar no pierde nada: en estos dos el resultado ES la respuesta.
+             * Lo ejecutás y aparece el dibujo donde estabas mirando, que es
+             * exactamente lo que se le pedía a `//keep`.
+             */
+            const escribeEnLaNota = result.effect.kind === 'write-note';
+
+            setResponse(escribeEnLaNota ? null : result.output || null);
+            setRows(escribeEnLaNota ? null : result.rows ?? null);
 
             switch (result.effect.kind) {
                 case 'open-diagnostics':
@@ -190,7 +203,7 @@ export function useNoteCommands({
                     onLeaveNote();
                     break;
                 case 'write-note':
-                    onWriteNote(result.effect.text);
+                    onWriteNote(result.effect.text, result.effect.title);
                     break;
                 case 'reset-all':
                     // Se borra AHORA y la pantalla lo cuenta después. Si los
@@ -205,9 +218,6 @@ export function useNoteCommands({
                 case 'kill-page':
                     registerKick();
                     onKillPage();
-                    break;
-                case 'keep-art':
-                    onKeepArt(result.effect.title, result.effect.text);
                     break;
                 case 'toggle-v02':
                     // Se le pasa la palabra: al entrar queda guardada, y es la
@@ -253,7 +263,6 @@ export function useNoteCommands({
             onLeaveNote,
             onWriteNote,
             onKillPage,
-            onKeepArt,
             onWipe,
         ]
     );

@@ -12,6 +12,7 @@ import {
     buildGhostNote,
     shouldHaunt,
 } from '@/lib/system/ghostFile';
+import { SCRAP_ID, buildScrapNote, shouldScrap } from '@/lib/system/artScrap';
 import { formatLog } from '@/lib/system/requestLog';
 import { getSystemState, markSecretFound } from '@/hooks/useSystemState';
 
@@ -32,6 +33,18 @@ interface UseTrashReturn {
  * se olvidaría en cuanto salís, y el fantasma volvería en el acto.
  */
 let ghostDismissedAt: number | null = null;
+
+/**
+ * Y cuándo se descartó el resto de la pieza.
+ *
+ * Mismo motivo que el del fantasma: a nivel de módulo, porque la papelera se
+ * monta y se desmonta al cambiar de vista.
+ *
+ * ⚠ PERO ÉSTE NO VUELVE. El fantasma reaparece pasado un rato —es un archivo que
+ * el sistema regenera—; el resto es una pista, y una pista que insiste después
+ * de que la tiraste deja de ser una pista para ser un pesado.
+ */
+let scrapDismissed = false;
 
 export const useTrash = (): UseTrashReturn => {
     const [trashedNotes, setTrashedNotes] = useState<Note[]>([]);
@@ -59,12 +72,26 @@ export const useTrash = (): UseTrashReturn => {
                 now: Date.now(),
             });
 
-            if (haunted) {
-                markSecretFound('ghost-file');
-                setTrashedNotes([buildGhostNote(formatLog()), ...notes]);
-            } else {
-                setTrashedNotes(notes);
-            }
+            /*
+             * Y EL RESTO DE LA PIEZA, por el mismo camino.
+             *
+             * Ganás una pieza y el sistema la archiva mal: acá queda lo que
+             * recuperó, comido, con las letras de `//art` repartidas entre la
+             * basura. Es lo que impide que alguien junte cinco piezas sin
+             * enterarse nunca de que hay una colección.
+             *
+             * Va DESPUÉS del fantasma en la lista —o sea debajo— porque el
+             * fantasma lleva más tiempo ahí: el orden cuenta quién llegó antes.
+             */
+            const resto = !scrapDismissed && shouldScrap() ? buildScrapNote() : null;
+
+            const inyectadas = [
+                ...(haunted ? [buildGhostNote(formatLog())] : []),
+                ...(resto ? [resto] : []),
+            ];
+
+            if (haunted) markSecretFound('ghost-file');
+            setTrashedNotes([...inyectadas, ...notes]);
         } catch (err) {
             const message = getErrorInfo(err);
             setError(message);
@@ -83,6 +110,40 @@ export const useTrash = (): UseTrashReturn => {
         if (id === GHOST_ID) {
             ghostDismissedAt = Date.now();
             setTrashedNotes((prev) => prev.filter((note) => note._id !== GHOST_ID));
+            return true;
+        }
+
+        /*
+         * ⚠ RECUPERARLO LO CONVIERTE EN UNA NOTA DE VERDAD.
+         *
+         * Acá estaba copiado el comportamiento del fantasma —descartar y ya— y
+         * era un fallo: en el fantasma «recuperar» significa «quitámelo de
+         * encima», porque es un registro que se lee de un vistazo en la propia
+         * tarjeta. El resto es un DIBUJO de cuarenta columnas, y la tarjeta sólo
+         * enseña ciento cuarenta caracteres recortados: pulsar recuperar hacía
+         * desaparecer justo lo que se quería mirar.
+         *
+         * Ahora se crea de verdad, con su contenido entero, y queda entre tus
+         * notas para abrirla, leerla y quedártela. Es lo que «recuperar»
+         * significa en cualquier papelera.
+         */
+        if (id === SCRAP_ID) {
+            const resto = buildScrapNote();
+            if (resto === null) return false;
+
+            try {
+                setError(null);
+                await notesApi.create({
+                    title: resto.title,
+                    content: resto.content,
+                });
+            } catch (err) {
+                setError(getErrorInfo(err));
+                return false;
+            }
+
+            scrapDismissed = true;
+            setTrashedNotes((prev) => prev.filter((note) => note._id !== SCRAP_ID));
             return true;
         }
 
@@ -114,6 +175,14 @@ export const useTrash = (): UseTrashReturn => {
         if (id === GHOST_ID) {
             ghostDismissedAt = Date.now();
             setTrashedNotes((prev) => prev.filter((note) => note._id !== GHOST_ID));
+            return true;
+        }
+
+        // Borrarlo sí es tirarlo, y no vuelve: ya dijo lo que tenía que decir.
+        // Tampoco sale a la red, que no existe en el servidor.
+        if (id === SCRAP_ID) {
+            scrapDismissed = true;
+            setTrashedNotes((prev) => prev.filter((note) => note._id !== SCRAP_ID));
             return true;
         }
 

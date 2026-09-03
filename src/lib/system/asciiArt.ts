@@ -24,6 +24,8 @@
 import type { Note } from '@/types/note.types';
 import type { Lang } from '@/config/lang';
 import { didV02RoundTrip } from '@/lib/system/v02';
+import { clearHints, hintEarned } from '@/lib/system/artHints';
+import { damageArt } from '@/lib/system/artCorruption';
 
 type Localized = Readonly<Record<Lang, string>>;
 
@@ -36,7 +38,7 @@ const STORAGE_KEY = 'flashnotes:art';
  * Así se ve que hay uno y que todavía no es tuyo, que es la diferencia entre
  * un descuido y una puerta.
  */
-const UNNAMED = '[ SIN IDENTIFICAR ]';
+export const UNNAMED = '[ SIN IDENTIFICAR ]';
 
 /**
  * Las que además se han VISTO en el catálogo.
@@ -569,7 +571,7 @@ export const ART: readonly ArtPiece[] = [
         id: 'bulb',
         source: 'theme-glitch',
         caption: {
-            es: 'BOMBILLA · NI ENCENDIDA NI APAGADA',
+            es: 'FOCO · NI ENCENDIDO NI APAGADO',
             en: 'BULB · NEITHER ON NOR OFF',
         },
         /*
@@ -1184,6 +1186,10 @@ export function revealArt() {
         // Sin sitio, la colección se queda como estaba. No se pierde nada
         // ganado: eso vive en su propia clave.
     }
+
+    // Y SE CALLAN LAS PISTAS. Existen para traerte hasta acá; seguir empujando
+    // después de haber llegado no es una pista, es un pesado.
+    clearHints();
 }
 
 /**
@@ -1233,6 +1239,19 @@ export function awardPiece(id: string): ArtPiece | null {
 
     found.add(id);
     store(found);
+
+    /*
+     * Y SE ENCIENDEN LAS PISTAS, pero sólo si todavía no miraste el catálogo.
+     *
+     * Ganar una pieza dejaba un premio en la mano y ninguna indicación de dónde
+     * verlo: el aviso no dice el nombre —a propósito— y `//art` sólo salía por la
+     * fuga de `//help`, que es azar. Se podían juntar cinco piezas sin enterarse
+     * de que había una colección.
+     *
+     * La regla vive ACÁ y no en `artHints` para que aquel módulo no tenga que
+     * leer de éste: la dependencia va en una sola dirección y no hay ciclo.
+     */
+    if (readRevealed().size === 0) hintEarned();
 
     return piece;
 }
@@ -1298,6 +1317,25 @@ export function onlyMissing(id: string): boolean {
 export function captionKnown(piece: ArtPiece): boolean {
     if (piece.nameNeeds === undefined) return true;
     return didV02RoundTrip();
+}
+
+/**
+ * El dibujo que toca ENSEÑAR de esta pieza.
+ *
+ * ⚠ SIN EL NOMBRE GANADO, EL DIBUJO TAMPOCO ESTÁ ENTERO.
+ *
+ * El manipulador se gana VIENDO el morse del reloj, y ver no es entender: en esa
+ * primera fase la pieza está a medio recuperar, con el pie sin identificar y el
+ * dibujo comido. Usar el código para entrar en la v0.2 y para salir es lo que la
+ * completa — el nombre Y el dibujo a la vez.
+ *
+ * Vive acá y no en cada sitio que pinta una pieza porque los sitios son tres
+ * —el catálogo, `//art_<n>` y la pestaña de la colección— y basta con que uno se
+ * olvide para que la primera fase deje de existir. Ya pasó con el pie: la
+ * colección lo enseñaba entero mientras el catálogo lo tapaba.
+ */
+export function artOf(piece: ArtPiece): string {
+    return captionKnown(piece) ? piece.art : damageArt(piece.art, piece.id);
 }
 
 export function catalogRows(lang: Lang = 'es'): CatalogRow[] {
@@ -1425,5 +1463,7 @@ export function artSlots(pieces: readonly Note[]): ArtSlot[] {
 /** Cómo queda la pieza al guardarla en una nota. */
 export function asNote(piece: ArtPiece, lang: Lang): string {
     const pie = captionKnown(piece) ? piece.caption[lang] : UNNAMED;
-    return [piece.art, '', `-- ${pie}`].join('\n');
+    // Y el dibujo va como toque: guardar una pieza a medio recuperar guarda
+    // lo que hay, no una copia entera que todavía no te ganaste.
+    return [artOf(piece), '', `-- ${pie}`].join('\n');
 }
