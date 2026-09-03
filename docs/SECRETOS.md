@@ -78,6 +78,7 @@ Qué hacer para ver cada cosa, y en qué sección de más abajo se cuenta.
 | `//hi` y enseguida `//whoareu` o `//howareu` | La conversación se agota a las **3** | §21 |
 | Insistir **2 veces más** tras la expulsión | La página se queda muerta | §21 |
 | `//date_off` | El reloj y la fecha se sueltan | §17 |
+| **Ganar tu primera pieza** | Tres pistas que llevan al catálogo, y un resto en la papelera | §18 |
 | `//art`, y después `//art_<n>` y `//keep` | El catálogo, las piezas y la colección con su pestaña | §18 · §23 |
 | `//reset` | ⚠ **Borra TODO, las notas incluidas.** Pregunta `[y/n]` antes | §22 |
 | …y contestar `n` (1 de cada 5) | **La broma:** te enseña el borrado entero y no borra nada | §22 |
@@ -115,7 +116,7 @@ sección.
 | Un glitch serio o grave trae negativo | 1 de cada 4 | 4 | `NEGATIVE_ODDS` · `glitchTiming.ts` |
 | Un glitch **grave** trae ráfaga cromática | 1 de cada 2 | 2 | `CHROMA_BURST_ODDS` · `useGlitch.ts` |
 | `//help` no está para listas | 1 de cada 6 | 6 | `SNARK_ODDS` · `commands.ts` |
-| `//help` suelta un comando escondido | 1 de cada 4 | 4 | `LEAK_ODDS` · `commands.ts` |
+| `//help` suelta un comando escondido | 1 de cada **8**, y sólo **6 posibles** | 8 | `LEAK_ODDS` · `LEAKABLE` · `commands.ts` |
 | Una ventana fantasma nombra un comando | 1 de cada 3 | 3 | `LEAK_ODDS` · `PhantomError.tsx` |
 | Salen 2 o 3 ventanas de golpe (sin bloqueo) | 1 de cada 4 | 4 | `PhantomError.tsx` |
 | Una sacudida de tema es ráfaga de cuatro | 1 de cada 3 | 3 | `FLICKER_ODDS` · `ChromaticFailure.tsx` |
@@ -339,6 +340,11 @@ otra palabra que suena igual de máquina en su idioma.
 las dos. `when` dice si un fragmento PUEDE salir —de madrugada, con la sesión
 larga—; el peso dice CADA CUÁNTO sale entre los que pueden. **Una variante no se
 gana estando disponible: se gana siendo rara.**
+
+**Y hay un fragmento que no está en el sorteo: `[BUEN ARTE]`.** Sale cuatro
+segundos al ganar una pieza y **pisa** lo que hubiera, porque es una de las tres
+pistas que llevan al catálogo (§18) — en el sorteo podría no salir nunca, justo
+cuando más falta hace.
 
 ### La errata
 
@@ -643,26 +649,30 @@ Sólo se desbloquean **al usarlos**, no al verlos: hasta entonces su sitio en
 `//help` lo ocupa una animación de letras aleatorias (§19). Cada uno **conserva
 su posición**: descubrir uno destapa su hueco, no lo añade al final.
 
+**«Fuga de `//help`»** son los seis de la lista blanca (§19); **«ventana de
+error»** es cualquiera, porque ésa no filtra (§19). Los demás tienen camino
+propio.
+
 | Comando | Qué hace | Cómo se descubre |
 | --- | --- | --- |
-| `//whoami` | Que no puede saber quién sos (ver abajo) | Fugas |
-| `//sudo` | `NO HAY SUPERUSUARIO. NO HAY USUARIOS. HAY UN NAVEGADOR.` | Fugas |
-| `//uptime` | Tiempo desde que abriste la pestaña | Fugas |
-| `//ps` | Los procesos que corren de verdad | Fugas |
-| `//log` | El registro de peticiones (§8) | Fugas |
-| `//history` | Las versiones guardadas de la nota — **da la cinta perforada** | Fugas |
-| `//diag` | Abre el panel (§7) | Fugas — o Alt+clic |
-| `//chaos on\|off` | Enciende o apaga los efectos | Fugas |
-| `//panic` | Dispara el colapso (§13) | Fugas |
-| `//hi` | Saludo que se va agriando (§16) | Probar a saludar |
-| `//whoareu` | Quién es ella | Encadenando tras `//hi` (§21) |
-| `//howareu` | Qué tal está | Encadenando tras `//hi` (§21) |
-| `//date_off` | Descontrola hora **y fecha** (§17) | Fugas |
-| `//art` | El catálogo de piezas. **No da ninguna** (§18) | Fugas |
+| `//uptime` | Tiempo desde que abriste la pestaña | Fuga de `//help` · ventana de error |
+| `//sudo` | `NO HAY SUPERUSUARIO. NO HAY USUARIOS. HAY UN NAVEGADOR.` | Fuga de `//help` · ventana de error |
+| `//log` | El registro de peticiones (§8) | Fuga de `//help` · ventana de error |
+| `//date_off` | Descontrola hora **y fecha** (§17) | Fuga de `//help` · ventana de error |
+| `//history` | Las versiones guardadas de la nota — **da la cinta perforada** | Fuga de `//help` · ventana de error |
+| `//diag` | Abre el panel (§7) | Fuga de `//help` · ventana de error · **Alt+clic** |
+| `//ps` | Los procesos que corren de verdad | **La pista del panel** (§7) · ventana de error |
+| `//attach_<n>` | Se engancha a un proceso (§15) | Leyendo `//ps` |
+| `//art` | El catálogo de piezas. **No da ninguna** (§18) | **Las tres pistas al ganar una pieza** (§18) · ventana de error |
 | `//art_<n>` | Dibuja la pieza `n`, si te la ganaste | Lo dice `//art` |
 | `//keep` | Deja la última dibujada en una pieza de la colección (§23) | Lo dice `//art_<n>` |
-| `//attach_<n>` | Se engancha a un proceso (§15) | Leyendo `//ps` |
-| `//reset` | ⚠ **Borra todo, notas incluidas.** Pregunta antes (§22) | Fugas |
+| `//hi` | Saludo que se va agriando (§16) | Probar a saludar · ventana de error |
+| `//whoareu` | Quién es ella | Encadenando tras `//hi` (§21) |
+| `//howareu` | Qué tal está | Encadenando tras `//hi` (§21) |
+| `//whoami` | Que no puede saber quién sos (ver abajo) | Ventana de error |
+| `//chaos on\|off` | Enciende o apaga los efectos | Ventana de error |
+| `//panic` | Dispara el colapso (§13) | Ventana de error |
+| `//reset` | ⚠ **Borra todo, notas incluidas.** Pregunta antes (§22) | Ventana de error |
 
 Y dos más que **sólo existen dentro de la v0.2**, `//todo` y `//recover` — ver
 §24.4.
@@ -794,9 +804,38 @@ capa superior sin ninguna librería. Usa la misma piel que `ConfirmDialog` —ba
 de título en tinta, cuerpo en papel, sin curvas—, y el foco inicial va al botón
 de cerrar.
 
+### En la barra de título hay un comando
+
+```
+⚙ Diagnóstico del sistema                                    //ps//
+```
+
+Eso de la derecha, en gris, **es la única forma de encontrar `//ps`** — y `//ps`
+es la única puerta del pong (§15).
+
+Hizo falta porque `//ps` **se sacó de la fuga de `//help`**: es una puerta, y
+regalarla es regalar la capa que abre. Pero entonces no quedaba **ninguna** forma
+de llegar a ella, y un comando que no se puede encontrar es un comando que no
+existe.
+
+**Va envuelto en barras a propósito.** `//ps//` se lee como uno de esos adornos
+de cabecera que ponían los programas viejos; `//ps` a secas, junto al título,
+sería un cartel que dice «tecleá esto». Y el comando son **los cuatro primeros
+caracteres, enteros y tecleables**: un `// ps` con espacio sería más bonito y no
+serviría para nada.
+
+**Ésa es la diferencia entre una pista y un cartel: quien mira, la ve.**
+
+Va dentro del `h2` y no debajo —la barra invertida ES el `h2`, así que colgarlo
+fuera lo dejaba sobre el fondo del panel y se leía como un dato más—, en
+`aria-hidden`, y **no pasa por las traducciones**: no es una frase, es un token, y
+es el mismo en los dos idiomas.
+
 **Qué muestra** — once lecturas, en este orden:
 
 ```
+⚙ Diagnóstico del sistema                                    //ps//
+
 SESIÓN                  NO LEGIBLE
 TIEMPO ACTIVO           00:47:12
 NOTAS CREADAS           12
@@ -804,7 +843,7 @@ BYTES ESCRITOS          8.4kb
 INTEGRIDAD              100%
 TEMA                    CLARO
 SECRETOS                [███░░░░░░░░░░░] 6/28 · SE FIJA
-PIEZAS                  [██░░░░░░░░░░░░] 2/16
+PIEZAS                  [██░░░░░░░░░░░░] 2/16 · LINDO
 VSYNC-TEST              42  (7 partidas)
 VSYNC-TEST DEGRADADO    SIN DATOS
 NÚCLEO                  41°C  ▮▮▮▮▮▯▯▯▯▯
@@ -892,6 +931,12 @@ cuenta— y la última **sólo** se enciende con todos.
 otra forma —cuánto del sistema conocés— y separarlas en dos lenguajes distintos
 haría parecer que una de las dos colecciones importa menos.
 
+**Y lleva `· LINDO` detrás, que no es adorno.** Sin el punto y la coletilla, esta
+fila queda más corta que la de `SECRETOS` —que lleva su escalón— y las dos
+cuentas dejan de alinearse. De paso dice lo único que la máquina sabe de los
+dibujos: **le parecen bonitos.** Es la misma voz naíf del `[BUEN ARTE]` de la
+barra de estado (§18) — no sabe qué son, sabe que le gustan.
+
 **Apertura (`signal-lock`, 120 ms, `steps(3)`).** Nada de fundidos: aparece al
 60 % de opacidad, desaparece, y aparece al 100 %, como una señal que engancha.
 
@@ -937,6 +982,11 @@ Se pregunta **al entrar a la papelera**, no cada tanto por reloj.
 **Contenido: tu propia actividad.** No es texto inventado que la imita — es el
 volcado del registro real de peticiones (§8). Un archivo fantasma que te muestra
 algo verificable es incomparablemente más incómodo que uno que lo simula.
+
+**No es el único intruso de la papelera.** Al ganar tu primera pieza aparece
+además `RECUPERADO.bin` (§18), con el mismo patrón —se inyecta en el cliente y
+nunca toca la base de datos— y **debajo de éste**: el fantasma lleva más tiempo
+ahí, y el orden cuenta quién llegó antes.
 
 **Se distingue siempre.** Lleva etiqueta `[SISTEMA]` en vez de `[ELIMINADA]`. Es
 un chiste, no una trampa.
@@ -1783,6 +1833,10 @@ fotograma: el más rápido de los otros cinco corre cuatro veces por segundo.
 El pie da **el verbo pero no el PID**. Adivinar `attach` a ciegas sería
 imposible; decir cuál de los seis es el raro sería regalar el hallazgo.
 
+**Y a `//ps` sólo se llega por la pista del panel de diagnóstico** (§7): está
+fuera de la fuga de `//help` porque es una puerta, y regalarla es regalar la capa
+que abre.
+
 `//attach_*` **no sale en `//help`**: `//ps` es la única puerta. Los otros PIDs
 contestan, y ahí está la otra mitad del chiste — `//attach_1` se lleva un
 «NO TOQUE EL AUTO-GUARDADO».
@@ -1989,8 +2043,20 @@ memoria de una máquina encendida hace demasiado. La polilla es **la primera
 avería informática documentada** —dentro de un relé, en 1947, y de ahí viene
 «bug»—; la cinta y el disquete son soportes que esta terminal conoció.
 
-**Son dieciséis, todas de cuarenta columnas de ancho.** La copia de seguridad de
-los dibujos está en [`ARTE.md`](ARTE.md), generada desde el código.
+**Son dieciséis, todas de cuarenta columnas de ancho.** Los dibujos están también
+en [`ARTE.md`](ARTE.md), que es a la vez **la copia de seguridad y el sitio donde
+se retocan a mano**: mover un carácter en un bloque de texto es mucho más cómodo
+que dentro de un array de cadenas con barras escapadas.
+
+> ⚠ **Y las dos copias se separaron en silencio.** Nada las ataba, y se
+> encontraron **siete piezas** —el casete, el pong, la pluma, la bombilla, el
+> arbusto, la estantería y la carita— retocadas en el documento y sin portar al
+> código. Sólo salieron a la luz al comparar antes de regenerar; **regenerar sin
+> mirar las habría borrado todas de una vez.**
+>
+> Ahora las ata `tests/docs/arte.test.ts`, y falla en las dos direcciones: si se
+> retocó el documento y no se portó, y si se cambió el código y no se regeneró.
+> Da igual cuál mande — lo que no puede pasar es que difieran sin que se sepa.
 
 ## Se ganan, no se regalan
 
@@ -2005,23 +2071,255 @@ fijo, el dibujo puede hablar de dónde salió — y la colección completa acaba
 siendo un mapa de todo lo que hay escondido en la app. Ésa es la única razón que
 justifica que tenga sección propia.
 
+## Cómo te enterás de que existe el catálogo
+
+> ⚠ **Ganar una pieza te dejaba un premio en la mano y ninguna indicación de
+> dónde mirarlo.** El aviso no dice el nombre —a propósito, es el premio del
+> tercer estado— y `//art` sólo salía por la fuga de `//help`, que es azar. **Se
+> podían juntar cinco piezas sin enterarse nunca de que había una colección.**
+
+Ahora hay **tres pistas**, y ninguna dice «tecleá esto». Se arman a la vez, en el
+instante en que ganás una pieza, y sólo mientras **no hayas mirado el catálogo
+todavía**.
+
+| | Pista | Cuánto dura | Qué dice |
+| --- | --- | --- | --- |
+| 1 | **La pestaña asoma, revuelta**, y **no deja entrar** | **Se queda**, hasta que teclees `//art` | «Hay un sitio». No dice cuál ni cómo |
+| 2 | **El resto en la papelera.** Un bloque comido con el comando escondido dentro | Hasta que teclees `//art` | Lo de abajo |
+| 3 | **La barra de estado.** `[TODO_BIEN?]` pasa a `[BUEN ARTE]` y vuelve sola | **4 s** | La más descarada, y la última |
+
+**Las tres se apagan en cuanto tecleás `//art`.** Son un empujón, no un mueble:
+una pista que sigue insistiendo después de haber servido deja de ser una pista
+para ser un pesado.
+
+### La pestaña · asoma, pero no deja entrar
+
+```
+[NOTAS]   [PAPELERA]   [★ qvbxjfmz]
+```
+
+Sin ninguna pieza, la pestaña **no existe**: enseñarla vacía anunciaría que hay
+una colección que llenar, y encontrar la primera pieza es parte de lo que se
+descubre. Con piezas sin mirar, **asoma con el nombre revuelto** — las mismas
+letras que no paran quietas de `//help` (§19), y por el mismo motivo: un nombre
+legible sería un cartel.
+
+> ⚠ **Y SE QUEDA.** La primera versión la enseñaba **1,2 segundos** y la
+> escondía, y eso no era una pista: era **un parpadeo que se perdía si mirabas a
+> otro lado**. Una pista que hay que ver en el instante justo no es una pista, es
+> un examen de reflejos.
+
+**Está deshabilitada, no muda.** Pulsarla y que no pasara nada sería un botón
+roto; deshabilitada se lee como lo que es — algo que todavía no está disponible.
+
+**Y al ganar la pieza la pantalla da un tirón**, el mismo fallo `major` del botón
+secreto del rótulo (§5). No es un efecto nuevo: acá no hacía falta inventar nada,
+y uno propio para esto habría sido un segundo lenguaje diciendo lo mismo.
+
+De eso —y sólo de eso— se ocupa todavía la ventana corta de 1,2 s: **el tirón
+tiene que dispararse una vez**, y atarlo a «tenés piezas sin ver» daría un tirón
+en **cada recarga** hasta que teclearas `//art`.
+
+`[BUEN ARTE]` **pisa** el fragmento en vez de meterse en el sorteo, por dos
+razones: en el sorteo podría no salir nunca —justo cuando más falta hace— y
+además tiene que durar lo suyo y no lo que dure un fragmento cualquiera. No
+menciona el comando: dice que hay algo que le gusta, con la misma voz naíf del
+`LINDO` del panel (§7). En inglés es `[ART OK]`.
+
+> **La regla de cuándo encender vive en `asciiArt`, no en `artHints`.** Quien
+> enciende es `awardPiece` y quien apaga es `revealArt`, las dos allá; acá sólo
+> hay relojes. Si `artHints` además leyera de `asciiArt` habría un **ciclo** entre
+> los dos módulos — funciona con los empaquetadores de hoy porque las llamadas
+> son en tiempo de ejecución, y revienta el día que alguien mueva algo al cuerpo
+> del módulo. La dependencia va en una sola dirección.
+>
+> Los dos componentes que las pintan —la cabecera y la barra de estado— se
+> suscriben con `useSyncExternalStore` y no con un `useState`: el destello lo
+> enciende `awardPiece` **desde fuera de React**, y puede pasar en cualquier
+> sitio, incluido un comando.
+
+## El resto en la papelera · `RECUPERADO.bin`
+
+La segunda pista, y la única que no se va sola.
+
+Ganás una pieza y en la papelera aparece un resto de lo que el sistema recuperó,
+**comido**. No es una nota tuya: es la máquina guardando algo que encontró, en el
+único sitio donde guarda lo que ya no sirve.
+
+Así sale el de la polilla, generado con el código:
+
+```
+RECUPERADO.bin
+
+-- BLOQUE RECUPERADO. INTEGRIDAD PARCIAL.
+
+                       #$) /                
+                     @    %                 
+      ?_ ___  _   *(@$  %%?+)__ __#_%   +_  
+          /   %    )% %$*  %%    \   ~    ? 
+     ( __+%__/ _ /            \_ _=__    &? 
+        (    /     ( % % %%% \    \    )    
+        (_  _$% /  ? %%  %*%    \_% \ _?    
+                /   #%  %&*)  \             
+               #A    (& &%~     \           
+                R    @ #%*)                 
+                T
+
+-- FIN DEL BLOQUE. NO SE PUDO IDENTIFICAR LA FUENTE.
+```
+
+Compará con el dibujo entero en [`ARTE.md`](ARTE.md) para ver cuánto se comió.
+
+### El comando va en VERTICAL, y ésa es toda la idea
+
+Mirá la columna de más abajo a la izquierda, de arriba abajo:
+
+```
+/
+/
+A
+R
+T
+```
+
+**Un dibujo en caracteres se lee en horizontal**: los ojos barren de izquierda a
+derecha y nadie va leyendo columnas. Así que una columna de letras entre el
+destrozo **no se lee** — se ve como cinco restos más, alineados de casualidad.
+Hasta que un día no.
+
+Es el punto exacto que costó encontrar:
+
+| Cómo se probó | Qué pasaba |
+| --- | --- |
+| Entero y en horizontal (`//art`) | Un cartel. «Acá tenés el comando», y deja de ser un hallazgo |
+| Partido en trozos horizontales (`//` · `a` · `rt`) | **Invisible.** Entre la basura, dos caracteres más de basura no le llaman la atención a nadie |
+| **En columna** | Se VE —cinco letras en fila india saltan— y aun así **hay que darse cuenta de que se leen hacia abajo** |
+
+Va **en mayúsculas** porque entre el ruido se distinguen mejor, y no importa: el
+comando se normaliza al teclearlo, así que `//ART` y `//art` son el mismo.
+
+**La columna no se elige al azar entre todas.** Se buscan las que tienen más
+casillas **vacías** para las cinco letras —el ojo va a lo que está solo en el
+hueco— y entre las mejores se sortea una, así que cae en un sitio distinto en
+cada pieza. Se descartan **las cuatro columnas de cada borde**: pegada al canto
+se leería como parte del marco. Si no hay hueco limpio se pisa el destrozo igual:
+**vale más un comando encontrable sobre la tinta que uno perfecto que no está.**
+
+### Cómo se rompe el dibujo
+
+De cada carácter **con tinta**: el **34 %** se come del todo y otro **26 %** se
+sustituye por basura (`#%&@?*+~=$`). Entre las dos cosas se toca **seis de cada
+diez**. Queda la silueta y poco más, que es exactamente lo que sobrevive a un
+bloque recuperado a medias.
+
+> ⚠ **Empezó en 14 % y 14 %, y se veía demasiado entero** — dos veces seguidas.
+> El resto tiene que parecer un bloque mal recuperado, no un dibujo con
+> manchitas: si se reconoce a la primera deja de leerse como algo que el sistema
+> estropeó, **y la pieza de verdad —la que se gana— pierde valor por haberla
+> visto ya.**
+
+Sobre el vacío no se corrompe nada — **agujerear el aire no rompe un dibujo, sólo
+lo ensancha**. La basura no lleva **barras ni letras** a propósito: así lo único
+legible entre el ruido es lo que se puso ahí queriendo.
+
+### Y las letras del dibujo se van TODAS, sin sorteo
+
+Es lo que hace que el comando se encuentre. Los dibujos llevan letras propias
+—el `oo` de la polilla, la `A` y el `3 min` del casete, el `v 0 . 2` del
+disquete— y **mientras sobreviva cualquiera de ellas, las cinco del comando son
+cinco letras más entre otras y no destacan en nada.**
+
+Comiéndoselas todas, **lo único alfabético que queda en el bloque es el comando**.
+No lo señala nadie y sigue habiendo que darse cuenta de que se lee hacia abajo,
+pero ya hay algo a lo que agarrarse.
+
+**Los dígitos se quedan**: parecen datos, y un bloque de datos con dígitos
+sueltos es exactamente lo que dice ser.
+
+**Se corrompe al vuelo, y no hay una segunda versión dibujada a mano.** Dieciséis
+dibujos gemelos serían dieciséis sitios más donde las dos copias pueden separarse
+en silencio —ya pasó con `ARTE.md`— y cada pieza nueva obligaría a dibujar dos.
+Es determinista por pieza: **la misma da siempre el mismo resto**, porque vive en
+la papelera y si cambiara en cada repintado sería un cartel de neón parpadeando
+en vez de algo que alguien tiró ahí.
+
+### Detalles que lo sostienen
+
+**Siempre es la misma pieza: la primera que ganaste por orden del catálogo.** Si
+rotara, quien vuelva a la papelera vería otro dibujo y leería que hay **varios**
+restos —o que el sistema está peor de lo que está—, cuando lo que hay es uno solo
+mal archivado.
+
+**Sólo existe en el cliente**, como `SYSTEM.LOG` (§9): se inyecta en la papelera y
+nunca toca la base de datos. Va **debajo** del fantasma cuando están los dos,
+porque el fantasma lleva más tiempo ahí — el orden cuenta quién llegó antes.
+
+**Se va solo al teclear `//art`**, y también si lo borrás o lo restaurás a mano —
+esas dos, sólo para esta pestaña: el descarte vive en el módulo, como el del
+fantasma, así que salir de la papelera y volver no lo resucita pero recargar sí.
+Y no hace falta ninguna clave nueva de `localStorage`: si aparece o no se deduce
+de las que ya hay —tenés piezas, no miraste el catálogo—.
+
+**El nombre SÍ se traduce**: `RECUPERADO.bin` en español, `RECOVERED.bin` en
+inglés.
+
+> ⚠ **Estaba sin traducir, copiando a `SYSTEM.LOG`, y ahí el razonamiento
+> falló.** `SYSTEM.LOG` se deja igual porque es un nombre **técnico** que se
+> reconoce en cualquier idioma; `RECUPERADO` es **una palabra española suelta**
+> en una interfaz en inglés. Se leía como un descuido de traducción, que es
+> exactamente lo contrario de lo que tiene que parecer.
+
+La extensión `.bin` sí se queda: dice que lo de dentro no es texto, que es justo
+lo que parece al abrirlo. La cabecera y el pie también se traducen — ésos son la
+máquina hablando.
+
 ## Los tres estados (y un cuarto)
 
-| Estado | Cómo se llega | Qué se ve en el catálogo |
-|---|---|---|
-| **Ganada** | Por su camino | Nada todavía: no brota sola |
-| **Revelada** | Tecleando `//art` | Su número y `[ SIN ABRIR ]` |
-| **Abierta** | Tecleando `//art_<n>` | El dibujo, y su pie |
-| **Sin nombre** | *(sólo el manipulador)* | El dibujo, y el pie **revuelto** |
+| Estado | Cómo se llega | En la lista de `//art` | En la pestaña de colección (§23) |
+|---|---|---|---|
+| **Ganada** | Por su camino | Letras revueltas | Hueco con su número |
+| **Revelada** | Tecleando `//art` | Su número y `[ SIN ABRIR ]` | El dibujo, y `[ SIN ABRIR ]` |
+| **Abierta** | Tecleando `//art_<n>` | Su número y su pie | El dibujo, y su pie |
+| **Sin nombre** | *(sólo el manipulador)* | El pie **revuelto** | Dibujo **a medio recuperar**, y `[ SIN IDENTIFICAR ]` |
 
 **Ganarla no es verla.** Una pieza ganada no aparece sola: hay que teclear
 `//art`. Sin ese paso el catálogo no serviría para nada, porque sabrías lo que
 llevás sin preguntar.
 
-**Tenerla no es saber qué es.** El pie llega al abrirla con `//art_<n>`. En el
-catálogo ves que tenés la seis y no sabés qué es la seis hasta abrirla; sin
-esto, `//art_<n>` sería sólo una forma de volver a ver algo que el catálogo ya
-te contó.
+**Tenerla no es saber qué es.** El pie llega al abrirla con `//art_<n>`. En la
+lista ves que tenés la seis y no sabés qué es la seis hasta abrirla; sin esto,
+`//art_<n>` sería sólo una forma de volver a ver algo que la lista ya te contó.
+
+**Y en la colección se ve el dibujo, pero tampoco el pie.** El dibujo sí, porque
+es lo que hace que una colección sea una colección; el nombre no, porque es el
+premio del tercer estado.
+
+> ⚠ **La pestaña no lo respetaba, y es el mismo fallo dos veces.** Enseñaba el
+> pie de TODO lo revelado, así que un solo `//art` te decía qué era cada pieza y
+> `//art_<n>` se quedaba sin nada que dar. Ya había pasado con el DIBUJO —la
+> colección lo pintaba entero mientras la lista lo tapaba— y se arregló igual:
+> **la decisión se mudó a una sola función.**
+>
+> | | Quién decide | Dónde vive |
+> | --- | --- | --- |
+> | Qué dibujo se enseña | `artOf(piece)` | `asciiArt.ts` |
+> | Qué pie se enseña | `captionOf(piece, lang)` | `asciiArt.ts` |
+>
+> Los sitios que pintan una pieza son tres —la lista de `//art`, `//art_<n>` y la
+> pestaña— y basta con que uno decida por su cuenta para que dos cuenten cosas
+> distintas de la misma pieza (REGLAS · B5).
+
+> ⚠ **Y los dos rótulos estaban duplicados.** `[ SIN ABRIR ]` y
+> `[ SIN IDENTIFICAR ]` vivían a la vez en `commands.ts` y en `asciiArt.ts`.
+> Mientras las dos copias digan lo mismo no se nota nada; el día que alguien
+> retoque una, empiezan a discrepar. Ahora hay una sola —`UNOPENED` y `UNNAMED`,
+> las dos en `asciiArt.ts`— y **traducidas**: `UNNAMED` estaba en español fijo y
+> se colaba en la interfaz en inglés, el mismo descuido que tenía el nombre del
+> resto de la papelera.
+>
+> Son dos rótulos y no uno a propósito: **`[ SIN ABRIR ]` es una pieza que sólo
+> hay que ir a ver, y `[ SIN IDENTIFICAR ]` una cuyo nombre hay que ganarse
+> aparte.** Confundirlos convertiría un trámite en un acertijo.
 
 **Y el aviso de pieza ganada no dice cuál es.** Decía `PIEZA RECUPERADA: {name}`
 y ahí se caía el sistema entero: el nombre es el premio del tercer estado, y
@@ -2035,15 +2333,52 @@ teclea `//art` por corazonada.
 de algo sin resolver:
 
 1. Ves el morse del reloj (§20) → **se gana la pieza**.
-2. `//art_10` → sale el manipulador de telégrafo, con el pie
-   `[ SIN IDENTIFICAR ]`. Ver el aparato que HACE las rayas es entender de golpe
-   qué parpadea en la hora.
-3. Usás el código para **entrar en la v0.2 y para salir** → **se gana el nombre**.
+2. `//art_10` → sale el manipulador de telégrafo **a medio recuperar**, con el
+   pie `[ SIN IDENTIFICAR ]`. Ver el aparato que HACE las rayas es entender de
+   golpe qué parpadea en la hora.
+3. Usás el código para **entrar en la v0.2 y para salir** → **se gana el nombre,
+   y el dibujo se completa.**
 
 Si el nombre viniera con la pieza, la pista llegaría ya resuelta. Y las rayas que
 lleva el dibujo debajo **no deletrean la palabra del reloj**, a propósito: la
 pieza se gana por VER la señal, no por descifrarla, y regalarla ahí sería
 dársela a quien todavía no la sacó.
+
+### Sin el nombre ganado, el dibujo tampoco está entero
+
+**Ver el morse no es entenderlo**, y la pieza lo dice enseñándose incompleta: el
+16 % de sus caracteres con tinta se pierde. Mucho menos destrozo que el resto de
+la papelera —aquél es un bloque que el sistema archivó mal y tiene que costar
+reconocerlo; **éste es TU pieza, ganada, que todavía no terminaste de
+recuperar**—. Se reconoce de sobra y se ve que le falta algo, que es exactamente
+el estado en que está.
+
+```
+          .---- .                             .-----.
+         (:::::::)                            (:::::::)
+          "-- --"                              "--+--"
+             |                                    |
+     .- ------- -- - -.                   .----------------.
+     | ::::: ::::: :::+- -- - ---- -.     |::::::::::::::::+---
+      ------- - -  ---+::: : :::::::|     "----------------+:::
+                      " ---- ----  -"             v        "---
+                     /\                                   /\
+    -- ------^- ----- +-- - ------ -.   .---------^--------+---
+   |  o                             |   |  o                  o
+   "---- -------- ---- -- -- -- ----    "----------------------
+
+   a medio recuperar                    entero, con el nombre ganado
+```
+
+**No lleva el comando**, y eso lo separa del resto de la papelera: aquello es una
+PISTA, y esto es una pieza incompleta. Meterle letras la convertiría en otro
+acertijo encima del que ya tiene.
+
+> ⚠ **Vive en `artOf()` y no en cada sitio que pinta una pieza.** Los sitios son
+> tres —el catálogo de `//art`, `//art_<n>` y la vista de la colección— y basta
+> con que uno se olvide para que la primera fase deje de existir. **Ya pasó con
+> el pie:** la colección lo enseñaba entero mientras el catálogo lo tapaba, o sea
+> dos sitios contando cosas distintas de la misma pieza.
 
 > Ponerle esta puerta a las dieciséis convertiría la colección en dos
 > colecciones —una de dibujos y otra de nombres— y obligaría a inventar un
@@ -2130,16 +2465,38 @@ pedirse a sí misma como requisito.
 ## `//keep` · quedarse una
 
 Se desbloquea con **la primera** pieza —esperar a tenerlas todas dejaría el
-comando inútil justo mientras coleccionás— y **crea una nota** con el dibujo y su
-pie, titulada `POLILLA · 1/16`. No escribe en la nota abierta: eso obligaría a
-tener una en blanco a mano, y la pieza acabaría mezclada entre tus archivos como
-una nota más.
+comando inútil justo mientras coleccionás— y **dibuja la pieza en la nota que
+tenés abierta**, poniéndole de título su ficha de catálogo: `POLILLA · 1/16`, no
+«Nueva nota».
+
+> ⚠ **Antes creaba una nota aparte.** El razonamiento de entonces era que
+> escribir encima obligaría a tener una nota en blanco a mano — pero eso
+> convirtió `//keep` en **un botón que hacía algo en OTRO sitio**: lo ejecutabas
+> y no pasaba nada donde estabas mirando. **Se sentía roto aunque funcionara, que
+> es peor que estarlo.**
+
+Escribiéndola en la nota abierta la pieza **es tuya de verdad**: está en tu
+archivo, se puede editar, se le puede poner texto alrededor y se borra como
+cualquier cosa que hayas escrito. **Eso es quedársela.**
+
+Sólo puede pasar con la nota en blanco —el comando ES todo el contenido (§6)—
+así que no pisa nada de lo que hayas escrito. Va por la misma vía que
+`//recover`, que ya devolvía texto a la nota abierta; **el título llega opcional**
+justamente por eso: aquél devuelve TU texto, y renombrarte la nota sería tocar
+algo que no pediste.
+
+Y no deja respuesta en la terminal: el dibujo aparece **donde estabas mirando**,
+que es exactamente lo que se le pedía.
 
 Guarda **la última que se dibujó** con `//art_<n>`, y esa memoria es de sesión:
 quedarse una pieza es un gesto del momento, y recordar entre sesiones cuál viste
 hace tres días haría que `//keep` guardara algo que ya no tenés delante. Si la
-pieza todavía no tiene el nombre ganado, la ficha sale sin él — guardarla no
-puede ser un atajo para leer lo que no se ha abierto.
+pieza todavía no tiene el nombre ganado, la ficha sale sin él **y el dibujo sale
+a medio recuperar** — guardarla no puede ser un atajo para leer lo que no se ha
+abierto.
+
+> **`//keep` no toca la colección.** Es para llevarte una copia y trastear con
+> ella; la colección (§23) sale de las piezas reveladas y no se entera.
 
 ## Dónde vive
 
@@ -2227,15 +2584,53 @@ Un secreto que nadie puede encontrar no es un secreto, es código muerto — el
 error exacto que ya se cometió con el umbral de diez colapsos. Así que hay **dos**
 maneras de que un comando escondido llegue a vos:
 
-1. **`//help` deja escapar uno**, una de cada cuatro veces:
-   `UNO SE ME ESCAPÓ: //panic`. Sólo suelta los que **siguen tachados** — soltar
-   uno que ya usaste no es una fuga — y sólo si queda alguno por descubrir.
+1. **`//help` deja escapar uno**, una de cada **ocho** veces:
+   `UNO SE ME ESCAPÓ: //log`. Sólo suelta los que **siguen tachados** — soltar
+   uno que ya usaste no es una fuga — y sólo **seis en total**: ver la lista
+   blanca, abajo.
 2. **Las ventanas de error del fallo cromático los nombran**, una de cada tres:
    `SÍMBOLO SIN RESOLVER: //chaos`, con un código hexadecimal inventado al lado.
 
 La segunda es la mejor. La primera se lee como ayuda; una ventana de error que
 muestra un comando en un volcado se lee como un descuido, y **enterarte de algo
 que el sistema no quería contarte vale más que enterarte porque te lo contó.**
+
+> **Estuvo en una de cada cuatro y era demasiado.** A esa frecuencia la fuga
+> dejaba de ser una fuga: pidiendo ayuda tres veces salían casi todos, y lo que
+> es la RED del proyecto —insistiendo, todo se encuentra— pasaba a ser **el
+> camino principal**. Con una de cada ocho sigue garantizando que nada quede
+> inalcanzable, sólo que hay que quererlo.
+
+### La lista blanca · qué puede soltar `//help`
+
+Soltaba **cualquier** comando escondido, y eso rompía tres cosas de distinta
+gravedad. Ahora hay una lista blanca cerrada (`LEAKABLE`) con seis nombres:
+
+```
+//uptime   //sudo   //log   //diag   //date_off   //history
+```
+
+Lo que queda es **lo que se lee, se sonríe, y ahí termina**. Lo que se sacó, y
+por qué:
+
+| Fuera | Por qué |
+| --- | --- |
+| `//reset` | **Borra tu progreso.** Es el único comando destructivo de la app y llegaba de regalo, sin contexto y sin haberlo buscado |
+| `//attach_6`, `//art_1`, `//keep` | **Eslabones intermedios.** Se niegan a existir fuera de orden, así que la fuga regalaba un nombre que todavía no servía para nada — y para cuando servía, ya no te acordabas |
+| `//hi`, `//art`, `//panic`, `//ps` | **Puertas.** Abren capas enteras y cada una ya tiene su propio camino. Regalarlas es regalar el juego |
+| `//whoareu`, `//howareu`, `//whoami` | **La cadena del ente.** Un nombre suelto no significa nada hasta que sabés a quién le estás hablando |
+
+**`//diag` y `//history` sí pueden filtrarse aunque abran algo**, y la diferencia
+es exacta: el panel sólo MIRA y el historial enseña **lo que ya escribiste**.
+Ninguno destapa un secreto.
+
+> ⚠ **La lista blanca sólo la respeta `//help`.** Las ventanas de error siguen
+> tirando de `hiddenCommandNames()`, o sea de **todos** los escondidos de esta
+> versión: pueden nombrar `//reset`, `//attach_6` o `//art_1`. Puede ser
+> deliberado —una ventana de error que se va de la lengua es otra clase de fuga
+> que una ayuda que te echa un cable— pero hoy los dos motivos que justifican la
+> lista blanca, lo destructivo y los eslabones fuera de orden, se cumplen en un
+> sitio y no en el otro.
 
 Las dos filtran **por versión**: dentro de la v0.2 sólo nombran comandos que
 existan ahí. Era una lista calculada una vez al cargar el módulo, así que soltaba
@@ -2614,47 +3009,94 @@ quien dijo que no.
 
 # 23 · La colección
 
-`//keep` no escribe el dibujo en la nota abierta: **crea una pieza**. Y una pieza
-no es una nota.
+Una pestaña propia con **las dieciséis casillas**, tengas la pieza o no.
 
 ```
 [NOTAS]   [PAPELERA]   [★ COLECCIÓN 3]
+
+Colección                                                    3/16
+
+┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
+│   1/16   │  │   2/16   │  │          │  │          │
+│  <(oo)>  │  │ [====]   │  │   3/16   │  │   4/16   │
+│ POLILLA  │  │ DISQUETE │  │          │  │          │
+└──────────┘  └──────────┘  └──────────┘  └──────────┘
 ```
 
-### Se llaman por lo que son
+## ⚠ Ya no sale de las notas
 
-`TERMINAL · 3/8`, no «Nueva nota». Es una **ficha de catálogo**: dice qué pieza es
-y cuántas hay. El número es su sitio en la colección, no el orden en que la
-encontraste.
+Se construía con las notas que `//keep` había marcado, **y eso ataba la colección
+a haber guardado una copia**. Ahora sale directamente de las piezas: `//keep` es
+sólo para llevarse una a una nota y trastear con ella (§18), y la colección no se
+entera.
 
-### Y no se tratan como notas
+Con eso se fue entero `collectibles.ts` —el módulo que marcaba qué notas no eran
+notas—, y con él su clave de `localStorage`. **Se quedó sin nadie que marcara
+nada: seguía corriendo, seguía limpiándose en `//reset`, y no hacía absolutamente
+nada.**
 
-No las escribiste, no se editan y no tienen por qué estorbar entre tus archivos:
+Y desaparece el precio que había que pagar: ya no hay ninguna nota tuya
+disfrazada de pieza, así que **abrir la app desde otro navegador no enseña piezas
+como notas normales**. Lo que sigue siendo de este navegador es la colección en
+sí, como todo el juego.
 
-- **Fuera de la lista de notas y de la barra lateral.** Filtrarlas sólo de la
-  lista principal las dejaba asomando por el lado.
-- **Fuera del recuento.** Cinco archivos siguen siendo cinco archivos.
-- **No se abren en el editor** ni llevan tamaño en bytes, ni fecha, ni `[ABRIR]`.
-  Se ven, que es lo único que se hace con una colección.
-- **Enteras, sin recortar.** Una pieza cortada a tres líneas no es una pieza, es
-  una nota con un dibujo dentro — justo lo que esta vista existe para no ser.
+## Es un catálogo, con sus huecos
 
-### La pestaña no está hasta que la ganás
+Enseñar sólo lo que tenés, apilado, **no deja ver cuál acabás de encontrar ni
+cuáles faltan** — y lo que hace coleccionar es ver el sitio vacío. Cada pieza cae
+en el suyo: **la nº 6 está siempre en el mismo hueco, la tengas o no.**
 
-Sin ninguna pieza, `[★ COLECCIÓN]` **ni aparece**. Enseñarla vacía anunciaría que
-hay una colección que llenar, y encontrar la primera pieza es parte de lo que se
-descubre.
+**El hueco lleva su número y nada más.** Un nombre o una silueta dirían QUÉ falta,
+y lo que tiene que decir es **cuánto**.
 
-### ⚠ La marca vive en el navegador
+La que tenés lleva el número arriba —es lo que convierte «tengo una pieza» en
+«tengo la 6»—, el dibujo **entero, sin recortar** —una pieza cortada a tres
+líneas no es una pieza— y su pie debajo.
 
-El backend no sabe que una nota es una pieza, y no va a saberlo: **no se toca el
-backend para un efecto** (REGLAS · B4). Un campo nuevo en el modelo, una
-migración y un endpoint por un huevo de pascua es exactamente el cambio que esa
-regla existe para frenar.
+**El dibujo sale de `artOf()`, no del dibujo pelado.** Las piezas con el nombre
+por ganar se enseñan **a medio recuperar** también acá (§18). Antes esta vista
+pintaba el dibujo entero mientras el catálogo lo tapaba: dos sitios contando
+cosas distintas de la misma pieza.
 
-El precio, dicho claro: **abrir la app desde otro navegador enseña las piezas como
-notas normales.** Lo mismo que ya pasa con la colección de `//art` y con los
-marcadores del pong — todo el juego es de este navegador.
+## Sólo lo revelado, y sólo lo que fuiste a mirar
+
+**Ganar una pieza no la pone acá: hay que teclear `//art`.** Si brotara sola, el
+comando no serviría para nada — sabrías lo que tenés sin preguntar. Así,
+encontrar una deja **una pregunta abierta** hasta que vas a mirar.
+
+Por eso la cuenta de la pestaña y la del rótulo (`3/16`) son las **reveladas**, no
+las ganadas.
+
+Sin ninguna revelada la vista dice *«Todavía no hay ninguna. El sistema guarda
+algunas cosas de antes.»* — y la pestaña, si tenés piezas sin mirar, está asomada
+pero cerrada (§18).
+
+**Revelar no es abrir.** Una pieza revelada enseña acá su dibujo, pero debajo
+dice `[ SIN ABRIR ]` hasta que la abras con `//art_<n>`: **el dibujo es lo que
+hace que esto sea una colección; el nombre es el premio del tercer estado**
+(§18).
+
+```
+┌──────────┐  ┌──────────┐
+│   1/16   │  │   2/16   │
+│  <(oo)>  │  │ [====]   │
+│ POLILLA  │  │[SIN ABRIR]
+└──────────┘  └──────────┘
+  abierta       revelada
+```
+
+## La cabecera es la misma que la de notas y papelera
+
+Tenía una propia y **se veía distinta**: otra letra, otro tamaño, sin la línea de
+abajo. **Tres vistas hermanas con tres cabeceras distintas se leen como tres
+aplicaciones**, no como tres pestañas de la misma.
+
+> ⚠ **Y la marca de «acá estás» se quedaba en NOTAS.** La cabecera decidía la
+> pestaña activa con «papelera, y si no, notas», que funcionó mientras sólo hubo
+> dos. Al aparecer la colección, su vista se pintaba pero la cabecera señalaba
+> otra: la pantalla decía una cosa y la cabecera otra. **Una lista blanca que se
+> traga lo que no reconoce envejece mal por definición** — ahora sólo el editor
+> es excepción, porque de verdad es una sub-vista de las notas.
 
 ---
 
@@ -3038,12 +3480,12 @@ así que no puede dejar el contador en `29/28`.
 | 15 | `pong` | `//attach_6` — **sólo el 6**; los otros PID no cuentan (§15) | `commands.ts` |
 | 16 | `greeting` | `//hi` | `useSystemState.ts` |
 | 17 | `art` | `//art` — y sólo si ya tenés alguna pieza | `commands.ts` |
-| 18 | `art-keep` | `//keep` (§23) | `commands.ts` |
+| 18 | `art-keep` | `//keep` (§18) | `commands.ts` |
 | 19 | `date-off` | `//date_off` (§17) | `commands.ts` |
 | 20 | `chat` | `//whoareu` o `//howareu` dentro de la ventana (§21) | `commands.ts` |
 | 21 | `kicked` | Que `//hi` te eche de la nota (§16) | `useSystemState.ts` |
 | 22 | `reset-prank` | Decir `n` a `//reset` y que toque la broma (§22) | `commands.ts` |
-| 23 | `collection` | Guardar la primera pieza y estrenar la pestaña (§23) | `page.tsx` |
+| 23 | `collection` | **Entrar** en la pestaña de colección (§23) | `page.tsx` |
 | 24 | `morse` | Sacar el código del reloj: **tres** clics en la hora (§20) | `SystemClock.tsx` |
 | 25 | `v02` | Teclear la palabra — **entrar o salir** (§24) | `commands.ts` |
 | 26 | `v02-recover` | `//recover`, dentro de la v0.2 (§24.4) | `commands.ts` |
@@ -3082,7 +3524,6 @@ Para inspeccionar o limpiar a mano. **Todas** las que escribe el juego:
 | `flashnotes:art` | Las piezas **ganadas** (§18) | ✅ |
 | `flashnotes:artSeen` | Las **reveladas** con `//art` | ✅ |
 | `flashnotes:artOpen` | Las **abiertas** con `//art_<n>` | ✅ |
-| `flashnotes:collectibles` | Qué notas son en realidad piezas de la colección (§23) | ✅ |
 | `flashnotes:pong` | Los dos marcadores del `vsync-test` (§15) | ✅ |
 | `flashnotes:lockout` | Cuándo vence el bloqueo, y si la señal estaba rota (§13) | ✅ |
 | `flashnotes:phantoms` | Las ventanas de error abiertas durante el bloqueo | ✅ (con el bloqueo) |
@@ -3191,7 +3632,9 @@ src/lib/system/pong.ts                  la física del vsync-test      §15
 src/lib/system/pongScores.ts            los dos marcadores            §15
 src/lib/system/timeDrift.ts             el reloj suelto               §17
 src/lib/system/asciiArt.ts              las dieciséis piezas          §18
-src/lib/system/collectibles.ts          qué notas no son notas        §23
+src/lib/system/artHints.ts              las tres pistas hacia //art   §18
+src/lib/system/artScrap.ts              RECUPERADO.bin                §18
+src/lib/system/artCorruption.ts         cómo se come el dibujo        §18
 src/lib/system/commandUnlock.ts         qué comandos se descubrieron  §19
 src/lib/system/morse.ts                 el código del reloj           §20
 src/lib/system/confirm.ts               la pregunta [y/n]             §22
@@ -3221,6 +3664,7 @@ src/components/effects/ScrambleLine.tsx     las letras que no paran       §19
 src/components/layout/SystemLabel.tsx       vídeo inverso y botón secreto §4 §5
 src/components/layout/SystemClock.tsx       el reloj y el morse           §20
 src/components/layout/StatusBar.tsx         el fragmento y la reconexión  §2 §11
+src/components/notes/CollectionView.tsx     el catálogo con sus huecos    §23
 src/components/system/DiagnosticPanel.tsx   el panel                      §7
 src/styles/glitch.css                       todos los fotogramas
 ```

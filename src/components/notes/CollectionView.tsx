@@ -6,10 +6,9 @@ import {
     ART,
     ART_TOTAL,
     artOf,
-    captionKnown,
+    captionOf,
     readRevealed,
 } from '@/lib/system/asciiArt';
-import { UNNAMED } from '@/lib/system/asciiArt';
 
 /**
  * Las piezas que te ganaste, y que además fuiste a mirar.
@@ -98,8 +97,14 @@ export default function CollectionView() {
                                 sitios contando cosas distintas de la misma
                                 pieza. */}
                             <pre className="collection-art">{artOf(piece)}</pre>
+                            {/* ⚠ Y EL PIE SALE DE `captionOf`, POR LO MISMO.
+                                Acá se enseñaba el pie de TODO lo revelado, así
+                                que un solo `//art` decía qué era cada pieza y
+                                `//art_<n>` se quedaba sin nada que dar. Tenerla
+                                no es haberla mirado, y haberla mirado no es
+                                saber qué es. */}
                             <p className="collection-name mono text-2xs">
-                                {captionKnown(piece) ? piece.caption[lang] : UNNAMED}
+                                {captionOf(piece, lang)}
                             </p>
                         </li>
                     );

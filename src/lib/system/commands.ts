@@ -4,7 +4,7 @@ import { LIMITS } from '@/config/limits';
 import { formatDuration } from '@/lib/utils/formatters';
 import { getLang, fill, pickPlural } from '@/i18n';
 import { greetingFor, chatReplyFor, KILL_AFTER_KICKS } from '@/lib/system/greeting';
-import { awardFrom, revealArt, markOpened, catalogRows, pieceByNumber, rememberDrawn, canKeep, lastDrawn, asNote, noteTitle, captionKnown, artOf } from '@/lib/system/asciiArt';
+import { awardFrom, revealArt, markOpened, catalogRows, pieceByNumber, rememberDrawn, canKeep, lastDrawn, asNote, noteTitle, captionKnown, artOf, UNNAMED, UNOPENED } from '@/lib/system/asciiArt';
 import { isUnlocked, markUsed } from '@/lib/system/commandUnlock';
 import { markV02RoundTrip } from '@/lib/system/v02';
 import { rememberHint, sawHint } from '@/lib/system/helpHint';
@@ -383,15 +383,15 @@ const T = {
         es: '[+] PIEZA RECUPERADA. NO SÉ CUÁL.',
         en: '[+] PIECE RECOVERED. NOT SURE WHICH.',
     },
-    /** Ocupa el sitio del pie mientras el pie no se ha ganado. */
-    artUnnamed: {
-        es: '[ SIN IDENTIFICAR ]',
-        en: '[ UNIDENTIFIED ]',
-    },
-    artUnopened: {
-        es: '[ SIN ABRIR ]',
-        en: '[ UNOPENED ]',
-    },
+    /*
+     * ⚠ ACÁ ESTABAN `artUnnamed` Y `artUnopened`, Y SE FUERON A `asciiArt`.
+     *
+     * Eran una segunda copia de los mismos dos rótulos que usa la pestaña de la
+     * colección. Mientras las dos copias digan lo mismo no se nota nada; el día
+     * que alguien retoque una, la lista y el catálogo empiezan a contar cosas
+     * distintas de la misma pieza — que es justo lo que acaba de pasar con el
+     * pie. Ahora hay una sola: `UNNAMED` y `UNOPENED`.
+     */
     artCatalog: {
         es: 'PIEZAS RECUPERADAS: {n} DE {total}',
         en: 'PIECES RECOVERED: {n} OF {total}',
@@ -1015,7 +1015,7 @@ const COMMANDS: readonly Command[] = [
                     const marca = `  ${f.number}/${filas.length}  `;
 
                     if (!f.found) return { scramble: f.length, prefix: marca };
-                    if (!f.opened) return { text: marca + T.artUnopened[lang] };
+                    if (!f.opened) return { text: marca + UNOPENED[lang] };
 
                     // ABIERTA Y AÚN SIN NOMBRE. Tenés el dibujo delante y el
                     // pie sigue revuelto: es el manipulador antes de haber
@@ -1087,7 +1087,7 @@ const COMMANDS: readonly Command[] = [
                     // ver el morse no es entenderlo. Ver `artOf`.
                     artOf(piece),
                     '',
-                    `-- ${captionKnown(piece) ? piece.caption[lang] : T.artUnnamed[lang]}`,
+                    `-- ${captionKnown(piece) ? piece.caption[lang] : UNNAMED[lang]}`,
                     '',
                     T.artKeepHint[lang],
                 ].join('\n')

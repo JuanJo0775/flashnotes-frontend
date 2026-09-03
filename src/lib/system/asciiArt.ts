@@ -37,8 +37,26 @@ const STORAGE_KEY = 'flashnotes:art';
  * Dejarlo VACÍO sería peor: parecería que a la pieza no le pusieron nombre.
  * Así se ve que hay uno y que todavía no es tuyo, que es la diferencia entre
  * un descuido y una puerta.
+ *
+ * ⚠ ESTABA SIN TRADUCIR, y se colaba una palabra española en la interfaz en
+ * inglés — el mismo descuido que tenía el nombre del resto de la papelera.
  */
-export const UNNAMED = '[ SIN IDENTIFICAR ]';
+export const UNNAMED: Localized = {
+    es: '[ SIN IDENTIFICAR ]',
+    en: '[ UNIDENTIFIED ]',
+};
+
+/**
+ * Y lo que va mientras la pieza no se ha ABIERTO con `//art_<n>`.
+ *
+ * No es lo mismo que `UNNAMED` y no puede decir lo mismo: aquél es una pieza
+ * cuyo nombre hay que ganarse aparte, y éste una que sólo hay que ir a ver.
+ * Confundirlos convertiría un trámite en un acertijo.
+ */
+export const UNOPENED: Localized = {
+    es: '[ SIN ABRIR ]',
+    en: '[ UNOPENED ]',
+};
 
 /**
  * Las que además se han VISTO en el catálogo.
@@ -1338,6 +1356,29 @@ export function artOf(piece: ArtPiece): string {
     return captionKnown(piece) ? piece.art : damageArt(piece.art, piece.id);
 }
 
+/**
+ * El pie que toca ENSEÑAR de esta pieza.
+ *
+ * Los tres estados, en orden: tenerla no es haberla mirado, y haberla mirado no
+ * es saber qué es.
+ *
+ *   · Sin abrir      → `[ SIN ABRIR ]`. Se sabe que está y no qué es.
+ *   · Abierta        → su pie.
+ *   · Sin el nombre  → `[ SIN IDENTIFICAR ]`, sólo el manipulador. Ver `NameGate`.
+ *
+ * ⚠ VIVE ACÁ POR LO MISMO QUE `artOf`, y por el mismo fallo. La lista de `//art`
+ * respetaba los tres estados y la pestaña de la colección no: enseñaba el pie de
+ * TODO lo revelado, así que un solo `//art` te decía qué era cada pieza y
+ * `//art_<n>` se quedaba sin nada que dar. Ya había pasado con el dibujo, y por
+ * la misma razón — dos sitios decidiendo lo mismo dejan de decir lo mismo
+ * (REGLAS · B5).
+ */
+export function captionOf(piece: ArtPiece, lang: Lang): string {
+    if (!readOpened().has(piece.id)) return UNOPENED[lang];
+
+    return captionKnown(piece) ? piece.caption[lang] : UNNAMED[lang];
+}
+
 export function catalogRows(lang: Lang = 'es'): CatalogRow[] {
     const found = readFound();
     if (found.size === 0) return [];
@@ -1397,7 +1438,7 @@ export function noteTitle(piece: ArtPiece, lang: Lang): string {
     const i = ART.findIndex((a) => a.id === piece.id) + 1;
     // Sin el pie ganado, la ficha va sin nombre: guardarla no puede ser un
     // atajo para leer lo que todavía no se abrió.
-    if (!captionKnown(piece)) return `${UNNAMED} · ${i}/${ART_TOTAL}`;
+    if (!captionKnown(piece)) return `${UNNAMED[lang]} · ${i}/${ART_TOTAL}`;
     // El pie lleva el nombre y una coletilla («POLILLA · HALLADA EN…»); para el
     // título basta el nombre, que es lo que se lee en una lista estrecha.
     const nombre = piece.caption[lang].split(' · ')[0];
@@ -1462,7 +1503,7 @@ export function artSlots(pieces: readonly Note[]): ArtSlot[] {
 
 /** Cómo queda la pieza al guardarla en una nota. */
 export function asNote(piece: ArtPiece, lang: Lang): string {
-    const pie = captionKnown(piece) ? piece.caption[lang] : UNNAMED;
+    const pie = captionKnown(piece) ? piece.caption[lang] : UNNAMED[lang];
     // Y el dibujo va como toque: guardar una pieza a medio recuperar guarda
     // lo que hay, no una copia entera que todavía no te ganaste.
     return [artOf(piece), '', `-- ${pie}`].join('\n');
