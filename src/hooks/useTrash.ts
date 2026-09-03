@@ -3,14 +3,23 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
-import { getErrorMessage } from '@/lib/api/client';
+import { getErrorInfo } from '@/lib/api/client';
+import type { Message } from '@/i18n';
 import { Note } from '@/types/note.types';
 import { withIdValidation } from '@/lib/utils/validators';
+import {
+    GHOST_ID,
+    buildGhostNote,
+    shouldHaunt,
+} from '@/lib/system/ghostFile';
+import { SCRAP_ID, buildScrapNote, shouldScrap } from '@/lib/system/artScrap';
+import { formatLog } from '@/lib/system/requestLog';
+import { getSystemState, markSecretFound } from '@/hooks/useSystemState';
 
 interface UseTrashReturn {
     trashedNotes: Note[];
     isLoading: boolean;
-    error: string | null;
+    error: Message | null;
 
     restoreNote: (id: string) => Promise<boolean>;
     deletePermanently: (id: string) => Promise<boolean>;
@@ -18,10 +27,29 @@ interface UseTrashReturn {
     clearError: () => void;
 }
 
+/**
+ * Cuándo se descartó el archivo fantasma. A nivel de módulo y no de estado
+ * porque la papelera se monta y se desmonta al cambiar de vista: en un `useRef`
+ * se olvidaría en cuanto salís, y el fantasma volvería en el acto.
+ */
+let ghostDismissedAt: number | null = null;
+
+/**
+ * Y cuándo se descartó el resto de la pieza.
+ *
+ * Mismo motivo que el del fantasma: a nivel de módulo, porque la papelera se
+ * monta y se desmonta al cambiar de vista.
+ *
+ * ⚠ PERO ÉSTE NO VUELVE. El fantasma reaparece pasado un rato —es un archivo que
+ * el sistema regenera—; el resto es una pista, y una pista que insiste después
+ * de que la tiraste deja de ser una pista para ser un pesado.
+ */
+let scrapDismissed = false;
+
 export const useTrash = (): UseTrashReturn => {
     const [trashedNotes, setTrashedNotes] = useState<Note[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<Message | null>(null);
 
     /**
      * Carga las notas en papelera
@@ -32,9 +60,40 @@ export const useTrash = (): UseTrashReturn => {
             setError(null);
 
             const { notes } = await notesApi.listTrash(1, 100);
-            setTrashedNotes(notes);
+
+            // El archivo fantasma se inyecta acá y sólo acá: nunca existe en la
+            // base de datos. Su contenido es el registro real de peticiones de
+            // esta pestaña, así que es coherente que muera con ella.
+            const system = getSystemState();
+            const haunted = shouldHaunt({
+                sessionMs: Date.now() - system.sessionStart,
+                notesCount: notes.length + system.permanentDeletes,
+                dismissedAt: ghostDismissedAt,
+                now: Date.now(),
+            });
+
+            /*
+             * Y EL RESTO DE LA PIEZA, por el mismo camino.
+             *
+             * Ganás una pieza y el sistema la archiva mal: acá queda lo que
+             * recuperó, comido, con las letras de `//art` repartidas entre la
+             * basura. Es lo que impide que alguien junte cinco piezas sin
+             * enterarse nunca de que hay una colección.
+             *
+             * Va DESPUÉS del fantasma en la lista —o sea debajo— porque el
+             * fantasma lleva más tiempo ahí: el orden cuenta quién llegó antes.
+             */
+            const resto = !scrapDismissed && shouldScrap() ? buildScrapNote() : null;
+
+            const inyectadas = [
+                ...(haunted ? [buildGhostNote(formatLog())] : []),
+                ...(resto ? [resto] : []),
+            ];
+
+            if (haunted) markSecretFound('ghost-file');
+            setTrashedNotes([...inyectadas, ...notes]);
         } catch (err) {
-            const message = getErrorMessage(err);
+            const message = getErrorInfo(err);
             setError(message);
             setTrashedNotes([]);
         } finally {
@@ -47,6 +106,47 @@ export const useTrash = (): UseTrashReturn => {
      * Usa withIdValidation para validación centralizada
      */
     const restoreNote = useCallback(async (id: string): Promise<boolean> => {
+        // Restaurarlo tampoco sale a la red: se descarta, igual que borrarlo.
+        if (id === GHOST_ID) {
+            ghostDismissedAt = Date.now();
+            setTrashedNotes((prev) => prev.filter((note) => note._id !== GHOST_ID));
+            return true;
+        }
+
+        /*
+         * ⚠ RECUPERARLO LO CONVIERTE EN UNA NOTA DE VERDAD.
+         *
+         * Acá estaba copiado el comportamiento del fantasma —descartar y ya— y
+         * era un fallo: en el fantasma «recuperar» significa «quitámelo de
+         * encima», porque es un registro que se lee de un vistazo en la propia
+         * tarjeta. El resto es un DIBUJO de cuarenta columnas, y la tarjeta sólo
+         * enseña ciento cuarenta caracteres recortados: pulsar recuperar hacía
+         * desaparecer justo lo que se quería mirar.
+         *
+         * Ahora se crea de verdad, con su contenido entero, y queda entre tus
+         * notas para abrirla, leerla y quedártela. Es lo que «recuperar»
+         * significa en cualquier papelera.
+         */
+        if (id === SCRAP_ID) {
+            const resto = buildScrapNote();
+            if (resto === null) return false;
+
+            try {
+                setError(null);
+                await notesApi.create({
+                    title: resto.title,
+                    content: resto.content,
+                });
+            } catch (err) {
+                setError(getErrorInfo(err));
+                return false;
+            }
+
+            scrapDismissed = true;
+            setTrashedNotes((prev) => prev.filter((note) => note._id !== SCRAP_ID));
+            return true;
+        }
+
         try {
             setError(null);
 
@@ -58,7 +158,7 @@ export const useTrash = (): UseTrashReturn => {
 
             return true;
         } catch (err) {
-            const message = getErrorMessage(err);
+            const message = getErrorInfo(err);
             setError(message);
             return false;
         }
@@ -69,6 +169,23 @@ export const useTrash = (): UseTrashReturn => {
      * Usa withIdValidation para validación centralizada
      */
     const deletePermanently = useCallback(async (id: string): Promise<boolean> => {
+        // El fantasma no existe en el servidor: borrarlo se simula. Sin esto, la
+        // llamada saldría con un id inválido y además gastaría una de las diez
+        // bajas que el backend permite cada quince minutos.
+        if (id === GHOST_ID) {
+            ghostDismissedAt = Date.now();
+            setTrashedNotes((prev) => prev.filter((note) => note._id !== GHOST_ID));
+            return true;
+        }
+
+        // Borrarlo sí es tirarlo, y no vuelve: ya dijo lo que tenía que decir.
+        // Tampoco sale a la red, que no existe en el servidor.
+        if (id === SCRAP_ID) {
+            scrapDismissed = true;
+            setTrashedNotes((prev) => prev.filter((note) => note._id !== SCRAP_ID));
+            return true;
+        }
+
         try {
             setError(null);
 
@@ -80,7 +197,7 @@ export const useTrash = (): UseTrashReturn => {
 
             return true;
         } catch (err) {
-            const message = getErrorMessage(err);
+            const message = getErrorInfo(err);
             setError(message);
             return false;
         }

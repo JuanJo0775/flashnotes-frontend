@@ -18,14 +18,22 @@
     animation: blink 1.05s step-end infinite;
 }
 
-/* Cursor de bloque. Se mide en `em`, no en píxeles, para que acompañe al
-   tamaño de texto: como glifo `█` a 34px quedaba un rectángulo enorme. */
+/* Cursor de bloque.
+   Mide UNA CELDA DE CARÁCTER: `1ch` de ancho —que en una monoespaciada es justo
+   el avance de un carácter— por `1.25em` de alto, la proporción habitual de un
+   cursor de bloque.
+
+   Las medidas están tomadas contra el cursor real que pinta el navegador con
+   `caret-shape: block`, comparando los dos lado a lado: la animación del
+   arranque y el cursor de verdad se relevan en el mismo sitio, así que si no
+   coinciden se nota el salto. Van dentro de un píxel; idénticos no pueden ser
+   porque el real lo dibuja el navegador y no se puede medir desde CSS. */
 .cursor-block {
     display: inline-block;
-    width: 0.55em;
-    height: 1em;
+    width: 1ch;
+    height: 1.25em;
     background: currentColor;
-    vertical-align: -0.12em;
+    vertical-align: -0.3em;
     animation: blink 1.05s step-end infinite;
 }
 
@@ -57,7 +65,15 @@
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 9998;
+
+    /* POR ENCIMA DE TODO, incluidas las capas de colapso (10000), bloqueo
+       (10001) y el vsync-test (9998).
+
+       El barrido no es un adorno de la pantalla de inicio: es el refresco del
+       tubo, o sea una propiedad de la PANTALLA, no de lo que se esté pintando
+       en ella. Estaba en 9998 y cualquier capa por encima lo tapaba, así que
+       desaparecía justo en las pantallas donde más sentido tiene. */
+    z-index: 10005;
     width: 100%;
     height: 2px;
     background: linear-gradient(

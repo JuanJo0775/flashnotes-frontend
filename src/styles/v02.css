@@ -1,0 +1,584 @@
+/* ------------------------------------------------------------------
+   La v0.2 · cómo se ve una versión que nadie terminó
+
+   La bandera va en <html> como `data-v02`, igual que `data-failing`, para que
+   alcance TAMBIÉN a los diálogos: se pintan en la capa superior del navegador,
+   fuera del subárbol de la app, y una v0.2 con un diálogo impecable en medio se
+   delataría sola (REGLAS · C5).
+
+   TRES IDEAS, y ninguna es «poner cosas feas»:
+
+     1. LOS MARCOS SE DIBUJARON A MANO. Antes de que alguien hiciera el sistema
+        de diseño, los bordes eran guiones y las esquinas eran `+`. Se ven así.
+
+     2. NADIE ALINEÓ NADA. Los elementos están un pelo fuera de sitio, cada uno
+        para su lado. No al azar en cada repintado —eso sería parpadeo— sino
+        FIJO por posición: es un desajuste, no un temblor.
+
+     3. LA PALETA NO SE TOCA. El primer intento le puso un tinte de fósforo
+        verde y quedaba mal: dejaba de ser FlashNotes vieja para ser otra app
+        con otro color. Lo que envejece no es el color — es cómo está dibujado.
+
+   Todo esto es de PANTALLA. Lo que de verdad falla —guardar, la papelera— vive
+   en el código, no acá.
+   ------------------------------------------------------------------ */
+
+/* ⚠ LA PALETA NO SE TOCA.
+   El primer intento le puso un tinte de fósforo verde y quedaba mal: dejaba de
+   ser FlashNotes vieja para ser otra app con otro color. Lo que envejece no es
+   la paleta — es cómo está dibujado. Los mismos colores de siempre, puestos por
+   alguien que todavía no sabía ponerlos. */
+
+/* ---- 1 · Los marcos dibujados a mano ---- */
+
+[data-v02] .file-container,
+[data-v02] .collection-card,
+[data-v02] .dialog-terminal,
+[data-v02] .notice {
+    border-style: dashed !important;
+    border-width: 1px !important;
+    border-radius: 0 !important;
+    position: relative;
+}
+
+/* Las esquinas, con el `+` de toda la vida. Van en las cuatro para que se lea
+   como un marco y no como una errata. */
+[data-v02] .file-container::before,
+[data-v02] .collection-card::before {
+    content: '+';
+    position: absolute;
+    top: -0.62em;
+    left: -0.24em;
+    font-size: 0.9em;
+    line-height: 1;
+    background: var(--color-primary);
+    padding: 0 0.1em;
+    opacity: 0.75;
+}
+
+[data-v02] .file-container::after,
+[data-v02] .collection-card::after {
+    content: '+';
+    position: absolute;
+    bottom: -0.62em;
+    right: -0.24em;
+    font-size: 0.9em;
+    line-height: 1;
+    background: var(--color-primary);
+    padding: 0 0.1em;
+    opacity: 0.75;
+}
+
+/* Las reglas horizontales pasan a ser guiones de verdad. */
+[data-v02] .rule-dashed,
+[data-v02] .panel-footer {
+    border-style: dashed !important;
+}
+
+/* Los botones, entre corchetes y sin caja: así se escribía un botón antes de
+   que hubiera botones. */
+[data-v02] .btn-terminal {
+    border-style: dotted !important;
+    border-radius: 0 !important;
+}
+
+[data-v02] .btn-terminal::before {
+    content: '[';
+    margin-right: 0.15em;
+    opacity: 0.6;
+}
+
+[data-v02] .btn-terminal::after {
+    content: ']';
+    margin-left: 0.15em;
+    opacity: 0.6;
+}
+
+/* ---- 2 · Nadie alineó nada ---- */
+
+/* Fijo por posición, no al azar en cada repintado: un desajuste se queda
+   quieto, y un temblor se lee como que la pantalla vibra. Son décimas de píxel
+   distintas en cada tarjeta, lo justo para que la rejilla no case. */
+[data-v02] .file-container {
+    transform: translateY(1px);
+}
+
+[data-v02] li:nth-child(3n) .file-container {
+    transform: translate(2px, -1px);
+}
+
+[data-v02] li:nth-child(4n) .file-container {
+    transform: translate(-1px, 2px);
+}
+
+[data-v02] .file-row:nth-child(2n) {
+    padding-left: 3px;
+}
+
+[data-v02] .file-row:nth-child(5n) {
+    padding-left: 7px;
+    letter-spacing: 0.04em;
+}
+
+/* La cabecera y el pie tampoco encajan del todo. */
+[data-v02] .terminal-header {
+    letter-spacing: 0.02em;
+}
+
+[data-v02] .status-bar {
+    padding-left: 5px;
+}
+
+/* ---- 3 · El renderizado a medias ---- */
+
+/* Los títulos de sección salen con el subrayado sin terminar: la línea llega
+   hasta donde llegó quien la estaba haciendo. */
+[data-v02] .section-title::after {
+    content: ' ' counter(nada) '';
+    border-bottom: 1px dashed currentColor;
+    display: inline-block;
+    width: 6ch;
+    margin-left: 0.6ch;
+    opacity: 0.45;
+    vertical-align: middle;
+}
+
+/* Un trozo de la interfaz sin estilo, como si esa regla no se hubiera escrito:
+   el pie de las tarjetas pierde su tipografía pequeña y se queda con la de por
+   defecto del navegador. Es el detalle que más incomoda de todos. */
+[data-v02] .file-container > div:last-child {
+    font-family: serif;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* ---- El glitch del tema, en la v0.2 ---- */
+
+/* La avería no se decide: alterna entre la aberración cromática y la estática.
+   No es el mismo efecto con otro color — es una avería que va y viene. */
+@keyframes v02-indeciso {
+    0%,
+    38% {
+        filter: url(#chroma-split-a);
+        opacity: 1;
+    }
+    40%,
+    48% {
+        filter: grayscale(1) contrast(2.4) brightness(1.3);
+        opacity: 0.86;
+    }
+    50%,
+    88% {
+        filter: url(#chroma-split-b);
+        opacity: 1;
+    }
+    90%,
+    100% {
+        filter: grayscale(1) contrast(3) brightness(0.8);
+        opacity: 0.9;
+    }
+}
+
+[data-v02] .chromatic-failure {
+    animation: v02-indeciso 2.6s steps(1, end) infinite !important;
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+    [data-v02] .chromatic-failure {
+        animation: none !important;
+    }
+}
+
+/* ---- Las tarjetas, dibujadas con caracteres ---- */
+
+/* No es una caja con borde: es un dibujo. Por eso no lleva `border` ninguno —
+   el marco está en el texto. */
+.v02-card {
+    display: block;
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+    cursor: pointer;
+    color: var(--color-body);
+}
+
+.v02-card pre {
+    margin: 0;
+    /* `ch` es el avance exacto de un carácter en monoespaciada, así que el
+       cuadro mide lo que dice medir sin nada que calcular en ejecución. */
+    font-size: 0.78rem;
+    line-height: 1.25;
+    white-space: pre;
+}
+
+.v02-card:hover pre,
+.v02-card:focus-visible pre {
+    /* Ni sombra ni fondo: se marca invirtiendo, que es lo que hace una terminal
+       cuando algo está seleccionado. */
+    background: var(--color-ink);
+    color: var(--color-primary);
+}
+
+.v02-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem 2ch;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* ---- La caja dibujada ----
+
+   El marco son CARACTERES DE VERDAD, no bordes: guiones arriba y abajo, barras
+   a los lados, cruces en las esquinas.
+
+   El truco para que se adapte a cualquier tamaño es emitir muchos más de los
+   que caben y recortar. Cuatrocientos guiones dentro de un `overflow: hidden`
+   llenan cualquier ancho; doscientas barras, cualquier alto. Y como todo va en
+   la misma monoespaciada, encaja en la rejilla sin medir nada. */
+.v02-box {
+    position: relative;
+    padding: 0.55em 1.1ch;
+    line-height: inherit;
+}
+
+.v02-box-h,
+.v02-box-v,
+.v02-corner,
+.v02-box-title {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    white-space: pre;
+    font-family: var(--font-mono);
+    line-height: 1;
+}
+
+.v02-box-h {
+    left: 0;
+    right: 0;
+    overflow: hidden;
+}
+
+.v02-box-top {
+    top: -0.35em;
+}
+
+.v02-box-bottom {
+    bottom: -0.35em;
+}
+
+.v02-box-v {
+    top: 0;
+    bottom: 0;
+    overflow: hidden;
+    /* El interlineado de las barras marca el paso del lado vertical: más
+       apretado que el texto para que se lea como una línea y no como una
+       columna de caracteres sueltos. */
+    line-height: 0.62;
+}
+
+.v02-box-left {
+    left: 0;
+}
+
+.v02-box-right {
+    right: 0;
+}
+
+.v02-corner {
+    line-height: 1;
+}
+
+.v02-corner-tl {
+    top: -0.35em;
+    left: 0;
+}
+
+.v02-corner-tr {
+    top: -0.35em;
+    right: 0;
+}
+
+.v02-corner-bl {
+    bottom: -0.35em;
+    left: 0;
+}
+
+.v02-corner-br {
+    bottom: -0.35em;
+    right: 0;
+}
+
+/* El título va METIDO en el guion de arriba, tapándolo: así se lee como una
+   etiqueta pegada a la caja y no como una primera fila de contenido. */
+.v02-box-title {
+    top: -0.35em;
+    left: 2ch;
+    background: var(--color-primary);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+.v02-box-inner {
+    position: relative;
+}
+
+/* Las cajas necesitan SITIO. El marco vive medio carácter fuera del contenido,
+   así que sin margen el guion de arriba se corta contra el borde de la ventana
+   y el de abajo se come el pie. */
+[data-v02] .container-terminal {
+    padding: 0.9em 1ch;
+    gap: 0.9em;
+    display: flex;
+    flex-direction: column;
+}
+
+[data-v02] .v02-box {
+    margin: 0.2em 0;
+}
+
+/* La barra lateral y el área principal, separadas por su propio hueco: pegadas,
+   los dos marcos se tocaban y se leían como una sola línea gruesa. */
+[data-v02] .flex.flex-1.min-h-0 {
+    gap: 1.4ch;
+}
+
+/* Dentro de una caja, el panel ya no necesita su propio borde: el marco es el
+   dibujo. Dos bordes seguidos se ven como un error de maquetación, que es
+   distinto de una versión vieja. */
+[data-v02] .v02-box .terminal-header,
+[data-v02] .v02-box .status-bar,
+[data-v02] .v02-box aside {
+    border: 0 !important;
+}
+
+/* El lado vertical: barras seguidas, no una columna de caracteres sueltos. El
+   interlineado ajusta el paso para que se lean como una línea. */
+[data-v02] .v02-box-v {
+    line-height: 0.78;
+    letter-spacing: 0;
+    opacity: 0.85;
+}
+
+/* ---- La caja no puede encoger lo que envuelve ----
+
+   Al meter el área principal en una caja, el editor se quedó pequeño: la caja
+   es un `div` corriente, así que el `h-full` del editor medía contra ella y no
+   contra la pantalla, y el alto se perdía por el camino.
+
+   La caja pasa la altura entera hacia adentro. Escribir es lo único que esta
+   app hace de verdad, y ningún adorno puede quitarle sitio. */
+[data-v02] .v02-main .v02-box,
+[data-v02] .v02-main .v02-box-inner {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+[data-v02] .v02-main .v02-box-inner > * {
+    flex: 1;
+    min-height: 0;
+}
+
+/* Y el hueco de la caja se aprieta donde hay que escribir: medio carácter de
+   marco es suficiente para que se lea como un cuadro. */
+[data-v02] .v02-main .v02-box {
+    padding: 0.5em 0.9ch;
+}
+
+/* ---- La papelera de la v0.2 ----
+ *
+ * Ya no se disfraza la papelera de verdad con esquinas de mentira pegadas por
+ * `::before`: la v0.2 tiene LA SUYA, dibujada de verdad, y las notas de verdad
+ * no se ven desde acá. Lo de abajo sólo la coloca.
+ *
+ * Una columna. Sin rejilla de tres, sin vista previa del contenido, sin «hace
+ * dos minutos» y sin tamaños con KB — todo eso llegó después.
+ */
+
+[data-v02] .v02-trash-list {
+    display: flex;
+    flex-direction: column;
+    /* Ni un hueco entre filas: en una rejilla de caracteres, las líneas van
+       pegadas. Separarlas es maquetación, y esto es un volcado. */
+    gap: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+[data-v02] .v02-trash-list pre,
+[data-v02] .v02-empty,
+[data-v02] .v02-notice {
+    margin: 0;
+    font: inherit;
+    white-space: pre;
+}
+
+/* Las acciones son TEXTO con un `>` delante. Sin borde, sin fondo, sin relleno:
+   un botón con cromo es de una versión que todavía no lo tenía. */
+[data-v02] .v02-trash-acts {
+    display: flex;
+    gap: 2ch;
+    /* Sangrado de dos caracteres, alineado a la rejilla: es lo que separa una
+       acción de la línea a la que pertenece cuando no hay con qué agruparlas. */
+    padding-left: 2ch;
+    /* Y una línea en blanco después, que es como se separaban dos cosas. */
+    margin-bottom: 1lh;
+}
+
+[data-v02] .v02-trash-acts button {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+[data-v02] .v02-trash-acts button:hover {
+    /* Ni color, ni subrayado: se invierte, que es lo único que sabía hacer una
+       terminal para decir «acá estás».
+     *
+     * ⚠ COLORES EXPLÍCITOS, NO `currentColor`. Con `background: currentColor` la
+     * regla se muerde la cola: la misma declaración cambia `color`, así que el
+     * fondo acababa resolviéndose contra el color nuevo y la acción se quedaba en
+     * un rectángulo blanco sin letras. Se vio en el navegador; ningún test lo
+     * habría cazado, porque los dos valores eran válidos. */
+    background: var(--text-primary);
+    color: var(--bg-primary);
+}
+
+/* El aviso va separado por una línea de guiones, no por un borde. */
+[data-v02] .v02-notice {
+    margin-top: 1lh;
+}
+
+[data-v02] .v02-notice::before {
+    content: '-------------------------------------------\A';
+}
+
+/* ---- Los botones, inestables ----
+
+   No sólo entre corchetes: en una versión vieja los botones no están todos
+   igual de terminados. Unos llevan su caja punteada, otros la perdieron y son
+   sólo texto entre corchetes — como si a alguien se le hubiera olvidado la
+   mitad.
+
+   Va por posición y no al azar: un botón que cambia de aspecto cada vez que lo
+   mirás es un parpadeo; uno que siempre está mal de la misma forma es una
+   versión sin terminar. */
+[data-v02] .btn-terminal:nth-of-type(2n) {
+    border-color: transparent !important;
+}
+
+[data-v02] .btn-terminal:nth-of-type(3n) {
+    border-style: dashed !important;
+    padding-left: 1.4ch;
+}
+
+/* ---- Los botones de la cabecera, también dibujados ----
+ *
+ * Las pestañas y los interruptores de tema e idioma se quedaban sin marco
+ * mientras todo lo demás estaba dibujado: se leían como texto suelto flotando en
+ * una interfaz de caracteres, que es justo el descuido que había que quitar.
+ *
+ * NO SE LES PONEN CORCHETES como a `.btn-terminal`: sus rótulos ya los traen
+ * dentro —`[NOTAS]`, `[ES]`— y doblarlos daría `[[NOTAS]]`, que no es un dibujo
+ * a medias sino una errata.
+ */
+
+[data-v02] .nav-tab {
+    /* ⚠ `currentColor`, NI `var(--line)` NI `var(--color-line)`.
+     *
+     * Dos intentos fallidos antes de éste, y los dos invisibles en pantalla sin
+     * dar un solo error:
+     *
+     *  1. `var(--line)` no existe. Un nombre de variable inventado no falla:
+     *     descarta la declaración entera en silencio, y las esquinas se
+     *     quedaron flotando alrededor de nada.
+     *  2. `var(--color-line)` sí existe, pero la cabecera va con los colores
+     *     invertidos —clara sobre la página oscura— y ahí esa variable vale un
+     *     blanco roto. Borde blanco sobre fondo crema: aplicado, computado, y
+     *     sin verse.
+     *
+     * `currentColor` hereda el color del texto, así que la línea se ve esté la
+     * caja donde esté. Es la lección de siempre: los tests cubren la lógica, el
+     * navegador cubre la composición. */
+    border: 1px dotted currentColor;
+    opacity: 0.85;
+    border-radius: 0;
+    /* Sitio para las esquinas, que se dibujan fuera de la caja de texto. */
+    padding: 0.15em 0.6em;
+    position: relative;
+}
+
+/* DOS ESQUINAS Y NO CUATRO, a propósito.
+ *
+ * Es lo que se ve cuando alguien empezó a dibujar el recuadro y lo dejó: la de
+ * arriba a la izquierda, la de abajo a la derecha, y las otras dos sin hacer.
+ * Cuatro esquinas serían una caja terminada, y ésta es la versión que no
+ * terminó nada. */
+[data-v02] .nav-tab::before,
+[data-v02] .nav-tab::after {
+    content: '+';
+    position: absolute;
+    line-height: 1;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+[data-v02] .nav-tab::before {
+    top: -0.52em;
+    left: -0.28em;
+}
+
+[data-v02] .nav-tab::after {
+    bottom: -0.52em;
+    right: -0.28em;
+}
+
+/* La pestaña abierta se INVIERTE, que es lo único que sabía hacer una terminal
+   para decir «acá estás». Sin esquinas: al invertirse, el marco ya no hace
+   falta y dejarlas sería ruido encima del bloque. */
+[data-v02] .nav-tab[aria-current='page'],
+[data-v02] .nav-tab.is-active {
+    border-style: solid;
+}
+
+[data-v02] .nav-tab[aria-current='page']::before,
+[data-v02] .nav-tab[aria-current='page']::after,
+[data-v02] .nav-tab.is-active::before,
+[data-v02] .nav-tab.is-active::after {
+    content: none;
+}
+
+/* ---- La pantalla de carga ----
+ *
+ * Ni centrada ni con puntos suspensivos animados: pegada arriba a la izquierda,
+ * donde escupiría sus líneas una terminal que va contando lo que hace. Centrar
+ * algo es una decisión de diseño, y acá no la había tomado nadie todavía.
+ */
+
+[data-v02] .v02-loading {
+    display: flex;
+    flex-direction: column;
+    /* Sin hueco entre líneas: en una rejilla de caracteres van pegadas. */
+    gap: 0;
+    padding: 1lh 2ch;
+}
+
+[data-v02] .v02-loading pre {
+    margin: 0;
+    font: inherit;
+    white-space: pre;
+}

@@ -1,0 +1,1393 @@
+/* ============================================================
+   GLITCH AMBIENTAL
+
+   La máquina falla sola cada tanto, y falla más seguido cuanto más lleva
+   abierta la pestaña. Nada de esto es suave: `steps` en todos los tramos,
+   porque un movimiento que se desliza se lee como una transición de interfaz y
+   uno que salta se lee como un fallo de señal. Es toda la diferencia.
+
+   La amplitud llega por variable desde el almacén: sube cuando baja la
+   integridad, así que es la misma señal contada más fuerte, no otra señal.
+   ============================================================ */
+
+@keyframes glitch-jolt {
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+    15% {
+        transform: translate3d(calc(var(--glitch-amp) * -1), 1px, 0);
+    }
+    30% {
+        transform: translate3d(calc(var(--glitch-amp) * 0.66), -1px, 0);
+    }
+    45% {
+        transform: translate3d(calc(var(--glitch-amp) * -0.33), 0, 0);
+    }
+    60% {
+        transform: translate3d(calc(var(--glitch-amp) * 0.66), 1px, 0);
+    }
+    100% {
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.glitch-jolt {
+    --glitch-amp: 3px;
+    animation: glitch-jolt 180ms steps(1, end);
+}
+
+/* Un fallo serio tiembla más rato; uno grave, además, pierde el vertical. */
+.glitch-jolt.is-major {
+    animation-duration: 280ms;
+}
+
+.glitch-jolt.is-severe {
+    animation:
+        glitch-jolt 140ms steps(1, end) 3,
+        vhold-slip 420ms steps(1, end);
+}
+
+/* --- Franjas ---
+   Un degradado repetido de 8px que se desplaza 24px hacia arriba: tres celdas
+   del patrón, así que el bucle cierra sin salto. Anima sólo `transform`. */
+@keyframes band-roll {
+    from {
+        transform: translate3d(0, 0, 0);
+    }
+    to {
+        transform: translate3d(0, -24px, 0);
+    }
+}
+
+.glitch-bands {
+    position: fixed;
+    inset: -24px 0 0 0;
+    z-index: 9996;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0 6px,
+        color-mix(in srgb, var(--color-ink) 8%, transparent) 6px 8px
+    );
+    animation: band-roll 180ms steps(6, end);
+    will-change: transform;
+}
+
+/* --- Negativo ---
+   Se hace con `backdrop-filter` sobre una capa propia y NUNCA con `filter`
+   sobre un contenedor: `filter` crea un bloque contenedor para los descendientes
+   `position: fixed`, y en esta app el grano vive en body::before y el barrido es
+   un hermano del contenedor. Con backdrop-filter se invierte todo lo que hay
+   detrás —grano y barrido incluidos— sin tocar la maqueta de nadie.
+
+   Y un efecto colateral que además está bien: un <dialog> abierto pinta en la
+   capa superior del navegador, así que el panel de diagnóstico NO se invierte.
+   El instrumento de medición no debería mentir. */
+@keyframes negative-blink {
+    0%,
+    100% {
+        opacity: 0;
+    }
+    20%,
+    45% {
+        opacity: 1;
+    }
+    55%,
+    75% {
+        opacity: 0;
+    }
+    80%,
+    95% {
+        opacity: 1;
+    }
+}
+
+.glitch-negative {
+    position: fixed;
+    inset: 0;
+    z-index: 9995;
+    pointer-events: none;
+    backdrop-filter: invert(1);
+    animation: negative-blink 200ms steps(1, end);
+}
+
+/* --- El barrido se traba ---
+   La línea de barrido es la firma de la app, así que "la máquina vieja se
+   atasca" se lee mejor en ella que en una textura que aparece de la nada: cada
+   tantas pasadas se detiene a media pantalla y sigue.
+
+   Los porcentajes repetidos (48%/62%) son la pausa: el mismo valor dos veces
+   deja la línea quieta el tiempo que hay entre ellos. */
+@keyframes scanline-stutter {
+    0% {
+        transform: translate3d(0, -100%, 0);
+    }
+    48% {
+        transform: translate3d(0, 45dvh, 0);
+    }
+    62% {
+        transform: translate3d(0, 45dvh, 0);
+    }
+    100% {
+        transform: translate3d(0, 100dvh, 0);
+    }
+}
+
+.scanline-effect.is-stuttering {
+    animation-name: scanline-stutter;
+}
+
+/* Con el bloqueo, las capas del fallo suben POR ENCIMA de la pantalla de error.
+
+   Sin esto quedaban debajo (z-index 9994–9996 contra 10001) y no se veía
+   ninguna: los tirones se notaban sólo en el temblor del cuadro, sin las
+   franjas, las rebanadas ni la caída de nivel. Ninguna recibe eventos, así que
+   estar encima no impide resolver el puzzle. */
+.is-locked .glitch-bands,
+.is-locked .glitch-slice,
+.is-locked .glitch-level,
+.is-locked .glitch-negative {
+    z-index: 10003;
+}
+
+/* Y LO MISMO CON EL COLAPSO (z 10000). Sin esto, el fallo crítico se veía sin
+   franjas ni rebanadas — que es justo la pantalla donde más falta hacen, porque
+   es la que cuenta que el sistema se está rompiendo. */
+[data-collapsing] .glitch-bands,
+[data-collapsing] .glitch-slice,
+[data-collapsing] .glitch-level,
+[data-collapsing] .glitch-negative {
+    z-index: 10003;
+}
+
+/* ⚠ AQUÍ HUBO UN BARRIDO «ESPECIAL» PARA ESTAS PANTALLAS, Y SE QUITÓ.
+ *
+ * Le cambiaba el color a dos tonos, el grosor a cuatro píxeles y la velocidad a
+ * dos segundos y medio, para «asegurar» que se viera sobre el colapso, el
+ * arranque y el borrado.
+ *
+ * Todo eso sobraba, y encima estaba mal: EL BARRIDO ES UNO. Es el refresco del
+ * tubo, y un tubo no refresca distinto según lo que esté pintando. Con dos
+ * versiones, lo que se veía en el arranque no era la misma línea que se ve
+ * escribiendo —más rápida, más gorda, de otro color— y eso se nota aunque no se
+ * sepa decir por qué.
+ *
+ * No se veía por otra cosa: `[data-booting] body > *` le ponía `opacity: 0`,
+ * porque el barrido es hijo directo de body igual que la app. Arreglado eso, la
+ * línea de siempre se ve en todas partes sin tocarle nada.
+ *
+ * La lección, que ya va por la tercera: cuando algo no se ve, averiguar por qué
+ * NO SE VE antes de dibujar uno nuevo encima. */
+
+/* --- Rebanadas desplazadas ---
+   El efecto que más "señal rota" comunica: la imagen se parte en franjas
+   horizontales y cada una se corre por su cuenta.
+
+   El truco está en `backdrop-filter` + `clip-path`: la capa toma lo que hay
+   detrás, lo recorta a una franja y la desplaza de lado. No hace falta duplicar
+   el DOM ni pintar en un canvas, y como cada franja es su propia capa fija, no
+   toca la maqueta de nadie.
+
+   La inversión de cada franja es lo que la hace visible sobre un fondo del mismo
+   color: sin ella, correr una banda de papel sobre papel no se vería. */
+.glitch-slice {
+    position: fixed;
+    left: 0;
+    width: 100%;
+    z-index: 9996;
+    pointer-events: none;
+    backdrop-filter: invert(1) contrast(1.4);
+    transform: translate3d(var(--slice-shift), 0, 0);
+    will-change: transform;
+}
+
+/* --- Fantasma monocromo ---
+   Una copia del texto corrida unos píxeles, en tinta al 30 %. Es lo mismo que
+   hace la separación de canales de un glitch en color, pero SIN color: la
+   estética se mantiene y el efecto se lee igual de roto.
+
+   Va en `text-shadow` y no en una capa aparte porque así lo hereda todo el texto
+   de la app de una sola vez, y porque el navegador lo pinta sin re-maquetar. */
+@keyframes ghost-shift {
+    0% {
+        text-shadow: 2px 0 color-mix(in srgb, var(--color-ink) 30%, transparent);
+    }
+    33% {
+        text-shadow: -3px 1px color-mix(in srgb, var(--color-ink) 26%, transparent);
+    }
+    66% {
+        text-shadow: 4px -1px color-mix(in srgb, var(--color-ink) 34%, transparent);
+    }
+    100% {
+        text-shadow: -1px 0 color-mix(in srgb, var(--color-ink) 30%, transparent);
+    }
+}
+
+.glitch-ghost {
+    animation: ghost-shift 120ms steps(1, end) infinite;
+}
+
+/* --- Pérdida de sincronismo vertical ---
+   La imagen entera se corre hacia arriba y vuelve de golpe, como una tele a la
+   que se le va el vertical. Sólo en los fallos graves: hecho seguido, marearía.
+
+   Va en el MISMO elemento que el tirón, así que se suman en una sola
+   composición de `transform` en vez de pelearse por la propiedad. */
+@keyframes vhold-slip {
+    0%,
+    100% {
+        transform: translate3d(0, 0, 0);
+    }
+    20% {
+        transform: translate3d(0, -14px, 0);
+    }
+    40% {
+        transform: translate3d(0, 9px, 0);
+    }
+    60% {
+        transform: translate3d(0, -5px, 0);
+    }
+    80% {
+        transform: translate3d(0, 2px, 0);
+    }
+}
+
+/* --- Caída de nivel ---
+   Un oscurecimiento brevísimo de toda la pantalla, como cuando a una señal le
+   baja la potencia. Es el más sutil de todos y el que más ata a los otros: sin
+   él, las rebanadas parecen recortes; con él, parecen una imagen que se está
+   perdiendo. */
+@keyframes level-drop {
+    0%,
+    100% {
+        backdrop-filter: brightness(1);
+    }
+    30%,
+    45% {
+        backdrop-filter: brightness(0.72) contrast(1.3);
+    }
+    70% {
+        backdrop-filter: brightness(1.25);
+    }
+}
+
+.glitch-level {
+    position: fixed;
+    inset: 0;
+    z-index: 9994;
+    pointer-events: none;
+    animation: level-drop 280ms steps(1, end);
+}
+
+/* Movimiento reducido: no se programa ningún fallo ambiental, y si alguno
+   llegara a pintarse, no se mueve. La regla manda sobre cualquier efecto. */
+@media (prefers-reduced-motion: reduce) {
+    .glitch-jolt,
+    .glitch-bands,
+    .glitch-negative,
+    .glitch-slice,
+    .glitch-ghost,
+    .glitch-level,
+    .scanline-effect.is-stuttering {
+        animation: none;
+    }
+
+    .glitch-bands,
+    .glitch-negative,
+    .glitch-slice,
+    .glitch-level {
+        display: none;
+    }
+
+    .glitch-ghost {
+        text-shadow: none;
+    }
+}
+
+/* ============================================================
+   FALLO CROMÁTICO
+
+   Se dispara al insistir con el interruptor de tema. Es lo único de toda la app
+   que usa color de verdad, y no contradice la regla del monocromo: esa regla
+   gobierna cómo se CONSTRUYE la interfaz. Esto no es interfaz — es una avería
+   que el usuario provocó a propósito, y una avería de señal se ve en color
+   porque así se ve una señal rota.
+
+   Todo acá es visual. Debajo la app sigue entera: se escribe, se guarda, se
+   navega. Y no se arregla solo: dura hasta recargar.
+
+   DÓNDE SE APLICA: sobre `.container-terminal`, nunca sobre <body> ni sobre un
+   ancestro de los elementos fijos. El grano (body::before), la línea de barrido
+   y el flash son HERMANOS del contenedor, no descendientes, así que ni el
+   text-shadow ni un transform de acá los convierten en su bloque contenedor.
+   Ver docs/DISENO.md y la §C.4 del diseño de secretos.
+   ============================================================ */
+
+/* Los dos colores de la avería, en un solo sitio.
+
+   El rojo NO es un color nuevo: es `--color-danger`, el mismo con el que la app
+   pinta un borrado definitivo o una nota sin guardar. Que la avería use el rojo
+   de la casa y no uno inventado es lo que la mantiene dentro del sistema — y
+   como el token se invierte con el tema, la avería también se ve distinta en
+   claro y en oscuro sin que haya que declararla dos veces.
+
+   El cian no tiene token porque la app nunca lo necesitó: es el complemento del
+   rojo, y sin él no hay separación de canales que valga. Se define acá y no en
+   `globals.css` a propósito — no es parte de la paleta, es parte de esta avería.
+
+   (La separación de canales del filtro SVG es otra cosa y no se puede teñir: ahí
+   se está partiendo literalmente el canal R de lo ya renderizado.) */
+.chromatic-failure,
+.chromatic-tear {
+    --chroma-red: var(--color-danger);
+    --chroma-cyan: #00b8c4;
+}
+
+/* Separación de canales. Va con `steps` en cada tramo: la señal salta entre
+   estados, no se desliza de uno a otro. Un fundido parecería una transición de
+   interfaz, que es justo lo contrario de lo que esto cuenta. */
+@keyframes chroma-drift {
+    0% {
+        text-shadow:
+            2px 0 color-mix(in srgb, var(--chroma-red) 75%, transparent),
+            -2px 0 color-mix(in srgb, var(--chroma-cyan) 65%, transparent);
+    }
+    25% {
+        text-shadow:
+            3px 0 color-mix(in srgb, var(--chroma-red) 70%, transparent),
+            -1px 0 color-mix(in srgb, var(--chroma-cyan) 70%, transparent);
+    }
+    50% {
+        text-shadow:
+            1px -1px color-mix(in srgb, var(--chroma-red) 80%, transparent),
+            -3px 1px color-mix(in srgb, var(--chroma-cyan) 60%, transparent);
+    }
+    75% {
+        text-shadow:
+            2px 1px color-mix(in srgb, var(--chroma-red) 70%, transparent),
+            -2px -1px color-mix(in srgb, var(--chroma-cyan) 70%, transparent);
+    }
+    100% {
+        text-shadow:
+            2px 0 color-mix(in srgb, var(--chroma-red) 75%, transparent),
+            -2px 0 color-mix(in srgb, var(--chroma-cyan) 65%, transparent);
+    }
+}
+
+/* El tirón llega tarde en el ciclo y dura poquísimo: una pantalla con avería no
+   tiembla sin parar, da un salto cada tanto y vuelve a quedarse quieta. */
+@keyframes chroma-jolt {
+    0%,
+    91%,
+    100% {
+        transform: translate3d(0, 0, 0);
+    }
+    92% {
+        transform: translate3d(-3px, 1px, 0);
+    }
+    94% {
+        transform: translate3d(3px, -1px, 0);
+    }
+    96% {
+        transform: translate3d(-1px, 0, 0);
+    }
+    98% {
+        transform: translate3d(2px, 1px, 0);
+    }
+}
+
+/* El SVG con las definiciones no ocupa sitio ni se ve: sólo existe para que el
+   `filter` de abajo tenga a qué apuntar. */
+.chroma-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+/* La separación de canales de TODA la superficie.
+   `text-shadow` sólo alcanza al texto; esto trabaja sobre lo ya renderizado, así
+   que le llega a los bordes, a los fondos, a los botones y al medidor ASCII.
+
+   Las tres variantes se intercambian de golpe (`steps`): la aberración se mueve
+   en lugar de quedarse clavada, que es lo que separa una señal rota de una foto
+   de una señal rota. Cada salto vuelve a correr el filtro, así que el ciclo es
+   largo a propósito — cuatro repintados por segundo y medio, no sesenta. */
+@keyframes chroma-swap {
+    0% {
+        filter: url(#chroma-split-a);
+    }
+    34% {
+        filter: url(#chroma-split-b);
+    }
+    67% {
+        filter: url(#chroma-split-c);
+    }
+    100% {
+        filter: url(#chroma-split-a);
+    }
+}
+
+.chromatic-failure {
+    animation:
+        chroma-swap 1.5s steps(1, end) infinite,
+        chroma-drift 1.6s steps(1, end) infinite,
+        chroma-jolt 5.2s steps(1, end) infinite;
+}
+
+/* --- El tirón DURANTE la avería ---
+
+   ATENCIÓN, TRAMPA DE CSS. `.glitch-jolt` y `.chromatic-failure` declaran las
+   dos la propiedad `animation`, y eso NO se suma: con la misma especificidad
+   gana la que va después en la hoja, y la otra desaparece entera. Como el bloque
+   de la avería está más abajo, el tirón simplemente no se reproducía mientras la
+   señal estaba rota — justo donde más se lo espera.
+
+   La solución es declarar la combinación explícitamente, con los dos conjuntos
+   en la misma lista. El orden importa: `glitch-jolt` va AL FINAL porque anima
+   `transform` igual que `chroma-jolt`, y dentro de una lista de animaciones la
+   última gana esa propiedad. Así el tirón fuerte pisa al temblor de fondo en
+   lugar de pelearse con él.
+
+   `chroma-jolt` se cae de la lista a propósito: durante un tirón de verdad, el
+   temblor suave de la avería no aporta nada y sólo compite. */
+.chromatic-failure.glitch-jolt {
+    animation:
+        chroma-swap 1.5s steps(1, end) infinite,
+        chroma-drift 1.6s steps(1, end) infinite,
+        glitch-jolt 180ms steps(1, end);
+}
+
+.chromatic-failure.glitch-jolt.is-major {
+    animation:
+        chroma-swap 1.5s steps(1, end) infinite,
+        chroma-drift 1.6s steps(1, end) infinite,
+        glitch-jolt 280ms steps(1, end);
+}
+
+.chromatic-failure.glitch-jolt.is-severe {
+    animation:
+        chroma-swap 1.5s steps(1, end) infinite,
+        chroma-drift 1.6s steps(1, end) infinite,
+        glitch-jolt 140ms steps(1, end) 3,
+        vhold-slip 420ms steps(1, end);
+}
+
+/* --- La ráfaga cromática ---
+   La MISMA aberración del fallo del tema, pero transitoria: dura lo que dura el
+   fallo grave que la trajo y no deja nada roto. Es lo que emparenta al botón
+   secreto con el fallo del tema — los dos son pánico, y hasta ahora eran dos
+   efectos sueltos que casualmente convivían.
+
+   Se declara junto al tirón, no aparte: si fueran dos reglas con `animation`
+   cada una, la segunda pisaría a la primera (ver la trampa de más abajo). */
+.chroma-burst.glitch-jolt {
+    animation:
+        chroma-swap 200ms steps(1, end) infinite,
+        chroma-drift 160ms steps(1, end) infinite,
+        glitch-jolt 140ms steps(1, end) 3,
+        vhold-slip 420ms steps(1, end);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chroma-burst.glitch-jolt {
+        animation: none;
+    }
+}
+
+/* --- TODO lo que aparezca durante la avería queda afectado ---
+
+   Sin excepción, y ésa es la regla. El filtro principal va sobre
+   `.container-terminal`, pero un `<dialog>` abierto con `showModal()` se pinta
+   en la CAPA SUPERIOR del navegador —fuera de ese subárbol— así que el panel de
+   diagnóstico salía limpio en mitad de una pantalla rota. Lo mismo le pasaría a
+   cualquier cosa que se montara fuera del contenedor.
+
+   Con la marca en `<html>` el selector alcanza cualquier sitio del árbol, y la
+   regla vale también para lo que se construya después: si aparece, se ve roto. */
+[data-failing] dialog,
+[data-failing] .dialog-terminal {
+    filter: url(#chroma-split-a);
+    animation:
+        chroma-swap 1.7s steps(1, end) infinite,
+        chroma-drift 2.1s steps(1, end) infinite;
+}
+
+/* El velo del diálogo también: si el fondo del modal se quedara limpio, se
+   notaría el recorte justo alrededor del cuadro. */
+[data-failing] .dialog-terminal::backdrop {
+    animation: chroma-swap 1.7s steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-failing] dialog,
+    [data-failing] .dialog-terminal,
+    [data-failing] .dialog-terminal::backdrop {
+        animation: none;
+    }
+}
+
+/* El cambio de tema durante la avería NO se suaviza: la señal salta de claro a
+   oscuro de golpe, como un corte. Una transición lo convertiría en un fundido
+   elegante, que es exactamente lo contrario de lo que cuenta.
+
+   Va con `!important` porque tiene que ganarle a cualquier transición declarada
+   más abajo, y es el único sitio de la app donde se usa. */
+.chromatic-failure,
+.chromatic-failure * {
+    transition: none !important;
+}
+
+/* La barra de desplazamiento del área de escritura no hereda text-shadow, así
+   que el desajuste entre el texto aberrado y la barra limpia refuerza la idea
+   de que lo que falla es la señal, no la ventana. No hace falta tocarla. */
+
+/* --- Barras de arrastre de color ---
+   Franjas que bajan por la pantalla, como el arrastre vertical de una señal mal
+   sincronizada. Animan sólo `transform`, así que van en el compositor. */
+@keyframes chroma-roll {
+    from {
+        transform: translate3d(0, -50%, 0);
+    }
+    to {
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.chromatic-tear {
+    position: fixed;
+    inset: 0;
+    z-index: 9997;
+    pointer-events: none;
+    opacity: 0.35;
+    /* ⚠ EL MODO DE MEZCLA DEPENDE DEL TEMA, y no puede no depender.
+     *
+     * `screen` sólo ACLARA. Sobre el lienzo oscuro las franjas de color saltan a
+     * la vista; sobre el claro no hacen nada, y la avería cromática se veía sólo
+     * en tema oscuro — que es exactamente lo que pasaba y no se entendía.
+     *
+     * En claro toca `multiply`, que sólo oscurece. Es el mismo efecto leído por
+     * el otro lado, no otro efecto: la señal se descompone igual, lo que cambia
+     * es contra qué. El valor por defecto es el de claro porque el tema por
+     * defecto es el claro, y las dos redefiniciones —la del sistema y la del
+     * interruptor— van debajo, como manda la casa. */
+    mix-blend-mode: multiply;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0 22px,
+        color-mix(in srgb, var(--chroma-red) 25%, transparent) 22px 24px,
+        transparent 24px 46px,
+        color-mix(in srgb, var(--chroma-cyan) 22%, transparent) 46px 48px
+    );
+    /* El doble de alto que la pantalla, para que el bucle no muestre el corte. */
+    background-size: 100% 200%;
+    animation: chroma-roll 2.8s linear infinite;
+    will-change: transform;
+}
+
+/* En oscuro, `screen`: sobre el lienzo oscuro lo que se ve es luz de color
+   sumándose, que es lo que hace un tubo con la señal descompuesta. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) .chromatic-tear {
+        mix-blend-mode: screen;
+    }
+}
+
+:root[data-theme='dark'] .chromatic-tear {
+    mix-blend-mode: screen;
+}
+
+
+/* Quien pide menos movimiento se queda con la avería QUIETA, no sin avería: el
+   fallo es contenido —le pasó algo al sistema y hay que poder verlo— pero nada
+   se mueve, ni se desplaza, ni parpadea. */
+@media (prefers-reduced-motion: reduce) {
+    /* La avería se ve QUIETA, no desaparece: al sistema le pasó algo y hay que
+       poder verlo. Queda el filtro fijo y la separación de canales del texto;
+       nada se mueve, ni salta, ni parpadea. */
+    .chromatic-failure {
+        animation: none;
+        filter: url(#chroma-split-a);
+        text-shadow:
+            2px 0 color-mix(in srgb, var(--chroma-red) 75%, transparent),
+            -2px 0 color-mix(in srgb, var(--chroma-cyan) 65%, transparent);
+    }
+
+    .chromatic-tear {
+        animation: none;
+    }
+}
+
+/* ============================================================
+   RÓTULO DEL SISTEMA · §4 vídeo inverso, §5 botón secreto
+   ============================================================ */
+
+/* La cabecera YA es tinta con texto inverso, así que el vídeo inverso de un
+   rótulo suyo es al revés de lo que uno supone: papel de fondo, tinta de letra.
+   Sobre una barra oscura eso es un rectángulo claro — que es exactamente el
+   atributo `reverse` de una terminal de verdad. Sale de dos tokens que ya
+   existen; no hace falta ningún color nuevo. */
+.reverse-video {
+    background: var(--color-inverse);
+    color: var(--color-ink);
+    padding: 0 calc(var(--spacing) * 0.5);
+}
+
+/* No parece un botón y no debe parecerlo. Sin `user-select` de por medio, nueve
+   clics rápidos sobre el texto lo seleccionan y dejan la cabecera resaltada a
+   mitad del efecto. */
+.system-label {
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* ============================================================
+   COLAPSO DEL SISTEMA · §13
+
+   El clímax, y también la pieza que más cuidado necesita: todo esto es una capa
+   POR ENCIMA de la app. Debajo, el editor sigue montado y el auto-guardado sigue
+   su curso. `pointer-events: none` y ningún foco: durante los 4,2 s se puede
+   seguir escribiendo a ciegas y todo llega.
+   ============================================================ */
+
+/* SIGUE EL TEMA ELEGIDO, no lo invierte.
+
+   Usaba `--color-ink` de fondo y `--color-inverse` de letra, que es la fórmula
+   de la cabecera y de la barra de estado — pero esos tokens SE INVIERTEN con el
+   tema a propósito (ver DISENO.md): en tema oscuro, `ink` es casi blanco. El
+   resultado era que quien tenía la app en oscuro veía el colapso en claro, un
+   fogonazo blanco en mitad de la pantalla.
+
+   Con `--color-primary` (el lienzo) y `--color-ink` (la tinta), la pantalla de
+   colapso es oscura en tema oscuro y clara en tema claro, como todo lo demás. */
+.collapse-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    pointer-events: none;
+    background: var(--color-primary);
+    color: var(--color-ink);
+    overflow: hidden;
+}
+
+/* Fase 1 · corte. Un solo fotograma a tinta plana, sin fundido: la señal se
+   corta, no se desvanece. Es el fondo de la capa, no hace falta nada más. */
+
+/* Fase 2 · la basura.
+
+   NO es ruido de píxeles. El ruido de píxeles es la estática de una TELEVISIÓN,
+   y esta app es una terminal de texto: se leía como un efecto de otra familia
+   visual pegado encima de todo lo demás.
+
+   Una terminal no hace estática, hace BASURA: la misma rejilla de celdas de
+   siempre, con la misma monoespaciada, llena de glifos que no significan nada.
+   Misma retícula, mismos tokens, misma tipografía — por fin de la misma casa. */
+.collapse-noise {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    overflow: hidden;
+    color: var(--color-ink);
+    font-size: 13px;
+    line-height: 15px;
+    letter-spacing: 0;
+    white-space: pre;
+    /* El texto no se selecciona ni se lee: es materia, no contenido. */
+    user-select: none;
+}
+
+/* Barras de arrastre: franjas anchas que bajan en bucle, con opacidad baja. Son
+   lo que convierte un ruido plano en una señal MAL SINCRONIZADA, que es una
+   avería más específica y por eso más creíble. */
+@keyframes collapse-drag {
+    from {
+        transform: translate3d(0, -40px, 0);
+    }
+    to {
+        transform: translate3d(0, 100dvh, 0);
+    }
+}
+
+.collapse-drag {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background: color-mix(in srgb, var(--color-ink) 18%, transparent);
+    animation: collapse-drag 900ms linear infinite;
+    will-change: transform;
+}
+
+/* La segunda barra va desfasada: dos barras a la vez y en fila se leerían como
+   un patrón, y un patrón se lee como decoración. */
+.collapse-drag.is-second {
+    animation-delay: -420ms;
+    opacity: 0.6;
+}
+
+/* Fase 3 · el tubo se apaga.
+   Como un CRT al cortarle la corriente: la imagen se aplasta a una línea
+   horizontal brillante, esa línea se cierra a un punto, y negro. Los dos tramos
+   van seguidos en un solo fotograma para que no haya un salto entre ellos. */
+@keyframes collapse-dying {
+    0% {
+        transform: scaleY(1) scaleX(1);
+        opacity: 1;
+    }
+    45% {
+        transform: scaleY(0.02) scaleX(1);
+        opacity: 1;
+    }
+    75% {
+        transform: scaleY(0.02) scaleX(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scaleY(0.02) scaleX(0);
+        opacity: 0;
+    }
+}
+
+.collapse-dying {
+    position: absolute;
+    inset: 0;
+    background: var(--color-ink);
+    transform-origin: center;
+    animation: collapse-dying 300ms linear forwards;
+}
+
+/* Fase 4 · rearranque.
+
+   Que la máquina te diga que tus notas están a salvo justo después de romperse
+   es lo que hace que el chiste no dé miedo.
+
+   LA BARRA NO ES DECORACIÓN. El rearranque tarda entre diez y cuarenta segundos
+   —más si venís insistiendo—, y medio minuto de pantalla negra sin nada se lee
+   como que la app se colgó. Con la barra se lee como que está trabajando. Usa
+   los mismos bloques ▮▯ que el medidor de la barra de estado: es la app
+   contándote algo con sus propios caracteres. */
+.collapse-reboot {
+    position: absolute;
+    top: 12%;
+    left: 8%;
+    right: 8%;
+    margin: 0;
+    color: var(--color-ink);
+    font-size: var(--text-base);
+    line-height: 1.8;
+    letter-spacing: 0.05em;
+}
+
+.collapse-reboot-lines {
+    margin: 0 0 calc(var(--spacing) * 6) 0;
+    white-space: pre;
+    font: inherit;
+}
+
+.collapse-progress {
+    letter-spacing: 0.02em;
+}
+
+.collapse-eta {
+    margin-top: calc(var(--spacing) * 2);
+    opacity: 0.55;
+    font-size: var(--text-sm);
+}
+
+/* Cuando el rearranque se traba. La barra ya se quedó clavada arriba; esto es
+   la máquina admitiéndolo, en el mismo formato de línea de arranque que venía
+   usando hasta ahora. */
+.collapse-failed {
+    margin-top: calc(var(--spacing) * 2);
+    color: var(--color-danger);
+    line-height: 1.8;
+}
+
+/* Cuanto más hayas insistido, más se sacude también el rearranque. */
+.collapse-layer[data-intensity="1.5"] .collapse-reboot {
+    animation: glitch-jolt 2.4s steps(1, end) infinite;
+    --glitch-amp: 2px;
+}
+
+.collapse-layer[data-intensity="2"] .collapse-reboot {
+    animation: glitch-jolt 1.2s steps(1, end) infinite;
+    --glitch-amp: 5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .collapse-drag,
+    .collapse-dying {
+        animation: none;
+    }
+}
+
+/* ============================================================
+   VENTANAS FANTASMA · §14
+
+   Cuadros de error que se abren y se cierran solos durante la avería.
+
+   NO son <dialog>: un diálogo de verdad atrapa el foco, se lleva el Escape y
+   bloquea la página — te sacaría del editor en mitad de una frase para enseñarte
+   un chiste. Esto es un cuadro pintado encima, sin eventos de puntero.
+
+   Lleva la piel de los diálogos de la app (barra de título en tinta, cuerpo en
+   papel, sin curvas) porque tiene que parecer de la casa: un cuadro con otro
+   aspecto se leería como un anuncio del navegador, no como el sistema fallando.
+   ============================================================ */
+
+@keyframes phantom-open {
+    0% {
+        transform: scale(0.94);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.phantom-error {
+    position: fixed;
+    z-index: 9993;
+    width: min(300px, calc(100vw - 48px));
+    border: 2px solid var(--color-line);
+    background: var(--color-tertiary);
+    color: var(--color-body);
+    font-family: var(--font-mono);
+    /* Dos fotogramas, no un fundido: la ventana APARECE, no se desliza. */
+    animation: phantom-open 90ms steps(2, end);
+    box-shadow: 4px 4px 0 color-mix(in srgb, var(--color-ink) 35%, transparent);
+}
+
+.phantom-error-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(var(--spacing) * 2);
+    background: var(--color-ink);
+    color: var(--color-inverse);
+    font-family: var(--font-pixel);
+    font-size: var(--text-base);
+    letter-spacing: 0.04em;
+    padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2);
+}
+
+/* La cruz se dibuja pero no cierra nada: la ventana se va sola. Que esté y no
+   sirva es parte del chiste — es una ventana que no es tuya. */
+.phantom-error-close {
+    opacity: 0.7;
+}
+
+.phantom-error-body {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--spacing) * 2);
+    padding: calc(var(--spacing) * 3);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+}
+
+.phantom-error-code {
+    color: var(--color-meta);
+    font-size: var(--text-xs);
+    letter-spacing: 0.06em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .phantom-error {
+        animation: none;
+    }
+}
+
+
+/* ============================================================
+   PANTALLA DE BLOQUEO · el sistema dejó de reiniciarse
+
+   Aparece a los diez colapsos seguidos. Es lo único de la app que sobrevive a
+   recargar la página.
+
+   Captura clics —hacen falta para el puzzle— pero NO enfoca nada: el editor
+   sigue montado debajo y lo que teclees sigue llegando y guardándose. La
+   pantalla está tapada; el trabajo, no.
+   ============================================================ */
+
+.lockout-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--spacing) * 4);
+    background: var(--color-ink);
+}
+
+/* EL ROJO ES EL DE LA PAPELERA, y se usa IGUAL que allá.
+
+   Antes el rojo iba de FONDO en la barra de título. `--color-danger` se invierte
+   con el tema —#8c2118 en claro, #e08272 en oscuro— así que de relleno daba un
+   ladrillo oscuro en un tema y un salmón claro en el otro: dos cuadros que no
+   parecían el mismo. En la papelera, el borrado definitivo usa el rojo como
+   COLOR DE TEXTO sobre las superficies de siempre (`.btn-terminal.is-danger`),
+   nunca como fondo, y por eso se lee igual en los dos temas.
+
+   Acá se hace lo mismo: la barra de título es tinta como todos los diálogos de
+   la app, y el rojo aparece sólo donde marca algo. */
+.lockout-window {
+    width: min(560px, 100%);
+    border: 2px solid var(--color-danger);
+    background: var(--color-tertiary);
+    color: var(--color-body);
+    box-shadow: 0 0 0 1px var(--color-ink);
+}
+
+/* La memoria corrupta se VE corrupta.
+
+   La misma aberración del fallo del tema, aplicada al cuadro entero. No es sólo
+   decoración: partir los canales de un volcado hexadecimal lo vuelve
+   materialmente más difícil de escanear, y eso es exactamente lo que tiene que
+   ser un puzzle que te bloquea la pantalla. Ver una irregularidad en una
+   cuadrícula limpia es fácil; verla con los dígitos temblando, no.
+
+   Va sobre la ventana y no sobre la capa: el fondo negro no gana nada con
+   aberrarse, y filtrar menos superficie es más barato. */
+.lockout-window {
+    filter: url(#chroma-split-b);
+    animation:
+        chroma-swap 1.9s steps(1, end) infinite,
+        chroma-drift 2.6s steps(1, end) infinite;
+}
+
+/* El volcado tiembla un poco más que el resto del cuadro: es lo que hay que
+   leer, así que es donde el temblor cuenta. */
+.lockout-dump {
+    animation: chroma-drift 1.3s steps(1, end) infinite;
+}
+
+/* El cuadro también da los tirones del sistema.
+
+   Misma trampa de siempre: `.lockout-window` ya declara `animation`, así que la
+   combinación con `.glitch-jolt` hay que escribirla entera o una pisa a la otra.
+   El tirón va al final para ganar el `transform`. */
+.lockout-window.glitch-jolt {
+    animation:
+        chroma-swap 1.9s steps(1, end) infinite,
+        chroma-drift 2.6s steps(1, end) infinite,
+        glitch-jolt 280ms steps(1, end);
+}
+
+.lockout-window.glitch-jolt.is-severe {
+    animation:
+        chroma-swap 1.9s steps(1, end) infinite,
+        chroma-drift 2.6s steps(1, end) infinite,
+        glitch-jolt 140ms steps(1, end) 3,
+        vhold-slip 420ms steps(1, end);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    /* La aberración se queda quieta: el puzzle sigue siendo más difícil de
+       escanear, pero nada se mueve. */
+    .lockout-window,
+    .lockout-dump {
+        animation: none;
+    }
+}
+
+.lockout-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(var(--spacing) * 4);
+    background: var(--color-ink);
+    color: var(--color-inverse);
+    font-family: var(--font-pixel);
+    font-size: var(--text-lg);
+    letter-spacing: 0.04em;
+    padding: calc(var(--spacing) * 2) calc(var(--spacing) * 4);
+    border-bottom: 2px solid var(--color-danger);
+}
+
+/* El rojo, donde marca algo: el aviso y el código del fallo. */
+.lockout-title-mark {
+    color: var(--color-danger);
+}
+
+.lockout-code {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-danger);
+}
+
+/* La cabecera del volcado, como la de una tabla técnica de la casa. */
+.lockout-dump-head {
+    display: flex;
+    justify-content: space-between;
+    color: var(--color-meta);
+    font-size: var(--text-2xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--color-line-soft);
+    padding-bottom: calc(var(--spacing) * 1);
+    margin-bottom: calc(var(--spacing) * 2);
+}
+
+/* El contador de intentos. Informa sin explicar el puzzle. */
+.lockout-tries {
+    color: var(--color-danger);
+    font-variant-numeric: tabular-nums;
+}
+
+.lockout-body {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--spacing) * 3);
+    padding: calc(var(--spacing) * 4);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+}
+
+.lockout-hint {
+    color: var(--color-meta);
+}
+
+.lockout-wrong {
+    color: var(--color-danger);
+}
+
+/* El volcado. La repetición es el puzzle: el ojo la ve y encuentra la celda que
+   la rompe sin que nadie se lo explique. Por eso no lleva instrucciones. */
+.lockout-dump {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--spacing) * 0.5);
+    border: 1px solid var(--color-line-soft);
+    padding: calc(var(--spacing) * 3);
+    overflow-x: auto;
+}
+
+/* Las columnas ocupan el ancho ENTERO del cuadro.
+
+   Antes la rejilla se apelotonaba a la izquierda y dejaba un hueco muerto a la
+   derecha: un volcado de memoria de verdad llena su caja, y además las celdas
+   separadas son objetivos más grandes y más fáciles de comparar entre sí. */
+.lockout-dump-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(var(--spacing) * 1);
+    width: 100%;
+}
+
+.lockout-offset {
+    color: var(--color-meta);
+    flex: 0 0 auto;
+    margin-right: calc(var(--spacing) * 2);
+}
+
+.lockout-cell {
+    flex: 1 1 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: inherit;
+    background: transparent;
+    border: 1px solid transparent;
+    padding: calc(var(--spacing) * 0.5) 0;
+    text-align: center;
+    cursor: pointer;
+}
+
+.lockout-cell:hover {
+    border-color: var(--color-line-soft);
+}
+
+/* Las lecturas del fallo: mismo filete y mismas etiquetas que el panel de
+   diagnóstico. Es la misma casa informando, aunque esté rota. */
+.lockout-readings {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--color-line-soft);
+    border-bottom: 1px solid var(--color-line-soft);
+}
+
+/* La ventana fantasma se aberra COMO TODO LO DEMÁS.
+
+   Vive fuera de `.container-terminal`, así que el filtro de la app no le llega:
+   hay que aplicárselo aparte. Con él, sus bordes, su barra de título y su fondo
+   se parten en rojo y cian igual que los botones — durante la avería, nada de lo
+   que aparece en pantalla está limpio.
+
+   El temblor de canales del texto va más lento que el de la app (2,3 s contra
+   1,6 s) para que se lea como otra superficie y no como parte de ella. */
+.phantom-error {
+    filter: url(#chroma-split-a);
+    animation:
+        phantom-open 90ms steps(2, end),
+        chroma-drift 2.3s steps(1, end) infinite,
+        chroma-swap 2.1s steps(1, end) infinite;
+}
+
+/* Cada ventana abierta a la vez va un poco desfasada: tres temblando al unísono
+   se leerían como una sola superficie partida en tres, no como tres ventanas. */
+.phantom-error:nth-of-type(2) {
+    animation-delay: 0ms, -700ms, -900ms;
+}
+
+.phantom-error:nth-of-type(3) {
+    animation-delay: 0ms, -1400ms, -1500ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .phantom-error {
+        animation: none;
+        filter: url(#chroma-split-a);
+    }
+}
+
+/* ------------------------------------------------------------------
+   §15 · vsync-test · el pong escondido
+
+   Se abre con `//attach_6`, que sólo se encuentra leyendo `//ps`.
+
+   Va por DEBAJO del colapso (10000) y del bloqueo (10001): si el sistema se
+   está cayendo mientras jugás, eso manda.
+   ------------------------------------------------------------------ */
+.pong-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    display: flex;
+    /* Cabecera arriba, mesa en medio, pie abajo: el mismo reparto que la app.
+       El juego no es una pantalla ajena, es la app en otro modo. */
+    flex-direction: column;
+    background: var(--color-primary);
+    color: var(--color-ink);
+
+    /* El alto de celda de la rejilla, en múltiplos del tamaño de letra. Lo
+       comparten el <pre> y las piezas que van encima, y por eso vive acá: si
+       divergieran, la pelota flotaría por encima o por debajo de su fila. */
+    --pong-line: 1.05;
+}
+
+.pong-frame {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    max-width: 100%;
+    padding: 1rem;
+    position: relative;
+}
+
+/* El tablero: el campo y, encima, lo que se mueve. */
+.pong-stage {
+    position: relative;
+
+    /* ⚠ PILA DE FUENTES PROPIA, Y NO ES CAPRICHO.
+
+       JetBrains Mono —la de toda la app— no trae los bloques (█ ▌ ● ┊), así que
+       los pintaba una fuente de reserva de 14,5 px contra los 9,12 de la base.
+       En una rejilla de caracteres eso descoloca la fila entera: el corte
+       BAILABA de una línea a la siguiente, y la paleta del borde derecho salía
+       desalineada.
+
+       Estas familias sí los traen a la anchura de una `M`, comprobado midiendo
+       en el navegador. Que sea otra tipografía no se nota: aquí no hay texto,
+       hay bloques. El marcador y las pistas siguen en la de la casa. */
+    font-family: ui-monospace, "Cascadia Mono", Consolas, "DejaVu Sans Mono",
+        "Liberation Mono", Menlo, monospace;
+
+    /* Se escala contra las DOS dimensiones: 72 columnas piden ancho y 24 filas
+       piden alto, y en una ventana apaisada y baja manda el alto. Con sólo `vw`
+       el corte se salía por abajo en pantallas cortas. */
+    font-size: clamp(0.5rem, min(1.55vw, 2.5vh), 1.35rem);
+    line-height: var(--pong-line);
+
+    /* El techo y el suelo de la mesa. Sin ellos la pelota rebota contra nada:
+       se la ve saltar en mitad del vacío y parece un fallo, no un rebote. Van
+       en CSS y no en la rejilla para no gastar dos de las veinticuatro filas. */
+    border-top: 1px solid var(--color-ink);
+    border-bottom: 1px solid var(--color-ink);
+}
+
+.pong-court {
+    margin: 0;
+    font: inherit;
+    white-space: pre;
+    user-select: none;
+}
+
+/* La pelota y las paletas, colocadas con precisión DECIMAL.
+
+   Ésta es la pieza que hace que el juego se vea fluido. Dentro de la rejilla la
+   pelota avanza 0,3 celdas por fotograma, así que redondeando a celda sólo se
+   mueve una vez cada tres: se ve a tirones aunque el bucle vaya a 60 fps
+   clavados. El tirón no era retraso, era el redondeo.
+
+   `1ch` es el avance exacto de un carácter en monoespaciada, así que las
+   coordenadas del juego se convierten en píxeles sin medir nada. */
+.pong-sprite {
+    position: absolute;
+    top: 0;
+    left: 0;
+    white-space: pre;
+    line-height: var(--pong-line);
+    user-select: none;
+    pointer-events: none;
+    transform: translate(
+        calc(var(--x) * 1ch),
+        calc(var(--y) * var(--pong-line) * 1em)
+    );
+}
+
+.pong-hud {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    /* Al ancho de la mesa: estirados a la pantalla, el marcador quedaba en una
+       esquina y el récord en la otra, a medio metro de lo que describen. */
+    width: min(100%, 62rem);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+
+.pong-hud-top {
+    /* El marcador sí manda: es lo único que hay que leer de un vistazo. */
+    opacity: 1;
+    font-size: 0.9rem;
+}
+
+.pong-proc,
+.pong-hint {
+    opacity: 0.55;
+}
+
+.pong-over {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    /* Translúcido y no opaco: el corte con la pelota fuera sigue viéndose
+       detrás, que es la prueba de por dónde se te escapó. */
+    background: color-mix(in srgb, var(--color-primary) 82%, transparent);
+    text-align: center;
+}
+
+.pong-over-title {
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.pong-over-hint {
+    font-size: 0.75rem;
+    opacity: 0.6;
+    letter-spacing: 0.08em;
+}
+
+/* El barrido es hermano del envoltorio filtrado, no descendiente, así que el
+   filtro no le llega por herencia. Se le da con la marca de <html>.
+
+   La capa del vsync-test NO necesita regla propia: recibe la MISMA lista de
+   clases que el envoltorio (ver page.tsx), así que hereda filtro, animaciones y
+   tirones por construcción. Duplicarlas acá era pedir que divergieran. */
+/* ⚠ LAS DOS ANIMACIONES, NO UNA.
+ *
+ * Esta regla ponía sólo `chroma-swap`, y `animation` es una propiedad: al
+ * declararla de nuevo, SUSTITUYE. El barrido dejaba de bajar durante toda la
+ * avería — se quedaba clavado a media pantalla cambiando de color, que es
+ * exactamente lo que se veía y no se entendía.
+ *
+ * El barrido es el refresco del tubo: una propiedad de la PANTALLA, no de lo que
+ * se esté pintando en ella. No para nunca. Lo que la avería le hace es teñirlo,
+ * no detenerlo. */
+[data-failing] .scanline-effect {
+    filter: url(#chroma-split-a);
+    animation:
+        scanline 9s linear infinite,
+        chroma-swap 1.7s steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-failing] .scanline-effect {
+        animation: none;
+    }
+
+}
+
+/* ------------------------------------------------------------------
+   El velo del arranque bloqueado.
+
+   El bloqueo se lee en un efecto (el servidor no tiene localStorage), así que
+   durante un fotograma se pintaba la app NORMAL: al recargar en pleno fallo
+   crítico se veía la pantalla de inicio un segundo antes de volver al error, y
+   recargar parecía funcionar — que es justo lo que este estado niega.
+
+   El script en línea de `config/lockout.ts` marca <html> antes de pintar; esto
+   tapa lo que haya debajo, y la propia capa de bloqueo quita la marca al
+   montarse. Es tinta plana, no una pantalla: lo que va encima ya lo pone React.
+   ------------------------------------------------------------------ */
+[data-booting-locked] body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 10004;
+    background: var(--color-primary);
+    pointer-events: none;
+}
+
+/* ------------------------------------------------------------------
+   La página muerta.
+
+   `//hi` insistido hasta que te echa tres veces. Negro, vacío, sin interfaz —
+   como una pestaña que se cerró y quedó el hueco.
+
+   No se puede cerrar la pestaña de verdad: los navegadores sólo lo permiten en
+   las que abrió un script. Y esto es MEJOR: una pestaña cerrada no cuenta nada
+   porque ya no está, mientras que un rectángulo negro donde estaba tu bloc de
+   notas se queda mirándote.
+
+   Va por encima de todo menos del barrido (10005): el tubo sigue refrescando
+   aunque no haya nada que refrescar, y ese detalle es medio chiste medio
+   escalofrío.
+   ------------------------------------------------------------------ */
+.dead-page {
+    position: fixed;
+    inset: 0;
+    z-index: 10004;
+    background: #000;
+}
+
+/* Fase 2b · las franjas de color.
+
+   Entre la nieve y el apagón, que es el orden real: un televisor que pierde la
+   señal enseña primero ruido, después la carta de ajuste, y sólo entonces se
+   apaga. Sin ellas la estática se cortaba a secas y el fallo parecía un corte de
+   luz; con ellas parece un equipo que se rindió por su cuenta. */
+.collapse-bars {
+    position: absolute;
+    inset: 0;
+    display: flex;
+}
+
+.collapse-bars > span {
+    flex: 1;
+}
+
+/* Con el tubo APAGADO no hay barrido.
+
+   Es la única excepción a que la línea esté siempre, y no la contradice: el
+   barrido es el refresco del tubo, y un tubo apagado no refresca nada. Dejarla
+   cruzando mientras la imagen se cierra a un punto contaría que la pantalla
+   sigue encendida justo en el momento en que se apaga. */
+[data-tube-off] .scanline-effect {
+    display: none;
+}

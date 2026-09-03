@@ -29,6 +29,14 @@ export interface NetworkStatus {
     isFullyOperational: boolean;
     /** Todavía no se completó la primera comprobación. */
     isChecking: boolean;
+    /**
+     * Cuánto duró la última caída del backend, en ms, o null.
+     *
+     * Se rellena en el instante en que el servidor VUELVE, y quien lo muestra
+     * lo descarta con clearLastOutage(). Es un dato que la app siempre tuvo y
+     * tiraba: hasta ahora, recuperarse sólo quitaba el aviso.
+     */
+    lastOutageMs: number | null;
 }
 
 let state: NetworkStatus = {
@@ -36,7 +44,11 @@ let state: NetworkStatus = {
     backendReachable: true,
     isFullyOperational: true,
     isChecking: true,
+    lastOutageMs: null,
 };
+
+/** Desde cuándo el backend no responde. null si responde. */
+let downSince: number | null = null;
 
 const listeners = new Set<() => void>();
 let subscriberCount = 0;
@@ -53,12 +65,43 @@ function setState(next: Partial<Omit<NetworkStatus, 'isFullyOperational'>>) {
     const unchanged =
         resolved.isOnline === state.isOnline &&
         resolved.backendReachable === state.backendReachable &&
-        resolved.isChecking === state.isChecking;
+        resolved.isChecking === state.isChecking &&
+        resolved.lastOutageMs === state.lastOutageMs;
 
     if (unchanged) return;
 
     state = resolved;
     listeners.forEach((l) => l());
+}
+
+/**
+ * Anota si el backend acaba de caerse o de volver.
+ *
+ * El cronómetro NO se reinicia mientras sigue caído: si cada comprobación
+ * fallida volviera a marcar el inicio, una caída de diez minutos se contaría
+ * como el minuto que hay entre dos sondeos.
+ */
+function trackOutage(healthy: boolean): number | null {
+    if (!healthy) {
+        if (downSince === null) downSince = Date.now();
+        return state.lastOutageMs;
+    }
+
+    if (downSince === null) return state.lastOutageMs;
+
+    const duracion = Date.now() - downSince;
+    downSince = null;
+    return duracion;
+}
+
+/** Descarta el aviso de reconexión, una vez mostrado. */
+export function clearLastOutage() {
+    setState({ lastOutageMs: null });
+}
+
+/** El estado actual, para quien no sea un componente. */
+export function getNetworkStatus(): NetworkStatus {
+    return state;
 }
 
 /**
@@ -72,10 +115,18 @@ export async function checkBackendHealth(): Promise<boolean> {
     try {
         const res = await apiClient.get('/health', { timeout: HEALTH_TIMEOUT_MS });
         const healthy = res.data?.success === true;
-        setState({ backendReachable: healthy, isChecking: false });
+        setState({
+            backendReachable: healthy,
+            isChecking: false,
+            lastOutageMs: trackOutage(healthy),
+        });
         return healthy;
     } catch {
-        setState({ backendReachable: false, isChecking: false });
+        setState({
+            backendReachable: false,
+            isChecking: false,
+            lastOutageMs: trackOutage(false),
+        });
         return false;
     } finally {
         inFlight = false;
@@ -129,6 +180,7 @@ const SERVER_SNAPSHOT: NetworkStatus = {
     backendReachable: true,
     isFullyOperational: true,
     isChecking: true,
+    lastOutageMs: null,
 };
 const getServerSnapshot = () => SERVER_SNAPSHOT;
 

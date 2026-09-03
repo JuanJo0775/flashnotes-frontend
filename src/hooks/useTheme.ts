@@ -4,6 +4,8 @@
 import { useSyncExternalStore } from 'react';
 import { THEME_STORAGE_KEY, type Theme } from '@/config/theme';
 
+export { THEME_STORAGE_KEY };
+
 export type { Theme };
 
 /**
@@ -62,6 +64,35 @@ export function setTheme(theme: Theme) {
 
     cached = theme;
     notify();
+}
+
+/**
+ * Invierte el tema SIN recordarlo.
+ *
+ * Es lo que usa el fallo cromático (§14) para sacudir la pantalla sola cada
+ * tantos segundos. La distinción con `setTheme` es la que hace que la avería
+ * siga siendo un chiste: cambia lo que se ve, no lo que elegiste. Recargar —que
+ * es lo único que arregla el fallo— te devuelve tu tema intacto.
+ *
+ * No escribe en localStorage y no dispara el evento `storage`, así que tampoco
+ * contagia la sacudida a las otras pestañas.
+ */
+export function flipThemeVolatile() {
+    const siguiente: Theme = getSnapshot() === 'dark' ? 'light' : 'dark';
+
+    document.documentElement.setAttribute('data-theme', siguiente);
+    cached = siguiente;
+    notify();
+}
+
+/** El tema efectivo, para quien no sea un componente. */
+export function getTheme(): Theme {
+    return getSnapshot();
+}
+
+/** Suscripción al tema, para quien no sea un componente. */
+export function subscribeTheme(listener: () => void) {
+    return subscribe(listener);
 }
 
 /** Invierte el tema actual. */

@@ -1,8 +1,11 @@
 // src/components/layout/Sidebar.tsx
 'use client';
 
+import { useV02T } from '@/i18n/useV02T';
+import SystemClock from '@/components/layout/SystemClock';
 import type { Note } from '@/types/note.types';
-import { formatFileSize, formatTime } from '@/lib/utils/formatters';
+import { formatFileSize } from '@/lib/utils/formatters';
+import { useT } from '@/i18n';
 
 interface SidebarProps {
     notes: Note[];
@@ -25,19 +28,25 @@ export default function Sidebar({
     onNewNote,
     onLoadMore,
 }: SidebarProps) {
+    const t = useT();
+    // El traductor degradado va aparte: `useT()` trae además `t.plural`, que el
+    // envoltorio de la v0.2 no necesita replicar — un plural mal traducido no
+    // aporta nada que no aporte ya una etiqueta mal traducida.
+    const tv = useV02T();
+
     return (
         <aside className="w-72 shrink-0 border-r border-line bg-secondary flex flex-col">
             <div className="border-b border-line p-4 flex flex-col gap-3">
-                <span className="comment">Seleccionar_archivo</span>
+                <span className="comment">{tv('sidebar.selectFile')}</span>
                 <button type="button" onClick={onNewNote} className="btn-terminal w-full">
-                    [+] Nueva nota
+                    {tv('sidebar.newNote')}
                 </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-2">
                 {notes.length === 0 ? (
                     <p className="text-center text-meta text-xs mono py-8">
-                        Sin archivos
+                        {t('sidebar.empty')}
                     </p>
                 ) : (
                     <ul className="flex flex-col">
@@ -56,7 +65,7 @@ export default function Sidebar({
                                             La guía crece para llenar el hueco,
                                             como en el listado de la referencia. */}
                                         <span className="file-row-name">
-                                            {note.title || 'Sin_titulo.txt'}
+                                            {note.title || t('common.untitled')}
                                         </span>
                                         <span className="file-row-leader" aria-hidden="true" />
                                         <span className="file-row-status">
@@ -77,8 +86,8 @@ export default function Sidebar({
                         className="btn-terminal w-full mt-2"
                     >
                         {isLoadingMore
-                            ? '[...] Cargando'
-                            : `[↓] Cargar más (${total - notes.length})`}
+                            ? t('common.loading')
+                            : t('sidebar.loadMore', { n: total - notes.length })}
                     </button>
                 )}
             </div>
@@ -86,11 +95,21 @@ export default function Sidebar({
             <div className="panel-footer justify-between text-2xs mono text-meta uppercase tracking-wider">
                 <span>
                     {notes.length}
-                    {total > notes.length ? `/${total}` : ''} archivos
+                    {total > notes.length ? `/${total}` : ''}{' '}
+                    {/* El plural concuerda con lo que hay CARGADO, que es el
+                        número que está pegado a la palabra: "1/6 archivos" sería
+                        raro, pero "1 archivo" y "6 archivos" son lo correcto. */}
+                    {t.plural('sidebar.files', total > notes.length ? total : notes.length)}
                 </span>
-                <span>
-                    {selectedNote?.updatedAt ? formatTime(selectedNote.updatedAt) : '--:--:--'}
-                </span>
+                {/* LA HORA DEL EQUIPO, latiendo, en 24 h y con segundos.
+                    Antes enseñaba la de la nota abierta, o `--:--:--` cuando no
+                    había ninguna — y ese marcador de posición es el que dio pie
+                    a todo esto, porque ya parecía morse.
+
+                    Es además el único sitio donde se VE `//date_off`: el reloj
+                    es donde mirarías la hora, así que es donde tiene que
+                    notarse que el sistema la perdió. */}
+                <SystemClock />
             </div>
         </aside>
     );

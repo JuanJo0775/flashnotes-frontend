@@ -1,4 +1,13 @@
 // tests/lib/utils/validators.test.ts
+import { translate } from '@/i18n';
+import type { Message } from '@/i18n';
+
+/**
+ * Los validadores devuelven la CLAVE del error, no su texto (ver
+ * `i18n/types.ts`). Se resuelve en español, que es el idioma de esta suite.
+ */
+const texto = (error?: Message) => (error ? translate('es', error.key, error.vars) : '');
+
 import {
     isValidObjectId,
     validateTitle,
@@ -39,18 +48,18 @@ describe('validators - validateTitle', () => {
     test('debe rechazar títulos vacíos o solo espacios', () => {
         const resultEmpty = validateTitle('');
         expect(resultEmpty.valid).toBe(false);
-        expect(resultEmpty.error).toContain('no puede estar vacío');
+        expect(texto(resultEmpty.error)).toContain('no puede estar vacío');
 
         const resultSpaces = validateTitle('   ');
         expect(resultSpaces.valid).toBe(false);
-        expect(resultSpaces.error).toContain('no puede estar vacío');
+        expect(texto(resultSpaces.error)).toContain('no puede estar vacío');
     });
 
     test('debe rechazar títulos que exceden 100 caracteres', () => {
         const longTitle = 'a'.repeat(101);
         const result = validateTitle(longTitle);
         expect(result.valid).toBe(false);
-        expect(result.error).toContain('100 caracteres');
+        expect(texto(result.error)).toContain('100 caracteres');
     });
 
     test('debe aceptar títulos con exactamente 100 caracteres', () => {
@@ -61,7 +70,7 @@ describe('validators - validateTitle', () => {
     test('debe rechazar no-strings', () => {
         const result = validateTitle(123 as unknown);
         expect(result.valid).toBe(false);
-        expect(result.error).toContain('debe ser un texto');
+        expect(texto(result.error)).toContain('debe ser un texto');
     });
 
     test('debe rechazar caracteres inválidos (HTML, caracteres de control)', () => {
@@ -90,7 +99,7 @@ describe('validators - validateContent', () => {
         const tooLong = 'a'.repeat(10001);
         const result = validateContent(tooLong);
         expect(result.valid).toBe(false);
-        expect(result.error).toContain('10.000 caracteres');
+        expect(texto(result.error)).toContain('10.000 caracteres');
     });
 
     test('debe aceptar contenido con exactamente 10,000 caracteres', () => {
@@ -101,7 +110,7 @@ describe('validators - validateContent', () => {
     test('debe rechazar no-strings', () => {
         const result = validateContent(123 as unknown);
         expect(result.valid).toBe(false);
-        expect(result.error).toContain('debe ser un texto');
+        expect(texto(result.error)).toContain('debe ser un texto');
     });
 });
 

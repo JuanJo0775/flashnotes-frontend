@@ -11,6 +11,7 @@ jest.mock('@/hooks/useNetworkStatus', () => ({
         backendReachable: true,
         isFullyOperational: true,
         isChecking: false,
+        lastOutageMs: null,
     }),
 }));
 
@@ -155,5 +156,145 @@ describe('NoteEditor · guardado', () => {
 
         expect(onSaveStateChange).toHaveBeenCalledWith('error');
         expect(screen.getByText(/sin guardar/i)).toBeInTheDocument();
+    });
+});
+
+describe('NoteEditor · secuencia de arranque', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => {
+        jest.runOnlyPendingTimers();
+        jest.useRealTimers();
+    });
+
+    const vacia: Note = { ...baseNote, content: '', versions: [], redoStack: [] };
+
+    /** El texto de ayuda que se teclea solo al abrir una nota vacía. */
+    const placeholder = () => document.querySelector('.editor-placeholder');
+
+    test('una nota vacía arranca tecleando el texto de ayuda', () => {
+        setup({ note: vacia });
+
+        expect(placeholder()).toBeInTheDocument();
+        // Todavía no escribió nada: el cursor de bloque está presente.
+        expect(placeholder()?.querySelector('.cursor-block')).toBeInTheDocument();
+    });
+
+    test('mientras arranca se oculta el cursor real, para no tener dos', () => {
+        setup({ note: vacia });
+
+        expect(screen.getByLabelText(/contenido de la nota/i)).toHaveClass('is-booting');
+    });
+
+    test('una nota con contenido no arranca: no hay animación ni texto de ayuda', () => {
+        setup();
+
+        expect(placeholder()).not.toBeInTheDocument();
+        expect(screen.getByLabelText(/contenido de la nota/i)).not.toHaveClass('is-booting');
+    });
+
+    test('escribir corta la animación y devuelve el cursor real', () => {
+        setup({ note: vacia });
+
+        fireEvent.change(screen.getByLabelText(/contenido de la nota/i), {
+            target: { value: 'H' },
+        });
+
+        expect(placeholder()).not.toBeInTheDocument();
+        expect(screen.getByLabelText(/contenido de la nota/i)).not.toHaveClass('is-booting');
+    });
+
+    test('al terminar, borra el texto y deja el cursor esperando', async () => {
+        // El arco completo: despertar, teclear, pausa y borrado hacia atrás.
+        // No desaparece: el mismo cursor que escribió el texto se queda listo.
+        setup({ note: vacia });
+
+        // La secuencia encadena `await` entre temporizador y temporizador, así
+        // que hay que avanzar el reloj dejando correr las microtareas: la
+        // versión síncrona sólo dispara los temporizadores ya programados y la
+        // cadena se queda a medio borrar.
+        await act(async () => {
+            await jest.advanceTimersByTimeAsync(6000);
+        });
+
+        const p = placeholder();
+        expect(p).toBeInTheDocument();
+        expect(p?.textContent).toBe('');
+        expect(p?.querySelector('.cursor-block')).toBeInTheDocument();
+    });
+
+    test('salir del campo también termina el arranque', () => {
+        setup({ note: vacia });
+
+        fireEvent.blur(screen.getByLabelText(/contenido de la nota/i));
+
+        expect(placeholder()).not.toBeInTheDocument();
+        expect(screen.getByLabelText(/contenido de la nota/i)).not.toHaveClass('is-booting');
+    });
+
+    test('informa al padre del tamaño de la nota, agrupado', () => {
+        // Va agrupado a propósito: avisar al padre en cada tecla re-renderiza
+        // la página entera y encadena una actualización más por pulsación, lo
+        // que hacía que React abortara el ciclo al escribir rápido.
+        const onLengthChange = jest.fn();
+        setup({ onLengthChange });
+
+        expect(onLengthChange).not.toHaveBeenCalled();
+
+        act(() => {
+            jest.advanceTimersByTime(300);
+        });
+
+        expect(onLengthChange).toHaveBeenCalledWith(baseNote.content.length);
+    });
+
+    test('escribir rápido no dispara un aviso por tecla', () => {
+        const onLengthChange = jest.fn();
+        setup({ onLengthChange });
+
+        const ta = screen.getByLabelText(/contenido de la nota/i);
+        for (const texto of ['a', 'ab', 'abc', 'abcd', 'abcde']) {
+            fireEvent.change(ta, { target: { value: texto } });
+        }
+
+        act(() => {
+            jest.advanceTimersByTime(300);
+        });
+
+        // Una sola vez, con el valor final: no cinco.
+        expect(onLengthChange).toHaveBeenCalledTimes(1);
+        expect(onLengthChange).toHaveBeenCalledWith(5);
+    });
+});
+
+describe('NoteEditor · posición del cursor al abrir', () => {
+    test('en una nota con contenido, el cursor va al final', () => {
+        // Regresión: `focus()` a secas deja el cursor en la posición cero, así
+        // que al volver a una nota ya escrita aparecías al comienzo y tenías
+        // que bajar a mano hasta donde ibas.
+        setup();
+
+        const ta = screen.getByLabelText(/contenido de la nota/i) as HTMLTextAreaElement;
+
+        expect(ta).toHaveFocus();
+        expect(ta.selectionStart).toBe(baseNote.content.length);
+        expect(ta.selectionEnd).toBe(baseNote.content.length);
+    });
+
+    test('en una nota vacía, el cursor queda en cero (que es el final)', () => {
+        setup({ note: { ...baseNote, content: '', versions: [], redoStack: [] } });
+
+        const ta = screen.getByLabelText(/contenido de la nota/i) as HTMLTextAreaElement;
+
+        expect(ta).toHaveFocus();
+        expect(ta.selectionStart).toBe(0);
+    });
+
+    test('un texto de varias líneas también abre al final', () => {
+        const larga = 'linea 1\nlinea 2\nlinea 3\nFINAL';
+        setup({ note: { ...baseNote, content: larga } });
+
+        const ta = screen.getByLabelText(/contenido de la nota/i) as HTMLTextAreaElement;
+
+        expect(ta.selectionStart).toBe(larga.length);
     });
 });

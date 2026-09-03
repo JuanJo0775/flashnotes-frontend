@@ -1,6 +1,11 @@
 // src/lib/api/notes.api.ts
 import { apiClient } from './client';
-import type { Note, CreateNoteDto, UpdateNoteDto } from '@/types/note.types';
+import type {
+    Note,
+    CreateNoteDto,
+    UpdateNoteDto,
+    NoteHistory,
+} from '@/types/note.types';
 import type {
     ApiResponse,
     PaginatedResponse,
@@ -109,6 +114,31 @@ class NotesApi {
         return this.unwrap(response, 'rehacer el cambio');
     }
 
+    /**
+     * GET /api/notes/:id/history
+     *
+     * Las versiones que el backend guarda por nota (hasta HISTORY_MAX). La ruta
+     * está en el backend desde el principio; esta es la primera vez que el
+     * frontend la usa.
+     */
+    async history(id: string): Promise<NoteHistory> {
+        if (!isValidObjectId(id)) {
+            throw new Error('ID inválido para consultar el historial');
+        }
+
+        const response = await apiClient.get<ApiResponse<Partial<NoteHistory>>>(
+            `${this.basePath}/${id}/history`
+        );
+        const data = this.unwrap(response, 'consultar el historial');
+
+        // Una nota sin ediciones no trae los arrays: se normalizan acá para que
+        // quien los pinte no tenga que defenderse de undefined.
+        return {
+            versions: data.versions ?? [],
+            redoStack: data.redoStack ?? [],
+        };
+    }
+
     /** PATCH /api/notes/:id/trash */
     async moveToTrash(id: string): Promise<Note> {
         const response = await apiClient.patch<ApiResponse<Note>>(
@@ -123,6 +153,48 @@ class NotesApi {
             `${this.basePath}/${id}/restore`
         );
         return this.unwrap(response, 'restaurar la nota');
+    }
+
+    /**
+     * BORRA TODO. Notas, papelera, sin dejar nada.
+     *
+     * ⚠ ES LA ÚNICA OPERACIÓN IRREVERSIBLE DE LA APP y la única que toca el
+     * servidor de forma destructiva. Sólo la llama `//reset`, y sólo después de
+     * que el aviso diga con todas las letras que las notas también se van y de
+     * que alguien conteste que sí.
+     *
+     * Se pagina hasta agotar porque el listado devuelve una página: borrar «los
+     * cien primeros» y decir que se borró todo sería mentir. Y se tira a la
+     * papelera antes de borrar de verdad porque el borrado definitivo sólo
+     * acepta notas que ya estén ahí.
+     */
+    async wipeEverything(): Promise<number> {
+        let borradas = 0;
+
+        // Las activas primero: pasan por la papelera y de ahí al vacío.
+        for (;;) {
+            const { notes } = await this.listActive(1, 100);
+            if (notes.length === 0) break;
+
+            for (const n of notes) {
+                await this.moveToTrash(n._id);
+                await this.deletePermanently(n._id);
+                borradas += 1;
+            }
+        }
+
+        // Y lo que ya estuviera en la papelera de antes.
+        for (;;) {
+            const { notes } = await this.listTrash(1, 100);
+            if (notes.length === 0) break;
+
+            for (const n of notes) {
+                await this.deletePermanently(n._id);
+                borradas += 1;
+            }
+        }
+
+        return borradas;
     }
 
     /** DELETE /api/notes/:id/permanent */

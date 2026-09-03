@@ -8,6 +8,8 @@
    de Tailwind: `p-4` calculaba 0px en toda la aplicación. */
 @import "../styles/terminal.css" layer(components);
 @import "../styles/animations.css" layer(components);
+@import "../styles/glitch.css" layer(components);
+@import "../styles/v02.css" layer(components);
 
 /* ============================================================
    TOKENS
@@ -210,28 +212,70 @@
     outline-offset: 2px;
   }
 
-  /* --- Scrollbars --- */
+  /* --- Barra de desplazamiento ---
+
+     Un canal rayado con un bloque de tinta dentro, como el de un sistema
+     operativo de los de antes. Ancha a propósito: es un elemento del sistema,
+     no un detalle que haya que esconder, y así se agarra bien.
+
+     El pulgar lleva un borde transparente con `background-clip: padding-box`:
+     eso deja ver el rayado del canal alrededor del bloque, en vez de taparlo
+     con un borde del color del fondo. */
+
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 14px;
+    height: 14px;
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--color-secondary);
+    background-color: var(--color-secondary);
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent 0 3px,
+      var(--color-line-soft) 3px 4px
+    );
+    border-left: 1px solid var(--color-line);
+  }
+
+  ::-webkit-scrollbar-track:horizontal {
+    border-left: none;
+    border-top: 1px solid var(--color-line);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--color-line-soft);
-    border: 2px solid var(--color-secondary);
+    background-color: var(--color-ink);
+    background-clip: padding-box;
+    border: 3px solid transparent;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-line);
+    background-color: var(--color-body);
+    border-width: 2px;
   }
 
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-line-soft) var(--color-secondary);
+  ::-webkit-scrollbar-thumb:active {
+    border-width: 1px;
+  }
+
+  /* Sin flechas: el canal es una superficie continua. */
+  ::-webkit-scrollbar-button {
+    display: none;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: var(--color-secondary);
+  }
+
+  /* Firefox no admite el rayado, pero sí los colores.
+     Va detrás de @supports a propósito: en Chrome, declarar `scrollbar-color`
+     hace que se IGNOREN todas las reglas ::-webkit-scrollbar de ese scroller, y
+     volvía la barra redondeada del sistema con sus flechas. Así cada navegador
+     coge sólo lo suyo. */
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: auto;
+      scrollbar-color: var(--color-ink) var(--color-secondary);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -274,3 +318,4 @@
     border-width: 0;
   }
 }
+

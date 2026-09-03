@@ -41,6 +41,18 @@
 
 /* Dentro de una barra invertida, el "texto apagado" no puede ser el gris de
    metadatos: quedaría ilegible sobre tinta. Se aclara con opacidad. */
+/* Hueco del estado del sistema.
+
+   Reserva en `ch` el ancho del fragmento más largo del repertorio, para que un
+   fragmento ambiental no empuje [GUARDADO] al aparecer. El valor lo pone el
+   componente desde MAX_FRAGMENT_LENGTH, que se calcula del repertorio: un
+   fragmento nuevo y más largo ensancha el hueco solo. */
+.status-slot {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
 .status-bar .dim,
 .terminal-header .dim {
     opacity: 0.65;
@@ -209,11 +221,6 @@
     white-space: nowrap;
 }
 
-.meta-tag.status-ok {
-    color: var(--color-ok);
-    border-color: var(--color-ok);
-}
-
 .meta-tag.status-error {
     color: var(--color-danger);
     border-color: var(--color-danger);
@@ -361,6 +368,186 @@
     color: var(--color-meta);
 }
 
+/* ------------------------------------------------------------
+   Cursor de bloque
+
+   `caret-shape` convierte el cursor de texto del navegador en un bloque, que es
+   el cursor de una terminal de verdad. Es una mejora progresiva: donde no está
+   soportado se ve el cursor fino de siempre y no se pierde nada.
+   ------------------------------------------------------------ */
+
+.input-terminal,
+.editor-textarea {
+    caret-shape: block;
+}
+
+/* ------------------------------------------------------------
+   Área de escritura y su placeholder de arranque
+
+   Al abrir una nota vacía, el texto de ayuda se teclea solo con cursor de
+   bloque, como un sistema arrancando. Mientras dura, el cursor real del
+   textarea se oculta para que no haya DOS cursores a la vez; al terminar, el
+   de mentira desaparece y el de verdad toma el relevo.
+   ------------------------------------------------------------ */
+
+/* ------------------------------------------------------------
+   Prompts de línea
+
+   Una copia del texto en color transparente, debajo del textarea, con el mismo
+   tipo, ancho y relleno. Se parte igual que el original, así que el `>` de cada
+   línea cae solo en su sitio sin medir nada.
+
+   `--gutter`: el hueco de la izquierda donde vive el prompt. Lo comparten el
+   textarea y la copia, y es lo que mantiene el texto alineado entre ambos.
+   ------------------------------------------------------------ */
+
+
+.editor-prompts {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+}
+
+.editor-prompts-track {
+    will-change: transform;
+}
+
+.editor-line {
+    position: relative;
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    color: transparent;
+    letter-spacing: var(--tracking);
+    padding-left: var(--gutter);
+    padding-right: var(--edge);
+}
+
+.editor-line.has-prompt::before {
+    content: '>';
+    position: absolute;
+    left: 0;
+    color: var(--color-meta);
+}
+
+.editor-canvas {
+    /* Hueco de la izquierda donde vive el prompt, y aire a la derecha para que
+       el texto no toque la barra de desplazamiento. Los comparten el textarea,
+       la copia de los prompts y el texto de arranque: son lo que los mantiene
+       alineados y lo que hace que se partan por el mismo sitio. */
+    --gutter: 2.5ch;
+    --edge: 2ch;
+
+    /* Separación entre letras.
+       En JetBrains Mono los glifos de `-`, `_`, `=` y `#` llegan al borde de su
+       celda, así que al repetirse se tocan y forman una línea continua: escribís
+       `---` y ves un solo guion largo, como si se hubieran borrado dos. (No es
+       una ligadura: romperlas con U+200C no cambia nada, y los caracteres están
+       todos ahí.) Un pelo de separación los vuelve contables sin que el texto
+       pierda densidad. */
+    --tracking: 0.05em;
+
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.editor-textarea {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    resize: none;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    line-height: 1.6;
+    color: var(--color-body);
+    letter-spacing: var(--tracking);
+    padding-left: var(--gutter);
+    padding-right: var(--edge);
+}
+
+.editor-textarea.is-booting {
+    caret-color: transparent;
+}
+
+/* La respuesta de un comando ocupa el mismo hueco que el texto de arranque,
+   pero NO es un texto de ayuda: es lo que el sistema contestó. Va en tinta
+   plena y con las líneas separadas, para que se lea como una salida de terminal
+   y no como un marcador de posición. */
+/* ⚠ VA CON DOS CLASES, Y NO ES DECORACIÓN.
+   El elemento lleva `editor-placeholder editor-reply`, y `.editor-placeholder`
+   —que declara `pointer-events: none`— está MÁS ABAJO en esta hoja con la misma
+   especificidad. Con un solo selector, la regla de abajo ganaba: la respuesta no
+   recibía la rueda del ratón y NO SE PODÍA DESPLAZAR, aunque saliera la barra.
+
+   Es la misma trampa de la cascada que ya dejó al tirón sin reproducirse durante
+   la avería (ver docs/REGLAS.md · C3): a igual especificidad gana la última, y
+   aquí la última es la genérica.
+
+   Dos clases suben la especificidad por encima y el orden deja de importar. */
+.editor-placeholder.editor-reply {
+    color: var(--color-body);
+
+    /* ⚠ TIENE QUE GANARLE AL TEXTAREA, y por eso es 2 y no 1.
+       El textarea es `position: relative; z-index: 1`, y la respuesta era
+       `absolute; z-index: 1`: a igualdad de z-index gana el que va DESPUÉS en el
+       documento, y el textarea va después. Resultado: la barra de desplazamiento
+       aparecía, pero la rueda del ratón se la comía el textarea y la respuesta
+       no bajaba.
+ 
+       Se diagnosticó con `document.elementFromPoint()` sobre el centro de la
+       respuesta, que devolvía `TEXTAREA`. Disparar un `wheel` sobre el elemento
+       a mano NO lo detecta: salta el impacto del ratón y prueba el mecanismo en
+       vez del camino. */
+    z-index: 2;
+
+    /* SE DESBORDABA. La respuesta se pinta con `position: absolute; inset: 0`
+       encima del editor, así que una salida larga —`//help` lista quince
+       comandos— se derramaba fuera del panel y se montaba sobre el pie.
+
+       Se recorta al hueco y se desplaza. Y para poder desplazarla hace falta
+       que reciba el ratón, al revés que el texto de arranque, que es un
+       marcador de posición y no debe estorbar. */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    pointer-events: auto;
+
+    /* Un pelo más apretada que el texto normal: es una salida de terminal. */
+    line-height: 1.45;
+    padding-right: var(--gutter);
+    padding-bottom: 0.5rem;
+}
+
+/* El clic que la cierra va aquí y no en el marco: puesto en el marco, arrastrar
+   la barra de desplazamiento contaba como clic y la cerraba justo cuando
+   querías bajarla. */
+.editor-reply-body {
+    cursor: pointer;
+}
+
+.editor-placeholder {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    line-height: 1.6;
+    color: var(--color-meta);
+    white-space: pre-wrap;
+    letter-spacing: var(--tracking);
+    padding-left: var(--gutter);
+}
+
 .input-terminal:focus {
     outline: 2px solid var(--color-line);
     outline-offset: -2px;
@@ -418,6 +605,44 @@
 }
 
 /* ------------------------------------------------------------
+   Panel de diagnóstico
+
+   Un listado de lecturas, como la tabla técnica de la contraportada de un
+   bloc: etiqueta a la izquierda, dato a la derecha, filete de un pelo entre
+   filas. La etiqueta va en color de metadato porque el dato es lo que se lee;
+   la etiqueta sólo dice qué se está mirando.
+   ------------------------------------------------------------ */
+
+.diag-readings {
+    display: flex;
+    flex-direction: column;
+}
+
+.diag-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: calc(var(--spacing) * 4);
+    padding: calc(var(--spacing) * 1.5) 0;
+    border-bottom: 1px solid var(--color-line-soft);
+}
+
+/* La última fila no lleva filete: cerraría la tabla por abajo y el borde del
+   cuerpo del diálogo ya hace ese trabajo. */
+.diag-row:last-child {
+    border-bottom: 0;
+}
+
+.diag-label {
+    color: var(--color-meta);
+    letter-spacing: 0.06em;
+}
+
+.diag-value {
+    text-align: right;
+}
+
+/* ------------------------------------------------------------
    Franja de aviso (errores y estado del sistema)
    ------------------------------------------------------------ */
 
@@ -437,4 +662,452 @@
 .notice.is-warn {
     border-color: var(--color-warn);
     color: var(--color-warn);
+}
+
+/* El reloj del pie de la barra lateral.
+
+   Tres clics lo cambian por el código morse de la sesión, así que tiene que
+   invitar a hacer clic sin anunciar que hay algo: cursor de puntero y nada más.
+   Sin `user-select`, el triple clic seleccionaría el texto en vez de contar. */
+.system-clock {
+    cursor: pointer;
+    user-select: none;
+    /* El hueco no se mueve al pasar de `14:05:09` a un código más largo. */
+    display: inline-block;
+    text-align: right;
+    min-width: 8ch;
+    /* Un blanco más grande. El reloj es diminuto y está en una esquina: sin
+       esto, tres clics seguidos se iban del objetivo con facilidad. */
+    padding: 0.4em 0.3em;
+    margin: -0.4em -0.3em;
+}
+
+/* Con el código puesto se separa un poco: sin esto, los puntos y las rayas
+   quedaban tan apretados que se leían como una sola mancha. */
+.system-clock.is-morse {
+    letter-spacing: 0.12em;
+    min-width: 0;
+}
+
+/* Los comandos todavía no descubiertos, en la respuesta de `//help`.
+
+   Uno por línea y con el mismo sangrado que los listados, para que se lean como
+   parte de la misma lista — que es lo que son: la parte que no se deja leer. */
+.reply-redacted {
+    display: block;
+    margin-top: 1em;
+}
+
+.scramble {
+    display: block;
+    padding-left: 2ch;
+    opacity: 0.55;
+    /* Sin esto, cada cambio de letra movería el bloque un pelo: los dígitos y
+       las letras miden igual en monoespaciada, pero el navegador puede
+       reajustar si el contenedor no está fijado. */
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+}
+
+/*
+ * El mismo revuelto, pero DENTRO de otra cosa.
+ *
+ * `.scramble` es de bloque porque en `//help` cada uno ocupa su renglón. En
+ * la pestaña de colección va dentro del rótulo, entre los corchetes, y de
+ * bloque partía el botón en TRES LÍNEAS: `[★`, el revuelto, y `]` cada uno
+ * por su lado. Se leía como un botón roto, no como algo por descubrir.
+ */
+.scramble-inline {
+    display: inline;
+    padding-left: 0;
+    white-space: nowrap;
+}
+
+/* Una fila de la respuesta por filas (`//help`). Bloque para que cada una ocupe
+   su línea sin depender de saltos dentro del texto. */
+.reply-row {
+    display: block;
+    white-space: pre;
+}
+
+/* ------------------------------------------------------------
+   La colección · las piezas de `//keep`
+
+   No se parecen a las tarjetas de notas a propósito: aquéllas invitan a abrir
+   —tienen tamaño, fecha y un [ABRIR]— y éstas no se abren. Se ven.
+   ------------------------------------------------------------ */
+.collection-view {
+    padding: 1.5rem;
+}
+
+
+/*
+ * ⚠ LA REJILLA SE MIDE EN COLUMNAS DE TEXTO, NO EN `rem`.
+ *
+ * Todas las piezas son de CUARENTA caracteres de ancho, así que la tarjeta se
+ * dimensiona contra eso: `40ch` del dibujo más el aire de los lados. Con
+ * `minmax(16rem, …)` las celdas se estiraban a lo que sobrara y el dibujo
+ * quedaba nadando o recortado según el ancho de la ventana.
+ *
+ * `auto-fill` con un tamaño FIJO —y no `1fr`— es lo que impide que las columnas
+ * crezcan: entran las que quepan y el resto es margen.
+ *
+ * ⚠ Y SIN CENTRAR. Un `justify-content: center` reparte el sobrante a los dos
+ * lados y mete un margen izquierdo que ninguna otra vista tiene: la colección
+ * dejaría de alinear con las notas y con la papelera. Empaquetadas a la
+ * izquierda, el sobrante se va todo a la derecha y el borde es el de siempre.
+ */
+.collection-grid {
+    display: grid;
+    /*
+     * ⚠ CUATRO COLUMNAS FIJAS, no `auto-fill`.
+     *
+     * Con `auto-fill` el número sale de una cuenta —cuántas caben— y esa
+     * cuenta se perdía por DIEZ PÍXELES: la rejilla dispone de 1186 y cuatro
+     * tarjetas piden 1196, así que caía a tres. Ajustar el ancho de la tarjeta
+     * hasta que cuadre es perseguir un número que cambia con la ventana, con
+     * el relleno del contenedor y con la barra lateral.
+     *
+     * Cuatro columnas se piden y ya. `minmax(0, …)` es lo que las deja
+     * encogerse en una ventana estrecha en vez de desbordar y obligar a
+     * desplazar de lado.
+     */
+    grid-template-columns: repeat(4, minmax(0, var(--collection-card-w)));
+    gap: 0.75rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/*
+ * ⚠ TODAS LAS TARJETAS MIDEN LO MISMO, tenga pieza o no.
+ *
+ * Antes la encontrada era más grande que los huecos y la rejilla daba saltos
+ * cada vez que descubrías una: las filas se recolocaban y la colección parecía
+ * otra. Lo que hace que coleccionar se sienta es ver el hueco EN SU SITIO, y para
+ * eso el sitio no puede cambiar de tamaño.
+ *
+ * El alto sale de lo que ocupa la pieza más alta —catorce filas a `0.7rem` con
+ * interlínea 1,15— más el número, el pie y los espacios. Se fija en una variable
+ * porque lo comparten la tarjeta y la rejilla.
+ */
+:root {
+    /*
+     * ⚠ NO SE PUEDE ESCRIBIR `40ch` ACÁ y esperar que salga bien: `ch` se resuelve
+     * con la letra del elemento que USA la variable —la tarjeta— y el dibujo se
+     * pinta a `0.7rem`. Saldría casi el doble de ancho.
+     *
+     * Así que se deja la cuenta escrita: cuarenta caracteres, a `0.7rem`, con el
+     * avance de 0,6 em que tienen las monoespaciadas de la pila. Más el relleno de
+     * los lados y los dos bordes.
+     *
+     * ⚠ EL RELLENO LATERAL ES DE MEDIO `rem`, NO DE TRES CUARTOS, y ésa es toda
+     * la diferencia entre cuatro tarjetas por fila y tres. Con 0,75 la cuarta se
+     * pasaba por CINCO PÍXELES en una pantalla normal y la rejilla caía a tres.
+     * El dibujo no se toca: lo que sobra es el aire de los lados.
+     */
+    --collection-card-w: calc(40 * 0.7rem * 0.6 + 1rem + 2px);
+    --collection-card-h: 15.5rem;
+}
+
+.collection-card {
+    border: 1px solid var(--color-line);
+    padding: 1rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    height: var(--collection-card-h);
+    overflow: hidden;
+}
+
+/* El dibujo lleva su propia pila de fuentes por el mismo motivo que el corte
+   del pong: si alguna pieza usara bloques, JetBrains Mono los pintaría con una
+   reserva de otras métricas y el dibujo se descuadraría fila a fila.
+   Hoy son todas ASCII, pero esto lo deja a salvo del día que no lo sean. */
+.collection-art {
+    /* Cuarenta columnas exactas: es el ancho de TODAS las piezas, y fijarlo acá
+       impide que el contenedor lo estruje en pantallas estrechas. */
+    width: 40ch;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, "DejaVu Sans Mono",
+        "Liberation Mono", Menlo, monospace;
+    font-size: 0.7rem;
+    line-height: 1.15;
+    white-space: pre;
+    margin: 0;
+}
+
+.collection-name {
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.6;
+    text-align: center;
+    /* El pie SÍ se ajusta: es el dibujo el que manda el ancho de la tarjeta, y
+       una etiqueta larga no tiene por qué estirarla hasta salirse del borde. */
+    white-space: normal;
+    max-width: 100%;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.collection-empty {
+    max-width: 34rem;
+}
+
+/* ------------------------------------------------------------
+   Los huecos del catálogo
+   ------------------------------------------------------------ */
+
+/* Un hueco vacío tiene que LEERSE como vacío sin gritar: si pesara lo mismo que
+   una pieza, la rejilla parecería llena y se perdería justo lo que hace
+   coleccionar, que es ver el sitio que falta. */
+.collection-card.is-empty {
+    border-style: dashed;
+    opacity: 0.4;
+}
+
+/* El número del hueco, grande y solo: es lo único que hay ahí, y lo que dice no
+   es QUÉ falta sino CUÁNTO. */
+.collection-slot {
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+}
+
+/* En una pieza encontrada el número va arriba y discreto: acompaña al dibujo,
+   no compite con él. */
+.collection-num {
+    align-self: flex-start;
+    letter-spacing: 0.08em;
+}
+
+/* ------------------------------------------------------------
+   El borrado: desvanecido, cuenta, y apagón
+   ------------------------------------------------------------ */
+
+/* PRIMERO SE VA LA APP. El atributo va en `<html>` porque lo que tiene que
+   desvanecerse vive fuera del árbol de la pantalla de borrado — es el mismo
+   sitio desde el que se alcanzan la avería cromática y la v0.2, y por el mismo
+   motivo. */
+/* ⚠ CON `opacity` Y LA TRANSICIÓN DE ARRIBA, no con `animation`: una regla
+   `animation` sobre `body > *` alcanza al barrido y le sustituye la suya, y el
+   refresco del tubo es lo único que no puede pararse nunca. */
+[data-wiping] body > *:not(.wipe-screen):not(.scanline-effect) {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Igual que el arranque: por encima del bloqueo y del colapso, por debajo del
+   barrido. Lo que se está contando es que ya no hay nada, y dejar una pantalla
+   de error asomando por encima lo desmentiría. */
+.wipe-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 10002;
+    /* `--color-primary`, no `--color-bg`: ésa no existe y dejaba la pantalla
+       transparente. */
+    background: var(--color-primary);
+    color: var(--color-ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    font-family: var(--font-mono);
+    transform-origin: center;
+}
+
+/* EL APAGÓN DEL TUBO. La misma animación que el colapso, y a propósito: es el
+   mismo gesto —cortarle la corriente a un CRT— y darle otra sería inventar un
+   segundo lenguaje para decir lo mismo. La imagen se aplasta a una línea, la
+   línea se cierra a un punto, negro. */
+.wipe-screen.is-off {
+    animation: collapse-dying 420ms linear forwards;
+}
+
+.wipe-list {
+    margin: 0;
+    font-family: inherit;
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    white-space: pre;
+}
+
+.wipe-joke {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* La carita, grande: es el remate, y un remate pequeño no remata. */
+.wipe-face {
+    margin: 0;
+    font-family: inherit;
+    font-size: 3.5rem;
+    line-height: 1;
+}
+
+.wipe-footer {
+    margin: 0;
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wipe-screen.is-off {
+        animation: none;
+    }
+}
+
+/* ------------------------------------------------------------
+   El monitor encendiéndose
+   ------------------------------------------------------------ */
+
+/* Tapa todo mientras dura, pero la app se monta por detrás: cuando el arranque
+   acaba ya está lista. Si esperara a terminar para empezar a cargar sería un
+   peaje de verdad, no un adorno. */
+/* ⚠ CON LOS COLORES DEL TEMA, no en negro fijo.
+   Estaba clavado a negro y en tema claro el arranque era otra app: se encendía
+   una pantalla oscura y a los dos segundos aparecía una clara. Un monitor no
+   cambia de color al terminar de arrancar. Con las variables, el equipo se
+   enciende como lo dejaste — y la primera vez, como venga de fábrica.
+
+   ⚠ Y LA VARIABLE ES `--color-primary`, NO `--color-bg`. La segunda no existe:
+   la declaración se descartaba en silencio, la pantalla se quedaba transparente
+   y el logo se veía FLOTANDO sobre las notas. Un nombre de variable inventado no
+   da error, da un dibujo encima de otro — es el mismo tropiezo que las esquinas
+   de la v0.2, y por eso está escrito acá otra vez. */
+/* ⚠ POR ENCIMA DE TODO MENOS DEL BARRIDO.
+ *
+ * Estaba en 95 y la pantalla de bloqueo (10001) y la de colapso (10000) le
+ * quedaban ENCIMA: al recargar con el fallo puesto, el arranque se veía por
+ * debajo del error y la app asomaba entre medias. Un equipo que arranca no
+ * enseña lo que había antes.
+ *
+ * 10002 lo pone sobre las dos y deja libre el 10005 del barrido, que va sobre
+ * todo por definición. */
+.boot-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 10002;
+    background: var(--color-primary);
+    color: var(--color-ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+}
+
+/* ⚠ ACÁ HUBO UN ENCENDIDO DEL TUBO Y SE QUITÓ.
+
+   Era una línea que nacía en el centro y se abría hacia arriba y abajo, pintada
+   con la TINTA del tema — o sea, del color contrario al fondo. Se veía como una
+   pantalla ajena abriéndose encima, no como un monitor encendiéndose.
+
+   El apagón de un tubo ya existe y está bien: `collapse-dying`, el del fallo
+   crítico, después de la estática y las franjas. Ése es el gesto de la casa, y se
+   usa donde toca — en el borrado. Inventar su inverso para el arranque era un
+   segundo lenguaje para decir algo que no hacía falta decir: lo que abre el
+   arranque son las barras de color, y con eso basta. */
+
+/* Y LA APP ENTRA DESVANECIÉNDOSE, no de golpe. Aparecer de una después de un
+   arranque de monitor rompe justo lo que el arranque acaba de construir: lo que
+   se enciende, se enciende con una imagen que se asienta.
+
+   ⚠ CON `transition`, NUNCA CON `animation`.
+   
+   La primera versión usaba `@keyframes` y una regla `animation` sobre
+   `body > *`. Eso ALCANZA AL BARRIDO, que es hijo directo de body y tiene su
+   propia animación — y `animation` no se suma, sustituye. El refresco del tubo
+   dejó de bajar en toda la app, en silencio, y sólo se notaba mirándolo.
+   
+   Es la regla C3 otra vez, y la más cara de todas: el barrido es la única
+   animación que no puede pararse nunca. `transition` no toca `animation`, así
+   que convive con lo que cada capa esté haciendo. */
+/* ⚠ EL BARRIDO QUEDA FUERA DE LOS DESVANECIDOS.
+ *
+ * Es hijo directo de `body`, igual que la app, así que `body > *` lo alcanzaba y
+ * se apagaba con todo lo demás: `opacity: 0` durante el arranque entero y durante
+ * el borrado entero. Se veía —o no se veía— exactamente igual que si no
+ * existiera, con los estilos diciendo `visible` y z-index 10005.
+ *
+ * Es la MISMA lección que la de `animation`, pero con otra propiedad: cualquier
+ * regla que barra `body > *` va a alcanzarlo, porque el barrido vive ahí arriba a
+ * propósito — es el refresco del tubo, una propiedad de la pantalla, no de lo que
+ * se pinta en ella. Cualquier regla que hable de «toda la app» tiene que
+ * excluirlo explícitamente. */
+body > *:not(.boot-screen):not(.wipe-screen):not(.scanline-effect) {
+    transition: opacity 700ms ease-out;
+}
+
+[data-booting] body > *:not(.boot-screen):not(.scanline-effect) {
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body > *:not(.boot-screen):not(.wipe-screen):not(.scanline-effect) {
+        transition: none;
+    }
+}
+
+/* Las barras ocupan la pantalla entera y de arriba abajo, como una carta de
+   ajuste. A media altura parecerían un adorno; a pantalla completa, un monitor
+   sin señal. */
+.boot-bars {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.boot-bars > span {
+    flex: 1;
+}
+
+.boot-logo {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    align-items: center;
+}
+
+.boot-logo pre {
+    margin: 0;
+    font-family: inherit;
+    font-size: clamp(0.5rem, 1.6vw, 0.9rem);
+    line-height: 1.2;
+    white-space: pre;
+}
+
+.boot-vendor {
+    margin: 0;
+    font-size: var(--text-2xs);
+    letter-spacing: 0.12em;
+    opacity: 0.7;
+}
+
+/* La comprobación va arriba a la izquierda, que es donde escupe sus líneas un
+   equipo al arrancar. Centrarla la convertiría en un cartel. */
+.boot-check {
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+    margin: 0;
+    font-family: inherit;
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    white-space: pre;
+}
+
+/* Las franjas del borrado, con el equipo ya vacío. Ocupan la pantalla entera:
+   media pantalla sería un adorno, entera es un monitor sin señal. */
+.wipe-bars {
+    position: absolute;
+    inset: 0;
+    display: flex;
+}
+
+.wipe-bars > span {
+    flex: 1;
 }
