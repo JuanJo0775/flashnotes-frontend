@@ -255,25 +255,32 @@ export const ART: readonly ArtPiece[] = [
             en: 'TERMINAL · NO SIGNAL SINCE',
         },
         /*
-         * El tubo, con su peana. Se ensanchó a la medida de la serie y se le
-         * puso el barrido dentro — la misma línea que cruza toda la app, aquí
-         * quieta para siempre.
+         * EL BISEL ES LO QUE LO HACE UN APARATO.
+         *
+         * Antes era una caja con texto dentro y podía ser una ventana, un cartel
+         * o un marco. El doble `::` alrededor de la pantalla es el bisel, y abajo
+         * están los MANDOS: dos ruedas de ajuste, la rejilla del altavoz y el
+         * piloto. Un aparato se reconoce por lo que tiene alrededor de la
+         * pantalla, no por la pantalla.
+         *
+         * El barrido sigue dentro, quieto para siempre: la misma línea que cruza
+         * toda la app.
          */
         art: [
-            '     +============================+     ',
-            '     |                            |     ',
-            '     |  ........................  |     ',
-            '     |  .                      .  |     ',
-            '     |  .  > _                 .  |     ',
-            '     |  .                      .  |     ',
-            '     |  .~~~~~~~~~~~~~~~~~~~~~~.  |     ',
-            '     |  .                      .  |     ',
-            '     |  ........................  |     ',
-            '     |                            |     ',
-            '     +=============+==+===========+     ',
-            '                   |  |                 ',
-            '           +=======+==+=======+         ',
-            '        +======================+        ',
+            '  +==================================+  ',
+            '  |   .--------------------------.   |  ',
+            '  |   |::::::::::::::::::::::::::|   |  ',
+            '  |   |::                      ::|   |  ',
+            '  |   |:: > _                  ::|   |  ',
+            '  |   |::                      ::|   |  ',
+            '  |   |::~~~~~~~~~~~~~~~~~~~~~~::|   |  ',
+            '  |   |::::::::::::::::::::::::::|   |  ',
+            '  |   "--------------------------"   |  ',
+            '  |   (o)   (o)    [======]   .::.   |  ',
+            '  +===============+==+===============+  ',
+            '                  |  |                  ',
+            '            .-----+--+-----.            ',
+            '            "---------------"           ',
         ].join('\n'),
     },
     {
@@ -285,25 +292,31 @@ export const ART: readonly ArtPiece[] = [
          * carretes. Ahora los tiene, y se ve la cinta pasando de uno al otro.
          */
         /*
-         * La ventana del medio estaba VACÍA, y es lo único que hay que ver en
-         * una cinta: los dos carretes con distinta cantidad enrollada y la cinta
-         * tensa entre ellos. Ahora el izquierdo va lleno y el derecho casi
-         * gastado, que es lo que cuenta que ESTUVO SONANDO.
+         * LA CINTA SE VE PASAR, que es lo único que hay que mirar por la ventana
+         * de un casete. Antes era un `====` entre dos carretes —un cable, no una
+         * cinta—; ahora es una banda ancha de `::::` cruzando por delante.
          *
-         * Y lleva su etiqueta con el lado escrito, como se escribían.
+         * Y LOS CARRETES TIENEN DISTINTA DENSIDAD: el izquierdo lleno de `:::`,
+         * el derecho con los puntos separados. Eso es lo que cuenta que ESTUVO
+         * SONANDO — dos carretes iguales serían una cinta sin usar.
+         *
+         * Con dos renglones de etiqueta y aire arriba y abajo: quedaba
+         * demasiado achatada para lo ancha que es.
          */
         art: [
-            '  +==================================+  ',
-            '  |  LADO A  ......................  |  ',
-            '  +==================================+  ',
-            '  |    .------.        .------.      |  ',
-            '  |   ( :::::: )      (  ....  )     |  ',
-            '  |   ( ::oo:: )======(  .oo.  )     |  ',
-            '  |   ( :::::: )      (  ....  )     |  ',
-            '  |    "------"        "------"      |  ',
-            '  |                                  |  ',
-            '  |   .--.  .--.  .--.  .--.  .--.   |  ',
-            '  +==================================+  ',
+            '+======================================+',
+            '|  LADO A                              |',
+            '|  .................................   |',
+            '+======================================+',
+            '|                                      |',
+            '|   .-------.  ::::::::   .-------.    |',
+            '|  ( ::::::: ):::::::::: ( . . . . )   |',
+            '|  ( ::(o):: ):::::::::: ( .:(o):. )   |',
+            '|  ( ::::::: ):::::::::: ( . . . . )   |',
+            '|   "-------"  ::::::::   "-------"    |',
+            '|                                      |',
+            '|   .--.   .--.   .--.   .--.   .--.   |',
+            '+======================================+',
         ].join('\n'),
     },
     {
