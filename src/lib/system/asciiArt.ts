@@ -83,7 +83,15 @@ export type ArtSource =
      * es — y por eso es la única que puede encontrar alguien que nunca haya
      * tecleado un comando.
      */
-    | 'written';
+    | 'written'
+    /**
+     * HABER SACADO EL MORSE DEL RELOJ.
+     *
+     * No descifrarlo: sólo verlo. Es el momento exacto en que la app deja de
+     * parecer una libreta — hay una señal, no se entiende, y está ahí a la vista.
+     * Por eso la pieza es una antena: recibir algo que todavía no sabés leer.
+     */
+    | 'morse';
 
 export interface ArtPiece {
     id: string;
@@ -160,7 +168,7 @@ export const ART: readonly ArtPiece[] = [
     },
     {
         id: 'crt',
-        source: 'command',
+        source: 'pong-degraded',
         caption: {
             es: 'TERMINAL · SIN SEÑAL DESDE ENTONCES',
             en: 'TERMINAL · NO SIGNAL SINCE',
@@ -189,7 +197,7 @@ export const ART: readonly ArtPiece[] = [
     },
     {
         id: 'cassette',
-        source: 'word',
+        source: 'command',
         caption: { es: 'CINTA · LADO A', en: 'TAPE · SIDE A' },
         /*
          * Estaba APLASTADA: seis filas para algo que necesita diez para tener
@@ -252,11 +260,11 @@ export const ART: readonly ArtPiece[] = [
         ].join('\n'),
     },
     {
-        id: 'dish',
-        source: 'pong-degraded',
+        id: 'quill',
+        source: 'word',
         caption: {
-            es: 'ANTENA · NADIE DEL OTRO LADO',
-            en: 'DISH · NOBODY ON THE OTHER SIDE',
+            es: 'PLUMA · Y EL TINTERO QUE LA ESPERA',
+            en: 'QUILL · AND THE INKWELL THAT WAITS',
         },
         /*
          * SE GANA EN EL TABLERO DEGRADADO, que es el difícil. Es la antena que
@@ -323,11 +331,11 @@ export const ART: readonly ArtPiece[] = [
         ].join('\n'),
     },
     {
-        id: 'flower',
+        id: 'shrub',
         source: 'written',
         caption: {
-            es: 'FLOR · CRECIÓ MIENTRAS USTED ESCRIBÍA',
-            en: 'FLOWER · IT GREW WHILE YOU WROTE',
+            es: 'ARBUSTO · CRECIÓ MIENTRAS USTED ESCRIBÍA',
+            en: 'SHRUB · IT GREW WHILE YOU WROTE',
         },
         /*
          * LA ÚNICA QUE NO SE GANA HURGANDO.
@@ -398,6 +406,55 @@ export const ART: readonly ArtPiece[] = [
             ' |||                |                |||',
             ' ||/===============\\|/===============\\||',
             "  `-  ------------  ^  ^ -----------  -'",
+        ].join('\n'),
+    },
+    {
+        id: 'dish',
+        source: 'morse',
+        caption: {
+            es: 'ANTENA · ALGO LLEGA, NO SE ENTIENDE',
+            en: 'DISH · SOMETHING ARRIVES, UNREADABLE',
+        },
+        /*
+         * SE GANA VIENDO EL MORSE, no descifrándolo. Ése es el momento en que la
+         * app deja de parecer una libreta: hay una señal, no se entiende, y está
+         * a la vista.
+         *
+         * Por eso el plato está RECIBIENDO y no emitiendo — las ondas entran
+         * hacia él, no salen — y lo que baja por el cable son puntos y rayas. La
+         * pieza no dice «hay una antena»: dice «acaba de llegar algo».
+         */
+        /*
+         * ⚠ TERCER INTENTO, y los dos anteriores fallaron por lo mismo: NO SE
+         * LEÍA COMO ANTENA.
+         *
+         * El primero eran ondas flotando sobre un óvalo — parecía un óvalo con
+         * rayas. El segundo la puso de perfil, abierta en diagonal, y salió una
+         * pluma con su tintero (tan buena que se quedó, pero de otra cosa).
+         *
+         * Un plato se reconoce DE FRENTE: un disco con su borde, el plato hondo
+         * dentro, el foco en el centro y el BRAZO saliendo hacia el que mira con
+         * la bocina en la punta. Ese brazo es lo que lo distingue de un círculo
+         * cualquiera — sin él, cualquier plato es una rueda.
+         *
+         * Y el mástil con su base lo apoya en el suelo. Las ondas entran desde
+         * arriba: recibe, no emite, que es lo que dice su pie.
+         */
+        art: [
+            '                          ) ) )         ',
+            '        .-"""""-.                       ',
+            '      .:         :.                     ',
+            '     /   .-----.   \\                    ',
+            '    |   /       \\   |                   ',
+            '    |  |    +    |  |==o                ',
+            '    |   \\       /   |                   ',
+            '     \\   "-----"   /                    ',
+            '      ":.       .:"                     ',
+            '        "-.....-"                       ',
+            '             |                          ',
+            '             |                          ',
+            '       .-----+-----.                    ',
+            '       "-----------"                    ',
         ].join('\n'),
     },
     {
