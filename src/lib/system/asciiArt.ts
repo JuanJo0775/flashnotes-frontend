@@ -310,8 +310,21 @@ export const ART: readonly ArtPiece[] = [
          * su brazo y su bocina — y las ondas salen justo de ahí, abriéndose. Es
          * lo que hace que se vea escuchando hacia algún lado en vez de posando.
          */
+        /*
+         * NACIÓ DE UN ACCIDENTE. Era un intento de antena de perfil y salió una
+         * pluma con su tintero — mejor que lo que se buscaba, así que se quedó
+         * como pluma y la antena se rehízo aparte.
+         *
+         * ⚠ SE DEJA COMO ESTÁ. Lo único que se le tocó fue CERRARLA ARRIBA: el
+         * cálamo subía y se cortaba contra el borde, y una línea que se corta en
+         * el filo se lee como un dibujo mal recortado, no como una punta.
+         *
+         * Hubo un intento de «arreglarla» cambiándole las barbas y quitándole
+         * las marcas de la derecha. Estaba aprobada: rehacer lo aprobado no es
+         * mejorar, es deshacer.
+         */
         art: [
-            '                             ) ) )      ',
+            '           "-.               ) ) )      ',
             '        .-"                ) ) )        ',
             '      .:                 ) ) )          ',
             '     /                 ) ) )            ',
