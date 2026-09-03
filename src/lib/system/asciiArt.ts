@@ -383,14 +383,16 @@ export const ART: readonly ArtPiece[] = [
          *
          * ⚠ SE DEJA COMO ESTÁ. Lo único que se le tocó fue CERRARLA ARRIBA: el
          * cálamo subía y se cortaba contra el borde, y una línea que se corta en
-         * el filo se lee como un dibujo mal recortado, no como una punta.
+         * el filo se lee como un dibujo mal recortado, no como una punta. Ahora
+         * la curva da la vuelta y termina en punta, que es lo que hace una pluma.
          *
          * Hubo un intento de «arreglarla» cambiándole las barbas y quitándole
          * las marcas de la derecha. Estaba aprobada: rehacer lo aprobado no es
          * mejorar, es deshacer.
          */
         art: [
-            '           "-.               ) ) )      ',
+            '              .-"-.                     ',
+            '           .-"     "             ) ) )  ',
             '        .-"                ) ) )        ',
             '      .:                 ) ) )          ',
             '     /                 ) ) )            ',
