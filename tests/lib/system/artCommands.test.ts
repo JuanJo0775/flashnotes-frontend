@@ -60,12 +60,22 @@ describe('//art · el catálogo, que no da nada', () => {
         expect(piezas).toHaveLength(ART_TOTAL);
     });
 
-    test('la que tenés se lee; las demás se revuelven', () => {
+    test('la que tenés sale SIN ABRIR; las demás se revuelven', () => {
+        // Su nombre no aparece hasta abrirla con `//art_<n>`. En el catálogo se
+        // ve que la tenés y no qué es.
         awardPiece(ART[0].id);
 
         const filas = corre('//art').rows ?? [];
 
         expect(filas.filter((f) => 'scramble' in f)).toHaveLength(ART_TOTAL - 1);
+        expect(corre('//art').output).toContain('SIN ABRIR');
+        expect(corre('//art').output).not.toContain(ART[0].caption.es);
+    });
+
+    test('y una vez abierta, ya lleva su pie', () => {
+        awardPiece(ART[0].id);
+        corre('//art_1');
+
         expect(corre('//art').output).toContain(ART[0].caption.es);
     });
 

@@ -4,7 +4,7 @@ import { LIMITS } from '@/config/limits';
 import { formatDuration } from '@/lib/utils/formatters';
 import { getLang, fill, pickPlural } from '@/i18n';
 import { greetingFor, chatReplyFor, KILL_AFTER_KICKS } from '@/lib/system/greeting';
-import { awardFrom, revealArt, catalogRows, pieceByNumber, rememberDrawn, canKeep, lastDrawn, asNote, noteTitle } from '@/lib/system/asciiArt';
+import { awardFrom, revealArt, markOpened, catalogRows, pieceByNumber, rememberDrawn, canKeep, lastDrawn, asNote, noteTitle } from '@/lib/system/asciiArt';
 import { isUnlocked, markUsed } from '@/lib/system/commandUnlock';
 import { isPrank } from '@/lib/system/wipe';
 import {
@@ -353,6 +353,10 @@ const T = {
         es: '[+] PIEZA RECUPERADA: {name}',
         en: '[+] PIECE RECOVERED: {name}',
     },
+    artUnopened: {
+        es: '[ SIN ABRIR ]',
+        en: '[ UNOPENED ]',
+    },
     artCatalog: {
         es: 'PIEZAS RECUPERADAS: {n} DE {total}',
         en: 'PIECES RECOVERED: {n} OF {total}',
@@ -678,12 +682,19 @@ const COMMANDS: readonly Command[] = [
             en: 'the saved versions of this note',
         },
         secretId: 'history',
+        // Y da su pieza: una cinta perforada. Es lo que ES un historial — el
+        // registro completo de lo que pasó, en una forma que el ojo no lee de un
+        // vistazo.
         // "ACTAS" es deliberado: no dice "versiones" ni "historial", dice el
         // registro oficial de algo que pasó. "THE RECORDS" hace lo mismo.
-        resolve: (_ctx, _args, lang) => ({
-            output: T.fetchingHistory[lang],
-            effect: { kind: 'fetch-history' },
-        }),
+        resolve: (_ctx, _args, lang) => {
+            awardFrom('history');
+
+            return {
+                output: T.fetchingHistory[lang],
+                effect: { kind: 'fetch-history' },
+            };
+        },
     },
     {
         name: '//diag',
@@ -850,13 +861,25 @@ const COMMANDS: readonly Command[] = [
                     }),
                 },
                 { text: '' },
-                ...filas.map((f): ReplyRow =>
-                    f.found
-                        ? { text: `  ${f.number}/${filas.length}  ${f.label}` }
-                        : // De las que faltan viaja el LARGO y no el nombre: lo
-                          // que no está no se puede leer en el inspector.
-                          { scramble: f.length }
-                ),
+                /*
+                 * TRES ESTADOS, TRES FORMAS DE PINTARSE.
+                 *
+                 *  · La que no tenés: letras revueltas. De ella viaja el LARGO y
+                 *    no el nombre — lo que no está no se puede leer en el
+                 *    inspector, y el largo ya es una pista.
+                 *  · La que tenés sin abrir: su número y el hueco. Sabés que la
+                 *    tenés y no sabés qué es.
+                 *  · La abierta: su pie.
+                 */
+                ...filas.map((f): ReplyRow => {
+                    if (!f.found) return { scramble: f.length };
+
+                    const marca = `  ${f.number}/${filas.length}  `;
+
+                    return {
+                        text: f.opened ? marca + f.label : marca + T.artUnopened[lang],
+                    };
+                }),
                 { text: '' },
                 {
                     text:
@@ -904,6 +927,12 @@ const COMMANDS: readonly Command[] = [
 
             // Se recuerda cuál fue, para que `//keep` pueda encadenarse.
             rememberDrawn(piece);
+
+            // ABRIRLA es lo que revela su pie. Tenerla no es saber qué es: en el
+            // catálogo se ve que tenés la seis, y qué es la seis sólo se sabe
+            // acá. Sin esto, este comando sería una forma de volver a ver algo
+            // que el catálogo ya te había contado.
+            markOpened(piece.id);
 
             return texto(
                 [

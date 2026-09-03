@@ -90,14 +90,17 @@ describe('el catálogo', () => {
         expect(catalogRows()).toHaveLength(ART_TOTAL);
     });
 
-    it('la que tenés sale con su nombre; las demás, tapadas', () => {
+    it('la que tenés sale marcada; las demás, tapadas', () => {
+        // El NOMBRE no sale hasta abrirla con `//art_<n>`: tenerla no es saber
+        // qué es. De eso se ocupa `artOpened.test.ts`.
         awardPiece('crt');
 
         const filas = catalogRows();
         const crt = filas[ART.findIndex((p) => p.id === 'crt')];
 
         expect(crt.found).toBe(true);
-        expect(crt.label).toMatch(/TERMINAL/i);
+        expect(crt.opened).toBe(false);
+        expect(crt.label).toBe('');
 
         expect(filas.filter((f) => !f.found)).toHaveLength(ART_TOTAL - 1);
     });

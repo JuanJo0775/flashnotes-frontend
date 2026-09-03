@@ -42,6 +42,18 @@ const STORAGE_KEY = 'flashnotes:art';
 const SEEN_KEY = 'flashnotes:artSeen';
 
 /**
+ * Las que además se han ABIERTO con `//art_<n>`.
+ *
+ * ⚠ TENERLA NO ES SABER QUÉ ES. Una pieza pasa por tres estados —ganada,
+ * revelada, abierta— y el PIE no llega hasta el tercero.
+ *
+ * En el catálogo ves que tenés la seis y no sabés qué es la seis hasta abrirla.
+ * Sin esto, `//art_<n>` sería sólo una forma de volver a ver algo que el
+ * catálogo ya te había contado.
+ */
+const OPEN_KEY = 'flashnotes:artOpen';
+
+/**
  * De dónde sale cada pieza.
  *
  * OCHO PIEZAS, OCHO CAMINOS, y ninguno da más de una. Si un canal diera piezas
@@ -91,7 +103,23 @@ export type ArtSource =
      * parecer una libreta — hay una señal, no se entiende, y está ahí a la vista.
      * Por eso la pieza es una antena: recibir algo que todavía no sabés leer.
      */
-    | 'morse';
+    | 'morse'
+    /**
+     * HABER MIRADO EL HISTORIAL de una nota con `//history`.
+     *
+     * Su pieza es una cinta perforada: un registro completo de lo que pasó,
+     * guardado en una forma que el ojo no lee de un vistazo. Es lo que ES un
+     * historial.
+     */
+    | 'history'
+    /**
+     * HABER PASADO POR EL BLOQUEO Y SALIR.
+     *
+     * El momento más oscuro de la app. Su pieza es un faro: sigue mandando su
+     * señal aunque no haya nadie mirando, que es lo que la máquina lleva
+     * haciendo desde antes de que llegaras.
+     */
+    | 'lockout';
 
 export interface ArtPiece {
     id: string;
@@ -409,11 +437,11 @@ export const ART: readonly ArtPiece[] = [
         ].join('\n'),
     },
     {
-        id: 'dish',
+        id: 'telegraph',
         source: 'morse',
         caption: {
-            es: 'ANTENA · ALGO LLEGA, NO SE ENTIENDE',
-            en: 'DISH · SOMETHING ARRIVES, UNREADABLE',
+            es: 'MANIPULADOR · LO QUE HIZO ESAS RAYAS',
+            en: 'TELEGRAPH KEY · WHAT MADE THOSE MARKS',
         },
         /*
          * SE GANA VIENDO EL MORSE, no descifrándolo. Ése es el momento en que la
@@ -425,36 +453,95 @@ export const ART: readonly ArtPiece[] = [
          * pieza no dice «hay una antena»: dice «acaba de llegar algo».
          */
         /*
-         * ⚠ TERCER INTENTO, y los dos anteriores fallaron por lo mismo: NO SE
-         * LEÍA COMO ANTENA.
+         * ⚠ ACÁ HUBO UNA ANTENA Y NO ERA LO CORRECTO.
          *
-         * El primero eran ondas flotando sobre un óvalo — parecía un óvalo con
-         * rayas. El segundo la puso de perfil, abierta en diagonal, y salió una
-         * pluma con su tintero (tan buena que se quedó, pero de otra cosa).
+         * Una antena RECIBE. Pero encontrar el morse del reloj no es que llegue
+         * algo: es que hay un MENSAJE QUE NO SABÉS LEER. Son dos cosas distintas,
+         * y la antena contaba la que no era.
          *
-         * Un plato se reconoce DE FRENTE: un disco con su borde, el plato hondo
-         * dentro, el foco en el centro y el BRAZO saliendo hacia el que mira con
-         * la bocina en la punta. Ese brazo es lo que lo distingue de un círculo
-         * cualquiera — sin él, cualquier plato es una rueda.
+         * Un manipulador de telégrafo es el aparato que HACE las rayas. Lo que se
+         * encontró en el reloj salió de algo así — y verlo es entender de golpe
+         * qué clase de cosa estabas mirando.
          *
-         * Y el mástil con su base lo apoya en el suelo. Las ondas entran desde
-         * arriba: recibe, no emite, que es lo que dice su pie.
+         * Se reconoce por tres piezas: la base pesada, el brazo con su pivote, y
+         * la perilla arriba. Sin la perilla es un pisapapeles.
          */
         art: [
-            '                          ) ) )         ',
-            '        .-"""""-.                       ',
-            '      .:         :.                     ',
-            '     /   .-----.   \\                    ',
-            '    |   /       \\   |                   ',
-            '    |  |    +    |  |==o                ',
-            '    |   \\       /   |                   ',
-            '     \\   "-----"   /                    ',
-            '      ":.       .:"                     ',
-            '        "-.....-"                       ',
-            '             |                          ',
-            '             |                          ',
-            '       .-----+-----.                    ',
-            '       "-----------"                    ',
+            '                 .---.                  ',
+            '                (     )                 ',
+            '                 "-+-"                  ',
+            '                   |                    ',
+            '       .-----------+-----------.        ',
+            '      |                         |       ',
+            '   ===+=========================+===    ',
+            '      |            |||          |       ',
+            '      "------------+++----------"       ',
+            '          .-----------------.           ',
+            '         |                   |          ',
+            '         "-------------------"          ',
+            '                                        ',
+            '        - . -   . - .   - - .           ',
+        ].join('\n'),
+    },
+    {
+        id: 'tape',
+        source: 'history',
+        caption: {
+            es: 'CINTA PERFORADA · TODO ESTÁ AHÍ, ILEGIBLE',
+            en: 'PUNCHED TAPE · IT IS ALL THERE, UNREADABLE',
+        },
+        /*
+         * SE GANA MIRANDO EL HISTORIAL, y es lo que ES un historial: el registro
+         * completo de lo que pasó, guardado en una forma que el ojo no lee de un
+         * vistazo.
+         *
+         * Se reconoce por la fila de agujeros CHICOS en medio —los del
+         * arrastre— frente a los grandes de los datos. Sin esa fila es una hoja
+         * con puntos; con ella, es cinta.
+         */
+        art: [
+            ' +====================================+ ',
+            ' | O   O O   O    O  O O   O   O O  O | ',
+            ' |  O O   O    O O   O    O O   O   O | ',
+            ' | O   O    O O   O   O O    O   O O  | ',
+            ' | .................................. | ',
+            ' | O O   O   O    O O   O    O   O  O | ',
+            ' |   O    O O   O    O   O O   O O  O | ',
+            ' | O  O O   O    O  O   O  O   O   O  | ',
+            ' |  O   O    O O   O  O O    O O   O  | ',
+            ' +====================================+ ',
+        ].join('\n'),
+    },
+    {
+        id: 'lighthouse',
+        source: 'lockout',
+        caption: {
+            es: 'FARO · SIGUE AVISANDO A NADIE',
+            en: 'LIGHTHOUSE · STILL WARNING NOBODY',
+        },
+        /*
+         * SE GANA SALIENDO DEL BLOQUEO, el momento más oscuro de la app.
+         *
+         * Un faro sigue mandando su señal aunque no haya nadie mirando — que es
+         * lo que esta máquina lleva haciendo desde antes de que llegaras. De
+         * todas las piezas, la que mejor dice qué es este sitio cuando no estás.
+         *
+         * Los rayos salen de la LINTERNA y no de la punta del tejado: es de donde
+         * sale la luz de verdad, y ponerlos arriba lo convertía en una antena.
+         */
+        art: [
+            '                 .-.                    ',
+            '                /   \\                   ',
+            '     \\         |     |         /        ',
+            '       \\      .+-----+.      /          ',
+            '   - -   \\    |  ( )  |    /   - -      ',
+            '           - -+-------+- -              ',
+            '              |       |                 ',
+            '              | :::::: |                ',
+            '             .+-------+.                ',
+            '            /           \\               ',
+            '           "-------------"              ',
+            '      ~~~~~~~~~~~~~~~~~~~~~~~~          ',
         ].join('\n'),
     },
     {
@@ -532,6 +619,7 @@ export function clearFound() {
     try {
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(SEEN_KEY);
+        localStorage.removeItem(OPEN_KEY);
     } catch {
         // Nada que hacer.
     }
@@ -554,6 +642,47 @@ export function readRevealed(): Set<string> {
         );
     } catch {
         return new Set();
+    }
+}
+
+/** Las que se han abierto, y de las que por tanto se conoce el pie. */
+export function readOpened(): Set<string> {
+    try {
+        const raw = localStorage.getItem(OPEN_KEY);
+        if (!raw) return new Set();
+
+        const parsed: unknown = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return new Set();
+
+        const validos = new Set(ART.map((a) => a.id));
+        return new Set(
+            parsed.filter(
+                (id): id is string => typeof id === 'string' && validos.has(id)
+            )
+        );
+    } catch {
+        return new Set();
+    }
+}
+
+/**
+ * Marca una pieza como abierta. Lo llama `//art_<n>`.
+ *
+ * Sólo si la tenés: abrir lo que no se ganó no significaría nada, y dejaría el
+ * catálogo diciendo el nombre de algo que no está.
+ */
+export function markOpened(id: string) {
+    if (!readFound().has(id)) return;
+
+    const abiertas = readOpened();
+    if (abiertas.has(id)) return;
+
+    abiertas.add(id);
+
+    try {
+        localStorage.setItem(OPEN_KEY, JSON.stringify([...abiertas]));
+    } catch {
+        // Sin sitio, el pie se vuelve a esconder al recargar. Molesto, no grave.
     }
 }
 
@@ -638,7 +767,9 @@ export interface CatalogRow {
     /** Su sitio fijo, del 1 al total. La 6 es la 6 la tengas o no. */
     number: number;
     found: boolean;
-    /** El nombre, si la tenés. Vacío si no. */
+    /** Si además se abrió con `//art_<n>`, que es cuando se conoce el pie. */
+    opened: boolean;
+    /** El nombre, sólo si la abriste. Vacío si no. */
     label: string;
     /**
      * Cuánto mide el nombre tapado.
@@ -661,14 +792,19 @@ export function catalogRows(lang: Lang = 'es'): CatalogRow[] {
     const found = readFound();
     if (found.size === 0) return [];
 
+    const abiertas = readOpened();
+
     return ART.map((piece, i) => {
         const tengo = found.has(piece.id);
+        const abierta = tengo && abiertas.has(piece.id);
         const nombre = piece.caption[lang];
 
         return {
             number: i + 1,
             found: tengo,
-            label: tengo ? nombre : '',
+            opened: abierta,
+            // El pie sólo llega al abrirla: tenerla no es saber qué es.
+            label: abierta ? nombre : '',
             length: nombre.length,
         };
     });

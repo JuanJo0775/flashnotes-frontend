@@ -778,6 +778,19 @@ export function clearLockout() {
     lockoutTimer = null;
 
     if (lockoutUntil === null) return;
+
+    /*
+     * SALIR DEL BLOQUEO DA SU PIEZA: un faro.
+     *
+     * Es el momento más oscuro de la app, y la pieza dice lo que la máquina
+     * lleva haciendo desde antes de que llegaras — seguir avisando aunque no
+     * haya nadie mirando.
+     *
+     * Va acá y no en la pantalla del bloqueo porque el bloqueo se levanta de dos
+     * maneras —resolviendo el puzzle o esperando a que venza— y las dos cuentan
+     * igual: haber estado ahí dentro y haber salido.
+     */
+    awardFrom('lockout');
     lockoutUntil = null;
 
     try {
