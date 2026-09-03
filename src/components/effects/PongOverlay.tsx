@@ -19,6 +19,7 @@ import {
     type PongMode,
     type PongState,
 } from '@/lib/system/pong';
+import { awardFrom } from '@/lib/system/asciiArt';
 import { recordRally, SYSTEM_RECORD, type Board } from '@/lib/system/pongScores';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import LanguageToggle from '@/components/ui/LanguageToggle';
@@ -90,6 +91,12 @@ interface Props {
     glitchClassName?: string;
     glitchStyle?: React.CSSProperties;
 }
+
+/** Cuánto peloteo pide la pieza del tablero limpio. */
+const RALLY_LIMPIO = 25;
+
+/** Y la del degradado, que se juega con la señal rota y se ve peor. */
+const RALLY_DEGRADADO = 15;
 
 export default function PongOverlay({
     open,
@@ -240,6 +247,21 @@ export default function PongOverlay({
 
         anotadaRef.current = true;
         recordRally(board, game.rally);
+
+        /*
+         * EL PELOTEO DA SU PIEZA, y cada tablero la suya.
+         *
+         * Son dos juegos distintos: el degradado se juega con la señal rota, se
+         * ve peor y cuesta más, así que pide menos peloteo. Contarlos juntos
+         * habría hecho que el difícil no valiera nada.
+         *
+         * Los umbrales piden jugar de verdad sin ser una paliza: veinticinco
+         * devoluciones seguidas se consiguen concentrándose un rato, no de
+         * casualidad ni a la primera.
+         */
+        if (game.rally >= (board === 'clean' ? RALLY_LIMPIO : RALLY_DEGRADADO)) {
+            awardFrom(board === 'clean' ? 'pong' : 'pong-degraded');
+        }
     }, [open, game.over, game.mode, game.rally, board]);
 
     if (!open) return null;
