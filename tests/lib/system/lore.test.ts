@@ -69,16 +69,37 @@ describe('lore - qué fragmentos están disponibles', () => {
         expect(disponibles).toContain('[TURNO LARGO]');
     });
 
-    test('«seguís ahí» pide sesión larga y además silencio', () => {
-        const tecleando = availableFragments(
-            ctx({ sessionMs: 50 * MINUTO, idleMs: 0 })
-        );
-        const enSilencio = availableFragments(
-            ctx({ sessionMs: 50 * MINUTO, idleMs: 6 * MINUTO })
-        );
+    /*
+     * ⚠ ANTES PEDÍA ADEMÁS SESIÓN LARGA, y por eso este test pasaba mientras la
+     * frase no podía salir NUNCA en la app de verdad.
+     *
+     * Exigir tres cuartos de hora Y silencio Y que el sorteo la eligiera la
+     * volvía casi inalcanzable, y encima nadie medía el silencio: los dos sitios
+     * que arman el contexto pasaban `idleMs: 0` fijo. El test verde tapaba las
+     * dos cosas, porque le pasaba a mano el contexto que en producción no
+     * llegaba jamás.
+     *
+     * La pregunta es «¿seguís ahí?»: depende de que no toques nada, no de cuánto
+     * lleves. Alguien que abre la app y se va diez minutos la merece igual.
+     */
+    test('«seguís ahí» pide silencio, y sólo silencio', () => {
+        const tecleando = availableFragments(ctx({ idleMs: 0 }));
+        const casi = availableFragments(ctx({ idleMs: 9 * MINUTO }));
+        const enSilencio = availableFragments(ctx({ idleMs: 10 * MINUTO }));
 
         expect(tecleando).not.toContain('[SEGUÍS AHÍ]');
+        expect(casi).not.toContain('[SEGUÍS AHÍ]');
         expect(enSilencio).toContain('[SEGUÍS AHÍ]');
+    });
+
+    test('y no le hace falta llevar horas abierta', () => {
+        // Sesión recién empezada, pero diez minutos sin tocar nada.
+        const disponibles = availableFragments(
+            ctx({ sessionMs: MINUTO, idleMs: 10 * MINUTO })
+        );
+
+        expect(disponibles).toContain('[SEGUÍS AHÍ]');
+        expect(disponibles).not.toContain('[TURNO LARGO]');
     });
 
     test('siempre queda algo que decir, incluso en el contexto más pobre', () => {

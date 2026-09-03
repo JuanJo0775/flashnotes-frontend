@@ -4,8 +4,10 @@ import { LIMITS } from '@/config/limits';
 import { formatDuration } from '@/lib/utils/formatters';
 import { getLang, fill, pickPlural } from '@/i18n';
 import { greetingFor, chatReplyFor, KILL_AFTER_KICKS } from '@/lib/system/greeting';
-import { awardFrom, revealArt, markOpened, catalogRows, pieceByNumber, rememberDrawn, canKeep, lastDrawn, asNote, noteTitle } from '@/lib/system/asciiArt';
+import { awardFrom, revealArt, markOpened, catalogRows, pieceByNumber, rememberDrawn, canKeep, lastDrawn, asNote, noteTitle, captionKnown } from '@/lib/system/asciiArt';
 import { isUnlocked, markUsed } from '@/lib/system/commandUnlock';
+import { markV02RoundTrip } from '@/lib/system/v02';
+import { rememberHint, sawHint } from '@/lib/system/helpHint';
 import { isPrank } from '@/lib/system/wipe';
 import {
     askConfirm,
@@ -93,7 +95,16 @@ export type CommandEffect =
     | { kind: 'set-effects'; enabled: boolean };
 
 /** Una fila de la respuesta: texto, o un nombre que no se deja leer. */
-export type ReplyRow = { text: string } | { scramble: number };
+export type ReplyRow =
+    | { text: string }
+    /**
+     * `prefix` es lo que SÍ se lee delante del revuelto.
+     *
+     * En el catálogo de piezas hace falta: el número es tuyo aunque el nombre
+     * no lo sea, y perderlo dejaría una lista de renglones anónimos donde no
+     * se puede señalar cuál es cuál.
+     */
+    | { scramble: number; prefix?: string };
 
 export interface CommandResult {
     output: string;
@@ -349,9 +360,26 @@ const T = {
             'THE SECRETS, THE PIECES, THE SCORES.\n' +
             'NOT YOUR NOTES. THOSE ARE YOURS.',
     },
+    /*
+     * ⚠ SIN NOMBRE, A PROPÓSITO.
+     *
+     * Decía `PIEZA RECUPERADA: {name}` y ahí se caía todo el sistema de tres
+     * estados: ganada → revelada con `//art` → abierta con `//art_<n>`. El
+     * nombre es el premio del TERCERO. Soltarlo en el primero deja `//art_<n>`
+     * sin nada que dar, porque volver a ver algo que ya te contaron no es
+     * abrirlo.
+     *
+     * Callar del todo tampoco vale: nadie teclea `//art` por corazonada. Dice
+     * QUE hay una, y dónde mirar.
+     */
     artEarned: {
-        es: '[+] PIEZA RECUPERADA: {name}',
-        en: '[+] PIECE RECOVERED: {name}',
+        es: '[+] PIEZA RECUPERADA. NO SÉ CUÁL.',
+        en: '[+] PIECE RECOVERED. NOT SURE WHICH.',
+    },
+    /** Ocupa el sitio del pie mientras el pie no se ha ganado. */
+    artUnnamed: {
+        es: '[ SIN IDENTIFICAR ]',
+        en: '[ UNIDENTIFIED ]',
     },
     artUnopened: {
         es: '[ SIN ABRIR ]',
@@ -534,6 +562,33 @@ function leakOne(random: () => number): string {
     return ocultos[i].name;
 }
 
+/**
+ * ¿Se han encontrado ya TODOS los comandos que sólo existen en la v0.2?
+ *
+ * La lista se deriva de los propios comandos en vez de escribirla aparte: una
+ * lista a mano se queda vieja en cuanto alguien añade uno, y la que se queda
+ * vieja es siempre la que nadie mira.
+ */
+function v02Complete(): boolean {
+    if (!isV02()) return false;
+
+    const propios = COMMANDS.filter((c) => c.onlyV02);
+    return propios.length > 0 && propios.every((c) => isUnlocked(c.name));
+}
+
+/**
+ * ¿No queda NINGÚN comando escondido por descubrir?
+ *
+ * Cuenta los de las dos versiones —los de la v1.0 y los que sólo existen en la
+ * v0.2— porque el premio es la terminal: cuando ya no hay nada que descubrir,
+ * la máquina no tiene nada más que decirte. Dejar fuera los de la v0.2 haría
+ * que se pudiera completar sin haber cruzado nunca esa puerta.
+ */
+function allCommandsFound(): boolean {
+    const escondidos = COMMANDS.filter((c) => c.hidden);
+    return escondidos.length > 0 && escondidos.every((c) => isUnlocked(c.name));
+}
+
 const COMMANDS: readonly Command[] = [
     {
         name: '//help',
@@ -545,6 +600,24 @@ const COMMANDS: readonly Command[] = [
             // cada seis veces no está para listas. Volver a pedirla funciona: es
             // un desplante, no una avería.
             if (random() < SNARK_ODDS) return texto(pickOne(HELP_SNARK, lang, random));
+
+            /*
+             * HACERLE CASO A LA PISTA DA EL FARO.
+             *
+             * Tecleaste algo que no existía, la máquina te señaló `//help`, y
+             * viniste. Eso es un faro: la luz llevaba encendida desde el
+             * principio y sólo hacía falta mirarla.
+             *
+             * ⚠ SÓLO SI LA PISTA LLEGÓ ANTES. Dar la pieza por teclear `//help`
+             * a secas la regalaría al primer minuto y a todo el mundo: es el
+             * comando más obvio de la app. Lo que se premia no es la lista, es
+             * haber estado perdido y haber seguido la señal.
+             *
+             * Y va DESPUÉS del desplante: una de cada seis veces `//help` no
+             * contesta, y cobrar el premio sin haber visto la lista sería
+             * premiar una puerta que no se abrió.
+             */
+            const faro = sawHint() ? awardFrom('guidance') : null;
 
             // Un comando escondido pasa a listarse cuando lo USÁS. Ver no es
             // descubrir: leer su nombre en una ventana de error no basta, hay
@@ -575,6 +648,8 @@ const COMMANDS: readonly Command[] = [
                     ? [{ text: '' }, { text: fill(T.leak[lang], { cmd: soltado }) }]
                     : []),
             ];
+
+            if (faro) filas.push({ text: '' }, { text: T.artEarned[lang] });
 
             return {
                 // El texto plano es lo que se teclea y lo que mide los tiempos;
@@ -872,13 +947,17 @@ const COMMANDS: readonly Command[] = [
                  *  · La abierta: su pie.
                  */
                 ...filas.map((f): ReplyRow => {
-                    if (!f.found) return { scramble: f.length };
-
                     const marca = `  ${f.number}/${filas.length}  `;
 
-                    return {
-                        text: f.opened ? marca + f.label : marca + T.artUnopened[lang],
-                    };
+                    if (!f.found) return { scramble: f.length, prefix: marca };
+                    if (!f.opened) return { text: marca + T.artUnopened[lang] };
+
+                    // ABIERTA Y AÚN SIN NOMBRE. Tenés el dibujo delante y el
+                    // pie sigue revuelto: es el manipulador antes de haber
+                    // usado el código para entrar y para salir.
+                    if (!f.named) return { scramble: f.length, prefix: marca };
+
+                    return { text: marca + f.label };
                 }),
                 { text: '' },
                 {
@@ -934,11 +1013,14 @@ const COMMANDS: readonly Command[] = [
             // que el catálogo ya te había contado.
             markOpened(piece.id);
 
+            // EL DIBUJO SÍ, EL PIE NO SIEMPRE. El manipulador se gana con ver
+            // el morse, y su dibujo es la PISTA de lo que todavía no sacaste:
+            // soltar acá el nombre sería dar la pista ya resuelta.
             return texto(
                 [
                     piece.art,
                     '',
-                    `-- ${piece.caption[lang]}`,
+                    `-- ${captionKnown(piece) ? piece.caption[lang] : T.artUnnamed[lang]}`,
                     '',
                     T.artKeepHint[lang],
                 ].join('\n')
@@ -1300,16 +1382,20 @@ export function run(
         : isSessionWord(corto) || corto.toUpperCase() === v02Word();
 
     if (abre) {
-        // ENTRAR EN LA v0.2 DA SU PIEZA, y sólo la primera vez. Es un disquete:
-        // el soporte donde esa versión guardaba sus cosas, y que nadie migró.
-        const ganada = entrando ? awardFrom('v02') : null;
+        /*
+         * SALIR CON EL CÓDIGO CIERRA EL VIAJE, y eso desbloquea el NOMBRE del
+         * manipulador — no una pieza nueva.
+         *
+         * Entrar se hace medio por accidente: se descifra el morse, se teclea
+         * la palabra y pasa algo. Salir con la MISMA palabra exige haber
+         * entendido que no era un comando más, sino una llave que gira en los
+         * dos sentidos. Ésa es la comprensión que se premia, y por eso el
+         * premio es entender qué era el aparato del dibujo.
+         */
+        if (!entrando) markV02RoundTrip();
 
         return {
-            output:
-                (entrando ? T.v02Enter[lang] : T.v02Leave[lang]) +
-                (ganada ? `
-
-${say(T.artEarned, lang, { name: ganada.caption[lang] })}` : ''),
+            output: entrando ? T.v02Enter[lang] : T.v02Leave[lang],
             // Descifrar el morse y CRUZAR la puerta son dos cosas distintas, y
             // la segunda merece contarse aparte: mucha gente va a leer el código
             // sin llegar a teclear la palabra.
@@ -1327,6 +1413,11 @@ ${say(T.artEarned, lang, { name: ganada.caption[lang] })}` : ''),
 
     if (!command) {
         const desconocido = say(T.unknownCommand, lang, { name: nombre.toUpperCase() });
+
+        // ACÁ ES DONDE SE ENCIENDE EL FARO. Tecleaste algo que no existe y la
+        // máquina, en vez de dejarte a oscuras, te señaló dónde mirar. Hacerle
+        // caso es lo que da la pieza — de eso se ocupa `//help`.
+        rememberHint();
 
         return { output: desconocido, effect: SIN_EFECTO };
     }
@@ -1356,7 +1447,31 @@ ${say(T.artEarned, lang, { name: ganada.caption[lang] })}` : ''),
      */
     if (command.hidden && !denied) markUsed(command.name);
 
-    return { output, effect, rows, secretId: secretId ?? command.secretId };
+    /*
+     * EL DISQUETE SE GANA VACIANDO LA v0.2, no entrando en ella.
+     *
+     * Entrar ya tiene premio: es la puerta, y el manipulador cuelga de ella.
+     * Dar además una pieza por cruzarla convertía el sitio en un pasillo — se
+     * entraba, se cobraba y se salía sin mirar nada. Ahora hay que encontrar
+     * los comandos que SÓLO existen ahí dentro, que son pocos y por eso es un
+     * remate y no una condena.
+     *
+     * Va acá, después de `markUsed`, porque es el único punto por el que pasan
+     * todos los comandos: dentro de cada uno se olvidaría en el siguiente que
+     * se añada.
+     */
+    const ganada =
+        (v02Complete() ? awardFrom('v02') : null) ??
+        (allCommandsFound() ? awardFrom('all-commands') : null);
+
+    return {
+        output: ganada ? `${output}
+
+${T.artEarned[lang]}` : output,
+        effect,
+        rows,
+        secretId: secretId ?? command.secretId,
+    };
 }
 
 // ------------------------------------------------------------------

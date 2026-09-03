@@ -1,6 +1,7 @@
 // src/hooks/useSystemFragment.ts
 'use client';
 
+import { idleMs } from '@/lib/system/idle';
 import { useSyncExternalStore } from 'react';
 import { pickFragment } from '@/lib/system/lore';
 import { getSystemState } from '@/hooks/useSystemState';
@@ -73,7 +74,7 @@ export function showFragment() {
         {
             hour: ahora.getHours(),
             sessionMs: Date.now() - system.sessionStart,
-            idleMs: 0,
+            idleMs: idleMs(),
         },
         previous
     );

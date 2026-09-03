@@ -23,10 +23,20 @@
 
 import type { Note } from '@/types/note.types';
 import type { Lang } from '@/config/lang';
+import { didV02RoundTrip } from '@/lib/system/v02';
 
 type Localized = Readonly<Record<Lang, string>>;
 
 const STORAGE_KEY = 'flashnotes:art';
+
+/**
+ * Lo que va en el sitio del pie mientras el pie no se ha ganado.
+ *
+ * Dejarlo VACÍO sería peor: parecería que a la pieza no le pusieron nombre.
+ * Así se ve que hay uno y que todavía no es tuyo, que es la diferencia entre
+ * un descuido y una puerta.
+ */
+const UNNAMED = '[ SIN IDENTIFICAR ]';
 
 /**
  * Las que además se han VISTO en el catálogo.
@@ -67,41 +77,107 @@ const OPEN_KEY = 'flashnotes:artOpen';
  * propia.
  */
 export type ArtSource =
-    /** Hablar con lo que hay detrás de `//hi`. */
+    /**
+     * HABLAR CON LO QUE HAY DETRÁS DE `//hi`.
+     *
+     * Su pieza es el OJO: lo que todo lo ve. Es lo único de la app que sabe
+     * cuánto llevás acá, porque nunca se fue.
+     *
+     * ⚠ TODAVÍA SIN CABLEAR, a propósito: el ente no existe. Y mientras no
+     * exista, `everything` —el cuaderno— es inalcanzable, porque exige tenerlas
+     * todas. Es deuda conocida, no un olvido.
+     */
     | 'entity'
-    /** Entrar en la v0.2 por primera vez. */
+    /**
+     * VACIAR LA v0.2: entrar y encontrar los comandos que sólo existen ahí.
+     *
+     * ⚠ NO ES «ENTRAR». Cruzar la puerta ya tiene premio —de ella cuelga el
+     * manipulador— y dar además una pieza por cruzarla convertía el sitio en
+     * un pasillo: se entraba, se cobraba y se salía sin mirar nada.
+     * Son pocos comandos, así que es un remate y no una condena.
+     */
     | 'v02'
-    /** Un comando escondido, por asignar. */
-    | 'command'
-    /** Una palabra secreta, por asignar. */
-    | 'word'
+    /**
+     * HABER VISTO CAERSE EL SISTEMA.
+     *
+     * Su pieza es la POLILLA, y no hay ninguna que encaje mejor: la primera
+     * avería informática documentada fue un bicho dentro de un relé, en 1947,
+     * y de ahí viene la palabra «bug». Acabás de ver uno, y acá está.
+     *
+     * ⚠ SE DA AL ENTRAR, NO AL SALIR. Salir tiene su propio premio —la llave,
+     * para quien resuelve el puzzle— y son dos logros distintos: caer ahí
+     * dentro le pasa a cualquiera, salir por la puerta buena no.
+     */
+    | 'blackout'
+    /**
+     * HABER LLENADO UNA NOTA HASTA EL TOPE (`LIMITS.CONTENT_MAX`).
+     *
+     * Su pieza es la pluma con su tintero: escribir hasta que no cabe más. Es
+     * la hermana de la sesión larga — aquélla premia el rato, ésta el volumen
+     * de una sola sentada.
+     */
+    | 'full-note'
     /** Marcador del pong, tablero limpio. */
     | 'pong'
-    /** Marcador del pong, tablero degradado — que es más difícil. */
-    | 'pong-degraded'
-    /** Haber encontrado todos los comandos escondidos. */
-    | 'all-commands'
-    /** El secreto más difícil que quede, por asignar. */
-    | 'hardest'
     /**
-     * HABERLOS ENCONTRADO TODOS. La última, y la única que no se puede tener a
-     * medias: sale cuando el contador del panel llega a su propio total.
-     */
-    | 'all-secrets'
-    /**
-     * HABER ESCRITO DE VERDAD.
+     * HABER ROTO EL TEMA A FUERZA DE CLICS: el fallo cromático.
      *
-     * Todas las demás premian hurgar. Ésta premia haber USADO la app para lo que
-     * es — y por eso es la única que puede encontrar alguien que nunca haya
-     * tecleado un comando.
+     * Su pieza queda a medio camino entre encendida y apagada, como el tema
+     * cuando se parte. ⚠ ANTES ERA EL MARCADOR DEL PONG DEGRADADO, que se
+     * quedó sin pieza al mudarse la terminal: el juego cabe entero en una,
+     * y dos marcadores para el mismo juego eran una pieza contada dos veces.
      */
-    | 'written'
+    | 'theme-glitch'
+    /**
+     * HABER ENCONTRADO TODOS LOS COMANDOS ESCONDIDOS.
+     *
+     * Todos: los de la v1.0 y los que sólo existen en la v0.2. Su pieza es la
+     * TERMINAL, y no por adorno — cuando ya no queda ningún comando por
+     * descubrir, la máquina no tiene nada más que decirte. De ahí «sin señal
+     * desde entonces».
+     */
+    | 'all-commands'
+    /**
+     * RESOLVER EL PUZZLE DEL FALLO TOTAL.
+     *
+     * El bloqueo se levanta de dos maneras: resolviendo el puzzle o esperando
+     * a que venza. Sólo la primera cuenta — esperar no es resolver, y una
+     * llave que se gana esperando no abre nada.
+     *
+     * Su pieza es la LLAVE, y su pie ya lo decía antes de tener camino: «la
+     * cerradura ya no existe». Encontrás la salida de algo que, en cuanto
+     * sale, deja de estar.
+     */
+    | 'blackout-puzzle'
+    /**
+     * TODO: TODOS LOS SECRETOS Y TODAS LAS DEMÁS PIEZAS.
+     *
+     * La última de verdad, y la única que no se puede tener a medias. No basta
+     * el contador de secretos: hay que haber recuperado además las otras
+     * quince, así que es literalmente la pieza que cierra la caja.
+     *
+     * Por eso es el cuaderno firmado: el único sitio del proyecto donde aparece
+     * un nombre propio, y sólo lo ve quien llegó al final.
+     */
+    | 'everything'
+    /**
+     * HABER ESTADO MEDIA HORA SEGUIDA CON LA PESTAÑA ABIERTA.
+     *
+     * Todas las demás premian hurgar. Ésta premia haber USADO la app para lo
+     * que es — y por eso es la única que puede encontrar alguien que nunca haya
+     * tecleado un comando. Su pieza es un arbusto: creció mientras estabas.
+     */
+    | 'long-session'
     /**
      * HABER SACADO EL MORSE DEL RELOJ.
      *
      * No descifrarlo: sólo verlo. Es el momento exacto en que la app deja de
      * parecer una libreta — hay una señal, no se entiende, y está ahí a la vista.
-     * Por eso la pieza es una antena: recibir algo que todavía no sabés leer.
+     *
+     * ⚠ SU PIEZA LLEGA SIN NOMBRE, y es la única así. El dibujo —un
+     * manipulador de telégrafo— ES LA PISTA: verlo es entender de golpe qué
+     * clase de cosa parpadea en la hora. El nombre se gana aparte, usando el
+     * código para entrar en la v0.2 y para salir. Ver `NameGate`.
      */
     | 'morse'
     /**
@@ -113,13 +189,22 @@ export type ArtSource =
      */
     | 'history'
     /**
-     * HABER PASADO POR EL BLOQUEO Y SALIR.
+     * HABER SEGUIDO LA PISTA: teclear algo que no existe y hacerle caso a
+     * `//help`.
      *
-     * El momento más oscuro de la app. Su pieza es un faro: sigue mandando su
-     * señal aunque no haya nadie mirando, que es lo que la máquina lleva
-     * haciendo desde antes de que llegaras.
+     * Su pieza es el FARO, y es la única que premia haber estado PERDIDO. La
+     * máquina no te dejó a oscuras: te señaló dónde mirar, y viniste. La luz
+     * llevaba encendida desde el principio.
+     *
+     * ⚠ NO BASTA CON TECLEAR `//help`. Es el comando más obvio de la app: darla
+     * por eso sería regalarla en el primer minuto y a todo el mundo. Hace falta
+     * que la pista haya llegado ANTES.
+     *
+     * ⚠ ANTES ERA «pasar por el bloqueo y salir». El bloqueo se repartió en dos
+     * —entrar da la polilla, resolver el puzzle da la llave— y un tercer premio
+     * por el mismo sitio era el mismo logro cobrado tres veces.
      */
-    | 'lockout'
+    | 'guidance'
     /**
      * HABER DICHO QUE NO Y QUE TE GASTARAN LA BROMA.
      *
@@ -131,11 +216,14 @@ export type ArtSource =
     /**
      * HABER DEJADO LA PESTAÑA ABIERTA SIN ESCRIBIR.
      *
-     * Su pieza es un ojo. Todas las demás premian hacer algo; ésta premia NO
-     * hacer nada — y lo que cuenta es que la máquina siguió ahí mientras tanto,
-     * mirando.
+     * EN PAUSA · LA CINTA ESTÁ RESERVADA.
+     *
+     * ⚠ SIN CABLEAR A PROPÓSITO. Este hueco pasó por tres dueños —el ojo, la
+     * polilla, la cinta— y cada mudanza dejó un pie contando algo que ya no
+     * pasaba. Se queda quieta hasta que su camino esté decidido, que es más
+     * barato que volver a mudarla.
      */
-    | 'idle'
+    | 'reserved-tape'
     /**
      * HABER JUNTADO MUCHAS NOTAS.
      *
@@ -144,12 +232,35 @@ export type ArtSource =
      */
     | 'many-notes';
 
+/**
+ * Un CUARTO estado, y sólo para quien lo declare.
+ *
+ * Casi todas las piezas se ganan por hacer algo y su nombre llega al abrirlas.
+ * Pero hay una que se gana ANTES de entender lo que se encontró: el manipulador
+ * cae por VER el morse del reloj, no por descifrarlo. Ahí la pieza ya es tuya y
+ * el dibujo se puede sacar — y el dibujo ES LA PISTA: ves un aparato de
+ * telégrafo y entendés de golpe qué era eso que parpadea en la hora.
+ *
+ * Si el nombre viniera con la pieza, la pista llegaría ya resuelta. Así que el
+ * nombre se queda revuelto hasta que usás el código para las dos cosas.
+ *
+ * ⚠ NO ES UNA REGLA GENERAL. Ponerle esta puerta a las dieciséis convertiría la
+ * colección en dos colecciones —una de dibujos y otra de nombres— y obligaría a
+ * inventar un segundo logro para cada pieza, incluidas las que no esconden
+ * ningún acertijo. Es una excepción declarada, no un modo.
+ */
+export type NameGate =
+    /** Haber usado el código para ENTRAR en la v0.2 y para SALIR de ella. */
+    'v02-round-trip';
+
 export interface ArtPiece {
     id: string;
     /** El pie: qué es esto. */
     caption: Localized;
     /** Cómo se gana. Uno por pieza, y ninguno repetido. */
     source: ArtSource;
+    /** Qué hace falta ADEMÁS para leer el pie. Casi ninguna lo tiene. */
+    nameNeeds?: NameGate;
     art: string;
 }
 
@@ -163,96 +274,121 @@ export interface ArtPiece {
 export const ART: readonly ArtPiece[] = [
     {
         id: 'moth',
-        source: 'entity',
+        source: 'blackout',
         // La primera avería informática documentada fue una polilla dentro de un
         // relé, en 1947. De ahí viene «bug». Es la pieza que mejor explica por
         // qué esta app habla todo el rato de fallos.
         caption: {
-            es: 'POLILLA · HALLADA EN EL RELÉ 70, 1947',
-            en: 'MOTH · FOUND IN RELAY 70, 1947',
+            es: 'POLILLA · ASÍ EMPEZÓ LA PALABRA «BUG»',
+            en: 'MOTH · THIS IS WHERE THE WORD BUG BEGAN',
         },
         /*
-         * ⚠ ES SU PROPIO ESPEJO, CARÁCTER A CARÁCTER.
+         * ⚠ EL CUERPO ES UNA COLUMNA QUE ATRAVIESA EL DIBUJO ENTERO.
          *
-         * Dos intentos salieron torcidos por centrar cada fila «a ojo». El eje
-         * real de un marco de cuarenta columnas cae ENTRE la 19 y la 20, no en
-         * una columna: cualquier motivo de ancho impar puesto ahí queda medio
-         * carácter corrido, y medio carácter en trece filas es un bicho chueco.
+         * La versión anterior tenía un `||` de dos columnas entre las alas, y eso
+         * no es un cuerpo: es un palo entre dos manchas. Sin nada que las sostenga,
+         * las alas se leen como dos borrones simétricos y no como un bicho.
          *
-         * Ahora la mitad izquierda se dibuja y la derecha se genera invirtiéndola
-         * —cambiando `/` por `\` y `(` por `)`—, así que la simetría no depende de
-         * contar bien. Por eso el cuerpo y la cabeza son de ancho PAR.
+         * Acá el cuerpo va de la cabeza a la cola con textura propia, y las alas
+         * SE APOYAN en él. Ése es todo el arreglo; el resto viene detrás.
          *
-         * Las alas llevan relleno degradado —`:::` denso junto al cuerpo, `.` en
-         * el borde— y un ocelo en cada una, que es la mancha que tienen las
-         * polillas de verdad. Un contorno con un punto dentro no era un ala, era
-         * un globo.
+         * ⚠ CUATRO ALAS, NO DOS. Anteriores anchas arriba, posteriores más chicas
+         * abajo, cada par con su contorno cerrado y sus nervaduras. Es lo que da
+         * volumen sin dibujar una sombra, y lo que distingue una polilla de una
+         * mancha con simetría.
+         *
+         * ⚠ Y EL ABDOMEN SE ESTRECHA EN ESCALONES hasta la punta. Antes acababa en
+         * un `""` plano, que es donde se nota que el dibujo se quedó sin ideas.
+         *
+         * ⚠ SIN MARCO, a diferencia de casi todas las demás. El `+====+` con sus
+         * bandas se comía CUATRO de las catorce filas, y con eso la polilla no
+         * cabía: hay que elegir entre el marco y el bicho.
+         *
+         * ⚠ GENERADO POR ESPEJO. El eje de una fila de 40 cae ENTRE la 19 y la 20,
+         * así que todo motivo centrado tiene que ser de ancho PAR: el cuerpo mide
+         * 8 columnas y no 9, y la cola es `\\/` y no un carácter suelto. Un motivo
+         * impar en el eje queda medio carácter corrido, y medio carácter repetido
+         * en doce filas es un bicho chueco. Ya pasó dos veces.
+         *
+         * ⚠ Y LAS ANTENAS SE ABREN HACIA ARRIBA. La referencia las tenía
+         * cerrándose, y así no salen de la cabeza: caen sobre ella.
          */
         art: [
-            '+======================================+',
-            '|::|::|::|::|::|::|::|::|::|::|::|::|::|',
-            '|          \\                /          |',
-            '|            \\\\   .--.   //            |',
-            '|  .-------\\\\--   (oo)   --//-------.  |',
-            '|  /:::::.  \\\\    ".."    //  .:::::\\  |',
-            '| /:::::::::.\\\\    ||    //.:::::::::\\ |',
-            '||::::(o):::: \\    ||    / ::::(o)::::||',
-            '| \\:::::::::" .    ||    . ":::::::::/ |',
-            '|  \\:::::"      .-++++-.      ":::::/  |',
-            '| "--------.       ||       .--------" |',
-            '|                  ""                  |',
-            '|::|::|::|::|::|::|::|::|::|::|::|::|::|',
-            '+======================================+',
+            '             \\            /             ',
+            '                \\ (oo) /                ',
+            '                (%%%%%%)                ',
+            '  _____________(%%%%%%%%)_____________  ',
+            ' (    /   /    )%%%%%%%%(    \\   \\    ) ',
+            ' (___/___/___/            \\___\\___\\___) ',
+            '    (    /    /(%%%%%%%%)\\    \\    )    ',
+            '    (__/___/   (%%%%%%%%)   \\___\\__)    ',
+            '             /  (%%%%%%)  \\             ',
+            '           /     (%%%%)     \\           ',
+            '                 (%%%%)                 ',
+            '                   \\/                   ',
         ].join('\n'),
     },
     {
         id: 'floppy',
         source: 'v02',
-        caption: { es: 'DISQUETE · 1,44 MB', en: 'FLOPPY DISK · 1.44 MB' },
+        caption: { es: 'DISQUETE · 1,44 MB QUE NADIE MIGRÓ', en: 'FLOPPY DISK · 1.44 MB NOBODY EVER MIGRATED' },
         /*
          * SE GANA ENTRANDO EN LA v0.2, y por eso es un disquete: el soporte donde
          * esa versión guardaba lo suyo, y que nadie migró. La etiqueta lleva su
          * número de versión escrito a mano, como se escribían.
          */
         /*
-         * ⚠ EL OBTURADOR ES LO QUE LO HACE INCONFUNDIBLE.
+         * ⚠ EL DIBUJO NO SE CONTORNEA: SE TEXTURA.
          *
-         * La versión anterior era una caja con una etiqueta: podía ser cualquier
-         * cosa cuadrada. Un disquete se reconoce por la CHAPA METÁLICA de la
-         * derecha con su muelle — es la única pieza que tiene y que no tiene
-         * ninguna otra cosa.
+         * Las versiones anteriores lo trazaban a punta de `+` y `-`, como un
+         * plano. Pero un disquete no se reconoce por su CONTORNO —es un
+         * cuadrado— sino por su SUPERFICIE: la etiqueta de papel con
+         * renglones, la chapa, el canto biselado del plástico. Acá el volumen
+         * lo hacen el fondo de `;`, los renglones de puntos y la banda de `"`;
+         * las líneas casi no dibujan nada.
          *
-         * Y la etiqueta lleva renglones escritos, no una línea suelta: nadie
-         * etiquetaba un disquete con una palabra.
+         * ⚠ LA ETIQUETA VA ARRIBA Y OCUPA MÁS DE LA MITAD.
          *
-         * ⚠ COLOCADO POR COLUMNAS, no a ojo. La primera versión tenía la
-         * etiqueta, el obturador y la ventana cada uno empezando donde caía, y
-         * las piezas no alineaban entre sí: se veía desfasado sin que se supiera
-         * decir dónde. Acá cada elemento arranca en una columna FIJA y todo lo
-         * demás se mide desde ahí.
+         * Es la parte grande del objeto y la que uno mira. Una versión la puso
+         * chiquita abajo con el obturador mandando, y quedó una cajita
+         * cualquiera: podía ser una radio o una casetera.
+         *
+         * ⚠ LOS `[]` DE ARRIBA Y LOS BISELES `//||` DE ABAJO SON LA ESCALA.
+         *
+         * Los dos tornillos y las esquinas achaflanadas son lo que dice
+         * «carcasa de plástico de nueve centímetros». Sin ellos el mismo marco
+         * podría ser una ventana, un cuadro o una caja.
+         *
+         * ⚠ COLOCADO POR COLUMNAS, no a ojo. Una versión tenía la etiqueta, el
+         * obturador y la ventana cada uno empezando donde caía, y las piezas no
+         * alineaban entre sí: se veía desfasado sin que se supiera decir dónde.
+         *
+         * El `v 0 . 2` escrito sobre el segundo renglón es lo único que no sale
+         * del objeto: es lo que ata la pieza a la versión de la que se ganó.
          */
         art: [
-            ' +====================================+ ',
-            ' |                         .--------. | ',
-            ' |                         |::::::::| | ',
-            ' |  .-------------------.  |::::::::| | ',
-            ' |  | v 0 . 2           |  |::::::::| | ',
-            ' |  | ................. |  "--------" | ',
-            ' |  | ................. |             | ',
-            ' |  "-------------------"             | ',
-            ' |                                    | ',
-            ' |       .--------------------.       | ',
-            ' |       |::::::::::::::::::::|       | ',
-            ' |       "--------------------"       | ',
-            ' +====================================+ ',
+            ' ,\'\'",----------------------------,"\'\', ',
+            ' ; [] ; . . . . . . . . . . . .  ; [] ; ',
+            ' ;    ; . . . . . . . . . . . .  ;    ; ',
+            ' ;    ; v 0 . 2                  ;    ; ',
+            ' ;    ; . . . . . . . . . . . .  ;    ; ',
+            ' ;    \'.                        .\'    ; ',
+            ' ;     """"""""""""""""""""""""""     ; ',
+            ' ;                                    ; ',
+            ' ;     ,-----------------.------.     ; ',
+            ' ;     ;  ,""""""",      ;      ;     ; ',
+            ' ;     ;  ;       ;      ;      ;     ; ',
+            ' ; //||;  ;       ;      ;      ;||\\\\ ; ',
+            ' ; \\\\||;  \'_______\'      ;      ;||// ; ',
+            ' \'.__________________________________.\' ',
         ].join('\n'),
     },
     {
         id: 'crt',
-        source: 'pong-degraded',
+        source: 'all-commands',
         caption: {
-            es: 'TERMINAL · SIN SEÑAL DESDE ENTONCES',
-            en: 'TERMINAL · NO SIGNAL SINCE',
+            es: 'TERMINAL · YA NO LE QUEDA NADA QUE DECIR',
+            en: 'TERMINAL · NOTHING LEFT TO TELL YOU',
         },
         /*
          * EL BISEL ES LO QUE LO HACE UN APARATO.
@@ -285,46 +421,63 @@ export const ART: readonly ArtPiece[] = [
     },
     {
         id: 'cassette',
-        source: 'command',
-        caption: { es: 'CINTA · LADO A', en: 'TAPE · SIDE A' },
+        source: 'reserved-tape',
+        caption: { es: 'CINTA · SIGUIÓ GIRANDO SOLA', en: 'TAPE · IT KEPT ROLLING ON ITS OWN' },
         /*
-         * Estaba APLASTADA: seis filas para algo que necesita diez para tener
-         * carretes. Ahora los tiene, y se ve la cinta pasando de uno al otro.
-         */
-        /*
-         * LA CINTA SE VE PASAR, que es lo único que hay que mirar por la ventana
-         * de un casete. Antes era un `====` entre dos carretes —un cable, no una
-         * cinta—; ahora es una banda ancha de `::::` cruzando por delante.
+         * ⚠ LA ESCOTADURA DE ABAJO ES LA SILUETA.
          *
-         * Y LOS CARRETES TIENEN DISTINTA DENSIDAD: el izquierdo lleno de `:::`,
-         * el derecho con los puntos separados. Eso es lo que cuenta que ESTUVO
-         * SONANDO — dos carretes iguales serían una cinta sin usar.
+         * Ninguna otra cosa tiene esa muesca con los dos agujeros del
+         * cabrestante. Es lo primero que hay que acertar: la versión anterior
+         * acababa en una fila de `.--.` que no era nada, y sin la muesca un casete
+         * es una caja con dos discos.
          *
-         * Con dos renglones de etiqueta y aire arriba y abajo: quedaba
-         * demasiado achatada para lo ancha que es.
+         * ⚠ LOS CARRETES VAN PEGADOS A LA VENTANA, sin hueco: `\\|\\` a la
+         * izquierda y `|/` a la derecha. Con dos espacios de por medio dejan de ser
+         * un mecanismo y pasan a ser tres objetos sueltos dentro de una caja.
+         *
+         * ⚠ ONCE FILAS, Y LAS FILAS VACÍAS SON EL ENEMIGO.
+         *
+         * Costó cuatro intentos y el fallo nunca estuvo en el dibujo: estuvo en el
+         * AIRE. Con la caja a 40 columnas hay sitio para dejar huecos, y cada
+         * hueco vacío estira el casete sin añadirle nada — tres filas en blanco
+         * entre los carretes y la muesca lo convertían en una caja alta con un
+         * mecanismo pequeño flotando arriba.
+         *
+         * Ahora el `A` es la ÚNICA fila entre los pozos de los carretes y la
+         * muesca, y el casete vuelve a ser ancho y plano, que es lo que es.
+         *
+         * ⚠ LA MUESCA OCUPA EL 74 % del ancho interior y los agujeros del
+         * cabrestante caen al 24 % y al 76 %, medido contra la referencia. Estuvo
+         * al 58 % con los agujeros al 13 % y al 83 %, casi pegados a los bordes: el
+         * resto del casete creció a 40 columnas y la muesca se quedó donde estaba.
+         *
+         * Ésas son las dos cosas que se ven antes de poder explicarse, y por eso
+         * se miden contra la referencia y no a ojo.
+         *
+         * La cinta va PUNTEADA y en diagonal, no maciza: así se ve pasar de un
+         * carrete al otro. Y el rayado `\\\\///` del molde y el `3 min` son lo que
+         * hace que parezca fabricado y no dibujado.
          */
         art: [
-            '+======================================+',
-            '|  LADO A                              |',
-            '|  .................................   |',
-            '+======================================+',
-            '|                                      |',
-            '|   .-------.  ::::::::   .-------.    |',
-            '|  ( ::::::: ):::::::::: ( . . . . )   |',
-            '|  ( ::(o):: ):::::::::: ( .:(o):. )   |',
-            '|  ( ::::::: ):::::::::: ( . . . . )   |',
-            '|   "-------"  ::::::::   "-------"    |',
-            '|                                      |',
-            '|   .--.   .--.   .--.   .--.   .--.   |',
-            '+======================================+',
+            '.--------------------------------------.',
+            '|\\\\////////////                 3 min  |',
+            '| \\/                                   |',
+            '|      ______  __________  ______      |',
+            '|     /      \\|\\ ....... |/      \\     |',
+            '|     (      )| ........ |(      )     |',
+            '|     \\______/|/       . |\\______/     |',
+            '|      ______  __________  ______      |',
+            '| A                                    |',
+            '|     ____________________________     |',
+            '|____/_.____o______________o____._\\____|',
         ].join('\n'),
     },
     {
         id: 'cursor',
         source: 'pong',
         caption: {
-            es: 'CURSOR · ESPERANDO DESDE HACE RATO',
-            en: 'CURSOR · WAITING FOR A WHILE',
+            es: 'JUEGO · SE TE DA BIEN. ¿CUÁNTAS VECES LO INTENTASTE?',
+            en: 'GAME · YOU ARE GOOD. HOW MANY TRIES THOUGH?',
         },
         /*
          * SE GANA CON EL PONG, así que el dibujo es LA PISTA: las dos palas, la
@@ -344,7 +497,7 @@ export const ART: readonly ArtPiece[] = [
             '|                  :                   |',
             '|  ||              :              ||   |',
             '|  ||              :              ||   |',
-            '|  ||              :     . : o    ||   |',
+            '|  ||              :         o    ||   |',
             '|  ||              :              ||   |',
             '|  ||              :              ||   |',
             '|                  :                   |',
@@ -355,10 +508,10 @@ export const ART: readonly ArtPiece[] = [
     },
     {
         id: 'quill',
-        source: 'word',
+        source: 'full-note',
         caption: {
-            es: 'PLUMA · Y EL TINTERO QUE LA ESPERA',
-            en: 'QUILL · AND THE INKWELL THAT WAITS',
+            es: 'PLUMA · SE ACABÓ LA HOJA, NO LA TINTA',
+            en: 'QUILL · THE PAGE RAN OUT, THE INK DID NOT',
         },
         /*
          * SE GANA EN EL TABLERO DEGRADADO, que es el difícil. Es la antena que
@@ -396,7 +549,7 @@ export const ART: readonly ArtPiece[] = [
          * mejorar, es deshacer.
          */
         art: [
-            '           .-"-.-¨"--".                 ',
+            '                   .-"-.-¨"--".         ',
             '            .-"._.-"        ) ) )       ',
             '        .-"                ) ) )        ',
             '      .:      .-"        ) ) )          ',
@@ -414,42 +567,57 @@ export const ART: readonly ArtPiece[] = [
     },
     {
         id: 'bulb',
-        source: 'all-commands',
+        source: 'theme-glitch',
         caption: {
-            es: 'PILOTO · ENCENDIDO DESDE EL PRIMER ARRANQUE',
-            en: 'PILOT LAMP · ON SINCE FIRST BOOT',
+            es: 'BOMBILLA · NI ENCENDIDA NI APAGADA',
+            en: 'BULB · NEITHER ON NOR OFF',
         },
         /*
-         * SE GANA ENCONTRÁNDOLOS TODOS, así que es la lámpara que lleva
-         * encendida desde el primer arranque — la que estuvo ahí mientras
-         * buscabas.
+         * SE GANA ROMPIENDO EL TEMA a fuerza de clics: el fallo cromático.
          *
-         * La anterior parecía un bote: le faltaba la rosca. Ahora la tiene, y el
-         * halo de tildes arriba y abajo es lo que la enciende.
+         * ⚠ LA COSTURA ES EL DIBUJO.
+         *
+         * La misma bombilla, mitad sobre fondo claro y mitad sobre fondo oscuro,
+         * con el corte exacto en el eje. No es una bombilla con relleno raro: es
+         * la interfaz PILLADA A MEDIO CAMBIAR DE TEMA, que es literalmente cómo
+         * se gana la pieza. El pie lo remata — ni encendida ni apagada.
+         *
+         * El relleno arranca fila por fila justo donde acaba la silueta (`BORDE`),
+         * no en una columna fija: si fuera recto, la bombilla quedaría ENCIMA de
+         * una mancha en vez de partida por ella.
+         *
+         * ⚠ EL MARCO NO ES ADORNO. Sin él, el relleno oscuro se desangra hasta el
+         * borde de las cuarenta columnas y deja de leerse como el fondo de la
+         * pieza para leerse como una mancha en la pantalla.
+         *
+         * ⚠ Y EL FILAMENTO VA COSIDO AL CASQUILLO. Una versión lo dejaba en dos
+         * trazos sueltos flotando dentro del vidrio, y con eso el vidrio y el
+         * casquillo eran dos piezas apiladas. Los dos soportes que bajan hasta el
+         * cuello son lo que las convierte en un solo objeto.
          */
         art: [
-            '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
-            '                 .----.                 ',
-            '              .-:      :-.              ',
-            '             (            )             ',
-            '            (   ::::::::   )            ',
-            '            (   ::::::::   )            ',
-            '             (            )             ',
-            '              -:        :-              ',
-            '                |======|                ',
-            '                |------|                ',
-            '                |======|                ',
-            '                |------|                ',
-            '                 .----.                 ',
-            '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+            '   .--------------------------------.   ',
+            '   |            .-""""-.::::::::::::|   ',
+            '   |          .-"      "-.::::::::::|   ',
+            '   |         (            ):::::::::|   ',
+            '   |         (   \\/\\/\\/   ):::::::::|   ',
+            '   |         (    |  |    ):::::::::|   ',
+            '   |          "-. |  | .-"::::::::::|   ',
+            '   |            "-.  .-"::::::::::::|   ',
+            '   |            |::::::|::::::::::::|   ',
+            '   |            |======|::::::::::::|   ',
+            '   |            |------|::::::::::::|   ',
+            '   |            |======|::::::::::::|   ',
+            '   |             "----":::::::::::::|   ',
+            '   \'--------------------------------\'   ',
         ].join('\n'),
     },
     {
         id: 'shrub',
-        source: 'written',
+        source: 'long-session',
         caption: {
-            es: 'ARBUSTO · CRECIÓ MIENTRAS USTED ESCRIBÍA',
-            en: 'SHRUB · IT GREW WHILE YOU WROTE',
+            es: 'ARBUSTO · MIRE, CRECIÓ UN ARBUSTO',
+            en: 'SHRUB · LOOK, A SHRUB GREW HERE',
         },
         /*
          * LA ÚNICA QUE NO SE GANA HURGANDO.
@@ -463,36 +631,51 @@ export const ART: readonly ArtPiece[] = [
          * simplemente escribiendo. Y es la que mejor dice de qué va esta app.
          */
         /*
-         * ⚠ NO CONVENCÍA porque los pétalos no se TOCABAN.
+         * ⚠ SON TRES MATAS ENCADENADAS EN VERTICAL, no una masa sola.
          *
-         * Eran seis óvalos sueltos alrededor de un centro, separados por aire, y
-         * eso no es una flor: es una constelación. Una flor tiene los pétalos
-         * pegados unos a otros, saliendo todos del mismo sitio.
+         * Ésa es la forma, y la cintura entre mata y mata es lo que la hace un
+         * ARBUSTO y no un seto. Una versión lo refundió en un único bulto
+         * ovalado y, por limpio que quedara, pasó a ser un TOPIARIO: una planta
+         * recortada, que es justo lo contrario de lo que cuenta la pieza. Las
+         * matas crecen hacia abajo (14, 20 y 22 columnas); al revés se cae.
          *
-         * Ahora se tocan y arrancan del centro, y la maceta es la de la
-         * referencia: los corchetes de la boca y el cuerpo estrechándose hacia
-         * abajo.
+         * ⚠ Y VAN RELLENAS. Antes eran `(           )` — huecas, y de lejos tres
+         * aros. Sin peso dentro la cintura no se nota, porque no hay nada que se
+         * estreche.
+         *
+         * ⚠ GENERADO POR ESPEJO, y el eje de una fila de 40 cae ENTRE la 19 y la
+         * 20. La versión anterior se dibujaba a mano y ocupaba de la 7 a la 27:
+         * todas las filas tiraban a la izquierda A LA VEZ, que es el desfase más
+         * difícil de ver y el que peor sienta.
+         *
+         * ⚠ NADA DE `.` EN LA COLUMNA 19. Al espejarlo sale `..` en mitad del
+         * dibujo, y eso pinta una raya vertical fantasma que cruza la pieza
+         * entera. El generador lo comprueba en vez de confiarlo al ojo.
+         *
+         * La maceta tiene el BORDE VOLADO sobre el cuerpo y las paredes se
+         * cierran hacia abajo. `[.......|.......]` era una caja con puntos: una
+         * maceta se reconoce por el labio, igual que un faro por las franjas.
          */
         art: [
-            '               .-.                      ',
-            '           .-."   ".-.                  ',
-            '          (           )                 ',
-            '           "-.     .-"                  ',
-            '        .-."   .-.   ".-.               ',
-            '       (      ( Ø )      )              ',
-            '        "-.    "-"    .-"               ',
-            '           .-"     "-.                  ',
-            '          (           )                 ',
-            '           "-."   ".-"                  ',
-            '               "|"                      ',
-            '        [.......|.......]               ',
-            '         \\             /                ',
-            '          "-----------"                 ',
+            '             \'  .-""""-.  \'             ',
+            '              .-":.::.:"-.              ',
+            '             (:.::::::::.:)             ',
+            '               "-.::::.-"               ',
+            '           .-":.::::::::.:"-.           ',
+            '          (:.::::.::::.::::.:)          ',
+            '             "-.::.::.::.-"             ',
+            '         (:.::::.::::::.::::.:)         ',
+            '             "-.::.::.::.-"             ',
+            '                   ||                   ',
+            '          .------------------.          ',
+            '           |:.::.::::::.::.:|           ',
+            '            "-.__________.-"            ',
+            '              "----------"              ',
         ].join('\n'),
     },
     {
         id: 'shelf',
-        source: 'all-secrets',
+        source: 'everything',
         caption: {
             es: 'CUADERNO · JUANJO0775 ESTUVO AQUÍ',
             en: 'NOTEBOOK · JUANJO0775 WAS HERE',
@@ -501,7 +684,9 @@ export const ART: readonly ArtPiece[] = [
          * LA ÚLTIMA, y la única que no se puede tener a medias: sale cuando el
          * contador del panel llega a su propio total.
          *
-         * Un cuaderno ABIERTO, con las dos hojas y el pliegue en medio. Todas las
+         * Un cuaderno ABIERTO, con las dos hojas y el pliegue en medio. El canto
+         * superior lo pusiste vos: sin él las hojas empezaban en el aire, y una
+         * hoja tiene borde arriba aunque esté abierta. Todas las
          * demás piezas son cosas que la máquina guardaba de antes; ésta es la
          * única que habla de FUERA de la máquina — y por eso cierra la colección.
          *
@@ -511,20 +696,25 @@ export const ART: readonly ArtPiece[] = [
          * de lo que va esta app entera.
          */
         art: [
+            '     ______________   ______________    ',
             ' .-/|              \\ /              |\\-.',
             ' |||                |                |||',
-            ' |||   ~~~*~~~      |                |||',
+            ' |||     ~~*~~~     |                |||',
             ' |||                |     estuvo     |||',
-            ' |||  JuanJo0775    |                |||',
+            ' |||  -JuanJo0775   |                |||',
             ' |||                |      aqui      |||',
             ' |||                |                |||',
             ' ||/===============\\|/===============\\||',
-            "  `-  ------------  ^  ^ -----------  -'",
+            '  `-  ------------  ^  ^ -----------  -\'',
         ].join('\n'),
     },
     {
         id: 'telegraph',
         source: 'morse',
+        // El dibujo se gana con VER el morse; el nombre, con usar el código
+        // para entrar y salir. Es la única pieza donde el dibujo es la PISTA
+        // de algo que todavía no resolviste, y por eso la única con puerta.
+        nameNeeds: 'v02-round-trip',
         caption: {
             es: 'MANIPULADOR · LO QUE HIZO ESAS RAYAS',
             en: 'TELEGRAPH KEY · WHAT MADE THOSE MARKS',
@@ -543,30 +733,50 @@ export const ART: readonly ArtPiece[] = [
          *
          * Una antena RECIBE. Pero encontrar el morse del reloj no es que llegue
          * algo: es que hay un MENSAJE QUE NO SABÉS LEER. Son dos cosas distintas,
-         * y la antena contaba la que no era.
+         * y la antena contaba la que no era. Un manipulador es el aparato que
+         * HACE las rayas — verlo es entender de golpe qué clase de cosa estabas
+         * mirando.
          *
-         * Un manipulador de telégrafo es el aparato que HACE las rayas. Lo que se
-         * encontró en el reloj salió de algo así — y verlo es entender de golpe
-         * qué clase de cosa estabas mirando.
+         * ⚠ Y LO QUE LO HACE RECONOCIBLE ES QUE SEA UNA PALANCA.
          *
-         * Se reconoce por tres piezas: la base pesada, el brazo con su pivote, y
-         * la perilla arriba. Sin la perilla es un pisapapeles.
+         * La versión anterior tenía el brazo RECTO sobre dos postes iguales, y
+         * eso no es un manipulador: es una mesa. Tres arreglos, y ninguno es
+         * decorativo:
+         *
+         *   · EL BRAZO VA ESCALONADO. En reposo la perilla está ARRIBA y la cola
+         *     ABAJO. Ese escalón de una sola fila es lo único que convierte una
+         *     barra en una palanca.
+         *
+         *   · EL FULCRO Y EL CONTACTO NO SON IGUALES. Antes eran dos postes
+         *     idénticos, así que ninguno se leía como nada. Ahora el fulcro es un
+         *     `/\\` bajo la junta, y el contacto son dos puntas enfrentadas —`v`
+         *     colgando del brazo, `^` clavado en la base— CON AIRE EN MEDIO. Ese
+         *     hueco es la llave abierta: es literalmente lo que se cierra al
+         *     pulsar.
+         *
+         *   · LA BASE ES MÁS ANCHA QUE EL APARATO que sostiene. La de antes era
+         *     más estrecha, y una base más estrecha que su carga no pesa.
+         *
+         * ⚠ LAS RAYAS DE ABAJO NO DELETREAN LA PALABRA DEL RELOJ, y eso es
+         * deliberado. Esta pieza se gana por VER la señal, no por descifrarla; si
+         * el dibujo llevara la respuesta se la estaría regalando a quien todavía
+         * no la sacó.
          */
         art: [
-            '                 .---.                  ',
-            '                (     )                 ',
-            '                 "-+-"                  ',
-            '                   |                    ',
-            '       .-----------+-----------.        ',
-            '      |                         |       ',
-            '   ===+=========================+===    ',
-            '      |            |||          |       ',
-            '      "------------+++----------"       ',
-            '          .-----------------.           ',
-            '         |                   |          ',
-            '         "-------------------"          ',
+            '          .-----.                       ',
+            '         (:::::::)                      ',
+            '          "--+--"                       ',
+            '             |                          ',
+            '     .----------------.                 ',
+            '     |::::::::::::::::+-------------.   ',
+            '     "----------------+:::::::::::::|   ',
+            '             v        "-------------"   ',
+            '                     /\\                 ',
+            '   .---------^--------+-------------.   ',
+            '   |  o                          o  |   ',
+            '   "--------------------------------"   ',
             '                                        ',
-            '        - . -   . - .   - - .           ',
+            '         - . -   . - .   - - .          ',
         ].join('\n'),
     },
     {
@@ -600,10 +810,10 @@ export const ART: readonly ArtPiece[] = [
     },
     {
         id: 'lighthouse',
-        source: 'lockout',
+        source: 'guidance',
         caption: {
-            es: 'FARO · SIGUE AVISANDO A NADIE',
-            en: 'LIGHTHOUSE · STILL WARNING NOBODY',
+            es: 'FARO · LA LUZ ESTABA AHÍ DESDE EL PRINCIPIO',
+            en: 'LIGHTHOUSE · THE LIGHT WAS ON ALL ALONG',
         },
         /*
          * SE GANA SALIENDO DEL BLOQUEO, el momento más oscuro de la app.
@@ -611,23 +821,50 @@ export const ART: readonly ArtPiece[] = [
          * Un faro sigue mandando su señal aunque no haya nadie mirando — que es
          * lo que esta máquina lleva haciendo desde antes de que llegaras. De
          * todas las piezas, la que mejor dice qué es este sitio cuando no estás.
+         */
+        /*
+         * ⚠ GENERADO POR ESPEJO: se dibuja la mitad izquierda y la derecha sale
+         * de darle la vuelta cambiando `/` por `\\` y `(` por `)`.
          *
-         * Los rayos salen de la LINTERNA y no de la punta del tejado: es de donde
-         * sale la luz de verdad, y ponerlos arriba lo convertía en una antena.
+         * La versión anterior se dibujaba a mano entera y tenía la pared derecha
+         * DESFASADA UNA COLUMNA en la fila del `::::::` — un espacio de más que
+         * no se veía leyendo el código y sí en pantalla. Espejando, ese fallo no
+         * se puede cometer. El eje de una fila de 40 cae ENTRE la 19 y la 20, así
+         * que todo motivo centrado tiene que ser de ancho PAR.
+         *
+         * ⚠ LA TORRE LLEVA BANDAS ALTERNAS y se ensancha dos columnas por fila.
+         *
+         * Antes eran cuatro filas rectas, y una torre recta y lisa es un tubo.
+         * Un faro se reconoce de lejos por dos cosas: que es CÓNICO y que está
+         * PINTADO A FRANJAS. Sin eso hay que explicar qué es.
+         *
+         * ⚠ LOS RAYOS SALEN DE LA LINTERNA Y SÓLO HACIA ARRIBA.
+         *
+         * Ponerlos en la punta del tejado lo convertía en una antena. Y los de
+         * abajo se quitaron porque chocaban con la galería: es que la balconada
+         * TAPA la luz hacia abajo, así que además de estorbar eran mentira. La
+         * diagonal avanza dos columnas por fila, que es la proporción real del
+         * carácter; a una por fila se leería casi vertical.
+         *
+         * ⚠ EL MAR ES LO ÚNICO QUE NO SE ESPEJA. Agua simétrica se ve falsa, y
+         * además cruza las 40 columnas: la versión anterior lo dejaba de la 6 a
+         * la 27 bajo una torre centrada, y el dibujo entero parecía torcido.
          */
         art: [
-            '                 .-.                    ',
-            '                /   \\                   ',
-            '     \\         |     |         /        ',
-            '       \\      .+-----+.      /          ',
-            '   - -   \\    |  ( )  |    /   - -      ',
-            '           - -+-------+- -              ',
-            '              |       |                 ',
-            '              | :::::: |                ',
-            '             .+-------+.                ',
-            '            /           \\               ',
-            '           "-------------"              ',
-            '      ~~~~~~~~~~~~~~~~~~~~~~~~          ',
+            '      \\          .-""-.          /      ',
+            '        \\      .+------+.      /        ',
+            '          \\    |::::::::|    /          ',
+            '       - - -   |::(##)::|   - - -       ',
+            '            .+------------+.            ',
+            '            "\\____________/"            ',
+            '               |::::::::|               ',
+            '              /          \\              ',
+            '             /::::::::::::\\             ',
+            '            /    .----.    \\            ',
+            '           /:::::|    |:::::\\           ',
+            '         .::::::::::::::::::::.         ',
+            '~-~--~---~-~--~-~----~--~-~---~-~--~~-~-',
+            '~~-~~---~~-~~~--~~-~~~-~~--~-~~~--~~-~~-',
         ].join('\n'),
     },
     {
@@ -670,62 +907,72 @@ export const ART: readonly ArtPiece[] = [
          * lee como una cara.
          */
         art: [
-            '                 :::                    ',
-            '                    :::                 ',
-            '     :::::             :::              ',
-            '     :::::                :::           ',
-            '     :::::                   ::         ',
+            '                 ::::                   ',
+            '                    ::::                ',
+            '                       ::::             ',
+            '     :::::                ::::          ',
             '                             ::         ',
             '                             ::         ',
             '                             ::         ',
-            '     :::::                   ::         ',
-            '     :::::                :::           ',
-            '     :::::             :::              ',
-            '                    :::                 ',
-            '                 :::                    ',
+            '                             ::         ',
+            '                             ::         ',
+            '     :::::                ::::          ',
+            '                       ::::             ',
+            '                    ::::                ',
+            '                 ::::                   ',
         ].join('\n'),
     },
     {
         id: 'eye',
-        source: 'idle',
+        source: 'entity',
         caption: {
-            es: 'OJO · SIGUIÓ ABIERTO MIENTRAS USTED NO ESTABA',
-            en: 'EYE · IT STAYED OPEN WHILE YOU WERE AWAY',
+            es: 'OJO · TE ESTOY VIENDO',
+            en: 'EYE · I AM WATCHING YOU',
         },
         /*
          * SE GANA NO HACIENDO NADA: dejar la pestaña abierta un buen rato sin
          * escribir. Todas las demás premian hacer algo; ésta premia lo contrario,
          * y lo que cuenta es que la máquina siguió ahí mientras tanto.
-         *
-         * La pupila va CERRADA y llena —un punto sólido, no un anillo— porque un
-         * ojo con el centro hueco parece una rosquilla. Y las pestañas de arriba
-         * son lo único que impide que se lea como una almendra.
          */
         /*
-         * ⚠ HECHO DE UNOS Y CEROS, y el ojo aparece por AUSENCIA.
+         * ⚠ HECHO DE UNOS Y CEROS, Y EL OJO APARECE POR AUSENCIA.
          *
          * No está dibujado con líneas: es un campo de dígitos con un hueco
          * dentro, y el hueco tiene forma de ojo. Es lo mismo que hace la máquina
          * — no te mira con un ojo, te mira con lo que guarda de vos.
          *
-         * La pupila es el único sitio donde los dígitos VUELVEN, y va llena: un
-         * centro hueco se lee como una rosquilla. El contraste entre el campo
-         * lleno, el blanco del iris y la pupila llena es lo único que hace que la
-         * forma se vea.
+         * ⚠ LA LLUVIA VA DENSA, SIN ESPACIOS ENTRE DÍGITOS.
+         *
+         * Una versión escribía `1 0 1 1` con un espacio de por medio, y con eso
+         * no hay nada que recortar: el campo ya estaba medio vacío, así que el
+         * hueco no se distinguía del fondo. Acá lo único que dibuja es el
+         * CONTRASTE entre lleno y vacío, y por eso el campo tiene que estar
+         * lleno del todo.
+         *
+         * ⚠ Y EL IRIS ES UN ANILLO CON LA PUPILA HUECA.
+         *
+         * Dentro del hueco los dígitos VUELVEN, y en el centro se apagan otra
+         * vez. Ese segundo cambio de lleno a vacío es lo que hace que mire: sin
+         * él sólo hay una rendija.
+         *
+         * El patrón sale de una semilla fija, no de `Math.random`: una pieza de
+         * la colección tiene que ser SIEMPRE la misma. Si cambiara en cada
+         * dibujado no habría nada que coleccionar.
          */
         art: [
-            '1 0 1 1 0 1 0 1 1 0 1 0 1 1 0 1 0 1 1 0 ',
-            '0 1 0 1 1 0 1 0 1 1 0 1 0 1 1 0 1 0 1 1 ',
-            '1 0 1 0 1 1         0 1 1 0 1 0 1 1 0 1 ',
-            '0 1 1 0 1                     1 0 1 0 1 ',
-            '1 0 1 0         0 1 1 0         0 1 1 0 ',
-            '0 1 1         1 0 1 1 0 1         1 0 1 ',
-            '1 0 1         0 1 1 0 1 0         0 1 0 ',
-            '0 1 1 0         1 0 0 1         1 0 1 1 ',
-            '1 0 1 0 1                     0 1 0 1 0 ',
-            '0 1 1 0 1 0 1       1 0 1 0 1 1 0 1 0 1 ',
-            '1 0 1 0 1 1 0 1 0 1 1 0 1 0 1 1 0 1 0 1 ',
-            '0 1 1 0 1 0 1 1 0 1 0 1 1 0 1 0 1 1 0 1 ',
+            '1011101110100001001101001110100110111101',
+            '1100111111111              0011011000010',
+            '000101100                      000011001',
+            '1110000           1000           1010011',
+            '00001          1000100000          01000',
+            '010           0001    0111           101',
+            '0            0000      1011            0',
+            '101           1111    0000           011',
+            '01000          1000101110          11001',
+            '1010111           1001           1000111',
+            '010010110                      011011100',
+            '1011100010100              1010111110100',
+            '1000111100000000001101100011000101010101',
         ].join('\n'),
     },
     {
@@ -752,16 +999,22 @@ export const ART: readonly ArtPiece[] = [
          *
          * Dos baldas y no una: una fila de lomos es un estante, dos son una
          * biblioteca.
+         *
+         * Los CANTOS de arriba y los tejuelos variados los pusiste vos, y son lo
+         * que la termina: un lomo se ve desde arriba, y dos libros seguidos con
+         * la misma marca vuelven a ser una reja.
          */
         art: [
             ' +====================================+ ',
+            ' |  _   __   _   __   __   _   __   _ | ',
             ' | |=| |~~| |:| |^^| |==| |o| |,,| |~|| ',
-            ' | | |  ||  | | | ||  |  | | |  ||  ||| ',
+            " | | | |==| | | |''| |  | | | |:|| |||| ",
             ' | |=| |~~| |:| |^^| |==| |o| |,,| |~|| ',
             ' | |_| |__| |_| |__| |__| |_| |__| |_|| ',
             ' +====================================+ ',
+            ' |  _   __   _   __   __   _   __   _ | ',
             ' | |~| |==| |,| |::| |^^| |=| |~~| |o|| ',
-            ' | | |  ||  | | | ||  |  | | |  ||  ||| ',
+            ' | | | |**| | | |  | |  | | | |  | |||| ',
             ' | |~| |==| |,| |::| |^^| |=| |~~| |o|| ',
             ' | |_| |__| |_| |__| |__| |_| |__| |_|| ',
             ' +====================================+ ',
@@ -769,7 +1022,7 @@ export const ART: readonly ArtPiece[] = [
     },
     {
         id: 'key',
-        source: 'hardest',
+        source: 'blackout-puzzle',
         caption: {
             es: 'LLAVE · LA CERRADURA YA NO EXISTE',
             en: 'KEY · THE LOCK IS GONE',
@@ -781,6 +1034,9 @@ export const ART: readonly ArtPiece[] = [
          * En la anterior el paletón salía a otra altura que el ojo y se veía
          * torcida. Acá el vástago sale del centro exacto y los dientes cuelgan
          * de él.
+         *
+         * El vástago DOBLE y los dientes de dos trazos con su pie los pusiste
+         * vos: una llave tiene grosor, y con una sola línea parecía un alambre.
          */
         /*
          * ⚠ EL ANILLO SE VEÍA CHUECO, y el motivo era medio carácter.
@@ -797,11 +1053,11 @@ export const ART: readonly ArtPiece[] = [
             '        .-"""-.                         ',
             '      .:       :.                       ',
             '     /           \\                      ',
-            '    |    ( * )    |=================+   ',
-            '    |     :-:     |   |    |    |   |   ',
-            '     \\           /    |    |    |   |   ',
-            '      ":.     .:"     "    "    "   "   ',
-            '        "-...-"                         ',
+            '    |    ( * )    |=================|   ',
+            '    |     :-:     |=================|   ',
+            '     \\           /    ||   ||   ||      ',
+            '      ":.     .:"     ||   ||   ||      ',
+            '        "-...-"       ""   ""   ""      ',
             '                                        ',
             '   : : : : : : : : : : : : : : : : :    ',
         ].join('\n'),
@@ -992,7 +1248,16 @@ export interface CatalogRow {
     found: boolean;
     /** Si además se abrió con `//art_<n>`, que es cuando se conoce el pie. */
     opened: boolean;
-    /** El nombre, sólo si la abriste. Vacío si no. */
+    /**
+     * Si su pie ya se puede LEER.
+     *
+     * Casi siempre es lo mismo que `opened`. Se separa por las piezas con
+     * `nameNeeds`: ésas se abren —el dibujo sale— con el nombre todavía
+     * tapado, y sin este campo el catálogo no podría pintar la diferencia
+     * entre «no la tenés» y «la tenés y aún no sabés qué es».
+     */
+    named: boolean;
+    /** El nombre, sólo si además se puede leer. Vacío si no. */
     label: string;
     /**
      * Cuánto mide el nombre tapado.
@@ -1011,6 +1276,30 @@ export interface CatalogRow {
  * desconocido». Un catálogo vacío anunciaría que hay una colección que llenar, y
  * encontrar la primera pieza es parte de lo que se descubre.
  */
+/**
+ * ¿Se puede LEER el pie de esta pieza?
+ *
+ * Vive acá y no en cada sitio que pinta un nombre porque los sitios son
+ * varios —el catálogo, `//art_<n>`, la nota de `//keep` y su título— y basta
+ * con que uno se olvide para que la puerta no sirva de nada.
+ */
+/**
+ * ¿La única que falta es ésta?
+ *
+ * Lo usa el cuaderno, que se gana teniéndolas TODAS. Preguntarlo así y no
+ * «¿están las dieciséis?» evita la pescadilla: la pieza que cierra la caja no
+ * puede exigirse a sí misma.
+ */
+export function onlyMissing(id: string): boolean {
+    const found = readFound();
+    return !found.has(id) && found.size === ART_TOTAL - 1;
+}
+
+export function captionKnown(piece: ArtPiece): boolean {
+    if (piece.nameNeeds === undefined) return true;
+    return didV02RoundTrip();
+}
+
 export function catalogRows(lang: Lang = 'es'): CatalogRow[] {
     const found = readFound();
     if (found.size === 0) return [];
@@ -1020,14 +1309,16 @@ export function catalogRows(lang: Lang = 'es'): CatalogRow[] {
     return ART.map((piece, i) => {
         const tengo = found.has(piece.id);
         const abierta = tengo && abiertas.has(piece.id);
+        const legible = abierta && captionKnown(piece);
         const nombre = piece.caption[lang];
 
         return {
             number: i + 1,
             found: tengo,
             opened: abierta,
+            named: legible,
             // El pie sólo llega al abrirla: tenerla no es saber qué es.
-            label: abierta ? nombre : '',
+            label: legible ? nombre : '',
             length: nombre.length,
         };
     });
@@ -1066,6 +1357,9 @@ export function canKeep(): boolean {
  */
 export function noteTitle(piece: ArtPiece, lang: Lang): string {
     const i = ART.findIndex((a) => a.id === piece.id) + 1;
+    // Sin el pie ganado, la ficha va sin nombre: guardarla no puede ser un
+    // atajo para leer lo que todavía no se abrió.
+    if (!captionKnown(piece)) return `${UNNAMED} · ${i}/${ART_TOTAL}`;
     // El pie lleva el nombre y una coletilla («POLILLA · HALLADA EN…»); para el
     // título basta el nombre, que es lo que se lee en una lista estrecha.
     const nombre = piece.caption[lang].split(' · ')[0];
@@ -1130,5 +1424,6 @@ export function artSlots(pieces: readonly Note[]): ArtSlot[] {
 
 /** Cómo queda la pieza al guardarla en una nota. */
 export function asNote(piece: ArtPiece, lang: Lang): string {
-    return [piece.art, '', `-- ${piece.caption[lang]}`].join('\n');
+    const pie = captionKnown(piece) ? piece.caption[lang] : UNNAMED;
+    return [piece.art, '', `-- ${pie}`].join('\n');
 }

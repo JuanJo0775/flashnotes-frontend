@@ -151,6 +151,7 @@ export const en: Dictionary = {
     'diag.integrity': 'INTEGRITY',
     'diag.theme': 'THEME',
     'diag.secrets': 'SECRETS',
+    'diag.pieces': 'PIECES',
     'diag.core': 'CORE',
     'diag.coreMeter': 'Core temperature: {temp} of {max} degrees',
     'diag.effects': '[EFFECTS: {state}]',

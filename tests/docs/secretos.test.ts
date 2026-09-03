@@ -20,6 +20,10 @@ import { CORRUPT_ODDS, LEAK_ODDS } from '@/lib/system/v02Restore';
 import { PLACEHOLDER_LEAK_ODDS } from '@/lib/system/v02Messages';
 import { GREETING_WINDOW_MS, KICK_AT, CHAT_GONE_AT } from '@/lib/system/greeting';
 import { COMMAND_NAMES } from '@/lib/system/commands';
+import { SECRET_IDS } from '@/hooks/useSystemState';
+import { ART, ART_TOTAL } from '@/lib/system/asciiArt';
+import { DUMP_COLS, DUMP_ROWS, PATTERN_LEN } from '@/lib/system/lockoutPuzzle';
+import { LOCKOUT_AT } from '@/lib/system/collapseEscalation';
 
 const DOC = readFileSync(join(process.cwd(), 'docs', 'SECRETOS.md'), 'utf8');
 
@@ -86,7 +90,7 @@ describe('docs/SECRETOS.md dice la verdad', () => {
          */
         const seccion = DOC.slice(
             DOC.indexOf('| **Anunciados** |'),
-            DOC.indexOf('### Tres fugas')
+            DOC.indexOf('### Las fugas')
         );
 
         const anunciados = seccion.slice(0, seccion.indexOf('**Escondidos**'));
@@ -99,6 +103,68 @@ describe('docs/SECRETOS.md dice la verdad', () => {
         // `//hi` es el caso que falló: escondido en el código, anunciado acá.
         expect(escondidos).toContain('`//hi`');
         expect(anunciados).not.toContain('`//hi`');
+    });
+
+    /*
+     * LAS TRES TABLAS QUE ENUMERAN ALGO.
+     *
+     * Las tres se escriben a mano sobre listas que crecen, y las tres se
+     * desfasaron: la de piezas decía que la polilla se ganaba estando quieto
+     * (hoy la gana el colapso) y que había dos marcadores de pong con pieza
+     * propia; la de secretos ni existía, y el ejemplo del panel decía `3/14`
+     * cuando el registro ya iba por veintiocho.
+     *
+     * Enumerar es justo lo que un test puede vigilar sin opinar de nada.
+     */
+    it('la tabla de secretos nombra los 28 que cuenta el panel', () => {
+        const seccion = DOC.slice(DOC.indexOf('# Los 28 secretos'));
+        expect(seccion.length).toBeGreaterThan(0);
+
+        expect(DOC).toContain(`SECRETOS n/${SECRET_IDS.length}`);
+
+        for (const id of SECRET_IDS) {
+            expect(seccion).toContain(`\`${id}\``);
+        }
+
+        // `//reset` es el único que NO cuenta, y el documento tiene que decir
+        // por qué en vez de dejar el hueco sin explicar.
+        expect(SECRET_IDS as readonly string[]).not.toContain('reset');
+    });
+
+    it('la tabla de piezas nombra las dieciséis y su camino', () => {
+        const seccion = DOC.slice(
+            DOC.indexOf('## Los dieciséis caminos'),
+            DOC.indexOf('## `//keep`')
+        );
+
+        expect(seccion.length).toBeGreaterThan(0);
+        expect(DOC).toContain(`/${ART_TOTAL}`);
+
+        for (const pieza of ART) {
+            // El `source` es lo que de verdad decide cómo se gana: es el campo
+            // que cambió sin que la tabla se enterara.
+            expect(seccion).toContain(`\`${pieza.source}\``);
+        }
+    });
+
+    it('el puzzle del bloqueo dice su forma de verdad', () => {
+        const seccion = DOC.slice(
+            DOC.indexOf('## El puzzle · cómo se resuelve'),
+            DOC.indexOf('# 14 · ')
+        );
+
+        expect(seccion.length).toBeGreaterThan(0);
+        expect(seccion).toContain(`${DUMP_COLS} columnas por ${DUMP_ROWS} filas`);
+        expect(seccion).toContain(`${DUMP_COLS * DUMP_ROWS} celdas`);
+        expect(seccion).toContain(`patrón de siete bytes`);
+        expect(PATTERN_LEN).toBe(7);
+
+        // Y que sigan siendo primos entre sí: es TODA la dificultad del puzzle,
+        // y la página lo explica apoyándose en eso.
+        const mcd = (a: number, b: number): number => (b === 0 ? a : mcd(b, a % b));
+        expect(mcd(PATTERN_LEN, DUMP_COLS)).toBe(1);
+
+        expect(DOC).toContain(`**${LOCKOUT_AT}** colapsos seguidos`);
     });
 
     it('no queda ni una referencia al fichero que se fusionó', () => {

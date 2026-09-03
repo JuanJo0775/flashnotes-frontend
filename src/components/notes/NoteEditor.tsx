@@ -19,6 +19,7 @@ import { isCommandLine, isExecutable } from '@/lib/system/commands';
 import { useNoteCommands } from '@/hooks/useNoteCommands';
 import { pickBootPhrase } from '@/lib/system/lore';
 import { getSystemState, useSystemState } from '@/hooks/useSystemState';
+import { idleMs } from '@/lib/system/idle';
 import { isV02, saveOutcome } from '@/lib/system/v02';
 import { v02Placeholder } from '@/lib/system/v02Messages';
 import { rememberDropped } from '@/lib/system/dropped';
@@ -127,7 +128,7 @@ export default function NoteEditor({
         const ctx = {
             hour: ahora.getHours(),
             sessionMs: Date.now() - system.sessionStart,
-            idleMs: 0,
+            idleMs: idleMs(),
             msSinceTrash,
         };
 

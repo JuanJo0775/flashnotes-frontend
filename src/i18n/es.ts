@@ -171,6 +171,7 @@ export const es = {
     'diag.integrity': 'INTEGRIDAD',
     'diag.theme': 'TEMA',
     'diag.secrets': 'SECRETOS',
+    'diag.pieces': 'PIEZAS',
     'diag.core': 'NÚCLEO',
     'diag.coreMeter': 'Temperatura del núcleo: {temp} de {max} grados',
     'diag.effects': '[EFECTOS: {state}]',

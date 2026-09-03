@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { clearLockout } from '@/hooks/useSystemState';
+import { awardFrom } from '@/lib/system/asciiArt';
 import { useGlitch } from '@/hooks/useGlitch';
 import { DUMP_COLS, buildDump, isTheOddOne } from '@/lib/system/lockoutPuzzle';
 import { ChromaSplitFilters } from '@/components/effects/ChromaticFailure';
@@ -141,6 +142,16 @@ export default function SystemLockout() {
                                             className="lockout-cell"
                                             onClick={() => {
                                                 if (isTheOddOne(dump, i)) {
+                                                    // RESOLVERLO DA LA LLAVE,
+                                                    // y va acá y no en
+                                                    // `clearLockout`: el
+                                                    // bloqueo también se
+                                                    // levanta al vencer el
+                                                    // plazo, y esperar no es
+                                                    // resolver. Una llave que
+                                                    // se gana esperando no
+                                                    // abre nada.
+                                                    awardFrom('blackout-puzzle');
                                                     clearLockout();
                                                     return;
                                                 }

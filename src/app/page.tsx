@@ -12,6 +12,7 @@ import { notesApi } from '@/lib/api/notes.api';
 import TrashView from '@/components/notes/TrashView';
 import WipeScreen from '@/components/effects/WipeScreen';
 import BootScreen from '@/components/effects/BootScreen';
+import type { BootPhase } from '@/lib/system/boot';
 import V02TrashView from '@/components/notes/V02TrashView';
 import DiagnosticPanel from '@/components/system/DiagnosticPanel';
 import GlitchLayer from '@/components/effects/GlitchLayer';
@@ -43,14 +44,27 @@ import {
 } from '@/hooks/useSystemState';
 import { useGlitch } from '@/hooks/useGlitch';
 import { initializeCsrfToken } from '@/lib/api/client';
+import { LIMITS } from '@/config/limits';
+import { markActivity } from '@/lib/system/idle';
 import { useT } from '@/i18n';
 import type { Note, SaveState, View } from '@/types/note.types';
 
 /** Referencia constante: una lista nueva en cada render remontaría todo. */
 const VACIO: never[] = [];
 
-/** Cuánto hay que haber escrito para que salga el arbusto. Unas dos páginas. */
-const ARBUSTO_DESDE = 5_000;
+/**
+ * Cuánto hay que llevar en la misma sesión para que salga el arbusto.
+ *
+ * ⚠ ANTES SE MEDÍA EN CARACTERES ESCRITOS, y era la misma cuenta que la de la
+ * pluma. Dos piezas midiendo lo mismo con dos umbrales distintos es una sola
+ * pieza contada dos veces: se ganaban juntas y ninguna significaba nada. Ahora
+ * el arbusto mide el RATO y la pluma el VOLUMEN.
+ *
+ * Media hora: no sale por probar la app, y sale sin proponérselo la primera
+ * vez que alguien se sienta a escribir de verdad. Y encaja con el dibujo: una
+ * planta que creció mientras estabas.
+ */
+const ARBUSTO_TRAS_MS = 30 * 60_000;
 
 /**
  * Cuántas notas hay que juntar para la biblioteca.
@@ -60,15 +74,6 @@ const ARBUSTO_DESDE = 5_000;
  * de golpe — de eso ya se ocupa el arbusto.
  */
 const BIBLIOTECA_DESDE = 12;
-
-/**
- * Cuánto hay que estar quieto para que salga el ojo.
- *
- * Cinco minutos: lo bastante para que no salga mientras pensás una frase, lo
- * bastante poco para que salga en la primera tarde en que te vas a hacer un café
- * y la dejás abierta.
- */
-const OJO_TRAS_MS = 5 * 60_000;
 
 /** No hay a qué suscribirse: sólo interesa el salto de servidor a cliente. */
 const SIN_CAMBIOS = () => () => {};
@@ -126,7 +131,13 @@ export default function Home() {
      * una vez es una pantalla de bienvenida, y ésas se saltan. Uno que sale
      * siempre es cómo es la máquina.
      */
-    const [booting, setBooting] = useState(true);
+    /**
+     * El encendido, y desde qué tramo.
+     *
+     * `'off'` es una recarga de verdad: el equipo se apaga y arranca entero.
+     * Quien ya hizo parte del recorrido pide otro tramo — ver `bootScript`.
+     */
+    const [booting, setBooting] = useState<BootPhase | null>('off');
 
     // Lo mínimo que los comandos y el panel necesitan saber de las notas: nombre
     // y tamaño. No se les pasa el contenido — lo que escribís no se lee.
@@ -147,43 +158,56 @@ export default function Home() {
      * encontrarla alguien que no haya tecleado un comando en su vida, y eso es
      * exactamente lo que la hace valer.
      *
-     * El umbral son cinco mil caracteres — unas dos páginas. Lo bastante para
-     * que no salga por probar, lo bastante poco para que salga usándola.
+     * ⚠ EL TEMPORIZADOR NO SE REINICIA CON LA ACTIVIDAD, al revés que el de la
+     * polilla. Aquél mide ESTAR AUSENTE y por eso cualquier tecla lo tumba;
+     * éste mide HABERSE QUEDADO, así que corre entero desde que se abrió.
      */
     useEffect(() => {
-        if (bytesWritten >= ARBUSTO_DESDE) awardFrom('written');
+        const id = setTimeout(() => awardFrom('long-session'), ARBUSTO_TRAS_MS);
+        return () => clearTimeout(id);
+    }, []);
+
+    /*
+     * LLENAR UNA NOTA HASTA EL TOPE DA LA PLUMA.
+     *
+     * El tope es el del contrato con el backend (`LIMITS.CONTENT_MAX`), no una
+     * cifra inventada acá: la pieza premia haber llegado al borde DE VERDAD, al
+     * sitio donde la app deja de aceptar más. Un umbral propio sería un premio
+     * por llegar a un número que no significa nada.
+     */
+    useEffect(() => {
+        if (bytesWritten >= LIMITS.CONTENT_MAX) awardFrom('full-note');
     }, [bytesWritten]);
 
     /*
-     * DEJAR LA PESTAÑA QUIETA DA EL OJO.
+     * QUIÉN MIDE LA INACTIVIDAD.
      *
-     * Todas las demás piezas premian HACER algo; ésta premia no hacer nada. Lo
-     * que cuenta es que la máquina siguió ahí mientras tanto — y por eso el
-     * temporizador se reinicia con cualquier tecla o clic: si sobreviviera a la
-     * actividad, la daría por estar la app abierta, que no es lo mismo que
-     * estar ausente.
+     * Acá se DABA una pieza por estar quieto, y el premio se retiró: ese camino
+     * pasó por tres dueños —el ojo, la polilla, la cinta— y cada mudanza dejaba
+     * un pie contando algo que ya no pasaba, así que la cinta quedó reservada.
+     *
+     * ⚠ PERO LA MEDICIÓN SE QUEDA, y quitarla fue un error. No servía sólo para
+     * el premio: `[SEGUÍS AHÍ]` la necesita, y ésa es la única frase del lore
+     * que pregunta por la ausencia. Sin nadie que marque la actividad, el
+     * contexto llegaba con `idleMs: 0` fijo y la frase no podía salir nunca.
+     *
+     * Cualquier tecla o clic reinicia el reloj: mide ESTAR AUSENTE, no tener la
+     * app abierta.
      */
     useEffect(() => {
-        let id: ReturnType<typeof setTimeout>;
-
-        const rearmar = () => {
-            clearTimeout(id);
-            id = setTimeout(() => awardFrom('idle'), OJO_TRAS_MS);
-        };
-
-        rearmar();
+        markActivity();
 
         for (const evento of ['keydown', 'pointerdown'] as const) {
-            window.addEventListener(evento, rearmar);
+            window.addEventListener(evento, markActivity);
         }
 
         return () => {
-            clearTimeout(id);
             for (const evento of ['keydown', 'pointerdown'] as const) {
-                window.removeEventListener(evento, rearmar);
+                window.removeEventListener(evento, markActivity);
             }
         };
     }, []);
+
 
     useEffect(() => {
         void initializeCsrfToken();
@@ -582,7 +606,21 @@ export default function Home() {
                 <SystemCollapse
                     notesCount={total}
                     level={collapse}
-                    onDone={() => setCollapse(null)}
+                    onDone={() => {
+                        setCollapse(null);
+                        /*
+                         * Y EL EQUIPO TERMINA DE ARRANCAR: barras, rótulo,
+                         * comprobación y a trabajar.
+                         *
+                         * Antes volvía de golpe a la app en cuanto la barra de
+                         * carga llegaba al final, y eso contaba que el sistema
+                         * se recuperó solo. Un equipo que se apagó arranca.
+                         *
+                         * ⚠ DESDE LAS BARRAS: el apagón ya lo hizo el colapso
+                         * con su fase `dying`.
+                         */
+                        setBooting('bars');
+                    }}
                 />
             )}
 
@@ -613,11 +651,20 @@ export default function Home() {
                         setView('notes');
                         void refreshNotes();
 
-                        // Después del borrado de verdad, el monitor VUELVE A
-                        // ARRANCAR: es lo que convierte «se borró» en «esto
-                        // acaba de encenderse por primera vez». La broma no
-                        // arranca nada, porque no se apagó nada.
-                        if (!eraBroma) setBooting(true);
+                        /*
+                         * Después del borrado de verdad, el monitor VUELVE A
+                         * ARRANCAR: es lo que convierte «se borró» en «esto
+                         * acaba de encenderse por primera vez». La broma no
+                         * arranca nada, porque no se apagó nada.
+                         *
+                         * ⚠ EMPIEZA POR EL RÓTULO, no por el apagón. La pantalla
+                         * de borrado termina apagando el equipo y enseñando las
+                         * barras; arrancar desde el principio repetía las dos
+                         * cosas SEGUIDAS —dos apagones con sus dos juegos de
+                         * barras— y eso no se lee como un encendido, se lee como
+                         * un tartamudeo.
+                         */
+                        if (!eraBroma) setBooting('logo');
                     }}
                 />
             )}
@@ -627,7 +674,9 @@ export default function Home() {
             {/* El bloqueo lo lee él del almacenamiento: pasárselo desde acá no
                 servía, porque en el primer render del cliente todavía dice que
                 no lo hay (REGLAS · C2). */}
-            {booting && <BootScreen onDone={() => setBooting(false)} />}
+            {booting !== null && (
+                <BootScreen from={booting} onDone={() => setBooting(null)} />
+            )}
 
             {dead && <DeadPage />}
 

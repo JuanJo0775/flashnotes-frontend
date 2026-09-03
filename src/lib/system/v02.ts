@@ -41,6 +41,20 @@ const STORAGE_KEY = 'flashnotes:v02';
  */
 const WORD_KEY = 'flashnotes:v02word';
 
+/**
+ * Que ya usaste el código para las DOS cosas: entrar y salir.
+ *
+ * ⚠ NO ES LO MISMO QUE HABER ENTRADO. Entrar se hace por accidente: se descifra
+ * el morse, se teclea la palabra y pasa algo. Salir con la misma palabra exige
+ * haber entendido QUÉ es esa palabra — que no es un comando más, sino una llave
+ * que gira en los dos sentidos. Ésa es la comprensión que se premia.
+ *
+ * ⚠ Y NO SE BORRA AL SALIR. `leaveV02` se lleva la palabra —para que la próxima
+ * puerta sea otra— pero no esto: el viaje ya lo hiciste. Sólo `//reset` lo
+ * olvida, con todo lo demás.
+ */
+const TRIP_KEY = 'flashnotes:v02trip';
+
 /** La versión que dice ser cuando está puesta. */
 export const V02_LABEL = 'FLASH-NOTES v0.2';
 
@@ -110,6 +124,32 @@ export function toggleV02(word?: string): boolean {
 /** Sólo para los tests: tira la caché sin tocar lo guardado. */
 export function forgetV02Cache() {
     dentro = null;
+}
+
+/** El código te sacó de la v0.2: ida y vuelta completas. */
+export function markV02RoundTrip() {
+    try {
+        localStorage.setItem(TRIP_KEY, 'on');
+    } catch {
+        // Sin persistencia dura lo que la pestaña. Aceptable.
+    }
+}
+
+export function didV02RoundTrip(): boolean {
+    try {
+        return localStorage.getItem(TRIP_KEY) === 'on';
+    } catch {
+        return false;
+    }
+}
+
+/** Lo olvida. Lo usan `//reset` y los tests. */
+export function forgetV02Trip() {
+    try {
+        localStorage.removeItem(TRIP_KEY);
+    } catch {
+        // Nada que hacer.
+    }
 }
 
 /* ------------------------------------------------------------------

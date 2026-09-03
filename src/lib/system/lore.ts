@@ -56,7 +56,14 @@ export type Random = () => number;
 
 const MINUTO = 60_000;
 const TURNO_LARGO_MS = 45 * MINUTO;
-const SILENCIO_MS = 5 * MINUTO;
+/**
+ * Cuánto hay que estar quieto para que la máquina pregunte si seguís.
+ *
+ * Diez minutos: bastante para que no salte mientras pensás una frase o vas
+ * a por un café corto, poco para que salga la primera tarde en que dejás la
+ * pestaña abierta y te vas a otra cosa.
+ */
+const SILENCIO_MS = 10 * MINUTO;
 const RECIEN_TIRADA_MS = 60_000;
 
 /**
@@ -74,11 +81,41 @@ interface Fragment {
     text: Localized;
     /** Si falta, el fragmento puede salir siempre. */
     when?: (ctx: SystemContext) => boolean;
+    /**
+     * Cuánto pesa en el sorteo. Uno es lo normal.
+     *
+     * ⚠ NO ES LO MISMO QUE `when`. `when` dice si el fragmento PUEDE salir —de
+     * madrugada, con la sesión larga—; el peso dice CADA CUÁNTO sale entre los
+     * que pueden. Son dos preguntas distintas y hacen falta las dos: una
+     * variante no se gana estando disponible, se gana siendo rara.
+     */
+    weight?: number;
 }
 
 // El español NO calca `SYSTEM` —`[SISTEMA_OK]` se lee como una app traducida—
 // pero tampoco se queda en inglés: tiene su propio token, `[TODO_BIEN]`, que
 // suena a máquina sin ser una traducción de nada.
+/**
+ * Lo que pesa una VARIANTE frente al texto que imita.
+ *
+ * Un tercio: sale una de cada veinte veces, más o menos.
+ *
+ * ⚠ MENOS QUE LAS DEMÁS, PERO NO RARÍSIMA. Son las dos mitades del ajuste, y
+ * fallar cualquiera la estropea:
+ *
+ *   · Con el MISMO peso que las demás salía una de cada siete, y a esa
+ *     frecuencia deja de ser una errata: se lee como otro estado más de la
+ *     barra, y lo que la hace funcionar es dudar de haberla visto.
+ *
+ *   · Con un peso MINÚSCULO —una de cada sesenta, que fue el primer intento—
+ *     hace falta insistir tanto que a efectos prácticos no existe. Una variante
+ *     que nadie ve es texto muerto por otro camino.
+ *
+ * El punto justo es que rote: que aparezca de vez en cuando en una sesión
+ * normal, sin que se vuelva costumbre.
+ */
+const PESO_VARIANTE = 1 / 3;
+
 const FRAGMENTS: readonly Fragment[] = [
     { text: { es: '[TODO_BIEN?]', en: '[SYSTEM_OK?]' } },
     // LA ERRATA. En inglés es un CERO en lugar de la O de OK; en español, un
@@ -89,7 +126,7 @@ const FRAGMENTS: readonly Fragment[] = [
     //
     // El español sustituye dos letras y el inglés una porque `TODO_BIEN` es más
     // largo que `OK`: con una sola, la errata se perdía en la palabra.
-    { text: { es: '[T0DO_B1EN]', en: '[SYSTEM_0K]' } },
+    { text: { es: '[T0DO_B1EN]', en: '[SYSTEM_0K]' }, weight: PESO_VARIANTE },
     // "SIGO ACÁ" no tiene equivalente literal cómodo. Lo que hay que conservar
     // no es el verbo, es que la máquina se anuncie sin que nadie preguntara.
     { text: { es: '[SIGO ACÁ]', en: '[STILL HERE]' } },
@@ -114,9 +151,18 @@ const FRAGMENTS: readonly Fragment[] = [
         text: { es: '[TURNO LARGO]', en: '[LONG SHIFT]' },
         when: (c) => c.sessionMs >= TURNO_LARGO_MS,
     },
+    /*
+     * ⚠ SÓLO MIRA LA INACTIVIDAD, no cuánto llevás abierta la pestaña.
+     *
+     * Pedía ADEMÁS turno largo —tres cuartos de hora— y eso la volvía casi
+     * imposible: hay que llevar mucho rato Y estar quieto Y que el sorteo la
+     * elija. La pregunta es «¿seguís ahí?», y eso depende de que no toques nada,
+     * no de cuánto lleves; alguien que abre la app y se va diez minutos merece
+     * la pregunta igual.
+     */
     {
         text: { es: '[SEGUÍS AHÍ]', en: '[STILL THERE]' },
-        when: (c) => c.sessionMs >= TURNO_LARGO_MS && c.idleMs >= SILENCIO_MS,
+        when: (c) => c.idleMs >= SILENCIO_MS,
     },
 ];
 
@@ -165,7 +211,25 @@ export function availableFragments(
     ctx: SystemContext,
     lang: Lang = getLang()
 ): readonly string[] {
-    return FRAGMENTS.filter((f) => !f.when || f.when(ctx)).map((f) => f.text[lang]);
+    return weightedFragments(ctx, lang).map((f) => f.text);
+}
+
+/**
+ * Lo mismo, pero conservando el peso de cada uno.
+ *
+ * `availableFragments` devuelve sólo los textos y se queda como está: lo usan
+ * los tests y quien sólo quiere saber QUÉ puede salir. El sorteo necesita
+ * además CADA CUÁNTO, y perder esa mitad por el camino es lo que hacía que el
+ * peso declarado no significara nada.
+ */
+function weightedFragments(
+    ctx: SystemContext,
+    lang: Lang
+): { text: string; weight: number }[] {
+    return FRAGMENTS.filter((f) => !f.when || f.when(ctx)).map((f) => ({
+        text: f.text[lang],
+        weight: f.weight ?? 1,
+    }));
 }
 
 /** Elige uno al azar entre los disponibles, evitando repetir el anterior. */
@@ -175,7 +239,34 @@ export function pickFragment(
     random: Random = Math.random,
     lang: Lang = getLang()
 ): string {
-    return pickFrom(availableFragments(ctx, lang), previous, random);
+    return pickWeighted(weightedFragments(ctx, lang), previous, random);
+}
+
+/**
+ * Sorteo con peso, sin repetir el anterior.
+ *
+ * Misma regla que el sorteo plano: se descarta el anterior, y si eso deja la
+ * lista vacía se prefiere repetir a devolver nada. Repetir es lo que delata
+ * que hay una lista corta detrás.
+ */
+function pickWeighted(
+    options: readonly { text: string; weight: number }[],
+    previous: string | null,
+    random: Random
+): string {
+    const candidatos = options.filter((o) => o.text !== previous);
+    const pool = candidatos.length > 0 ? candidatos : options;
+
+    const total = pool.reduce((suma, o) => suma + o.weight, 0);
+    let tirada = random() * total;
+
+    for (const opcion of pool) {
+        tirada -= opcion.weight;
+        if (tirada < 0) return opcion.text;
+    }
+
+    // Sólo se llega acá por redondeo del último tramo.
+    return pool[pool.length - 1].text;
 }
 
 /*

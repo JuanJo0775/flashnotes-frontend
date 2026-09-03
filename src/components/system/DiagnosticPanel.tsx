@@ -14,6 +14,7 @@ import { coreTemperature, CORE_MAX_C, CORE_MIN_C } from '@/lib/system/diagnostic
 import { strainedCore, strainedIntegrity } from '@/lib/system/strain';
 import { useGlitch } from '@/hooks/useGlitch';
 import { secretsBar, secretsRank } from '@/lib/system/secretsRank';
+import { ART_TOTAL, readFound } from '@/lib/system/asciiArt';
 import { formatDuration, formatFileSize } from '@/lib/utils/formatters';
 import { readScores, type Board, type Scores } from '@/lib/system/pongScores';
 import { useT } from '@/i18n';
@@ -131,6 +132,10 @@ export default function DiagnosticPanel({
     }, [open]);
 
     const uptime = formatDuration(now - system.sessionStart);
+
+    // Cuántas piezas llevás recuperadas. Se lee acá y no de `system` porque la
+    // colección vive en `localStorage` y no pasa por el estado del sistema.
+    const piezas = readFound().size;
     // El ritmo de escritura lo calienta, y las averías también: forzar la
     // máquina cuesta, y el núcleo es donde se lee ese coste.
     const temp = strainedCore(coreTemperature(charsPerMinute), desgaste);
@@ -221,6 +226,26 @@ export default function DiagnosticPanel({
                                     system.secretsTotal,
                                     lang
                                 )}
+                            </span>
+                        </span>
+                    </Reading>
+                    {/* LAS PIEZAS VAN AL LADO DE LOS SECRETOS y con la misma
+                        barra, porque son la misma pregunta contada de otra
+                        forma: cuánto del sistema conocés. Separarlas en dos
+                        lenguajes distintos haría parecer que una de las dos
+                        colecciones importa menos.
+
+                        Se lee del almacenamiento en el render, como hace la
+                        pestaña de la colección: este panel sólo existe
+                        después de un alt+clic, así que nunca lo pinta el
+                        servidor y no hay desajuste que temer (REGLAS · C1). */}
+                    <Reading label={t('diag.pieces')}>
+                        <span className="flex items-center gap-2">
+                            <span aria-hidden="true">
+                                {secretsBar(piezas, ART_TOTAL)}
+                            </span>
+                            <span data-testid="diag-pieces">
+                                {piezas}/{ART_TOTAL}
                             </span>
                         </span>
                     </Reading>

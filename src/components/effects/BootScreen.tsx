@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import {
+    type BootPhase,
     bootAt,
     bootDuration,
     bootScript,
@@ -45,9 +46,17 @@ const SIN_CAMBIOS = () => () => {};
 
 interface Props {
     onDone: () => void;
+    /**
+     * Desde qué tramo arranca.
+     *
+     * Lo pasan quienes YA hicieron parte del recorrido: el borrado de `//reset`
+     * (que apaga y enseña las barras) y el colapso (que apaga con su `dying`).
+     * Sin esto, el arranque repetía lo que acababa de verse.
+     */
+    from?: BootPhase;
 }
 
-export default function BootScreen({ onDone }: Props) {
+export default function BootScreen({ onDone, from = 'off' }: Props) {
     const quieto = usePrefersReducedMotion();
     const [step, setStep] = useState(0);
 
@@ -77,8 +86,8 @@ export default function BootScreen({ onDone }: Props) {
     // El dado se tira UNA vez por encendido. Sorteando en cada paso, cada tramo
     // duraría lo suyo y el arranque no tendría una duración, tendría varias.
     const guion = useMemo(
-        () => (locked === null ? [] : bootScript(bootDuration(), locked)),
-        [locked]
+        () => (locked === null ? [] : bootScript(bootDuration(), locked, from)),
+        [locked, from]
     );
 
     useEffect(() => {

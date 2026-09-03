@@ -12,11 +12,12 @@ import {
     type CollapseLevel,
 } from '@/lib/system/collapseEscalation';
 import { countGreeting, CHAT_WINDOW_MS } from '@/lib/system/greeting';
-import { clearFound as clearArt } from '@/lib/system/asciiArt';
+import { clearFound as clearArt, onlyMissing, ART_SOURCES } from '@/lib/system/asciiArt';
+import { forgetHint } from '@/lib/system/helpHint';
 import { resetScores } from '@/lib/system/pongScores';
 import { clearUsed } from '@/lib/system/commandUnlock';
 import { clearCollectibles } from '@/lib/system/collectibles';
-import { leaveV02, isV02, toggleV02 } from '@/lib/system/v02';
+import { leaveV02, isV02, toggleV02, forgetV02Trip } from '@/lib/system/v02';
 import { clearDropped } from '@/lib/system/dropped';
 import { clearV02Notes } from '@/lib/system/v02Notes';
 import { forgetWord } from '@/lib/system/morse';
@@ -482,7 +483,21 @@ export function markSecretFound(id: string) {
      * puede depender de que alguien vaya a mirar el contador. Ocurre cuando
      * ocurre, y `awardPiece` ya se encarga de no darla dos veces.
      */
-    if (secrets.size >= SECRET_IDS.length) awardFrom('all-secrets');
+    /*
+     * ⚠ NO BASTA CON LOS SECRETOS: hacen falta TODAS LAS DEMÁS PIEZAS.
+     *
+     * El cuaderno es el que cierra la caja, y lo dice en el dibujo: es el
+     * único sitio del proyecto donde aparece un nombre propio. Darlo sólo con
+     * el contador de secretos lo dejaba al alcance de quien nunca hubiera
+     * mirado la colección, que es justo lo contrario de lo que celebra.
+     *
+     * `onlyMissing` pregunta «¿la única que falta es ésta?» y no «¿están las
+     * dieciséis?», porque la pieza que cierra la caja no puede exigirse a sí
+     * misma.
+     */
+    if (secrets.size >= SECRET_IDS.length && onlyMissing(ART_SOURCES.everything)) {
+        awardFrom('everything');
+    }
 
     publish();
 }
@@ -577,6 +592,9 @@ export function registerThemeToggle(): boolean {
     chromaticFailure = true;
     publish();
     markSecretFound('chroma');
+    // Y da la bombilla: el tema se queda a medio camino entre claro y oscuro,
+    // que es exactamente lo que dibuja la pieza.
+    awardFrom('theme-glitch');
 
     return true;
 }
@@ -684,6 +702,10 @@ export function resetEverything() {
     clearUsed();
     clearCollectibles();
     leaveV02();
+    forgetV02Trip();
+    // ⚠ ESTO FALTABA: era la única clave que el borrado no tocaba, y el faro
+    // se recuperaba con el primer `//help` de después.
+    forgetHint();
     clearV02Notes();
     clearDropped();
     forgetWord();
@@ -754,6 +776,18 @@ function startLockout() {
         // Sin persistencia el bloqueo dura lo que la pestaña. Aceptable.
     }
 
+    /*
+     * CAER EN EL FALLO TOTAL DA LA POLILLA.
+     *
+     * La primera avería informática documentada fue un bicho dentro de un relé,
+     * en 1947, y de ahí viene la palabra «bug». Acabás de ver uno de verdad.
+     *
+     * ⚠ AL ENTRAR, NO AL SALIR. Salir tiene su propio premio —la llave, para
+     * quien resuelve el puzzle— y son dos logros distintos: caer ahí dentro le
+     * pasa a cualquiera; salir por la puerta buena, no.
+     */
+    awardFrom('blackout');
+
     scheduleLockoutExpiry();
     publish();
 }
@@ -780,17 +814,15 @@ export function clearLockout() {
     if (lockoutUntil === null) return;
 
     /*
-     * SALIR DEL BLOQUEO DA SU PIEZA: un faro.
+     * ⚠ ACÁ SE DABA EL FARO, Y YA NO.
      *
-     * Es el momento más oscuro de la app, y la pieza dice lo que la máquina
-     * lleva haciendo desde antes de que llegaras — seguir avisando aunque no
-     * haya nadie mirando.
+     * El bloqueo se repartió en dos premios: ENTRAR da la polilla y RESOLVER
+     * EL PUZZLE da la llave. Un tercero por el mismo sitio sería el mismo
+     * logro cobrado tres veces — y encima éste se cobraba también al vencer
+     * el plazo, o sea por esperar.
      *
-     * Va acá y no en la pantalla del bloqueo porque el bloqueo se levanta de dos
-     * maneras —resolviendo el puzzle o esperando a que venza— y las dos cuentan
-     * igual: haber estado ahí dentro y haber salido.
+     * El faro está en pausa hasta decidir qué premia. Ver `ArtSource`.
      */
-    awardFrom('lockout');
     lockoutUntil = null;
 
     try {

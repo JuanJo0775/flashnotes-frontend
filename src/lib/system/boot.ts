@@ -82,9 +82,26 @@ export function bootDuration(rand: () => number = Math.random): number {
 }
 
 /** El guion completo para una duración dada. */
+/**
+ * DESDE QUÉ TRAMO EMPIEZA, y por qué hace falta poder decirlo.
+ *
+ * El arranque no siempre viene de una recarga. A veces lo lanza algo que YA hizo
+ * parte del recorrido:
+ *
+ *   · Tras `//reset`, la pantalla de borrado termina apagando el equipo y
+ *     enseñando las barras. Volver a arrancar desde el apagón repetía las dos
+ *     cosas SEGUIDAS —se apagaba dos veces, con sus dos juegos de barras— y eso
+ *     no se lee como un encendido, se lee como un tartamudeo.
+ *
+ *   · Tras el colapso, el equipo ya se apagó (la fase `dying`), así que lo que
+ *     toca después de su barra de carga son las barras de color.
+ *
+ * Por defecto empieza por el apagón, que es lo que hace una recarga de verdad.
+ */
 export function bootScript(
     totalMs: number,
-    lockedOut = false
+    lockedOut = false,
+    from: BootPhase = 'off'
 ): { phase: BootPhase; ms: number }[] {
     const apagon = { phase: 'off' as const, ms: BOOT_OFF_MS };
 
@@ -105,13 +122,18 @@ export function bootScript(
      */
     if (lockedOut) return [{ phase: 'bars', ms: BOOT_BARS_LOCKED_MS }];
 
-    return [
+    const completo = [
         apagon,
         ...REPARTO.map(({ phase, peso }) => ({
             phase,
             ms: Math.round(totalMs * peso),
         })),
     ];
+
+    // Un tramo que no esté en el guion no recorta nada: vale más un arranque
+    // entero que uno vacío.
+    const desde = completo.findIndex((t) => t.phase === from);
+    return desde <= 0 ? completo : completo.slice(desde);
 }
 
 /** Lo que duran las barras cuando no hay nada más que enseñar. */

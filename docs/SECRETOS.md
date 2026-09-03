@@ -58,16 +58,17 @@ Qué hacer para ver cada cosa, y en qué sección de más abajo se cuenta.
 
 | Lo que hacés | Lo que pasa | Dónde |
 | --- | --- | --- |
+| **Cargar la página** | El monitor se enciende: barras, rótulo, memoria | §25 |
+| Cargar la página (1 de cada 12) | El rótulo arranca en vídeo inverso | §4 |
 | Nada: dejar la pestaña abierta | Glitch ambiental, fragmentos del sistema, el barrido se traba | §1 · §2 · §12 |
-| Abrir la app | Arranque en vídeo inverso | §4 |
 | Abrir una nota vacía | Arranques raros (1 de cada 30) | §3 |
 | Escribir `//` y un comando | La terminal contesta | §6 |
 | `//help` | La lista, con huecos revueltos donde van los que no conocés | §19 |
-| `//diag`, o Alt+clic en `[SYSTEM_OK]` | El panel de diagnóstico | §7 |
+| `//diag`, o Alt+clic en `[TODO_BIEN]` | El panel de diagnóstico | §7 |
 | `//log` | El registro de peticiones | §8 |
 | Clic 3 veces en el rótulo | El botón secreto | §5 |
 | Clic 9 veces en el rótulo, o `//panic` | El colapso del sistema | §13 |
-| **6** colapsos seguidos | El bloqueo | §13 |
+| **6** colapsos seguidos, **o** colapsar con la señal ya rota | El bloqueo y su puzzle | §13 |
 | **10** toques rápidos al tema | El fallo cromático — **y sus ventanas sueltan comandos** | §14 |
 | Entrar a la papelera con la sesión avanzada | El archivo fantasma | §9 |
 | Borrar cinco notas para siempre | La papelera lleva la cuenta | §10 |
@@ -77,13 +78,15 @@ Qué hacer para ver cada cosa, y en qué sección de más abajo se cuenta.
 | `//hi` y enseguida `//whoareu` o `//howareu` | La conversación se agota a las **3** | §21 |
 | Insistir **2 veces más** tras la expulsión | La página se queda muerta | §21 |
 | `//date_off` | El reloj y la fecha se sueltan | §17 |
-| `//art`, y después `//keep` | Las piezas, y la colección con su pestaña | §18 · §23 |
-| `//reset` | Empezar de cero — **sin tocar las notas** | §22 |
+| `//art`, y después `//art_<n>` y `//keep` | El catálogo, las piezas y la colección con su pestaña | §18 · §23 |
+| `//reset` | ⚠ **Borra TODO, las notas incluidas.** Pregunta `[y/n]` antes | §22 |
+| …y contestar `n` (1 de cada 5) | **La broma:** te enseña el borrado entero y no borra nada | §22 |
 | **Clic 3 veces en la hora** | **El morse: la puerta de la v0.2** | §20 |
 | Descifrar el morse y teclearlo | **Entrar en la v0.2** | §24 |
 | Ya dentro: abrir una nota vacía | El marcador trae un comando el **18 %** | §24.3 |
 | Ya dentro: tirar una nota y recuperarla | Vuelve corrompida el **50 %**, y con un comando el **7 %** | §24.2 |
-| Ya dentro: teclear la palabra otra vez | Salir | §24.10 |
+| Ya dentro: `//todo` y `//recover` | Los dos comandos que sólo existen ahí | §24.4 |
+| Ya dentro: teclear la palabra otra vez | Salir — **y ganar el nombre del manipulador** | §24.10 |
 
 ---
 
@@ -92,27 +95,52 @@ Qué hacer para ver cada cosa, y en qué sección de más abajo se cuenta.
 Para no tener que buscarlas pieza por pieza. Cada una está explicada en su
 sección.
 
-| Efecto | Probabilidad | Intentos de media | Constante |
+| Efecto | Probabilidad | Intentos de media | Constante · dónde |
 | --- | --- | --- | --- |
-| v0.2 · miente al guardar | **22 %** | ~5 | `LIE_ODDS` |
-| v0.2 · pierde de verdad | **6 %** | ~17 | `DROP_ODDS` |
-| v0.2 · tirar a la papelera no hace nada | **18 %** | ~6 | `TRASH_FAIL_ODDS` |
-| v0.2 · vuelve corrompida de la papelera | **50 %** | 2 | `CORRUPT_ODDS` |
-| v0.2 · …y suelta un comando | **14 %** de ésas (7 % del total) | ~14 | `LEAK_ODDS` |
-| v0.2 · el marcador trae un comando | **18 %** | ~6 | `PLACEHOLDER_LEAK_ODDS` |
-| v0.2 · etiqueta mal escrita | **26 %** | ~4 | `BROKEN_LABEL_ODDS` |
-| Arranque raro en una nota vacía | **1 de cada 30** | ~30 | — |
+| v0.2 · miente al guardar | **22 %** | ~5 | `LIE_ODDS` · `v02.ts` |
+| v0.2 · pierde de verdad | **6 %** | ~17 | `DROP_ODDS` · `v02.ts` |
+| v0.2 · tirar a la papelera no hace nada | **18 %** | ~6 | `TRASH_FAIL_ODDS` · `v02.ts` |
+| v0.2 · vuelve corrompida de la papelera | **50 %** | 2 | `CORRUPT_ODDS` · `v02Restore.ts` |
+| v0.2 · …y suelta un comando | **14 %** de ésas (7 % del total) | ~14 | `LEAK_ODDS` · `v02Restore.ts` |
+| v0.2 · el marcador trae un comando | **18 %** | ~6 | `PLACEHOLDER_LEAK_ODDS` · `v02Messages.ts` |
+| v0.2 · etiqueta mal escrita | **26 %** | ~4 | `BROKEN_LABEL_ODDS` · `v02.ts` |
+| v0.2 · la barra de carga retrocede | 25 % por latido | 4 | `fakeProgress` · `v02Loading.ts` |
+| Arranque raro en una nota vacía | **1 de cada 30** | ~30 | `NoteEditor.tsx` |
+| …y que ésa sea de las invasivas | 1 de cada 6 de ésas (1 de 180 aperturas) | ~180 | `INVASIVE_ODDS` · `lore.ts` |
+| Rótulo en vídeo inverso al cargar | 1 de cada 12 | ~12 | `REVERSE_BOOT_ODDS` · `SystemLabel.tsx` |
+| El barrido se traba en esta pasada | 1 de cada 4 | 4 | `page.tsx` (`onAnimationIteration`) |
+| Glitch leve · serio · grave | 70 % · 25 % · 5 % | — | `rollSeverity` · `glitchTiming.ts` |
+| Un glitch trae además un fragmento | 1 de cada 5 | 5 | `FRAGMENT_ODDS` · `glitchTiming.ts` |
+| …y que ese fragmento sea la errata `[T0DO_B1EN]` | ~1 de cada 20 | ~20 | `PESO_VARIANTE` · `lore.ts` |
+| Un glitch serio o grave trae negativo | 1 de cada 4 | 4 | `NEGATIVE_ODDS` · `glitchTiming.ts` |
+| Un glitch **grave** trae ráfaga cromática | 1 de cada 2 | 2 | `CHROMA_BURST_ODDS` · `useGlitch.ts` |
+| `//help` no está para listas | 1 de cada 6 | 6 | `SNARK_ODDS` · `commands.ts` |
+| `//help` suelta un comando escondido | 1 de cada 4 | 4 | `LEAK_ODDS` · `commands.ts` |
+| Una ventana fantasma nombra un comando | 1 de cada 3 | 3 | `LEAK_ODDS` · `PhantomError.tsx` |
+| Salen 2 o 3 ventanas de golpe (sin bloqueo) | 1 de cada 4 | 4 | `PhantomError.tsx` |
+| Una sacudida de tema es ráfaga de cuatro | 1 de cada 3 | 3 | `FLICKER_ODDS` · `ChromaticFailure.tsx` |
+| Decir `n` a `//reset` y que sea broma | **20 %** | 5 | `PRANK_ODDS` · `wipe.ts` |
 
 **Umbrales**, que no son sorteos sino cuentas:
 
-| | |
-| --- | --- |
-| Toques al tema para el fallo cromático | **10** |
-| Colapsos seguidos para el bloqueo | **6** |
-| Saludos para que te eche | **8**, en una ventana de **3 minutos** |
-| Insistencias tras la expulsión para la página muerta | **2 más** |
-| `//whoareu` / `//howareu` antes de desaparecer | **3**, en **60 s** |
-| Clics en la hora para el morse | **3**, en **1600 ms** |
+| | | Constante |
+| --- | --- | --- |
+| Toques al tema para el fallo cromático | **10**, con < **1,2 s** entre uno y otro | `THEME_BREAK_AT` |
+| Clics en el rótulo para el colapso | **9**, con < **4 s** entre uno y otro | `COLLAPSE_AT_CLICK` |
+| Colapsos seguidos para el bloqueo | **6**, en una ventana de **5 minutos** | `LOCKOUT_AT` |
+| Cuánto dura el bloqueo sin resolverlo | **5 minutos** | `LOCKOUT_MS` |
+| Saludos para que te eche | **8**, en una ventana de **3 minutos** | `KICK_AT` |
+| Insistencias tras la expulsión para la página muerta | **3** expulsiones en total | `KILL_AFTER_KICKS` |
+| `//whoareu` / `//howareu` antes de desaparecer | **3**, en **60 s** | `CHAT_GONE_AT` · `CHAT_WINDOW_MS` |
+| Clics en la hora para el morse | **3**, en **1600 ms** | `SystemClock.tsx` |
+| Borrados definitivos para que la papelera lo mencione | **5** | `TALLY_AT` |
+| Sesión y notas para el archivo fantasma | **10 min** y **3** | `GHOST_MIN_SESSION_MS` · `GHOST_MIN_NOTES` |
+| Silencio para que pregunte `[SEGUÍS AHÍ]` | **10 min** sin tocar nada | `SILENCIO_MS` · `lore.ts` |
+| Sesión para `[TURNO LARGO]` | **45 min** | `TURNO_LARGO_MS` · `lore.ts` |
+| Peloteo para la pieza del pong | **25** limpio · **15** degradado | `RALLY_LIMPIO` · `RALLY_DEGRADADO` |
+| Notas para la biblioteca | **12** | `BIBLIOTECA_DESDE` |
+| Rato con la pestaña abierta para el arbusto | **30 min** | `ARBUSTO_TRAS_MS` |
+| Caracteres escritos para la pluma | **10 000** | `LIMITS.CONTENT_MAX` |
 
 ---
 
@@ -148,9 +176,14 @@ capa más profunda y sólo tienen sentido después de las demás.
 | §22 | [Empezar de cero](#22--empezar-de-cero) |
 | §23 | [La colección](#23--la-colección) |
 | §24 | [La v0.2 · la versión de antes](#24--la-v02-la-versión-de-antes) |
+| §25 | [El monitor se enciende](#25--el-monitor-se-enciende) |
+| — | [Los 28 secretos que cuenta el panel](#los-28-secretos-que-cuenta-el-panel) |
 | — | [Accesibilidad, en una tabla](#accesibilidad-en-una-tabla) |
 | — | [Dónde vive cada cosa](#dónde-vive-cada-cosa) |
 | — | [Apéndice · las claves de `localStorage`](#apéndice--las-claves-de-localstorage) |
+
+> §25 va al final por el mismo criterio que manda en toda la lista —el orden en
+> que se construyeron— aunque sea **lo primero que se ve** al abrir la app.
 
 ---
 
@@ -266,34 +299,94 @@ ritmo, y el ojo lo archiva como animación. Variando tanto, a veces apenas lo ve
 y a veces el sistema se queda diciendo `[SIN RELEVO]` un minuto largo mientras
 escribís, que es bastante más incómodo que cualquier temblor.
 
-**Cuándo.** Cada 3–7 minutos, más los que dispara el glitch. Nunca dos veces el
-mismo seguido.
+**Cuándo. Sólo lo dispara el glitch (§1), una de cada cinco veces**, con 120 ms
+de retraso. No hay temporizador propio: `showFragment()` tiene un único
+llamador, y es `fireGlitch`.
+
+> Hubo un ciclo ambiental de 3–7 minutos aparte y ya no está. En la práctica no
+> se pierde nada —el glitch ya cae solo, y cada vez más seguido con la fatiga de
+> la sesión— y se gana lo que hace a esta pieza: **el fragmento no aparece
+> nunca solo.** Siempre llega detrás de un fallo, que es lo que lo convierte en
+> una frase en vez de en un cartel que parpadea por su cuenta.
+
+Nunca dos veces el mismo seguido, y **nunca dos a la vez**: con uno en pantalla,
+`showFragment` no hace nada — dos pisándose se leerían como un parpadeo.
 
 **Sin animación.** Aparece y desaparece de golpe. Esa sequedad es lo que lo hace
 sentir un fallo en vez de un adorno.
 
 ### El repertorio
 
-| Fragmento | Condición |
-| --------- | --------- |
-| `[SYSTEM_OK?]` | siempre |
-| `[SYSTEM_0K]` | siempre |
-| `[SIGO ACÁ]` | siempre |
-| `[TURNO 1/1]` | siempre |
-| `[SIN RELEVO]` | siempre |
-| `[MEMORIA TIBIA]` | siempre |
-| `[SYSTEM_TIRED]` | 02:00–05:00, hora del dispositivo |
-| `[NADIE MÁS CONECTADO]` | 02:00–05:00 |
-| `[TURNO LARGO]` | sesión > 45 min |
-| `[SEGUÍS AHÍ]` | sesión > 45 min y sin teclear hace > 5 min |
+Los fragmentos **sí se traducen**, y cada idioma tiene su propio token: `SYSTEM`
+en inglés, `TODO_BIEN` en español. No es una traducción de `SYSTEM_OK` —
+`[SISTEMA_OK]` se leería como una app traducida en vez de como una máquina— sino
+otra palabra que suena igual de máquina en su idioma.
 
-`[SYSTEM_0K]` lleva un **cero** en lugar de la O. En JetBrains Mono el cero va
-con punto interior, así que se distingue si mirás y no se nota si no. No es un
-efecto: es una errata — y una errata inquieta más que un temblor.
+| Español | Inglés | Cuándo puede salir | Peso |
+| --- | --- | --- | --- |
+| `[TODO_BIEN?]` | `[SYSTEM_OK?]` | siempre | 1 |
+| `[T0DO_B1EN]` | `[SYSTEM_0K]` | siempre | **⅓** |
+| `[SIGO ACÁ]` | `[STILL HERE]` | siempre | 1 |
+| `[TURNO 1/1]` | `[SHIFT 1/1]` | siempre | 1 |
+| `[SIN RELEVO]` | `[NO RELIEF]` | siempre | 1 |
+| `[MEMORIA TIBIA]` | `[MEMORY STILL WARM]` | siempre | 1 |
+| `[TURNO_PESADO]` | `[SYSTEM_TIRED]` | 02:00–05:00, hora del dispositivo | 1 |
+| `[NADIE MÁS CONECTADO]` | `[NO ONE ELSE ONLINE]` | 02:00–05:00 | 1 |
+| `[TURNO LARGO]` | `[LONG SHIFT]` | sesión ≥ 45 min | 1 |
+| `[SEGUÍS AHÍ]` | `[STILL THERE]` | **sin tocar nada ≥ 10 min** | 1 |
 
-`SYSTEM` no se traduce, aunque el resto de la app sí. `[SISTEMA_OK]` se leería
-como una app traducida en vez de como una máquina, y la errata del cero perdería
-aquello de lo que es errata.
+**Estar disponible y salir a menudo son dos preguntas distintas**, y hacen falta
+las dos. `when` dice si un fragmento PUEDE salir —de madrugada, con la sesión
+larga—; el peso dice CADA CUÁNTO sale entre los que pueden. **Una variante no se
+gana estando disponible: se gana siendo rara.**
+
+### La errata
+
+`[T0DO_B1EN]` lleva un **cero** por la O y un **uno** por la I; el inglés
+`[SYSTEM_0K]` sustituye una sola letra. En JetBrains Mono el cero va con punto
+interior y el uno con bandera, así que se distinguen si mirás y no se notan si
+no. No es un efecto: es una errata — y una errata inquieta más que un temblor. El
+español cambia dos letras y el inglés una porque `TODO_BIEN` es más largo que
+`OK`: con una sola, la errata se perdía dentro de la palabra.
+
+**Pesa un tercio de lo que pesa el resto: sale una de cada veinte.** El ajuste
+tiene dos mitades y fallar cualquiera lo estropea:
+
+| Peso | Sale | Qué pasa |
+| --- | --- | --- |
+| Igual que las demás | 1 de cada 7 | Deja de ser una errata: se lee como **otro estado más** de la barra, y lo que la hace funcionar es dudar de haberla visto |
+| Minúsculo | 1 de cada 60 | Hace falta insistir tanto que **a efectos prácticos no existe** — texto muerto por el otro camino |
+| **⅓** | **1 de cada 20** | Rota: aparece de vez en cuando en una sesión normal, sin volverse costumbre |
+
+Un test fija las dos mitades a la vez: que salga **menos** que las normales, y
+que aun así **se vea** en 200 tiradas.
+
+### La inactividad se mide de verdad
+
+`[SEGUÍS AHÍ]` es el único fragmento que pregunta por el silencio, y durante un
+tiempo **no pudo salir nunca**: los dos sitios que arman el contexto
+—`showFragment()` y el marcador del editor— pasaban `idleMs: 0` fijo. La frase
+estaba escrita, traducida y con su condición, y era código muerto.
+
+> ⚠ **El test que la cubría pasaba en verde.** Le entregaba a mano un contexto
+> que en producción no llegaba jamás — o sea que probaba la condición, no la
+> pieza. Está reescrito diciendo exactamente eso.
+
+Ahora hay un reloj de inactividad de verdad, en `src/lib/system/idle.ts`, con sus
+escuchadores de tecla y de clic. Vive en un módulo suelto y **no** en un hook
+porque lo consultan cosas que no son componentes, y porque **el reloj de la
+inactividad es UNO para toda la pestaña**: dos contadores distintos darían dos
+respuestas a la misma pregunta. Se apoya en el reloj del navegador y no en un
+`setInterval` propio — un temporizador corriendo todo el rato para saber si
+alguien está quieto es justo lo contrario de lo que hace falta, y además se
+desajusta cuando el navegador congela la pestaña.
+
+**Y la condición se aflojó: ya no pide sesión larga.** Pedía además tres cuartos
+de hora de pestaña abierta, así que aunque alguien hubiera medido la inactividad
+seguiría siendo casi inalcanzable. Ahora **depende sólo del silencio, a los diez
+minutos**: bastante para no dispararse cuando te vas a por un café corto, poco
+para que salga la primera tarde en que dejás la pestaña abierta y te vas a otra
+cosa.
 
 ### Dos cosas que parecen detalles y no lo son
 
@@ -303,13 +396,13 @@ usuario si su trabajo está a salvo, y eso no se toca ni en broma.
 
 **El fragmento no se anuncia.** La barra es `<footer role="status"
 aria-live="polite">`: todo lo que cambie ahí dentro se lee en voz alta. Un
-repertorio de frases raras cada tres minutos, para quien usa lector de pantalla,
+repertorio de frases raras cada pocos minutos, para quien usa lector de pantalla,
 es una voz que le interrumpe lo que está escribiendo para decirle `SIN RELEVO`.
 Eso no es encantador, es hostil. El fragmento va en un nodo `aria-hidden` y el
-`[SYSTEM_OK]` real se mantiene en `.sr-only`.
+`[TODO_BIEN]` real se mantiene en `.sr-only`.
 
 **El hueco tiene ancho reservado.** La barra es `flex` con `gap`: un fragmento más
-ancho que `[SYSTEM_OK]` empujaría `[GUARDADO]` y todo lo que sigue. El hueco
+ancho que `[TODO_BIEN]` empujaría `[GUARDADO]` y todo lo que sigue. El hueco
 lleva `min-width` en **`ch`** dimensionado al fragmento más largo **de los dos
 idiomas** — en monoespaciada `1ch` es el avance exacto de un carácter, así que se
 cuenta en vez de medirse, y cambiar de idioma no reajusta el ancho.
@@ -397,13 +490,21 @@ revés de lo que uno supone: un **bloque de papel con letra de tinta**. Sobre un
 barra oscura, un rectángulo claro — que es exactamente el atributo *reverse* de
 una terminal de verdad. Sale de dos tokens que ya existían.
 
-**Tres fotogramas duros, 620 ms** (`steps(1, end)`, sin transiciones):
+**Tres fotogramas duros, 560 ms de punta a punta** (`steps(1, end)`, sin
+transiciones):
 
 ```
 0 ms     <la variante>          vídeo inverso, rótulo mal
 380 ms   [FLASH-NOTES v1.0]     vídeo inverso, rótulo correcto
 560 ms   [FLASH-NOTES v1.0]     normal
 ```
+
+**El dado se tira después de montar, en un temporizador a 0 ms**, y no en el
+inicializador del estado. Sorteando al pintar, el servidor manda el rótulo bien y
+el cliente —si le toca el 1 de 12— lo manda invertido: React ve el desajuste y
+**regenera el árbol entero** en cada carga con suerte. Además queda mejor: el
+rótulo se rompe un fotograma DESPUÉS de aparecer, que es como se rompe una señal
+de verdad.
 
 ### La variante es de la sesión, no del arranque
 
@@ -429,7 +530,11 @@ versión quieta: un rótulo mal escrito sin corrección visible sería sencillam
 un error.
 
 El texto corrupto va en un nodo `aria-hidden` con el nombre real en `.sr-only`:
-el nombre de la app no se corrompe en el árbol de accesibilidad ni por 620 ms.
+el nombre de la app no se corrompe en el árbol de accesibilidad ni por 560 ms.
+
+**Dentro de la v0.2 el rótulo dice `[FLASH-NOTES v0.2]`** y no falla nunca. No es
+un adorno: es lo primero que mira alguien que sospecha que la app cambió, y verlo
+confirma que no se lo imaginó (§24).
 
 ---
 
@@ -449,6 +554,10 @@ tabulación.
 | 7 | 40 | Glitch **serio**, 7 px — rebanadas, fantasma y caída de nivel |
 | 8 | 20 | Glitch **grave**, 10 px — además pierde el vertical |
 | 9 | 0 | **Colapso** (§13) |
+
+El clic 3 marca el secreto `logo`. Los clics acumulados dentro de la ventana
+también **le restan a la integridad que enseña el panel** — 3 puntos cada uno, y
+2 °C al núcleo (§7).
 
 **El clic 3 no es decorativo.** Sin él, un curioso que toca el logo dos veces y
 para no se lleva ninguna señal de que ahí hay algo: la tasa de descubrimiento
@@ -514,27 +623,21 @@ contiene el comando. La regla real:
 Con cualquier otra cosa, Enter hace lo de siempre. A nadie que esté escribiendo
 de verdad se le roba el Enter.
 
-### Los comandos
+### Los seis que `//help` lista
+
+Son los únicos que no llevan `hidden`, y por eso son exactamente lo que sale en
+la ayuda. Un test lo ata al registro (`COMMAND_NAMES`).
 
 | Comando | Qué responde |
 | ------- | ------------ |
-| `//help` | La lista completa |
+| `//help` | La lista, con huecos revueltos donde van los que no conocés (§19) |
 | `//version` | `FLASH-NOTES v1.0 · NÚCLEO ESTABLE` |
-| `//whoami` | Que no puede saberlo (ver abajo) |
-| `//sudo` | `NO HAY SUPERUSUARIO. NO HAY USUARIOS. HAY UN NAVEGADOR.` |
-| `//uptime` | Tiempo desde que abriste la pestaña |
 | `//date` | Tu hora, la del sistema y el desfase |
 | `//ls` | Tus notas con guías de puntos |
 | `//df` | Total escrito, con el medidor ASCII |
-| `//ps` | Los procesos que corren de verdad |
-| `//log` | El registro de peticiones (§8) |
-| `//history` | Las versiones guardadas de la nota |
-| `//diag` | Abre el panel (§7) |
-| `//chaos on\|off` | Enciende o apaga los efectos |
-| `//panic` | Dispara el colapso (§13) |
 | `//clear` | Vacía la nota |
 
-### Y los que NO salen en esa lista
+### Y los dieciocho que NO salen en esa lista
 
 Sólo se desbloquean **al usarlos**, no al verlos: hasta entonces su sitio en
 `//help` lo ocupa una animación de letras aleatorias (§19). Cada uno **conserva
@@ -542,14 +645,41 @@ su posición**: descubrir uno destapa su hueco, no lo añade al final.
 
 | Comando | Qué hace | Cómo se descubre |
 | --- | --- | --- |
-| `//hi` | Saludo que se va agriando | Probar a saludar |
-| `//whoareu` | Quién te saludó | Encadenando tras `//hi` |
-| `//howareu` | Qué tal está | Encadenando tras `//hi` |
-| `//date_off` | Descontrola hora **y fecha** | Azar / ventanas de error |
-| `//art` | Enseña una pieza ASCII | Azar / ventanas de error |
-| `//keep` | Guarda la pieza como coleccionable | Tras encontrar una pieza |
-| `//attach_<n>` | Se engancha a un proceso | Leyendo `//ps` |
-| `//reset` | Borra secretos, piezas y marcadores — **no las notas** | Azar / ventanas de error |
+| `//whoami` | Que no puede saber quién sos (ver abajo) | Fugas |
+| `//sudo` | `NO HAY SUPERUSUARIO. NO HAY USUARIOS. HAY UN NAVEGADOR.` | Fugas |
+| `//uptime` | Tiempo desde que abriste la pestaña | Fugas |
+| `//ps` | Los procesos que corren de verdad | Fugas |
+| `//log` | El registro de peticiones (§8) | Fugas |
+| `//history` | Las versiones guardadas de la nota — **da la cinta perforada** | Fugas |
+| `//diag` | Abre el panel (§7) | Fugas — o Alt+clic |
+| `//chaos on\|off` | Enciende o apaga los efectos | Fugas |
+| `//panic` | Dispara el colapso (§13) | Fugas |
+| `//hi` | Saludo que se va agriando (§16) | Probar a saludar |
+| `//whoareu` | Quién es ella | Encadenando tras `//hi` (§21) |
+| `//howareu` | Qué tal está | Encadenando tras `//hi` (§21) |
+| `//date_off` | Descontrola hora **y fecha** (§17) | Fugas |
+| `//art` | El catálogo de piezas. **No da ninguna** (§18) | Fugas |
+| `//art_<n>` | Dibuja la pieza `n`, si te la ganaste | Lo dice `//art` |
+| `//keep` | Deja la última dibujada en una pieza de la colección (§23) | Lo dice `//art_<n>` |
+| `//attach_<n>` | Se engancha a un proceso (§15) | Leyendo `//ps` |
+| `//reset` | ⚠ **Borra todo, notas incluidas.** Pregunta antes (§22) | Fugas |
+
+Y dos más que **sólo existen dentro de la v0.2**, `//todo` y `//recover` — ver
+§24.4.
+
+**Tres se niegan a existir hasta que toca**, y contestan exactamente lo mismo que
+una palabra inventada. No es un «todavía no»: un «todavía no» confirma que ahí
+hay algo y convierte la puerta cerrada en un cartel.
+
+| Comando | Mientras… | Qué contesta |
+| --- | --- | --- |
+| `//attach_<n>` | no hayas usado `//ps` | `COMANDO DESCONOCIDO: //ATTACH_N` |
+| `//art` | no tengas ninguna pieza | `COMANDO DESCONOCIDO: //ART` |
+| `//art_<n>` | no tengas ESA pieza | `COMANDO DESCONOCIDO: //ART_N` |
+
+Y **no cuentan como usados**: quien se niega marca su respuesta con `denied`, y
+`markUsed` corre después de resolver, así que teclearlos a ciegas no destapa su
+hueco en la ayuda con la misma frase que les dice que no existen.
 
 
 **Dónde se filtran los que aún no conocés:** en las ventanas de error del fallo
@@ -585,11 +715,17 @@ PID  PROCESO            INTERVALO
   3  scanline              9000ms
   4  meter-batch            250ms
   5  glitch-ambient      variable
+  6  vsync-test              16ms
+
+USE //attach_<PID> PARA ADJUNTARSE A UN PROCESO.
 ```
 
-Cada número es verificable contra el código: 2500 es el debounce del
-auto-guardado, 60000 el sondeo de red, 9000 la animación del barrido, 250 el
-agrupado del medidor. **El chiste es que no hay chiste.**
+Los cinco primeros son verificables contra el código: 2500 es
+`AUTOSAVE_DELAY_MS` de `NoteEditor`, 60000 es `POLL_INTERVAL_MS` de
+`useNetworkStatus`, 9000 es la animación `scanline`, 250 el agrupado del medidor.
+**El chiste es que no hay chiste.**
+
+El sexto es la única puerta del pong (§15), y sus 16 ms son la pista entera.
 
 ### `//date` — el sistema vive en otro huso
 
@@ -614,11 +750,20 @@ Con desfase cero la frase cambia, y queda mejor:
 > Ahora usan la hora del dispositivo. El chiste no se pierde — al revés, dice
 > algo mejor: **la máquina te traduce la hora, pero por dentro nunca se mudó.**
 
-### La respuesta se teclea
+### La respuesta se teclea, y el ritmo se adapta al largo
 
-Con el mismo motor que la secuencia de arranque: **18 ms** por carácter, **2 s**
-de pausa, borrado a **8 ms**, y la nota vuelve a quedar vacía. Escribir la
-descarta en el acto.
+Con el mismo motor que la secuencia de arranque, pero más rápido: el arranque es
+la máquina despertando, esto es la máquina contestando algo que le preguntaste.
+La nota vuelve a quedar vacía sola, y escribir la descarta en el acto.
+
+| | Cuánto | Por qué |
+| --- | --- | --- |
+| Tecleo | **18 ms** por carácter, **pero como mucho 1,2 s en total** | Con 18 ms fijos, `//help` tardaba **ocho segundos** en aparecer. Sólo se notó usando la app |
+| Pausa, respuesta corta | 2 s + 22 ms por carácter, tope **9 s** | Lo que se tarda en leerla |
+| Pausa, respuesta **de más de 6 líneas** | **32 s** fijos | No hace falta leer más caracteres: hace falta margen para **desplazarla entera y volver** |
+| Borrado | 8 ms por carácter, como mucho 500 ms en total | Más rápido de lo que se escribió |
+
+Todo en `replyTiming.ts`, aparte del editor y probado sin montar nada.
 
 ### Nada de esto se guarda — y hay que forzarlo
 
@@ -644,30 +789,108 @@ el menú contextual. Y el rótulo se queda como texto plano —sin `role="button
 sin `tabindex`— porque meter un objetivo interactivo dentro de una región viva es
 incómodo con lector de pantalla; el panel ya tiene su vía por teclado con `//diag`.
 
-**Qué muestra**
+Es un `<dialog>` nativo con `showModal()`: trampa de foco, cierre con Escape y
+capa superior sin ninguna librería. Usa la misma piel que `ConfirmDialog` —barra
+de título en tinta, cuerpo en papel, sin curvas—, y el foco inicial va al botón
+de cerrar.
+
+**Qué muestra** — once lecturas, en este orden:
 
 ```
-SESIÓN            NO LEGIBLE
-TIEMPO ACTIVO     00:47:12
-NOTAS CREADAS     12
-BYTES ESCRITOS    8.4kb
-INTEGRIDAD        100%
-TEMA              CLARO
-SECRETOS          3/14
-NÚCLEO            41°C  ▮▮▮▮▮▯▯▯▯▯
+SESIÓN                  NO LEGIBLE
+TIEMPO ACTIVO           00:47:12
+NOTAS CREADAS           12
+BYTES ESCRITOS          8.4kb
+INTEGRIDAD              100%
+TEMA                    CLARO
+SECRETOS                [███░░░░░░░░░░░] 6/28 · SE FIJA
+PIEZAS                  [██░░░░░░░░░░░░] 2/16
+VSYNC-TEST              42  (7 partidas)
+VSYNC-TEST DEGRADADO    SIN DATOS
+NÚCLEO                  41°C  ▮▮▮▮▮▯▯▯▯▯
+
+           [EFECTOS: ON]   [✗] Cerrar
 ```
 
 `SESIÓN` dice `NO LEGIBLE` por lo mismo que `//whoami`. **El panel no inventa un
 dato que no tiene.**
 
-`NÚCLEO` es decoración honesta: se deriva del ritmo de escritura, va de 38 °C a
-71 °C y no pretende medir nada. Se dibuja con el `ProgressBar` ASCII que ya
-existía, no con un widget nuevo.
+`TIEMPO ACTIVO` sólo tictaquea con el panel abierto —no hay un temporizador
+colgando de fondo— y **arranca en el inicio de la sesión, no en `Date.now()`**:
+con `Date.now()` el servidor y el cliente lo evaluaban en instantes distintos y
+React tiraba un error de hidratación en cada carga.
 
-`SECRETOS` cuenta **sólo lo que provocaste vos**. Lo ambiental te pasa, no lo
-encontrás. El total sale de la longitud del registro, nunca de un número escrito
-a mano. Y no puede verse en `0/N`: para leer esa fila ya tuviste que encontrar el
-panel, así que lo primero que ves es `1/N`.
+`SIN DATOS` y no un cero en los marcadores del pong: **un cero parecería un
+récord malísimo en vez de un hueco.** Se leen en un efecto y no al pintar, por lo
+mismo de siempre — `localStorage` no existe en el servidor.
+
+### Los instrumentos se mueven
+
+Decían `INTEGRIDAD 100%` y `NÚCLEO 38 °C` con la señal rota, con tirones cayendo
+solos y con el rótulo aporreado. **Un instrumento que marca lo mismo pase lo que
+pase no es un instrumento: es un adorno con números** — y el panel es el único
+sitio de la app donde lo que ocurre queda registrado. Si no se mueve, la avería
+no tiene testigo.
+
+**Dos lecturas, y van en direcciones contrarias a propósito:** la integridad dice
+cuánto queda sano y BAJA; el núcleo dice cuánto está costando y SUBE. Con una
+sola no se distinguiría «roto» de «forzado».
+
+| Lo que está pasando | Integridad | Núcleo |
+| --- | --- | --- |
+| La señal cromática está rota (§14) | −18 | +9 °C |
+| Hay un tirón **ahora mismo** | −7 | +4 °C |
+| Cada clic al rótulo dentro de la ventana (§5) | −3 | +2 °C |
+
+El tirón resta pero **no daña**: mientras dura, baja; cuando pasa, vuelve. Una
+caída que no volviera diría que el tirón rompió algo, y no rompe nada.
+
+Y **no sustituye la integridad que viene dada**: el rótulo ya la baja por su
+cuenta en escalones fijos, y esto le resta ADEMÁS. Sustituirla borraría lo que el
+rótulo acaba de hacer. Todo en `strain.ts`, puro.
+
+`NÚCLEO` es decoración honesta: se deriva del ritmo de escritura —un grado por
+cada 12 caracteres por minuto—, va de 38 °C a 71 °C y no pretende medir nada. Se
+dibuja con el `ProgressBar` ASCII que ya existía, no con un widget nuevo. **La
+barra se dibuja contra la temperatura que se ENSEÑA**, no contra el ritmo pelado:
+si no, el número subía con la avería y la barra se quedaba donde estaba.
+
+### `SECRETOS` no es un dato: es una invitación
+
+Cuenta **sólo lo que provocaste vos** (§ [Los 28 secretos](#los-28-secretos-que-cuenta-el-panel)).
+Lo ambiental te pasa, no lo encontrás. El total sale de la longitud del registro,
+nunca de un número escrito a mano. Y no puede verse en `0/N`: para leer esa fila
+ya tuviste que encontrar el panel, así que lo primero que ves es `1/N`.
+
+`6/28` es un dato. **Una barra y un rango son una invitación:** se ve de un
+vistazo que falta mucho, y el nombre del escalón siguiente da curiosidad sin
+decir de qué va.
+
+| | Escalón | Cuándo |
+| --- | --- | --- |
+| 0 | `DE PASO` | ninguno todavía |
+| 1–4 | `CURIOSO` · `SE FIJA` · `INSISTE` · `CONOCE LA CASA` | se reparten el tramo intermedio |
+| 5 | `NO QUEDA NADA` | **todos**, no el noventa por ciento |
+
+> ⚠ **Ningún rango nombra un secreto, y hay un test que lo prohíbe.** Si un
+> escalón se llamara «el de la versión vieja», el contador dejaría de dar
+> curiosidad para dar instrucciones — y enseñar lo que todavía no encontraste es
+> exactamente lo único que no puede hacer.
+
+La barra tiene **14 celdas**, y dos reglas que la salvan de mentir: el primer
+hallazgo **siempre** enciende una celda aunque no le toque por proporción
+—redondearlo a cero sería decirle a alguien que lo que acaba de encontrar no
+cuenta— y la última **sólo** se enciende con todos.
+
+> Sus dos caracteres, `█` y `░`, salen del mismo bloque Unicode a propósito.
+> Ninguno está en JetBrains Mono, así que los pinta una fuente de reserva — pero
+> **la misma para los dos**, con lo que miden igual y la barra no se descuadra al
+> llenarse. Mezclar un bloque con un punto ASCII sí la habría descuadrado
+> (REGLAS · C8).
+
+`PIEZAS` va al lado y **con la misma barra**: son la misma pregunta contada de
+otra forma —cuánto del sistema conocés— y separarlas en dos lenguajes distintos
+haría parecer que una de las dos colecciones importa menos.
 
 **Apertura (`signal-lock`, 120 ms, `steps(3)`).** Nada de fundidos: aparece al
 60 % de opacidad, desaparece, y aparece al 100 %, como una señal que engancha.
@@ -704,7 +927,12 @@ decoración: cada línea ocurrió.** Y es lo que le da contenido real al §9.
 
 **Qué se ve.** En la papelera aparece una nota que nadie creó: `SYSTEM.LOG`.
 
-**Cuándo.** Con la sesión ≥ 10 minutos abierta y ≥ 3 notas.
+**Cuándo.** Con la sesión ≥ 10 minutos abierta y ≥ 3 notas **contando las de la
+papelera más los borrados definitivos de esta sesión** — que es lo que hay a mano
+cuando se mira la papelera, y además es lo coherente: el fantasma habla de lo que
+pasó por acá, no de lo que sigue vivo.
+
+Se pregunta **al entrar a la papelera**, no cada tanto por reloj.
 
 **Contenido: tu propia actividad.** No es texto inventado que la imita — es el
 volcado del registro real de peticiones (§8). Un archivo fantasma que te muestra
@@ -736,12 +964,22 @@ El borrado definitivo es la única acción irreversible de la app.
 El mensaje del diálogo escala en **cuatro peldaños**, y cada uno dice UNA cosa
 más que el anterior:
 
-| Borrados | Qué dice |
-| -------- | -------- |
-| 1–4 | `Esta acción no se puede deshacer.` — genérico, como cualquier app |
-| 5–7 | `Como los otros cuatro.` — menciona que estuvo contando |
-| 8–11 | `Van ocho. Ninguna vuelve.` — añade que no hay marcha atrás |
-| 12+ | `Ya no las cuento por sesión.` — deja ver que lleva un registro aparte |
+El escalón se decide por los borrados **anteriores** a éste, así que el que estás
+por hacer va siempre uno por delante:
+
+| Borrados previos | El que estás por hacer | Qué dice |
+| --- | --- | --- |
+| 0–3 | 1.º–4.º | `«X» se borrará para siempre. Esta acción no se puede deshacer.` — genérico, como cualquier app |
+| 4–7 | 5.º–8.º | `Como los otros cuatro.` — menciona que estuvo contando |
+| 8–11 | 9.º–12.º | `Van ocho. Ninguna vuelve.` — añade que no hay marcha atrás |
+| 12+ | 13.º en adelante | `Ya no las cuento por sesión.` — deja ver que lleva un registro aparte |
+
+**Los números van en palabras**, no en cifras: «los otros cinco» pesa más que
+«los otros 5» — la cifra es un dato, la palabra es alguien contando. El
+repertorio llega hasta *doce*; más allá vuelve la cifra, porque «los otros
+cuarenta y dos» escrito a mano sería más frágil que informativo.
+
+Al quinto borrado se marca además el secreto `trash-tally` (§7).
 
 **La progresión es la pieza.** Un único mensaje distinto sería un chiste; cuatro
 que se van cerrando es una presencia. Y el último es el que más pesa: hasta ahí
@@ -808,9 +1046,20 @@ que sigue en el compositor.
 # 13 · Colapso del sistema
 
 El clímax. Se dispara con la integridad a 0 (nueve clics en el rótulo) o con
-`//panic`. Dura **4,2 s**.
+`//panic`.
+
+**Dura 3,12 s de caída más lo que tarde en volver** — entre 8 y 25 segundos,
+sorteados en cada colapso, y más si venís insistiendo (ver la escalada).
 
 ### La secuencia
+
+| | Tramo | Desde | Hasta |
+| --- | --- | --- | --- |
+| 1 | Corte | 0 ms | 150 ms |
+| 2 | Interferencia | 150 ms | 2,2 s |
+| 3 | **Barras de color** | 2,2 s | 2,72 s |
+| 4 | Pantalla muerta | 2,72 s | 3,12 s |
+| 5 | Rearranque | 3,12 s | + 8–25 s |
 
 **1 · Corte — 0 a 150 ms.** Todo a tinta plana de golpe. Un fotograma, sin
 fundido: la señal se corta, no se desvanece.
@@ -830,7 +1079,7 @@ buscara engancharse y no lo consiguiera.
 | Modo | Glifos | Qué se ve |
 | ---- | ------ | --------- |
 | `bars` | `█▓▌` | Bandas horizontales gruesas que bajan. La más limpia y la que mejor se lee como avería. Los bordes se deshilachan: una banda de canto perfecto parecería una caja dibujada. |
-| `snow` | `▓▒░` | Grano medio, con densidad propia por fila — las vetas horizontales que el ojo reconoce como ruido. |
+| `snow` | `░░░░░░▒▒▓` | Grano medio, con densidad propia por fila (de 0,12 a 0,5) — las vetas horizontales que el ojo reconoce como ruido. Los glifos van **repetidos para pesar la tirada**: `░` sale seis de cada nueve veces y `▓` sólo una. Con los tres por igual la nieve salía como un muro blanco, porque los tres sombreados son claros. |
 | `dots` | `·:.` | Granito fino y escaso. Es el respiro entre las densas. |
 | `nosignal` | `▄▀` | Casi todo vacío, con algún trazo suelto cada siete filas. Una pantalla que ya ni ruido consigue producir. |
 
@@ -844,10 +1093,20 @@ Todo a **12 fotogramas por segundo**, y escrito con `textContent` directamente
 sobre el nodo: son miles de caracteres doce veces por segundo, y un `setState`
 por fotograma repintaría el árbol de React cada 83 ms.
 
-**3 · Pantalla muerta — 2,2 a 2,6 s.** El tubo se apaga: `scaleY(1) → scaleY(0.02)`,
-queda una línea horizontal brillante, la línea se cierra a un punto, negro.
+**3 · Las barras de color — 2,2 a 2,72 s.** Las mismas siete barras SMPTE del
+arranque del monitor (§25), entre la estática y el apagón.
 
-**4 · Rearranque — a partir de 2,6 s, y dura lo suyo.**
+Es lo que hacía un televisor al perder la señal de verdad: primero nieve, después
+la carta de ajuste, y sólo entonces se apagaba. **Sin ellas, la estática se
+apagaba a secas y el fallo parecía un corte de luz; con ellas, parece un equipo
+que se rindió por su cuenta.** Cortas a propósito: son un latido dentro de la
+caída, no una parada.
+
+**4 · Pantalla muerta — 2,72 a 3,12 s.** El tubo se apaga: `scaleY(1) →
+scaleY(0.02)`, queda una línea horizontal brillante, la línea se cierra a un
+punto, negro.
+
+**5 · Rearranque — a partir de 3,12 s, y dura lo suyo.**
 
 Las líneas **no salen de golpe: van saliendo a medida que carga.**
 
@@ -889,7 +1148,25 @@ otra familia.
 TIEMPO ESTIMADO: 19s
 ```
 
-**5 · Vuelta.** La capa se retira sin fundido y la integridad vuelve a 100.
+**6 · Vuelta — y el equipo termina de arrancar.** La capa se retira sin fundido,
+la integridad vuelve a 100 y **empieza a correr la ventana de la escalada**
+(`registerRecovery`). Y entonces el monitor hace lo que hace un equipo que se
+apagó: **arranca** (§25), desde las barras.
+
+```
+carga  →  barras  →  rótulo  →  comprobación  →  inicio
+```
+
+**Desde las barras, no desde el apagón**, porque el apagón ya lo hizo el propio
+colapso en su tramo 4. Antes la app volvía de golpe en cuanto la barra de carga
+llegaba al final, y eso contaba que **el sistema se recuperó solo** — que es
+justo lo que no pasó: se cayó, y hay que encenderlo.
+
+> Durante todo esto, `<html>` lleva `data-collapsing`. Las capas de glitch y el
+> barrido viven fuera de este árbol y tienen que saber que hay un colapso encima
+> para subirse por arriba y pintarse con luz en vez de con tinta. Un atributo en
+> la raíz es el único sitio desde el que se alcanza todo, y ya es el patrón de la
+> casa (lo mismo hacen `data-failing` y la v0.2).
 
 ### Lo que más importa no se ve
 
@@ -973,16 +1250,6 @@ misma**.
 
 ### El bloqueo · al sexto colapso
 
-> **El puzzle se endureció.** El patrón era de 5 bytes en una rejilla de 10
-> columnas, y 5 divide a 10: la repetición caía en columnas perfectas y la celda
-> rota saltaba a la vista sin buscarla. Ahora el patrón es de **7**, primo con
-> las 10 columnas, así que se corre una columna por fila y ninguna fila repite la
-> alineación de otra.
->
-> Y el byte roto ya no es uno al azar —cantaba demasiado— sino **el que tocaba
-> con un solo dígito hexadecimal cambiado**. Sigue sin coincidir con ningún byte
-> del patrón: difícil no es lo mismo que imposible.
-
 **El rearranque ARRANCA y se traba.** Saltárselo era peor: la barra que empieza a
 subir y se queda clavada entre el 52 % y el 83 % cuenta el fallo mucho mejor que
 no intentarlo — primero te hace creer que vuelve. El tope se sortea para que no
@@ -1010,44 +1277,144 @@ TIEMPO ESTIMADO: --
 > EL NÚCLEO NO RESPONDE
 ```
 
-Y ahí sí queda la pantalla de fallo crítico con su volcado de memoria:
+Y ahí sí queda **la pantalla de fallo crítico**, que es la que trae el puzzle.
+
+## El puzzle · cómo se resuelve
+
+Esto es lo que se ve, entero:
 
 ```
-0000   7F 3A 2B 91 4C 7F 3A 2B 91 4C
-000A   7F 3A 2B 91 4C 7F 3A 2B 91 4C
-0014   7F 3A 2B 91 4C 7F E9 2B 91 4C
-0028   7F 3A 2B 91 4C 7F 3A 2B 91 4C
+┌───────────────────────────────────────────────┐
+│ ⚠ FALLO CRÍTICO                        0xDEAD │
+├───────────────────────────────────────────────┤
+│ EL NÚCLEO NO PUDO REINICIARSE.                │
+│                                               │
+│ SUBSISTEMA          NÚCLEO / MEMORIA          │
+│ ESTADO              SIN RESPUESTA             │
+│ INTENTOS            03                        │
+│                                               │
+│ LA MEMORIA ESTÁ CORRUPTA EN UNA POSICIÓN.     │
+│                                               │
+│ OFFSET       VOLCADO 0x0000–0x003B            │
+│ 0000  7F 3A 2B 91 4C E0 15 7F 3A 2B           │
+│ 000A  91 4C E0 15 7F 3A 2B 91 4C E0           │
+│ 0014  15 7F 3A 2B 91 4C E0 15 7F 3A           │
+│ 001E  2B 91 4C E0 15 7F 3A 2B 91 4C           │
+│ 0028  E0 15 7F 3A 2B 91 4C E0 15 7F           │
+│ 0032  3A 2B 91 4C E0 15 7F 3A 2B 91           │
+└───────────────────────────────────────────────┘
 ```
 
-**El volcado repite un patrón y una sola celda lo rompe.** Haciendo clic en esa
-celda, el sistema se recupera. Las columnas ocupan el ancho entero del cuadro: un
-volcado de verdad llena su caja, y además las celdas separadas son objetivos más
-grandes y más fáciles de comparar entre sí.
+**La rejilla es de 10 columnas por 6 filas: 60 celdas.** Los offsets van de
+diez en diez en hexadecimal — `0000`, `000A`, `0014`, `001E`, `0028`, `0032` — y
+el encabezado lo dice: el volcado cubre de `0x0000` a `0x003B`.
 
-El puzzle **no lleva instrucciones**, y es deliberado: una rejilla que repite un
-patrón con una celda distinta se resuelve mirando, y explicarlo lo convertiría en
-un formulario. Se resuelve con un **clic** y no escribiendo porque el teclado es
-del editor, que sigue vivo debajo — pedirte que escribas acá te robaría las
-pulsaciones.
+### Cómo se resuelve, paso a paso
 
-**La memoria corrupta se VE corrupta.** El cuadro entero lleva la misma
-aberración cromática del fallo del tema, y el volcado tiembla un poco más que el
-resto porque es lo que hay que leer. No es sólo decoración: partir los canales de
-un volcado hexadecimal lo vuelve **materialmente más difícil de escanear**, que
-es exactamente lo que tiene que ser un puzzle que te bloquea la pantalla. Ver una
-irregularidad en una cuadrícula limpia es fácil; verla con los dígitos
-temblando, no.
+1. **El volcado repite un patrón de siete bytes.** En el ejemplo de arriba,
+   `7F 3A 2B 91 4C E0 15`, una y otra vez hasta llenar las 60 celdas. Los
+   siete son distintos entre sí: dos iguales harían que la repetición se leyera
+   peor y el fallo costara más de encontrar **por el motivo equivocado**.
+2. **Una sola celda no sigue el patrón.** Hay que encontrarla.
+3. **Se hace clic en esa celda** y el sistema se recupera en el acto. Cada celda
+   es un `<button>` de verdad.
+4. **Si te equivocás**, sale `ESA NO. RELEYENDO…` durante 600 ms, sube el
+   contador de `INTENTOS` — y **el volcado se rehace entero**: patrón nuevo y
+   celda rota nueva.
 
-**Errar rehace el volcado entero** — patrón nuevo y celda rota nueva. Sin eso,
-cada fallo sólo tacharía una celda y el puzzle se resolvería por descarte:
-sesenta clics y listo. Rehaciéndolo, cada intento vuelve a ser una búsqueda. Lo
-que NO hace es regenerarse en cada render: ahí el byte saltaría de sitio mientras
-lo mirás, que sería tramposo en vez de difícil.
+### Por qué cuesta encontrarla
 
-**Es lo único de toda la app que sobrevive a recargar la página.** Recargar es la
-salida fácil de cualquier otro efecto; acá justamente no la hay. Se guarda el
-instante de vencimiento, no un booleano, así que la espera corre aunque cierres
-la pestaña.
+**Siete es primo con diez, y ahí está toda la dificultad.** El patrón era antes
+de cinco bytes, y cinco divide a diez: la repetición caía en columnas perfectas
+—cada columna mostraba siempre el mismo byte— y la celda rota saltaba a la vista
+sin buscarla. Se resolvía de un vistazo y no era un puzzle.
+
+Con siete, **el patrón se corre una columna en cada fila** y tarda siete filas en
+volver a alinearse; como el volcado tiene seis, ninguna fila repite la alineación
+de otra. Hay que leer el patrón de verdad en vez de escanear una columna. Un test
+lo fija calculando el máximo común divisor: si alguien cambia el ancho de la
+rejilla, salta.
+
+**El byte roto es el que tocaba con UN dígito hexadecimal cambiado.** Antes era
+un byte al azar y cantaba demasiado: entre bytes repetidos, uno sin ninguna
+relación se ve de lejos. Si en la posición tocaba `4C`, la celda rota dice `4E`
+o `9C` — no `E9`.
+
+> **Difícil no es lo mismo que imposible.** El resultado **nunca puede coincidir
+> con otro byte del patrón**, o la celda se leería como parte de la repetición y
+> el puzzle se quedaría sin solución visible. Se construye la lista de las
+> treinta variantes de un dígito, se descartan las que ya están en el patrón, y
+> se sortea entre las que quedan.
+
+**Nunca es la primera celda.** Sin patrón establecido todavía, no habría con qué
+compararla y el puzzle sería injusto.
+
+### Tres decisiones que lo definen
+
+**No lleva instrucciones**, y es deliberado: una rejilla que repite un patrón con
+una celda distinta se resuelve mirando, y explicarlo lo convertiría en un
+formulario. Lo único que dice es `LA MEMORIA ESTÁ CORRUPTA EN UNA POSICIÓN.` —
+eso no es la instrucción, es **el síntoma**: la máquina informando de su avería,
+como informa de todo lo demás en este cuadro. Que además sea exactamente lo que
+hay que saber es cosa tuya.
+
+**Se resuelve con un clic y no escribiendo** porque el teclado es del editor, que
+sigue vivo debajo. Pedirte que escribas acá te robaría las pulsaciones.
+
+**Errar rehace el volcado entero.** Sin eso, cada fallo sólo tacharía una celda y
+el puzzle se resolvería por descarte: sesenta clics y listo. Rehaciéndolo, cada
+intento vuelve a ser una búsqueda. Lo que **no** hace es regenerarse en cada
+render: ahí el byte saltaría de sitio mientras lo mirás, que sería tramposo en
+vez de difícil.
+
+### Y encima, la memoria corrupta se VE corrupta
+
+El cuadro entero lleva la misma aberración cromática del fallo del tema, y el
+volcado tiembla un poco más que el resto porque es lo que hay que leer. No es
+sólo decoración: partir los canales de un volcado hexadecimal lo vuelve
+**materialmente más difícil de escanear**, que es exactamente lo que tiene que
+ser un puzzle que te bloquea la pantalla. Ver una irregularidad en una cuadrícula
+limpia es fácil; verla con los dígitos temblando, no.
+
+El cuadro **se sacude además con los mismos tirones que el resto del sistema**:
+uno quieto en mitad de una pantalla que falla se lee como si estuviera en otra
+capa de realidad.
+
+> El filtro SVG se publica desde este componente y no se da por puesto: esta
+> pantalla puede aparecer sin que el fallo cromático haya ocurrido nunca, y con
+> la señal sana nadie lo había metido en el DOM todavía.
+
+Las columnas ocupan el ancho entero del cuadro: un volcado de verdad llena su
+caja, y además las celdas separadas son objetivos más grandes y más fáciles de
+comparar entre sí.
+
+### Sobrevive a recargar, y es lo único que lo hace
+
+Recargar es la salida fácil de cualquier otro efecto; acá justamente no la hay.
+Se guarda **el instante de vencimiento**, no un booleano, así que la espera corre
+aunque cierres la pestaña.
+
+Y se guarda además **si la señal ya estaba rota** cuando el bloqueo empezó. Sin
+eso pasaba algo que no cuadraba: rompías la señal, entrabas en fallo crítico,
+recargabas, resolvías el puzzle — y la app volvía impecable. Resolver el puzzle
+acababa arreglando una avería que el puzzle no toca.
+
+> **Y se lee antes del primer pintado.** El bloqueo no se puede leer al montar
+> sin más: durante un fotograma se pintaba la app NORMAL, así que al recargar en
+> pleno fallo crítico se veía la pantalla de inicio un segundo antes de volver al
+> error — **recargar parecía funcionar, que es justo lo que este estado niega**.
+>
+> La solución es la misma que ya usan el tema y el idioma: un script en línea y
+> síncrono (`LOCKOUT_BOOT_SCRIPT`) que marca `<html>` con `data-booting-locked`
+> antes de pintar. React sigue hidratando lo mismo que el servidor —el atributo
+> lo pone el navegador, no el árbol— y el CSS tapa la app hasta que la capa de
+> bloqueo se monta de verdad.
+>
+> El arranque del monitor (§25) hace lo suyo: con el bloqueo puesto **se queda en
+> las barras** y no enseña ni el rótulo ni la comprobación de memoria. Un equipo
+> bloqueado no llega a arrancar, y contarle que arrancó bien justo antes de
+> decirle que no arrancó sería peor — además de obligarle a esperar hasta ocho
+> segundos para volver a leer el mismo error.
 
 ### Sin excepciones: todo lo que aparezca se ve roto
 
@@ -1137,6 +1504,32 @@ puede accionar. La otra —a los cinco minutos se levanta solo— existe para qu
 nadie quede encerrado de verdad, pero **no se anuncia**: decirlo convierte el
 puzzle en opcional y el estado en una cuenta atrás. Que la salida exista y no se
 sepa es lo que mantiene la tensión sin crear una trampa.
+
+Las dos **cortan la racha de colapsos**. Si no, el colapso siguiente volvería a
+bloquear en el acto y el puzzle no habría servido de nada.
+
+### Entrar y salir son DOS piezas distintas
+
+| Momento | Pieza | Dónde se da |
+| --- | --- | --- |
+| **Caer** en el fallo total | **POLILLA** (§18 · 1) | `startLockout` |
+| **Resolver el puzzle** | **LLAVE** (§18 · 16) | el clic acertado, en `SystemLockout` |
+| Esperar a que venza | *(nada)* | — |
+
+**Caer ahí dentro le pasa a cualquiera; salir por la puerta buena, no.** La
+polilla es la primera avería informática documentada —un bicho dentro de un relé,
+1947, y de ahí viene «bug»— y acabás de ver una de verdad. La llave lleva desde
+antes de tener camino el pie que le tocaba: *«la cerradura ya no existe»* —
+encontrás la salida de algo que, en cuanto sale, deja de estar.
+
+**Esperar no da nada, y ésa es la decisión.** La llave se da en el clic acertado
+y no en `clearLockout`, que es por donde pasan las dos salidas: **una llave que
+se gana esperando no abre nada.**
+
+> ⚠ **El faro estuvo acá y se fue.** Premiaba «pasar por el bloqueo y salir», y
+> al repartirse el bloqueo en dos —entrar y resolver— un tercer premio por el
+> mismo sitio era **el mismo logro cobrado tres veces**. Ahora premia otra cosa
+> (§18 · 12).
 
 **No roba el teclado.** La capa captura clics porque el puzzle los necesita, pero
 no enfoca nada: el editor sigue montado debajo y lo que teclees sigue llegando y
@@ -1480,21 +1873,49 @@ Con la señal rota (§14) la física es **idéntica byte por byte**: lo que camb
 que ves la pelota doble y corrida. No es una variante difícil, es un display
 averiado — y por eso es un logro distinto y lleva marcador aparte.
 
+**En el panel de diagnóstico** (§7), que gana así una razón para reabrirlo:
+
 ```
 VSYNC-TEST                42  (7 partidas)
 VSYNC-TEST DEGRADADO      12  (3 partidas)
+```
 
+Cada tablero guarda **su mejor peloteo y cuántas partidas jugaste**, se batiera
+el récord o no. Sin ninguna partida dice `SIN DATOS`, no un cero: un cero
+parecería un récord malísimo en vez de un hueco.
+
+**Y dentro del propio juego**, abajo:
+
+```
 RÉCORD DEL SISTEMA       118.394
 ```
 
 El récord del sistema ya está puesto cuando llegás. Lleva jugando desde antes que
-vos y no tenía nada más que hacer.
+vos y no tenía nada más que hacer. Es **inalcanzable a propósito**: no es una
+meta, es el tamaño del turno que lleva sola. Ése es el chiste, y también la parte
+triste.
 
 Viven en `localStorage` con el mismo patrón que el tema y el bloqueo: atados a
 este navegador, sobreviven a recargar. **No van a Mongo**: guardar un contador de
 peloteo pedía colección, endpoint y migración, y el backend no se toca.
 
-Se ven en el panel de diagnóstico, que gana así una razón para reabrirlo.
+### Una sola pieza para los dos tableros
+
+> ⚠ **Antes había una por tablero.** El degradado se quedó sin la suya cuando la
+> terminal pasó a premiar los comandos, y no se le buscó otro dibujo a propósito:
+> **dos piezas para el MISMO juego son una pieza contada dos veces**, y el pie ya
+> pregunta cuántas veces hizo falta intentarlo.
+
+Los umbrales sí siguen siendo distintos, porque el degradado se ve peor y cuesta
+más:
+
+| Tablero | Peloteo que pide | Constante |
+| --- | --- | --- |
+| Limpio | **25** | `RALLY_LIMPIO` |
+| Degradado | **15** | `RALLY_DEGRADADO` |
+
+Se cobra **al perder**, no al llegar al número: se mira el peloteo de la partida
+terminada. Y cualquiera de los dos da la misma pieza — **JUEGO** (§18 · 5).
 
 ### La regla que rompe
 
@@ -1568,53 +1989,189 @@ memoria de una máquina encendida hace demasiado. La polilla es **la primera
 avería informática documentada** —dentro de un relé, en 1947, y de ahí viene
 «bug»—; la cinta y el disquete son soportes que esta terminal conoció.
 
-Ocho piezas, cada una con su pie:
+**Son dieciséis, todas de cuarenta columnas de ancho.** La copia de seguridad de
+los dibujos está en [`ARTE.md`](ARTE.md), generada desde el código.
 
-```
-     \         /     
-  .--.\.-----./.--.  
- /    \|     |/    \ 
-|  /\  |  .  |  /\  |
- \ \/  '.___.'  \/ / 
-  '--'    |    '--'  
-          |          
--- POLILLA · HALLADA EN EL RELÉ 70, 1947
-PIEZA NUEVA · 1/8
-```
+## Se ganan, no se regalan
 
-**Se coleccionan, y `//art` prioriza las que te faltan.** Sorteando a ciegas
-entre las ocho, conseguir la última pedía una media de veinte intentos y
-coleccionar se volvía un trámite. Dando primero las que no tenés, cada tirada
-avanza; completada, empieza a repetir y lo dice.
+> ⚠ **`//art` NO da ninguna pieza.** Antes sacaba una por cada vez que se
+> tecleaba, priorizando las que faltaban: la colección entera se completaba con
+> ocho pulsaciones de Enter y la pestaña con estrella no significaba nada. Una
+> colección de cosas fáciles de conseguir no es una colección, es una lista.
 
-La colección vive en `localStorage`, atada a este navegador, con el mismo patrón
-que los marcadores del pong.
+Ahora **`//art` es el catálogo**: dice cuáles llevás y no da nada. Cada pieza
+llega **por un camino distinto**, y ninguno da más de una. Como el origen es
+fijo, el dibujo puede hablar de dónde salió — y la colección completa acaba
+siendo un mapa de todo lo que hay escondido en la app. Ésa es la única razón que
+justifica que tenga sección propia.
 
-### `//keep` · quedarse una
+## Los tres estados (y un cuarto)
 
-Se desbloquea con **la primera** pieza —esperar a tenerlas las ocho dejaría el
-comando inútil justo mientras coleccionás, que es cuando dan ganas de guardar
-una— y escribe el dibujo en la nota abierta. Sólo puede pasar con la nota en
-blanco, porque el comando ES todo el contenido, así que no pisa nada.
+| Estado | Cómo se llega | Qué se ve en el catálogo |
+|---|---|---|
+| **Ganada** | Por su camino | Nada todavía: no brota sola |
+| **Revelada** | Tecleando `//art` | Su número y `[ SIN ABRIR ]` |
+| **Abierta** | Tecleando `//art_<n>` | El dibujo, y su pie |
+| **Sin nombre** | *(sólo el manipulador)* | El dibujo, y el pie **revuelto** |
 
-Guarda **la última que salió**, y esa memoria es de sesión y no de
-almacenamiento: quedarse una pieza es un gesto del momento, y recordar entre
-sesiones cuál viste hace tres días haría que `//keep` guardara algo que ya no
-tenés delante.
+**Ganarla no es verla.** Una pieza ganada no aparece sola: hay que teclear
+`//art`. Sin ese paso el catálogo no serviría para nada, porque sabrías lo que
+llevás sin preguntar.
 
-> ⚠ **Todo ASCII imprimible.** Los bloques (`█ ▌ ░`) no están en JetBrains Mono y
-> los pinta una fuente de reserva con otras métricas, así que un dibujo con
-> bloques se descuadra fila a fila. Es la misma trampa que hizo bailar el corte
-> del pong — ver [REGLAS.md · C8](REGLAS.md). Dos tests lo fijan: todo carácter
-> dentro del ASCII imprimible, y todas las filas de una pieza del mismo ancho.
+**Tenerla no es saber qué es.** El pie llega al abrirla con `//art_<n>`. En el
+catálogo ves que tenés la seis y no sabés qué es la seis hasta abrirla; sin
+esto, `//art_<n>` sería sólo una forma de volver a ver algo que el catálogo ya
+te contó.
+
+**Y el aviso de pieza ganada no dice cuál es.** Decía `PIEZA RECUPERADA: {name}`
+y ahí se caía el sistema entero: el nombre es el premio del tercer estado, y
+soltarlo en el primero deja `//art_<n>` sin nada que dar. Ahora dice
+`[+] PIEZA RECUPERADA. NO SÉ CUÁL.` — callar del todo sería peor, porque nadie
+teclea `//art` por corazonada.
+
+### El cuarto estado · el manipulador
+
+**Es la única pieza con puerta propia**, y existe porque su dibujo es una PISTA
+de algo sin resolver:
+
+1. Ves el morse del reloj (§20) → **se gana la pieza**.
+2. `//art_10` → sale el manipulador de telégrafo, con el pie
+   `[ SIN IDENTIFICAR ]`. Ver el aparato que HACE las rayas es entender de golpe
+   qué parpadea en la hora.
+3. Usás el código para **entrar en la v0.2 y para salir** → **se gana el nombre**.
+
+Si el nombre viniera con la pieza, la pista llegaría ya resuelta. Y las rayas que
+lleva el dibujo debajo **no deletrean la palabra del reloj**, a propósito: la
+pieza se gana por VER la señal, no por descifrarla, y regalarla ahí sería
+dársela a quien todavía no la sacó.
+
+> Ponerle esta puerta a las dieciséis convertiría la colección en dos
+> colecciones —una de dibujos y otra de nombres— y obligaría a inventar un
+> segundo logro para cada pieza, incluidas las que no esconden ningún acertijo.
+> Es una excepción declarada, no un modo.
+
+**Código:** `NameGate` y `captionKnown()` en `asciiArt.ts` · `markV02RoundTrip()`
+en `v02.ts` · `tests/lib/system/artNameGate.test.ts`
+
+## Los dieciséis caminos
+
+| # | Pieza | `source` | Cómo se consigue | Cableado |
+|---|---|---|---|---|
+| 1 | **POLILLA** · así empezó la palabra «bug» | `blackout` | Caer en el fallo total | ✅ |
+| 2 | **DISQUETE** · 1,44 MB que nadie migró | `v02` | Entrar en la v0.2 y usar sus dos comandos propios | ✅ |
+| 3 | **TERMINAL** · ya no le queda nada que decir | `all-commands` | Haber **usado** todos los comandos escondidos | ✅ |
+| 4 | **CINTA** · siguió girando sola | `reserved-tape` | *(reservada, sin decidir)* | ❌ |
+| 5 | **JUEGO** · se te da bien. ¿cuántas veces lo intentaste? | `pong` | Aguantar el peloteo en el pong | ✅ |
+| 6 | **PLUMA** · se acabó la hoja, no la tinta | `full-note` | Llenar una nota hasta `CONTENT_MAX` | ✅ |
+| 7 | **BOMBILLA** · ni encendida ni apagada | `theme-glitch` | El fallo cromático | ✅ |
+| 8 | **ARBUSTO** · mire, creció un arbusto | `long-session` | Media hora seguida con la pestaña abierta | ✅ |
+| 9 | **CUADERNO** · JuanJo0775 estuvo aquí | `everything` | Todos los secretos **y** las otras quince piezas | ✅ |
+| 10 | **MANIPULADOR** · lo que hizo esas rayas | `morse` | Ver el morse *(el nombre, aparte)* | ✅ |
+| 11 | **CINTA PERFORADA** · todo está ahí, ilegible | `history` | `//history` | ✅ |
+| 12 | **FARO** · la luz estaba ahí desde el principio | `guidance` | Seguir la pista: teclear algo que no existe y hacerle caso a `//help` | ✅ |
+| 13 | **CARITA** · era broma, ya le dije | `prank` | La broma del `n` en `//reset` | ✅ |
+| 14 | **OJO** · te estoy viendo | `entity` | Hablar con el ente | ❌ |
+| 15 | **BIBLIOTECA** · todo lo que usted volvió a escribir | `many-notes` | Juntar doce notas | ✅ |
+| 16 | **LLAVE** · la cerradura ya no existe | `blackout-puzzle` | Resolver el puzzle del fallo total | ✅ |
+
+### Lo que falta, y por qué está así
+
+**El ojo espera al ente.** Es lo que todo lo ve, así que no puede ser el premio
+de irse a por un café — le corresponde a lo que hay detrás de `//hi`, que
+todavía no existe. **La cinta está reservada** para un camino que aún no se ha
+decidido; se dejó quieta a propósito porque ese hueco ya pasó por tres dueños
+—el ojo, la polilla, la cinta— y cada mudanza dejó un pie contando algo que ya
+no pasaba.
+
+Mientras el ojo no exista, **el cuaderno es inalcanzable**, porque exige tenerlas
+todas. Es deuda conocida y no un olvido, y lo fija un test que enumera los
+caminos sin cablear: sin él, borrar un `awardFrom` de un componente dejaría una
+pieza imposible de ganar **sin romper nada visible**.
+
+**El fallo total da DOS piezas, y no la misma dos veces.** Caer ahí dentro le
+pasa a cualquiera: eso da la polilla, que es literalmente el bug —la primera
+avería informática documentada fue un bicho dentro de un relé, en 1947—. Salir
+por la puerta buena, no: **resolver el puzzle** da la llave, y su pie ya lo decía
+antes de tener camino, «la cerradura ya no existe». Esperar a que el bloqueo
+venza **no cuenta**: una llave que se gana esperando no abre nada.
+
+**El faro premia haber estado perdido.** Tecleás algo que no existe, la máquina
+no te deja a oscuras —te señala `//help`— y vos venís. La luz llevaba encendida
+desde el principio y sólo hacía falta mirarla. **Teclear `//help` a secas no
+basta**: es el comando más obvio de la app, y darla por eso la regalaría en el
+primer minuto y a todo el mundo. Hace falta que la pista haya llegado antes, y
+esa pista se recuerda en `flashnotes:helpHint` — entre perderse y hacer caso
+puede haber una recarga, y perder el hilo ahí dejaría el premio dependiendo de
+si te distrajiste.
+
+**El pong es una sola pieza.** Había una por tablero; el degradado se quedó sin
+la suya al mudarse la terminal, y no se le buscó otro dibujo a propósito: dos
+piezas para el mismo juego son una pieza contada dos veces. Los dos umbrales
+siguen siendo distintos —el degradado se ve peor y pide menos peloteo— y el pie
+ya pregunta cuántas veces hizo falta intentarlo.
+
+**El arbusto y la pluma medían lo mismo.** Los dos miraban los caracteres
+escritos, con dos umbrales distintos: se ganaban casi a la vez y ninguna
+significaba nada. Ahora el arbusto mide el **rato** (media hora) y la pluma el
+**volumen** de una sola nota — y el tope de la pluma es el del contrato con el
+backend, no una cifra inventada acá, porque el premio es haber llegado al borde
+de verdad.
+
+**«Todos los comandos» quiere decir USADOS.** No listados: `//help` los enseña
+revueltos y `//ps` menciona alguno, y si eso contara la terminal se ganaría
+mirando. Lo garantiza que `markUsed` corre **después** de resolver el comando y
+sólo si no se negó a existir. Y cuenta los de **las dos versiones**, así que no
+se puede completar sin haber cruzado la puerta de la v0.2.
+
+**El cuaderno no se exige a sí mismo.** La condición es «¿la única que falta es
+ésta?» y no «¿están las dieciséis?»: la pieza que cierra la caja no puede
+pedirse a sí misma como requisito.
+
+## `//keep` · quedarse una
+
+Se desbloquea con **la primera** pieza —esperar a tenerlas todas dejaría el
+comando inútil justo mientras coleccionás— y **crea una nota** con el dibujo y su
+pie, titulada `POLILLA · 1/16`. No escribe en la nota abierta: eso obligaría a
+tener una en blanco a mano, y la pieza acabaría mezclada entre tus archivos como
+una nota más.
+
+Guarda **la última que se dibujó** con `//art_<n>`, y esa memoria es de sesión:
+quedarse una pieza es un gesto del momento, y recordar entre sesiones cuál viste
+hace tres días haría que `//keep` guardara algo que ya no tenés delante. Si la
+pieza todavía no tiene el nombre ganado, la ficha sale sin él — guardarla no
+puede ser un atajo para leer lo que no se ha abierto.
+
+## Dónde vive
+
+| Clave | Qué guarda |
+|---|---|
+| `flashnotes:art` | Las ganadas |
+| `flashnotes:artSeen` | Las reveladas con `//art` |
+| `flashnotes:artOpen` | Las abiertas con `//art_<n>` |
+| `flashnotes:v02trip` | Si ya entraste **y saliste** con el código |
+
+Todo en `localStorage`, atado a este navegador, con el mismo patrón que los
+marcadores del pong. **Las borra `//reset`** (§22).
+
+El **panel de diagnóstico** (alt+clic) lleva el contador de piezas al lado del de
+secretos y con la misma barra: son la misma pregunta contada de otra forma
+—cuánto del sistema conocés— y separarlas en dos lenguajes distintos haría
+parecer que una de las dos colecciones importa menos.
+
+> ⚠ **Nada que la monoespaciada no tenga.** La regla no es «sólo ASCII» —la `Ø`
+> está en JetBrains Mono y se pinta perfecta— sino que no haya bloques (`█ ▌ ░`)
+> ni marcos de caja (`┌ ─ ┐`): ésos no están, los pinta una fuente de reserva con
+> otras métricas, y el dibujo se descuadra fila a fila. Es la misma trampa que
+> hizo bailar el corte del pong — ver [REGLAS.md · C8](REGLAS.md). Dos tests lo
+> fijan: los caracteres, y que todas las filas de una pieza midan lo mismo.
 
 ---
 
 # 19 · La ayuda no lo dice todo
 
-`//help` listaba los dieciocho comandos. Bastaba teclearlo una vez para que no
-quedara nada por descubrir: las piezas dejaban de ser secretos y pasaban a ser un
-menú.
+`//help` listaba **los veinticuatro comandos** de la v1.0. Bastaba teclearlo una
+vez para que no quedara nada por descubrir: las piezas dejaban de ser secretos y
+pasaban a ser un menú.
 
 Ahora lista **sólo lo básico** —lo que alguien podría querer de una app de notas,
 más las puertas de entrada— y los demás salen **revolviéndose**, cada uno en SU
@@ -1651,7 +2208,7 @@ letras se cruza con lo que sueltan las ventanas de error.
 | | |
 | --- | --- |
 | **Anunciados** | `//help` `//version` `//date` `//ls` `//df` `//clear` |
-| **Escondidos** | `//whoami` `//sudo` `//uptime` `//ps` `//log` `//history` `//diag` `//chaos` `//panic` `//hi` `//whoareu` `//howareu` `//date_off` `//art` `//keep` `//reset` `//attach_6` |
+| **Escondidos** | `//whoami` `//sudo` `//uptime` `//ps` `//log` `//history` `//diag` `//chaos` `//panic` `//hi` `//whoareu` `//howareu` `//date_off` `//art` `//art_<n>` `//keep` `//reset` `//attach_<n>` |
 | **Sólo en la v0.2** | `//todo` `//recover` — ver §24.4 |
 
 > `//hi` estuvo en la lista de anunciados hasta que se pidió esconderlo, y esta
@@ -1659,22 +2216,45 @@ letras se cruza con lo que sueltan las ventanas de error.
 > registro de comandos: una tabla escrita a mano sobre algo que cambia se
 > desfasa, y lo hace en silencio.
 
-### Tres fugas, para que nada sea inalcanzable
+`//art_<n>` y `//attach_<n>` **emparejan por patrón** y no por nombre exacto —un
+número dentro de un token único—, así que en el registro figuran con un nombre de
+muestra (`//art_1`, `//attach_6`) y con `—` por descripción. Se listan igual que
+los demás cuando los descubrís, guion incluido.
+
+### Las fugas, para que nada sea inalcanzable
 
 Un secreto que nadie puede encontrar no es un secreto, es código muerto — el
-error exacto que ya se cometió con el umbral de diez colapsos. Así que hay tres
+error exacto que ya se cometió con el umbral de diez colapsos. Así que hay **dos**
 maneras de que un comando escondido llegue a vos:
 
-1. **`//help` dice CUÁNTOS faltan, no cuáles.** `12 COMANDOS NO LISTADOS.` Sabés
-   que hay que buscar; sigue habiendo qué buscar.
-2. **Una de cada cuatro veces se le escapa uno.** `UNO SE ME ESCAPÓ: //panic`
-3. **Las ventanas de error del fallo cromático los nombran**, una de cada tres:
-   `SÍMBOLO SIN RESOLVER: //chaos`
+1. **`//help` deja escapar uno**, una de cada cuatro veces:
+   `UNO SE ME ESCAPÓ: //panic`. Sólo suelta los que **siguen tachados** — soltar
+   uno que ya usaste no es una fuga — y sólo si queda alguno por descubrir.
+2. **Las ventanas de error del fallo cromático los nombran**, una de cada tres:
+   `SÍMBOLO SIN RESOLVER: //chaos`, con un código hexadecimal inventado al lado.
 
-La tercera es la mejor. Las dos primeras se leen como ayuda; una ventana de error
-que muestra un comando en un volcado se lee como un descuido, y **enterarte de
-algo que el sistema no quería contarte vale más que enterarte porque te lo
-contó.**
+La segunda es la mejor. La primera se lee como ayuda; una ventana de error que
+muestra un comando en un volcado se lee como un descuido, y **enterarte de algo
+que el sistema no quería contarte vale más que enterarte porque te lo contó.**
+
+Las dos filtran **por versión**: dentro de la v0.2 sólo nombran comandos que
+existan ahí. Era una lista calculada una vez al cargar el módulo, así que soltaba
+comandos de la v1.0 que ahí contestan «desconocido» — **una pista que no lleva a
+ninguna parte es peor que ninguna pista**, porque enseña que las pistas de esta
+app no valen y a partir de ahí ya nadie sigue ninguna.
+
+> ⚠ **Hubo una tercera fuga y ya no está.** `//help` decía cuántos faltaban
+> (`12 COMANDOS NO LISTADOS.`) y esa línea no se construye en ninguna parte: hoy
+> la respuesta es el rótulo, la lista y —con suerte— el comando soltado. No es un
+> descuido de esta página que se arregle escribiéndola de nuevo: **es una fuga
+> que el código dejó de tener**, y así queda anotada.
+>
+> La red sigue en pie con dos, porque la de las ventanas de error se puede
+> provocar a voluntad rompiendo la señal (§14) y no tiene tope de tiradas.
+
+Dentro de la v0.2 hay además **sus dos caminos propios** —la basura de una nota
+recuperada y el marcador de una nota vacía— para sus dos comandos exclusivos. Ver
+§24.2 y §24.3.
 
 ### Y una de cada seis veces no está para listas
 
@@ -1686,6 +2266,22 @@ contó.**
 Una ayuda que siempre contesta igual se lee como documentación; ésta es una
 máquina cansada. Volver a pedirla funciona: es un desplante, no una avería — un
 comando que a veces no anda de verdad sería un defecto, no un chiste.
+
+Hay **cuatro desplantes**, y ninguno es una negativa seca — todos dicen algo del
+sistema:
+
+```
+LA LISTA LA TENÍA ALGUIEN QUE YA NO TRABAJA ACÁ.
+PRUEBE COSAS. ES LO QUE HAGO YO.
+AYUDA DE QUÉ. ACÁ NO PASA NADA.
+AHORA NO.
+```
+
+### Y una cosa más: `//help` puede dar una pieza
+
+Si antes tecleaste algo que no existe, la máquina te mandó acá — y venir es lo
+que da **el faro** (§18 · 12). Se cobra **después** del desplante: pagar el
+premio sin haber visto la lista sería premiar una puerta que no se abrió.
 
 ---
 
@@ -1741,8 +2337,24 @@ una a tres señales — con letras de cinco, la palabra desbordaba el hueco. Y s
 los códigos morse **de verdad**: inventarlos volvería el puzzle imposible, porque
 se descifra con una tabla que cualquiera puede buscar.
 
-> **La puerta está, la habitación no.** Teclear la palabra todavía no hace nada:
-> abre la v0.2, que está por construirse. Ver [`IDEAS.md`](IDEAS.md) · E.
+### Y detrás de la puerta hay algo
+
+Teclear la palabra descifrada, como si fuera un comando, **entra en la v0.2**
+(§24). La misma palabra, tecleada de nuevo ahí dentro, saca.
+
+Sacar el morse **ya cuenta** —marca el secreto `morse` y da el manipulador
+(§18 · pieza 10)— aunque no llegues a descifrarlo. Descifrarlo y cruzar es un
+hallazgo aparte (`v02`): mucha gente va a leer el código sin llegar a teclear la
+palabra.
+
+**Dentro de la v0.2 el reloj deja de esconderlo.** El morse es la puerta de
+entrada; seguir enseñándolo ahí dentro daría a entender que hay otra cosa detrás,
+cuando lo que hay detrás es de donde acabás de venir.
+
+Las diez palabras son: `MODO`, `DIARIO`, `RESTO`, `SIGUE`, `ANTES`, `AGUA`,
+`NIDO`, `TARDE`, `MADERA`, `ESTAR`. Ninguna es una clave al azar: **todas dicen
+algo del sistema**, que es lo que la máquina diría si pudiera. Y las catorce
+letras del alfabeto corto son `A D E G I K M N O R S T U W`.
 
 ---
 
@@ -1811,23 +2423,192 @@ de la nada, que es medio chiste y medio escalofrío.
 
 # 22 · Empezar de cero
 
-`//reset`. Los secretos, las piezas, los marcadores, los comandos desbloqueados,
-la palabra en morse, el reloj suelto, el bloqueo, la integridad. Todo a cero.
+**`//reset` borra todo, y «todo» incluye tus notas.** Llama a
+`notesApi.wipeEverything()`: es la única operación irreversible de la app y la
+única que toca el servidor.
+
+## El riesgo está aceptado, y por qué
+
+Esta pieza empezó perdonando las notas —«reiniciar el juego no es reiniciar tu
+trabajo»— y **se decidió lo contrario a conciencia**. `//reset` es *empezar de
+cero*, y una vuelta al primer día que te deja los archivos de ayer no es empezar
+de cero: es un botón de limpiar progreso disfrazado de otra cosa. Que la
+secuencia de borrado se coma `notas/*` en la primera línea (§ abajo) sólo tiene
+sentido si de verdad se las come.
+
+**Lo que hace aceptable el riesgo no es que perdone nada, es que avisa antes.**
+La primera regla del proyecto es que nada pierda trabajo *ni lo aparente*, y
+sigue en pie: acá no se pierde nada por sorpresa. Se pierde porque lo leíste, lo
+entendiste y contestaste que sí.
+
+Y por eso el aviso y la pregunta **no son adorno: son la pieza**. Cualquier
+cambio que los debilite —quitar la confirmación, suavizar el texto, aceptar un
+segundo Enter— rompe el trato, no el comando.
+
+`//reset` no borra a la primera. Estaba a un Enter de distancia: teclearlo por
+probar, o dejarlo escrito en una nota y pulsar Enter, y se acabó.
+
+## Primero avisa
 
 ```
-TODO A CERO.
+ESTO BORRA TODO Y NO SE PUEDE DESHACER:
 
-LOS SECRETOS, LAS PIEZAS, LOS MARCADORES.
-SUS NOTAS NO. ESAS SON SUYAS.
+  - SUS NOTAS, TODAS, TAMBIEN LAS DE LA PAPELERA
+  - SECRETOS, PIEZAS Y MARCADORES
+  - LOS COMANDOS QUE HAYA ENCONTRADO
+
+NO HAY COPIA. NO HAY VUELTA ATRAS.
+
+¿SEGURO? [y/n]
 ```
 
-**No toca las notas, y eso es lo importante de esta pieza.** Reiniciar el juego
-no es reiniciar tu trabajo: un comando escondido que se lleve por delante lo que
-escribiste no es un huevo de pascua, es una pérdida de datos — la primera regla
-del proyecto. Dos tests lo fijan.
+**La confirmación es una letra que hay que teclear, no un segundo Enter**: dos
+Enter seguidos es exactamente lo que hace quien no leyó el aviso. Lo que la hace
+segura no es que la `y` sea difícil de escribir —no lo es— sino que **hay que
+volver a escribir después de haber leído**. Un comando copiado y pegado, o dejado
+escrito en una nota, se queda en la pregunta.
 
-Tampoco toca si apagaste los efectos: eso es una preferencia tuya, no una parte
-del juego que se gane.
+| Se teclea | Qué pasa |
+| --- | --- |
+| `y` o `s` | Borra. `s` porque en español se contesta «sí» y teclear `y` no es lo primero que sale |
+| `n` | Cancela: `CANCELADO. NO SE BORRÓ NADA.` — **o la broma, 1 de cada 5** |
+| Cualquier otra cosa | **No cuenta como un no.** Quien escribe otra cosa no está contestando, está haciendo otra cosa, y su texto sigue su camino — incluido volver a ser una nota normal |
+| Otro comando | Retira la pregunta. Dejarla en el aire convertiría una `y` tecleada más tarde, por cualquier motivo, en un borrado |
+
+Y **no hace falta el prefijo `//`**: una terminal que pregunta `[y/n]` espera una
+letra, no otro comando. Si `y` tuviera que escribirse `//y` dejaría de parecer una
+terminal y pasaría a parecer un formulario.
+
+La pregunta **vive en memoria**: una pregunta pendiente al recargar sería una
+trampa esperando a que alguien teclee una `y` por otra cosa.
+
+## Después lo cuenta: la secuencia de borrado
+
+No es un cartel encima de la app. Es una secuencia, y cada tramo tiene un trabajo
+distinto:
+
+| | Fase | Dura | Qué se ve |
+| --- | --- | --- | --- |
+| 1 | `fading` | 900 ms | La pantalla de notas **se desvanece** hasta quedar vacía |
+| 2 | `erasing` | 220 ms × 14 | Pantalla aparte, **contando lo que se va yendo** |
+| 3 | `off` | 420 ms | El tubo se apaga, como cuando cortás la corriente |
+| 4 | `bars` | 700 ms | Las franjas de color, con el equipo **ya sin nada dentro** |
+| 5 | — | — | El monitor **vuelve a arrancar** (§25), **desde el rótulo**, y a casa |
+
+**El desvanecido es lo que la hace funcionar.** Sin él, la pantalla de borrado
+aparecía de golpe sobre las notas y se leía como un diálogo; con él, lo que se ve
+es a la app **irse**, y sólo después empieza a contarse.
+
+**Las franjas van DESPUÉS del apagón y no antes.** Es la diferencia entre «se
+apagó» y «se apagó y volvió a encenderse desde cero»: lo que se ve entre las dos
+cosas es un equipo sin señal, que es exactamente lo que hay cuando ya no queda
+nada dentro.
+
+> ⚠ **Y por eso el arranque de después empieza por el rótulo.** Esta pantalla ya
+> termina apagando el equipo y enseñando las barras; arrancar desde el principio
+> repetía las dos cosas **seguidas** —dos apagones con sus dos juegos de barras—
+> y eso no se lee como un encendido, se lee como un tartamudeo.
+
+Y las catorce líneas que se come, en orden:
+
+```
+   notas/*                    xx ######
+   notas/papelera             xx ##############
+   secrets.idx                ...
+   art/collected
+   art/found
+   coleccion
+   pong/scores
+   pong/scores.degraded
+   commands.used
+   greetings
+   v02/flag
+   v02/notes
+   v02/trash
+   session
+```
+
+Nombres de cosas de la casa, no palabras de relleno: **lo que da el escalofrío es
+reconocer lo que se está borrando**. Las notas van las primeras porque son lo que
+de verdad importa, y verlas encabezar la lista es el aviso final.
+
+**La comida no desaparece: se sustituye por basura del mismo largo.** Un hueco en
+blanco se lee como una lista más corta; una fila de ruido se lee como algo que
+estaba ahí y ya no.
+
+> ⚠ **El prefijo mide lo mismo en los dos casos.** Con `  ` y `xx ` la línea
+> crecía un carácter al comerse, y en una rejilla de monoespaciada eso empuja
+> todo lo de al lado: el borrado se leía como un fallo de maquetación en vez de
+> como algo devorándose la pantalla.
+
+## Y la broma · una de cada cinco veces que decís que no
+
+**Decir que no también tiene premio.** Una de cada cinco, el `n` enseña el
+borrado **entero** —el mismo, sin trampa: el desvanecido y las catorce líneas
+comiéndose— y en vez de apagarse suelta un «era broma» durante 2,2 s y te
+devuelve a casa **sin haber tocado nada**.
+
+```
+1 · fading  →  2 · erasing  →  joke  →  a casa
+```
+
+**No se apaga ni enseña franjas**: no hay nada que apagar cuando no se borró
+nada, y volver por el arranque diría que sí pasó algo.
+
+Es la única forma de que la respuesta prudente no sea siempre la aburrida. Y
+**sólo pasa con el «no»**: con el «sí» no hay sorteo — pedir que borre y que a
+veces no borre sería una app que no hace lo que le pedís, y eso no es un secreto,
+es un fallo.
+
+Da además **la carita** (§18 · pieza 13) y marca el secreto `reset-prank`: es el
+único momento en que la máquina se ríe **con** vos y no de vos, y sólo lo ve
+quien tuvo el valor de teclear `//reset` y la prudencia de decir que no.
+
+## Qué se borra exactamente
+
+| | |
+| --- | --- |
+| **En el servidor** | Todas tus notas, las de la papelera incluidas |
+| **En el navegador** | Secretos, piezas (ganadas, reveladas y abiertas), coleccionables, marcadores del pong, comandos usados, la bandera y la palabra de la v0.2, sus notas y su papelera, el viaje de ida y vuelta, lo que la v0.2 no llegó a guardar |
+| **En memoria** | Integridad, borrados de la sesión, fallo cromático, saludos, conversación, expulsiones, racha de colapsos, bloqueo, palabra en morse, el reloj suelto |
+| **NO se toca** | El interruptor de efectos, y el tema |
+
+El interruptor de efectos no se toca porque **es una preferencia tuya, no una
+parte del juego que se gane**.
+
+> **La pista del faro también se olvida.** `flashnotes:helpHint` se le escapaba a
+> `resetEverything()` —era la única de las catorce claves que no limpiaba— y el
+> faro se recuperaba **con el primer `//help` de después**, sin tener que volver
+> a perderse. Un borrado que deja una pieza puesta no es un borrado. Hay un test:
+> tras el reinicio, `//help` ya no la devuelve.
+>
+> El olvido vive en `helpHint.ts` y no en `commands.ts`, y no es manía de
+> ordenar: quien borra todo es `useSystemState`, y meterlo en `commands.ts`
+> obligaría a importar **los comandos enteros** desde el estado del sistema para
+> llamar a una línea — un import que hoy no existe y que es exactamente como
+> empiezan los ciclos.
+
+**El orden importa: primero el servidor, después lo local.** Si fuera al revés y
+la red fallara a mitad, quedarían las notas sin los secretos — un estado que no es
+ni lo de antes ni lo de después. Y si el servidor no colabora, lo local se limpia
+igual: dejar las dos mitades a medias sería peor que limpiar una.
+
+## Y no cuenta como secreto
+
+`//reset` **no está en la lista de los 28**, y no es un olvido. Encontrarlo no es
+un logro: es saber que hay un botón peligroso. Contarlo entre los hallazgos
+animaba a usarlo, que es exactamente lo contrario de lo que hace falta con el
+único comando que destruye algo tuyo. **La broma sí cuenta** — ésa sólo la ve
+quien dijo que no.
+
+> **Sobra un texto en el código, y conviene quitarlo.** `T.resetDone` («TODO A
+> CERO. … SUS NOTAS NO. ESAS SON SUYAS.») no lo pinta nadie: la respuesta al `y`
+> es una cadena vacía y lo que se ve es la secuencia de borrado.
+>
+> Es de cuando `//reset` perdonaba las notas. No hace daño porque nadie lo lee,
+> pero **dice lo contrario de lo que el comando hace ahora**, y un literal así,
+> esperando en el archivo de textos, es exactamente lo que alguien vuelve a
+> enchufar dentro de seis meses creyendo que arregla un hueco.
 
 ---
 
@@ -1959,17 +2740,26 @@ teniendo**. La v0.2 no sabe que va a llegar a ser algo.
 
 ## 24.5 · Las etiquetas mal escritas
 
-**Una de cada cuatro** sale mal, y de tres maneras:
+**El 26 %** salen mal —una de cada cuatro largas— y de tres maneras, que se
+reparten ese tramo en tres partes iguales:
 
-| Cómo | Ejemplo |
-| --- | --- |
-| Sin traducir | `[+] CREATE FIRST FILE` |
-| A medio hacer | `LIST.EMPTYBANNER_659` |
-| Mal traducida | `[+] NUEVO ARCHIVO (SIC)` |
+| Cómo | Ejemplo | Qué cuenta |
+| --- | --- | --- |
+| Sin traducir | `[+] CREATE FIRST FILE` | Quedó la cadena en inglés porque nadie la tradujo. Es el fallo más común de una versión temprana y el que más se reconoce. **Sólo puede salir si la etiqueta tiene versión en inglés a mano** |
+| A medio hacer | `LIST.EMPTYBANNER_659` | El nombre de la variable con un número de tres cifras detrás: lo que se ve cuando el texto todavía no se escribió |
+| Mal traducida | `[+] NUEVO ARCHIVO (SIC)` | Alguien la tradujo palabra por palabra sin mirar qué era. Es peor que no traducirla, y por eso es más gracioso |
 
-**Es determinista por clave:** la misma etiqueta se rompe **siempre igual**. Si
-cambiara en cada repintado sería un cartel de neón parpadeando, y se leería como
-una avería en vez de como una versión vieja.
+**Es determinista por clave:** la misma etiqueta se rompe **siempre igual**, y
+con la misma avería de las tres — no con una distinta cada vez. Si cambiara en
+cada repintado sería un cartel de neón parpadeando, y se leería como una avería
+en vez de como una versión vieja.
+
+> ⚠ **El dado lleva mezcla final (avalancha), y hace falta.** Con el FNV a secas,
+> claves parecidas —`clave1`, `clave2`, `clave3`…— caían en el mismo tramo: **la
+> mitad** de las etiquetas salían rotas en vez de una de cada cuatro, porque los
+> bits altos apenas cambiaban y son los que mandan al pasar a decimal. Lo cazó un
+> test que exige que la MAYORÍA de las etiquetas salgan bien: si fallaran todas
+> sería ilegible, no vieja.
 
 **Constante:** `BROKEN_LABEL_ODDS = 0.26` · **Código:** `v02.ts` · `v02Label()`
 
@@ -2033,7 +2823,14 @@ las vea. Es, literalmente, la última línea de su propio `//todo`.
 
 ## 24.10 · La puerta, y la salida
 
-La puerta es el morse del reloj (§20). ### La salida
+La puerta es el morse del reloj (§20): tres clics en la hora, descifrar la
+palabra, y teclearla como si fuera un comando.
+
+La palabra se guarda **en mayúsculas**. Se descifra a mano y se teclea como
+salga, pero la que se guarda es una sola: normalizar ahí evita que «modo» y
+«MODO» acaben siendo dos puertas distintas.
+
+### La salida
 
 **Dentro de la v0.2 el reloj ya no enseña el morse** — es la puerta de entrada,
 no algo de esa versión.
@@ -2050,21 +2847,271 @@ apuntada en la última línea.
 
 ---
 
+# 25 · El monitor se enciende
+
+**Lo primero que se ve al abrir la app, y lo que llevaba más tiempo sin estar en
+esta página.** No es un secreto: es el marco de todo lo demás.
+
+Sale **antes** de la app, **cada vez que se carga**: las barras de color, el
+rótulo del fabricante, la comprobación de memoria, y a trabajar. Lo que hacía un
+equipo de los de antes cuando le dabas al interruptor.
+
+## Por qué siempre, y no sólo la primera vez
+
+**Un arranque que sale una vez es una pantalla de bienvenida, y una pantalla de
+bienvenida se salta.** Uno que sale siempre es cómo ES la máquina — y a los tres
+días ya no lo mirás, igual que no mirabas el POST de un ordenador de verdad. Es
+lo que convierte «una app con estética de terminal» en «un equipo que se
+enciende».
+
+## Y tarda distinto cada vez
+
+**Entre 2 y 8 segundos**, sorteados en cada encendido. Un equipo de verdad no
+tarda siempre lo mismo: depende de lo que encuentre, de si el disco responde a la
+primera, de la temperatura. **Un arranque cronometrado se siente como una
+animación; uno que unas veces vuela y otras se hace de rogar se siente como una
+máquina.** Y es lo que hace que valga la pena mirarlo alguna vez: nunca sabés si
+te toca el corto o el largo.
+
+El dado se tira **una vez por encendido** y se reparte. Sorteando en cada tramo,
+el arranque no tendría una duración, tendría varias.
+
+| Tramo | Cuánto | Qué se ve |
+| --- | --- | --- |
+| `off` | **420 ms, fijo** | El apagón del tubo — el mismo del fallo crítico |
+| `bars` | 25 % de lo sorteado | Las siete barras de color |
+| `logo` | **50 %** | El rótulo del fabricante |
+| `check` | 25 % | La comprobación de memoria |
+
+**El apagón va primero y está fuera del sorteo.** Recargar es apagar y encender,
+así que lo que se ve primero es el equipo **apagándose**: la imagen se aplasta a
+una línea, la línea se cierra a un punto, y sólo entonces las barras. Es un gesto
+físico, no una espera, y estirarlo lo convertiría en otra cosa.
+
+**El rótulo se lleva la mitad** porque es lo único que hay que MIRAR.
+
+## No siempre empieza por el principio
+
+El arranque puede entrar **por el tramo que toque**, según de dónde vengas. La
+regla es simple: **no repetir lo que la pantalla anterior ya hizo.**
+
+| De dónde venís | Empieza por | Por qué |
+| --- | --- | --- |
+| Una recarga normal | `off` | Recargar es apagar y encender |
+| **El colapso** (§13) | `bars` | El apagón ya lo hizo él en su tramo 4 |
+| **El borrado** (§22) | `logo` | Ya se apagó **y** ya hubo barras |
+| Con el **bloqueo** puesto | `bars`, y ahí se queda | Un equipo bloqueado no llega a arrancar |
+
+Los tramos que quedan **conservan su duración**: empezar más tarde no acelera lo
+que viene, sólo se salta lo que ya se vio.
+
+**Y un tramo que no exista no recorta nada**: si se pide arrancar desde algo que
+no está en el guion, sale el arranque entero. Vale más uno completo que uno
+vacío.
+
+**El bloqueo manda sobre todo lo demás.** Pedirle otro tramo no lo cambia: se
+apaga, enseña que no hay señal y vuelve al fallo.
+
+## Las barras
+
+```
+▌ ▌ ▌ ▌ ▌ ▌ ▌
+```
+
+Siete, y **en este orden, porque es el de las barras SMPTE de verdad**: de la más
+clara a la más oscura por luminancia.
+
+```
+#c0c0c0  #c0c000  #00c0c0  #00c000  #c000c0  #c00000  #0000c0
+```
+
+Puestas en cualquier otro orden se ven como rayas de colores; en éste se
+reconocen. Son **las mismas** que salen en el colapso (§13 · tramo 3) y en el
+borrado (§22 · fase 4).
+
+> ⚠ **No se dibujan con caracteres.** Los bloques (`█`) no están en JetBrains
+> Mono y los pintaría una fuente de reserva con otras métricas (REGLAS · C8). Van
+> con CSS, que además permite el color de verdad.
+
+## El rótulo
+
+```
+ _____ _         _   _  _     _
+|   __| |___ ___| |_| \| |___| |_ ___
+|   __| | .-. |_-|   |    | . |  _| -_|
+|__|  |_|__,_|___|_|_|_|\_|___|_| |___|
+
+FLASHNOTES SYSTEMS INC.  ---  NINGUN DERECHO RESERVADO
+```
+
+Arte ASCII, no un recuadro. Hubo una versión con el nombre dentro de una caja
+—más legible, imposible de romper— y **se descartó a la vista**: en una pantalla
+de arranque el rótulo no está para LEERSE, está para RECONOCERSE. Un cuadro con
+letras espaciadas se lee y no dice nada; esto se reconoce.
+
+La broma del pie es que **nadie firmó nunca esto**.
+
+> ⚠ **Las barras van dobles en el código.** `'\|'` en una cadena de TypeScript es
+> `|` a secas: la barra se la come el escape. Con una sola, dos de las cuatro
+> líneas salían un carácter más cortas y el rótulo se veía descuadrado. Ningún
+> error, ninguna advertencia: sólo un dibujo torcido. Lo cazó el test que exige
+> que las cuatro líneas midan lo mismo.
+
+## La comprobación de memoria
+
+```
+MEMORIA CONVENCIONAL ..... 640K  OK
+ALMACENAMIENTO LOCAL ..... PRESENTE
+RELOJ .................... SIN AJUSTAR
+
+INICIANDO FLASH-NOTES...
+```
+
+**`640K` es la cifra exacta del límite de memoria convencional del PC de IBM**, y
+quien la reconoce sabe de qué se está hablando. Quien no, ve un número que cuadra
+con el resto.
+
+`RELOJ · SIN AJUSTAR` no es relleno: es la misma máquina que en `//date` admite
+que nunca se mudó de huso (§6) y que en `//date_off` pierde el año entero (§17).
+
+## Tres cosas que no se ven
+
+**No bloquea nada.** La app se monta por detrás mientras esto se ve: cuando el
+arranque termina, ya está todo listo. Si esperara a que acabe para empezar a
+cargar sería un peaje de verdad y no un adorno.
+
+**`prefers-reduced-motion` lo salta entero** (REGLAS · A3). Detrás está
+exactamente la misma app.
+
+**Con el bloqueo puesto se queda en las barras**, 900 ms, y vuelve a la pantalla
+de error — sin apagón y sin rótulo. Ver §13.
+
+> **Y no avanza hasta saber si hay bloqueo.** El bloqueo se lee del
+> almacenamiento y no del estado de React, porque en el primer render del cliente
+> el estado todavía dice que no lo hay (REGLAS · C2). Mientras no se sabe, la
+> pantalla tapa y no avanza: **un fotograma de espera es mucho menos que ocho
+> segundos de app asomando en mitad de un fallo crítico.**
+
+## Después de un borrado y después de un colapso
+
+Al terminar la secuencia de `//reset` (§22), el monitor **vuelve a encenderse**:
+es lo que convierte «se borró» en «esto acaba de encenderse por primera vez». **La
+broma no arranca nada**, porque no se apagó nada.
+
+Y al terminar el rearranque de un colapso (§13) pasa lo mismo por el otro motivo:
+un equipo que se apagó, arranca. Antes la app volvía de golpe en cuanto la barra
+de carga llegaba al final, contando que el sistema se recuperó solo.
+
+**Código:** `src/lib/system/boot.ts` · `src/components/effects/BootScreen.tsx` ·
+`tests/lib/system/bootFrom.test.ts`
+
+
+---
+
+# Los 28 secretos que cuenta el panel
+
+Lo que va en `SECRETOS n/28` (§7). **Sólo entra lo que provocás vos**: lo
+ambiental —el glitch, los fragmentos de la barra, el barrido trabado, el arranque
+en vídeo inverso, el encendido del monitor— te pasa, no lo encontrás, y contarlo
+inflaría el denominador con cosas que nadie puede buscar.
+
+El total sale de la longitud de la lista y **nunca de un número escrito a mano**,
+porque va a cambiar. Un identificador viejo que ya no exista se filtra al leerlo,
+así que no puede dejar el contador en `29/28`.
+
+| # | `id` | Qué hay que hacer | Dónde se marca |
+| --- | --- | --- | --- |
+| 1 | `commands` | Usar `//help` | `commands.ts` |
+| 2 | `diagnostics` | Abrir el panel — con `//diag` o Alt+clic | `DiagnosticPanel.tsx` |
+| 3 | `logo` | **Tres** clics al rótulo: el parpadeo a `v1.0.1` (§5) | `useSystemState.ts` |
+| 4 | `collapse` | `//panic` | `commands.ts` |
+| 5 | `history` | `//history` | `commands.ts` |
+| 6 | `log` | `//log` | `commands.ts` |
+| 7 | `sudo` | `//sudo` | `commands.ts` |
+| 8 | `whoami` | `//whoami` | `commands.ts` |
+| 9 | `date` | `//date` | `commands.ts` |
+| 10 | `inspect` | Cualquiera de `//ls`, `//df` o `//ps` — los tres marcan el mismo | `commands.ts` |
+| 11 | `ghost-file` | Que aparezca `SYSTEM.LOG` en la papelera (§9) | `useTrash.ts` |
+| 12 | `trash-tally` | **Cinco** borrados definitivos (§10) | `useSystemState.ts` |
+| 13 | `chaos` | `//chaos` | `commands.ts` |
+| 14 | `chroma` | Romper la señal: **diez** toques al tema (§14) | `useSystemState.ts` |
+| 15 | `pong` | `//attach_6` — **sólo el 6**; los otros PID no cuentan (§15) | `commands.ts` |
+| 16 | `greeting` | `//hi` | `useSystemState.ts` |
+| 17 | `art` | `//art` — y sólo si ya tenés alguna pieza | `commands.ts` |
+| 18 | `art-keep` | `//keep` (§23) | `commands.ts` |
+| 19 | `date-off` | `//date_off` (§17) | `commands.ts` |
+| 20 | `chat` | `//whoareu` o `//howareu` dentro de la ventana (§21) | `commands.ts` |
+| 21 | `kicked` | Que `//hi` te eche de la nota (§16) | `useSystemState.ts` |
+| 22 | `reset-prank` | Decir `n` a `//reset` y que toque la broma (§22) | `commands.ts` |
+| 23 | `collection` | Guardar la primera pieza y estrenar la pestaña (§23) | `page.tsx` |
+| 24 | `morse` | Sacar el código del reloj: **tres** clics en la hora (§20) | `SystemClock.tsx` |
+| 25 | `v02` | Teclear la palabra — **entrar o salir** (§24) | `commands.ts` |
+| 26 | `v02-recover` | `//recover`, dentro de la v0.2 (§24.4) | `commands.ts` |
+| 27 | `v02-todo` | `//todo`, dentro de la v0.2 (§24.4) | `commands.ts` |
+| 28 | `v02-corrupt` | Recuperar una nota de la papelera de la v0.2 y que vuelva rota (§24.2) | `V02TrashView.tsx` |
+
+**La mitad de estos identificadores se marcan en un archivo distinto del que los
+declara**, y así es exactamente como se desincronizan: la lista está en
+`useSystemState.ts` y las marcas repartidas por toda la app. Hay un test que lo
+comprueba **pieza por pieza**.
+
+> ⚠ **Ya pasó una vez:** `logo` estaba en la lista y no se marcaba en ninguna
+> parte, así que el panel decía `x/18` con un 18 **al que era imposible llegar**.
+> El mismo error que el umbral de diez colapsos, pero peor — acá la app te dice a
+> la cara cuántos te faltan.
+
+**Y `//reset` no está**, a propósito. Ver §22.
+
+**Encontrarlos todos da el cuaderno** (§18 · pieza 9) — pero sólo si además ya
+tenés las otras quince. Se comprueba en `markSecretFound` y no en el panel: el
+panel se puede no abrir nunca, y el hallazgo no puede depender de que alguien vaya
+a mirar el contador.
+
+
+---
+
 # Apéndice · Las claves de `localStorage`
 
-Para inspeccionar o limpiar a mano.
+Para inspeccionar o limpiar a mano. **Todas** las que escribe el juego:
 
-| Clave | Qué guarda |
-| --- | --- |
-| `flashnotes:v02` | Si la v0.2 está encendida (`on`) |
-| `flashnotes:v02word` | La palabra con la que se entró — **es la salida** |
-| `flashnotes:v02notes` | Los archivos de la v0.2 |
-| `flashnotes:v02trash` | Su papelera |
-| Las de los comandos usados, las piezas y los marcadores | Las borra `//reset` (§22) |
+| Clave | Qué guarda | La borra `//reset` |
+| --- | --- | --- |
+| `flashnotes:secrets` | Los secretos hallados, como lista de `id` (§ los 28) | ✅ |
+| `flashnotes:cmds` | Los comandos escondidos ya usados (§19) | ✅ |
+| `flashnotes:helpHint` | Si la máquina ya te mandó a `//help` — es lo que arma el faro (§18 · 12) | ✅ |
+| `flashnotes:art` | Las piezas **ganadas** (§18) | ✅ |
+| `flashnotes:artSeen` | Las **reveladas** con `//art` | ✅ |
+| `flashnotes:artOpen` | Las **abiertas** con `//art_<n>` | ✅ |
+| `flashnotes:collectibles` | Qué notas son en realidad piezas de la colección (§23) | ✅ |
+| `flashnotes:pong` | Los dos marcadores del `vsync-test` (§15) | ✅ |
+| `flashnotes:lockout` | Cuándo vence el bloqueo, y si la señal estaba rota (§13) | ✅ |
+| `flashnotes:phantoms` | Las ventanas de error abiertas durante el bloqueo | ✅ (con el bloqueo) |
+| `flashnotes:v02` | Si la v0.2 está encendida (`on`) | ✅ |
+| `flashnotes:v02word` | La palabra con la que se entró — **es la salida** | ✅ |
+| `flashnotes:v02trip` | Si ya entraste **y saliste** con el código (§18 · pieza 10) | ✅ |
+| `flashnotes:v02notes` | Los archivos de la v0.2 | ✅ |
+| `flashnotes:v02trash` | Su papelera | ✅ |
+| `flashnotes:effects` | El interruptor de efectos (`on` / `off`) | ❌ — es tu preferencia |
+
+**Lo que NO se guarda**, y por qué: la integridad, la racha de colapsos, el fallo
+cromático, los saludos, la conversación, las expulsiones, los borrados de la
+sesión, el reloj suelto, la palabra en morse de esta sesión y lo que la v0.2 no
+llegó a guardar. Todo eso vive en memoria: **recargar devuelve un sistema sano**,
+para que nadie se encuentre una app rota sin saber por qué.
+
+`flashnotes:lockout` es la excepción declarada — ver §13.
 
 **Para probar sin descifrar morse:** poner `flashnotes:v02` a `on` y
 `flashnotes:v02word` a cualquier palabra, y recargar. Sirve para verificar; no es
 la forma de descubrirlo.
+
+**Para probar el bloqueo sin seis colapsos:** poner `flashnotes:lockout` a
+`{"until": <ahora + 300000>, "chroma": false}` y recargar.
+
+**Ninguna lectura puede tumbar la pantalla.** Todas van dentro de `try/catch` y
+lo que no se entiende se descarta empezando de cero: un marcador corrupto, una
+lista que no es una lista o un navegador sin permiso dan el estado vacío y nunca
+una excepción.
 
 Todo lo que se guarda vive en **este navegador**. Borrar los datos del sitio
 borra secretos, piezas y marcadores — las notas de la v1.0 no, que están en el
@@ -2077,35 +3124,104 @@ servidor.
 
 | Regla | Dónde se aplica |
 | ----- | --------------- |
-| Nada se anuncia al lector de pantalla… | fragmentos (§2), rótulo invertido (§4), capa de colapso (§13) |
+| Nada se anuncia al lector de pantalla… | fragmentos (§2), rótulo invertido (§4), capa de colapso (§13), ventanas fantasma (§14), página muerta (§21) |
 | …salvo lo que es información real | la reconexión (§11) sí se anuncia |
-| Ningún efecto entra en el orden de tabulación | el botón secreto (§5) no es un `<button>` |
+| Ningún efecto entra en el orden de tabulación | el botón secreto (§5) y el reloj (§20) no son `<button>` |
 | El nombre real se mantiene en `.sr-only` | §2 y §4 |
+| El reloj **sí** tiene nombre accesible | quien usa lector oye la hora, que es lo que ese hueco dice que es (§20) |
 | Ningún efecto mueve la maqueta | hueco reservado en `ch` (§2) |
-| Ningún efecto roba el foco | §13 |
+| Ningún efecto roba el foco | §13 — ni el colapso ni el bloqueo enfocan nada |
+| Ningún efecto se come un clic | las ventanas fantasma llevan `pointer-events: none` (§14) |
+| Un control que se rompe **lo dice** | el interruptor de tema pasa a `[✗ SEÑAL]`, deshabilitado y con nombre accesible que explica que hay que recargar (§14) |
 | Destellos rápidos, sólo si los provocás | la ráfaga de §14 es rápida a propósito y `prefers-reduced-motion` la apaga entera |
 | `prefers-reduced-motion` desactiva el movimiento | todas; §14 se queda quieta en vez de desaparecer |
+
+**Qué hace exactamente `prefers-reduced-motion`**, pieza por pieza:
+
+| Pieza | Qué pasa |
+| --- | --- |
+| §25 arranque del monitor | **Se salta entero** |
+| §4 rótulo en vídeo inverso | **No ocurre en absoluto** — no se degrada a una versión quieta, porque un rótulo mal escrito sin corrección visible sería sencillamente un error |
+| §3 arranques raros | El texto sale quieto y entero, sin tecleo ni borrado |
+| §1 glitch ambiental | No se programa nada |
+| §13 colapso | Se reduce a un corte a negro de 400 ms con el texto de rearranque ya escrito |
+| §14 fallo cromático | **Se ve, pero quieta.** Es la única que no se apaga entera, porque su información no está en el movimiento |
+| §14 ventanas fantasma | No se abre ninguna |
+| §14 sacudida de tema | No ocurre, **ni suelta ni en ráfaga** |
+| §24.6 tirones de la v0.2 | No se programan |
 
 ---
 
 # Dónde vive cada cosa
 
+**El estado compartido** — almacenes de módulo con `useSyncExternalStore`, que es
+el patrón de la casa: lo miran varios componentes a la vez y con un `useState`
+por componente cada uno tendría el suyo.
+
 ```
-src/hooks/useSystemState.ts             integridad, efectos, secretos, sesión
+src/hooks/useSystemState.ts             integridad, efectos, secretos, sesión,
+                                        colapsos, bloqueo, saludos, v0.2
 src/hooks/useGlitch.ts                  el glitch y su gravedad
 src/hooks/useSystemFragment.ts          el fragmento visible
-src/hooks/useNoteCommands.ts            ejecución de comandos
-src/lib/system/lore.ts                  fragmentos y frases, en los dos idiomas
-src/lib/system/commands.ts              registro de comandos, puro
-src/lib/system/glitchTiming.ts          intervalos, gravedad, rebanadas
-src/lib/system/requestLog.ts            búfer circular
-src/lib/system/ghostFile.ts             SYSTEM.LOG
-src/lib/system/diagnostics.ts           la temperatura del núcleo
-src/components/effects/GlitchLayer.tsx      franjas, rebanadas, negativo
-src/components/effects/SystemCollapse.tsx   estática, muerte y rearranque
-src/components/effects/ChromaticFailure.tsx franjas de color y sacudida de tema
-src/components/layout/SystemLabel.tsx       vídeo inverso y botón secreto
-src/components/system/DiagnosticPanel.tsx   el panel
+src/hooks/useClock.ts                   el latido de la hora
+src/hooks/useNoteCommands.ts            ejecución de comandos y sus efectos
+src/hooks/useTrash.ts                   la papelera y el archivo fantasma
+```
+
+**La lógica pura** — texto y números, sin DOM ni relojes propios, con el azar
+inyectado. Todo se prueba sin montar nada.
+
+```
+src/lib/system/commands.ts              registro de comandos          §6 §19
+src/lib/system/lore.ts                  fragmentos, frases, borrados  §2 §3 §10
+src/lib/system/idle.ts                  cuánto hace que no tocás nada §2
+src/lib/system/helpHint.ts              si ya te mandó a //help       §18
+src/lib/system/greeting.ts              saludo y conversación         §16 §21
+src/lib/system/glitchTiming.ts          intervalos, gravedad, rebanadas   §1
+src/lib/system/asciiNoise.ts            los cuatro modos de interferencia §13
+src/lib/system/collapseEscalation.ts    la escalada y el umbral       §13
+src/lib/system/lockoutPuzzle.ts         el volcado y su celda rota    §13
+src/lib/system/staticNoise.ts           ruido de píxeles (sin usar hoy)
+src/lib/system/requestLog.ts            búfer circular de 40          §8
+src/lib/system/ghostFile.ts             SYSTEM.LOG                    §9
+src/lib/system/diagnostics.ts           la temperatura del núcleo     §7
+src/lib/system/strain.ts                lo que cuesta lo que pasa     §7
+src/lib/system/secretsRank.ts           la barra y los escalones      §7
+src/lib/system/pong.ts                  la física del vsync-test      §15
+src/lib/system/pongScores.ts            los dos marcadores            §15
+src/lib/system/timeDrift.ts             el reloj suelto               §17
+src/lib/system/asciiArt.ts              las dieciséis piezas          §18
+src/lib/system/collectibles.ts          qué notas no son notas        §23
+src/lib/system/commandUnlock.ts         qué comandos se descubrieron  §19
+src/lib/system/morse.ts                 el código del reloj           §20
+src/lib/system/confirm.ts               la pregunta [y/n]             §22
+src/lib/system/wipe.ts                  la secuencia de borrado       §22
+src/lib/system/dropped.ts               lo que la v0.2 no guardó      §24.1
+src/lib/system/boot.ts                  el arranque del monitor       §25
+src/lib/system/replyTiming.ts           ritmo de las respuestas       §6
+src/lib/system/v02*.ts                  todo lo de la v0.2            §24
+```
+
+**Lo que se pinta**
+
+```
+src/components/effects/GlitchLayer.tsx      franjas, rebanadas, negativo  §1
+src/components/effects/BootPrompt.tsx       el tecleo del editor          §3 §6
+src/components/effects/BootScreen.tsx       el encendido del monitor      §25
+src/components/effects/SystemCollapse.tsx   estática, muerte y rearranque §13
+src/components/effects/SystemLockout.tsx    la pantalla de fallo y el puzzle §13
+src/components/effects/ChromaticFailure.tsx franjas de color y tema       §14
+src/components/effects/PhantomError.tsx     las ventanas que no son tuyas §14
+src/components/effects/PongOverlay.tsx      el vsync-test                 §15
+src/components/effects/WipeScreen.tsx       el borrado y la broma         §22
+src/components/effects/DeadPage.tsx         la página muerta              §21
+src/components/effects/V02Skin.tsx          la piel de la v0.2            §24
+src/components/effects/V02Glitches.tsx      sus tirones solos             §24.6
+src/components/effects/ScrambleLine.tsx     las letras que no paran       §19
+src/components/layout/SystemLabel.tsx       vídeo inverso y botón secreto §4 §5
+src/components/layout/SystemClock.tsx       el reloj y el morse           §20
+src/components/layout/StatusBar.tsx         el fragmento y la reconexión  §2 §11
+src/components/system/DiagnosticPanel.tsx   el panel                      §7
 src/styles/glitch.css                       todos los fotogramas
 ```
 

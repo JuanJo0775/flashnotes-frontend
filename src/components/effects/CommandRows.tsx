@@ -62,7 +62,7 @@ export default function CommandRows({ rows, holdMs, onDone }: Props) {
                         {fila.text || '\u00a0'}
                     </span>
                 ) : (
-                    <ScrambleLine key={i} length={fila.scramble} />
+                    <ScrambleLine key={i} length={fila.scramble} prefix={fila.prefix} />
                 )
             )}
         </span>

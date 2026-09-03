@@ -259,8 +259,19 @@ export default function PongOverlay({
          * devoluciones seguidas se consiguen concentrándose un rato, no de
          * casualidad ni a la primera.
          */
+        /*
+         * ⚠ UNA SOLA PIEZA PARA LOS DOS TABLEROS.
+         *
+         * Había una por tablero, y el degradado se quedó sin la suya cuando la
+         * terminal pasó a premiar los comandos. No se le buscó otro dibujo a
+         * propósito: dos piezas para el MISMO juego son una pieza contada dos
+         * veces, y el pie ya pregunta cuántas veces hizo falta intentarlo.
+         *
+         * Los umbrales siguen siendo distintos: el degradado se ve peor y pide
+         * menos peloteo.
+         */
         if (game.rally >= (board === 'clean' ? RALLY_LIMPIO : RALLY_DEGRADADO)) {
-            awardFrom(board === 'clean' ? 'pong' : 'pong-degraded');
+            awardFrom('pong');
         }
     }, [open, game.over, game.mode, game.rally, board]);
 

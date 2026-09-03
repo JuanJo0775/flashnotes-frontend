@@ -93,13 +93,30 @@ describe('contestando', () => {
         expect(run('s', ctx())!.effect.kind).toBe('reset-all');
     });
 
+    /*
+     * ⚠ EL AZAR VA FIJADO. Este test no lo hacía y fallaba una de cada cinco
+     * veces sin tocar nada: el «no» tiene una broma con `PRANK_ODDS = 0.2`, y
+     * cuando salía, la salida no era el «cancelado» sino la broma.
+     *
+     * Un test que falla solo se acaba re-lanzando hasta que pasa, y a partir de
+     * ahí ya no avisa de nada. Cada rama se prueba con su propio azar.
+     */
     it('«n» cancela, y lo dice', async () => {
         const { run } = await load();
         run('//reset', ctx());
 
-        const r = run('n', ctx())!;
+        const r = run('n', ctx(), () => 0.5)!;
         expect(r.effect.kind).not.toBe('reset-all');
         expect(r.output).toMatch(/CANCEL/i);
+    });
+
+    it('y una de cada cinco veces hace la broma, sin borrar nada', async () => {
+        const { run } = await load();
+        run('//reset', ctx());
+
+        const r = run('n', ctx(), () => 0)!;
+        expect(r.effect.kind).toBe('reset-prank');
+        expect(r.effect.kind).not.toBe('reset-all');
     });
 
     it('la pregunta no se responde sola dos veces', async () => {
