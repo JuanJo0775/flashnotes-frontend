@@ -224,20 +224,27 @@ export const ART: readonly ArtPiece[] = [
          *
          * Y la etiqueta lleva renglones escritos, no una línea suelta: nadie
          * etiquetaba un disquete con una palabra.
+         *
+         * ⚠ COLOCADO POR COLUMNAS, no a ojo. La primera versión tenía la
+         * etiqueta, el obturador y la ventana cada uno empezando donde caía, y
+         * las piezas no alineaban entre sí: se veía desfasado sin que se supiera
+         * decir dónde. Acá cada elemento arranca en una columna FIJA y todo lo
+         * demás se mide desde ahí.
          */
         art: [
-            '  +===============================+     ',
-            '  | .---------------------------. |==+  ',
-            '  | |                           | |::|  ',
-            '  | |   v 0 . 2                 | |::|  ',
-            '  | |   ......................| |::|     '.slice(0, 40),
-            '  | |   ......................| |==+     '.slice(0, 40),
-            '  | "---------------------------" |     ',
-            '  |                               |     ',
-            '  |   .-----------------------.   |     ',
-            '  |  :|:::::::::::::::::::::::|:  |     ',
-            '  |  :|:::::::::::::::::::::::|:  |     ',
-            '  "--+-----------------------+---"      ',
+            ' +====================================+ ',
+            ' |                         .--------. | ',
+            ' |                         |::::::::| | ',
+            ' |  .-------------------.  |::::::::| | ',
+            ' |  | v 0 . 2           |  |::::::::| | ',
+            ' |  | ................. |  "--------" | ',
+            ' |  | ................. |             | ',
+            ' |  "-------------------"             | ',
+            ' |                                    | ',
+            ' |       .--------------------.       | ',
+            ' |       |::::::::::::::::::::|       | ',
+            ' |       "--------------------"       | ',
+            ' +====================================+ ',
         ].join('\n'),
     },
     {
