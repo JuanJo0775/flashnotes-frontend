@@ -195,17 +195,25 @@ export const ART: readonly ArtPiece[] = [
          * Estaba APLASTADA: seis filas para algo que necesita diez para tener
          * carretes. Ahora los tiene, y se ve la cinta pasando de uno al otro.
          */
+        /*
+         * La ventana del medio estaba VACÍA, y es lo único que hay que ver en
+         * una cinta: los dos carretes con distinta cantidad enrollada y la cinta
+         * tensa entre ellos. Ahora el izquierdo va lleno y el derecho casi
+         * gastado, que es lo que cuenta que ESTUVO SONANDO.
+         *
+         * Y lleva su etiqueta con el lado escrito, como se escribían.
+         */
         art: [
             '  +==================================+  ',
+            '  |  LADO A  ......................  |  ',
+            '  +==================================+  ',
+            '  |    .------.        .------.      |  ',
+            '  |   ( :::::: )      (  ....  )     |  ',
+            '  |   ( ::oo:: )======(  .oo.  )     |  ',
+            '  |   ( :::::: )      (  ....  )     |  ',
+            '  |    "------"        "------"      |  ',
             '  |                                  |  ',
-            '  |   .------.          .------.     |  ',
-            '  |  ( ...... )        ( ...... )    |  ',
-            '  |  ( .:oo:. )========( .:oo:. )    |  ',
-            '  |  ( ...... )        ( ...... )    |  ',
-            '  |   :------:          :------:     |  ',
-            '  |                                  |  ',
-            '  |  ::::::::::::::::::::::::::::    |  ',
-            '  |                                  |  ',
+            '  |   .--.  .--.  .--.  .--.  .--.   |  ',
             '  +==================================+  ',
         ].join('\n'),
     },
@@ -255,20 +263,31 @@ export const ART: readonly ArtPiece[] = [
          * lleva escuchando sin que conteste nadie — y las ondas que salen de ella
          * se pierden hacia arriba.
          */
+        /*
+         * ⚠ NO CONVENCÍA, y el motivo era que las ondas estaban SUELTAS.
+         *
+         * Flotaban arriba, en filas ordenadas, sin salir de ninguna parte. Un
+         * plato mirando al frente con unas rayas encima no cuenta que esté
+         * emitiendo: cuenta que hay rayas.
+         *
+         * Ahora el plato está DE PERFIL, abierto hacia arriba a la derecha, con
+         * su brazo y su bocina — y las ondas salen justo de ahí, abriéndose. Es
+         * lo que hace que se vea escuchando hacia algún lado en vez de posando.
+         */
         art: [
-            '   ~   ~   ~   ~   ~   ~   ~   ~   ~    ',
-            '     ~     ~     ~     ~     ~     ~    ',
-            '                                        ',
-            '           .------------.               ',
-            '         .-              -.             ',
-            '        (        ..        )            ',
-            '        (        ..        )            ',
-            '         :-              -:             ',
-            '           :------------:               ',
-            '                |  |                    ',
-            '                |  |                    ',
-            '             +==+==+==+                 ',
-            '            ::::::::::::                ',
+            '                             ) ) )      ',
+            '        .-"                ) ) )        ',
+            '      .:                 ) ) )          ',
+            '     /                 ) ) )            ',
+            '    |         .-------o                 ',
+            '    |      .-"                          ',
+            '     \\  .-"                             ',
+            '      ":"                               ',
+            '       |                                ',
+            '       |                                ',
+            '    .--+--.                             ',
+            '   /       \\                            ',
+            '  "---------"                           ',
         ].join('\n'),
     },
     {
@@ -321,20 +340,32 @@ export const ART: readonly ArtPiece[] = [
          * escarbando, la pieza más difícil de justificar es la que se consigue
          * simplemente escribiendo. Y es la que mejor dice de qué va esta app.
          */
+        /*
+         * ⚠ NO CONVENCÍA porque los pétalos no se TOCABAN.
+         *
+         * Eran seis óvalos sueltos alrededor de un centro, separados por aire, y
+         * eso no es una flor: es una constelación. Una flor tiene los pétalos
+         * pegados unos a otros, saliendo todos del mismo sitio.
+         *
+         * Ahora se tocan y arrancan del centro, y la maceta es la de la
+         * referencia: los corchetes de la boca y el cuerpo estrechándose hacia
+         * abajo.
+         */
         art: [
-            '             .-.       .-.              ',
-            '            (   )     (   )             ',
-            '             :-:       :-:              ',
-            '          .-.     .-.     .-.           ',
-            '         (   )   ( Ø )   (   )          ',
-            '          :-:     :-:     :-:           ',
-            '             .-.       .-.              ',
-            '            (   )     (   )             ',
-            '             :-:       :-:              ',
-            '                   |                    ',
-            '            [      |      ]             ',
-            '             \\           /              ',
-            '              \\_________/               ',
+            '               .-.                      ',
+            '           .-."   ".-.                  ',
+            '          (           )                 ',
+            '           "-.     .-"                  ',
+            '        .-."   .-.   ".-.               ',
+            '       (      ( Ø )      )              ',
+            '        "-.    "-"    .-"               ',
+            '           .-"     "-.                  ',
+            '          (           )                 ',
+            '           "-."   ".-"                  ',
+            '               "|"                      ',
+            '        [.......|.......]               ',
+            '         \\             /                ',
+            '          "-----------"                 ',
         ].join('\n'),
     },
     {
@@ -384,16 +415,26 @@ export const ART: readonly ArtPiece[] = [
          * torcida. Acá el vástago sale del centro exacto y los dientes cuelgan
          * de él.
          */
+        /*
+         * ⚠ EL ANILLO SE VEÍA CHUECO, y el motivo era medio carácter.
+         *
+         * Cada fila estaba centrada en su propio eje: unas en la columna 10,5 y
+         * otras en la 11. Medio carácter no se nota leyendo el código y en
+         * pantalla convierte un círculo en un huevo torcido.
+         *
+         * Ahora TODAS son simétricas respecto a la columna 11, y para eso las
+         * anchuras del anillo son impares: una forma de ancho par no puede
+         * centrarse en una columna entera, y ahí nacía la torcedura.
+         */
         art: [
-            '                                        ',
-            '        .-""-.                          ',
-            '      .:      :.                        ',
-            '     /    .--.    \\                     ',
-            '    |    ( ** )    |==============+     ',
-            '    |     :--:     |    |   |   | |     ',
-            '     \\            /     |   |   | |     ',
-            '      ":.      .:"      "   "   " "     ',
-            '        "-..-"                          ',
+            '        .-"""-.                         ',
+            '      .:       :.                       ',
+            '     /           \\                      ',
+            '    |    ( * )    |=================+   ',
+            '    |     :-:     |   |    |    |   |   ',
+            '     \\           /    |    |    |   |   ',
+            '      ":.     .:"     "    "    "   "   ',
+            '        "-...-"                         ',
             '                                        ',
             '   : : : : : : : : : : : : : : : : :    ',
         ].join('\n'),
