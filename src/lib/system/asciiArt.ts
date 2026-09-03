@@ -172,24 +172,36 @@ export const ART: readonly ArtPiece[] = [
             en: 'MOTH · FOUND IN RELAY 70, 1947',
         },
         /*
-         * LA MEJOR DE LAS OCHO, y la que cuenta el proyecto entero. Sólo se
-         * ensanchó a la medida de la serie y se le puso el relé alrededor: la
-         * polilla no estaba suelta, estaba DENTRO de un contacto.
+         * ⚠ ES SU PROPIO ESPEJO, CARÁCTER A CARÁCTER.
+         *
+         * Dos intentos salieron torcidos por centrar cada fila «a ojo». El eje
+         * real de un marco de cuarenta columnas cae ENTRE la 19 y la 20, no en
+         * una columna: cualquier motivo de ancho impar puesto ahí queda medio
+         * carácter corrido, y medio carácter en trece filas es un bicho chueco.
+         *
+         * Ahora la mitad izquierda se dibuja y la derecha se genera invirtiéndola
+         * —cambiando `/` por `\` y `(` por `)`—, así que la simetría no depende de
+         * contar bien. Por eso el cuerpo y la cabeza son de ancho PAR.
+         *
+         * Las alas llevan relleno degradado —`:::` denso junto al cuerpo, `.` en
+         * el borde— y un ocelo en cada una, que es la mancha que tienen las
+         * polillas de verdad. Un contorno con un punto dentro no era un ala, era
+         * un globo.
          */
         art: [
             '+======================================+',
-            '|  |    |    |    |    |    |    |     |',
-            '|             \\           /            |',
-            '|               \\  .-.  /              |',
-            '|      .------\\---( o )---/------.     |',
-            '|     /         \\  ._.  /         \\    |',
-            '|    /  .:::.    \\ ||| /    .:::.  \\   |',
-            '|   |  (:::::)     |||     (:::::)  |  |',
-            '|    \\  ":::"      |||      ":::"  /   |',
-            '|     \\            |||            /    |',
-            '|      "------.    |||    .------"     |',
-            '|                  "                   |',
-            '|  |    |    |    |    |    |    |     |',
+            '|::|::|::|::|::|::|::|::|::|::|::|::|::|',
+            '|          \\                /          |',
+            '|            \\\\   .--.   //            |',
+            '|  .-------\\\\--   (oo)   --//-------.  |',
+            '|  /:::::.  \\\\    ".."    //  .:::::\\  |',
+            '| /:::::::::.\\\\    ||    //.:::::::::\\ |',
+            '||::::(o):::: \\    ||    / ::::(o)::::||',
+            '| \\:::::::::" .    ||    . ":::::::::/ |',
+            '|  \\:::::"      .-++++-.      ":::::/  |',
+            '| "--------.       ||       .--------" |',
+            '|                  ""                  |',
+            '|::|::|::|::|::|::|::|::|::|::|::|::|::|',
             '+======================================+',
         ].join('\n'),
     },
@@ -202,19 +214,30 @@ export const ART: readonly ArtPiece[] = [
          * esa versión guardaba lo suyo, y que nadie migró. La etiqueta lleva su
          * número de versión escrito a mano, como se escribían.
          */
+        /*
+         * ⚠ EL OBTURADOR ES LO QUE LO HACE INCONFUNDIBLE.
+         *
+         * La versión anterior era una caja con una etiqueta: podía ser cualquier
+         * cosa cuadrada. Un disquete se reconoce por la CHAPA METÁLICA de la
+         * derecha con su muelle — es la única pieza que tiene y que no tiene
+         * ninguna otra cosa.
+         *
+         * Y la etiqueta lleva renglones escritos, no una línea suelta: nadie
+         * etiquetaba un disquete con una palabra.
+         */
         art: [
-            '   +==============================+     ',
-            '   |  +========================+  |     ',
-            '   |  |                        |  |==+  ',
-            '   |  |     v 0 . 2            |  |  |  ',
-            '   |  |     ...............    |  |  |  ',
-            '   |  |                        |  |==+  ',
-            '   |  +========================+  |     ',
-            '   |                              |     ',
-            '   |     +==============+         |     ',
-            '   |     | :::::::::::: |         |     ',
-            '   |     | :::::::::::: |         |     ',
-            '   +=====+==============+=========+     ',
+            '  +===============================+     ',
+            '  | .---------------------------. |==+  ',
+            '  | |                           | |::|  ',
+            '  | |   v 0 . 2                 | |::|  ',
+            '  | |   ......................| |::|     '.slice(0, 40),
+            '  | |   ......................| |==+     '.slice(0, 40),
+            '  | "---------------------------" |     ',
+            '  |                               |     ',
+            '  |   .-----------------------.   |     ',
+            '  |  :|:::::::::::::::::::::::|:  |     ',
+            '  |  :|:::::::::::::::::::::::|:  |     ',
+            '  "--+-----------------------+---"      ',
         ].join('\n'),
     },
     {
