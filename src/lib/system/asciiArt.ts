@@ -327,29 +327,29 @@ export const ART: readonly ArtPiece[] = [
             en: 'CURSOR · WAITING FOR A WHILE',
         },
         /*
-         * SE GANA CON EL PONG, así que el dibujo es la pista: dos palas, la
-         * bola en medio, y el cursor esperando turno abajo.
+         * SE GANA CON EL PONG, así que el dibujo es LA PISTA: las dos palas, la
+         * red partiendo el campo por el eje, el marcador en marcha y la bola con
+         * su ESTELA — que es lo único que le da dirección a un dibujo quieto.
+         * Sin los dos puntos detrás, la bola era un punto suelto en medio de la
+         * nada y podía ser cualquier cosa.
          *
-         * La anterior era un rectángulo con un `>` dentro y no decía nada que la
-         * app no dijera ya. Una pieza que se gana jugando tiene que enseñar la
-         * partida.
+         * Y abajo lleva el nombre del proceso, `VSYNC-TEST`, que es como se
+         * llama el pong escondido en `//ps`. Eso ata la pieza al sitio del que
+         * salió: quien la mira después de haberla ganado reconoce de dónde viene.
          */
         art: [
             '+======================================+',
-            // 03–02. Un doble cero es una pista que nadie empezó; un marcador
-            // apretado es una partida en marcha, que es lo que la bola con
-            // estela ya está contando.
-            '|  03                            02    |',
-            '|  ==                            ==    |',
+            '|  0 3                          0 2    |',
+            '|  ===                          ===    |',
             '|                  :                   |',
-            '|   ||             :               ||  |',
-            '|   ||             :               ||  |',
-            '|   ||             :   . . o       ||  |',
-            '|   ||             :               ||  |',
-            '|   ||             :               ||  |',
+            '|  ||              :              ||   |',
+            '|  ||              :              ||   |',
+            '|  ||              :     . : o    ||   |',
+            '|  ||              :              ||   |',
+            '|  ||              :              ||   |',
             '|                  :                   |',
-            '|  ::::::::::::::::::::::::::::::::    |',
-            '|   > _                                |',
+            '| :::::::::::::::::::::::::::::::::::: |',
+            '| > _                     VSYNC-TEST   |',
             '+======================================+',
         ].join('\n'),
     },
