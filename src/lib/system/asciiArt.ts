@@ -391,8 +391,8 @@ export const ART: readonly ArtPiece[] = [
          * mejorar, es deshacer.
          */
         art: [
-            '              .-"-.                     ',
-            '           .-"     "             ) ) )  ',
+            '             .--.                       ',
+            '           "-.               ) ) )      ',
             '        .-"                ) ) )        ',
             '      .:                 ) ) )          ',
             '     /                 ) ) )            ',

@@ -114,8 +114,8 @@ Son **16**, todas de **40 caracteres** de ancho.
 **Se gana:** `word` · **id:** `quill`
 
 ```
-              .-"-.                     
-           .-"     "             ) ) )  
+             .--.                       
+           "-.               ) ) )      
         .-"                ) ) )        
       .:                 ) ) )          
      /                 ) ) )            
