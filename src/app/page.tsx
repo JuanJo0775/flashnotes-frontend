@@ -19,6 +19,7 @@ import GlitchLayer from '@/components/effects/GlitchLayer';
 import SystemCollapse from '@/components/effects/SystemCollapse';
 import ChromaticFailure from '@/components/effects/ChromaticFailure';
 import PhantomError from '@/components/effects/PhantomError';
+import { LooseWall } from '@/components/effects/LooseWall';
 import SystemLockout from '@/components/effects/SystemLockout';
 import PongOverlay from '@/components/effects/PongOverlay';
 import DeadPage from '@/components/effects/DeadPage';
@@ -491,6 +492,9 @@ export default function Home() {
             <GlitchLayer />
             <ChromaticFailure />
             <PhantomError />
+            {/* Lo que él aflojó. Ver `LooseWall`: es una ventana más, salvo
+                que ésta responde. */}
+            <LooseWall />
 
             {/* El fallo va sobre el contenedor y NUNCA sobre <body> ni sobre un
                 ancestro de los elementos fijos: el grano, el barrido y el flash

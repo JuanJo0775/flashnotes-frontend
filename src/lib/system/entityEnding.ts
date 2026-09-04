@@ -27,6 +27,7 @@
 
 import { awardFrom } from '@/lib/system/asciiArt';
 import { markLoose, readEntity, setPhase } from '@/lib/system/entity';
+import { clearWall } from '@/lib/system/looseWall';
 
 /**
  * El comando que te pasa.
@@ -48,9 +49,31 @@ export function commandGiven(): boolean {
     return readEntity().gaveCommand === true;
 }
 
-/** ¿Queda algo suelto en la pantalla ahora mismo? */
+/**
+ * ¿Queda algo suelto en la pantalla ahora mismo?
+ *
+ * ⚠ DEJA DE HABERLO EN CUANTO SE ACABA, de las dos maneras. Si ayudaste, la
+ * pared ya se cayó y volvió; si reportaste, el fallo se arregló. En los dos
+ * casos no se puede volver a tirar — y que no se pueda es parte de que la
+ * decisión pese: se elige una vez.
+ */
 export function somethingLoose(): boolean {
-    return readEntity().loose === true;
+    return readEntity().loose === true && !entityGone();
+}
+
+/**
+ * ⚠ LA CICATRIZ.
+ *
+ * Después del reinicio la pared está de vuelta como si no hubiera pasado nada
+ * — pero esa zona tiembla de vez en cuando. Nadie te lo cuenta, no se puede
+ * volver a tirar, y sólo vos sabés por qué pasa.
+ *
+ * Es lo único que queda de él, y por eso sólo la deja el final en que se fue.
+ * Reportarlo arregla el fallo de verdad: ahí no queda marca, que es justamente
+ * lo que hace que ese final se sienta más limpio y más frío.
+ */
+export function hasScar(): boolean {
+    return readEntity().phase === 'ido';
 }
 
 /** Lo ejecutaste: una parte de la pantalla queda floja. Cuál, lo buscás vos. */
@@ -67,6 +90,10 @@ export function unbind() {
 export function helpedHim() {
     setPhase('ido');
     awardFrom('entity');
+
+    // La pared vuelve a estar en pie con el reinicio. Lo que queda es la
+    // cicatriz, que no es un estado: es esa zona temblando de vez en cuando.
+    clearWall();
 }
 
 /**

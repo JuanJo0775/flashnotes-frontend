@@ -144,3 +144,49 @@ describe('en los dos finales, silencio', () => {
         expect(segunda.ending.entityGone()).toBe(true);
     });
 });
+
+describe('⚠ LA CICATRIZ', () => {
+    /*
+     * Después del reinicio la pared está de vuelta como si no hubiera pasado
+     * nada — pero esa zona tiembla de vez en cuando. Nadie te lo cuenta y no se
+     * puede volver a tirar. Sólo vos sabés por qué pasa.
+     */
+
+    it('la deja el final en que se fue', async () => {
+        const { ending, entity } = await load();
+        entity.clearEntity();
+        entity.markGave();
+        ending.unbind();
+
+        ending.helpedHim();
+
+        expect(ending.hasScar()).toBe(true);
+    });
+
+    it('pero reportarlo no deja marca: ese fallo se arregló de verdad', async () => {
+        // Y es lo que hace ese final más limpio, y más frío.
+        const { ending, entity } = await load();
+        entity.clearEntity();
+        entity.markGave();
+
+        ending.reportedIt();
+
+        expect(ending.hasScar()).toBe(false);
+    });
+
+    it('y no se puede volver a tirar, de ninguna de las dos maneras', async () => {
+        // Que no se pueda es parte de que la decisión pese: se elige una vez.
+        for (const acabar of ['helpedHim', 'reportedIt'] as const) {
+            localStorage.clear();
+            const { ending, entity } = await load();
+            entity.clearEntity();
+            entity.markGave();
+            ending.unbind();
+            expect(ending.somethingLoose()).toBe(true);
+
+            ending[acabar]();
+
+            expect(ending.somethingLoose()).toBe(false);
+        }
+    });
+});

@@ -1391,3 +1391,121 @@
 [data-tube-off] .scanline-effect {
     display: none;
 }
+
+/*
+ * ══ LO QUE ÉL AFLOJÓ ═════════════════════════════════════════════════════════
+ *
+ * El cuadro suelto es una ventana de error MÁS: hereda `.phantom-error` entera
+ * y sólo cambia en que ésta recibe el clic. Que se vea idéntica a las que
+ * llevan meses apareciendo es justamente lo que la esconde — lo raro no es cómo
+ * se ve, es que responda.
+ *
+ * ⚠ SIN `cursor: pointer` Y SIN `:hover`. Un cursor de mano la anunciaría como
+ * un control, y esto no es un control: es un fallo. Lo que hay que notar se
+ * nota pegándole, no pasando por encima.
+ */
+.loose-wall {
+    /* A media altura y a la izquierda: lejos del editor, donde estorba poco
+       hasta que decidís mirarlo. */
+    top: 38%;
+    left: 6%;
+    /* Encima de las fantasmas, para que no se lo tapen justo cuando le pegás. */
+    z-index: 9994;
+    user-select: none;
+}
+
+/*
+ * LA ESTÁTICA, y en la estática un ojo.
+ *
+ * Ocupa la pantalla entera porque lo que se cayó era una pared: si sólo se
+ * viera el hueco del cuadro, parecería que se rompió una ventana. Lo que se
+ * rompió es el fondo.
+ */
+.wall-static {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    background: var(--color-ink);
+    color: var(--color-inverse);
+    /* Grano: dos capas de ruido a distinta velocidad, sin imágenes. */
+    animation: wall-static-grain 90ms steps(3, end) infinite;
+}
+
+.wall-static__eye {
+    font-family: var(--font-mono);
+    font-size: clamp(6px, 1.6vw, 13px);
+    line-height: 1.15;
+    white-space: pre;
+    margin: 0;
+    /* Detrás de la estática, no encima: se adivina antes de verse. */
+    opacity: 0.82;
+}
+
+@keyframes wall-static-grain {
+    0% {
+        filter: contrast(1) brightness(1);
+    }
+    50% {
+        filter: contrast(1.6) brightness(0.85);
+    }
+    100% {
+        filter: contrast(0.9) brightness(1.1);
+    }
+}
+
+/*
+ * ⚠ LA CICATRIZ.
+ *
+ * La pared volvió como si nada, pero esa zona tiembla de vez en cuando. Va sin
+ * cuadro y sin texto: es un temblor en el aire, no un elemento. Con contenido
+ * sería un recordatorio, y un recordatorio es alguien contándotelo.
+ *
+ * Muy de tanto en tanto y muy corto: si se viera siempre dejaría de ser una
+ * cicatriz para ser una decoración.
+ */
+.wall-scar {
+    position: fixed;
+    top: 38%;
+    left: 6%;
+    width: min(300px, calc(100vw - 48px));
+    height: 64px;
+    z-index: 9992;
+    pointer-events: none;
+    opacity: 0;
+    background: color-mix(in srgb, var(--color-line) 22%, transparent);
+    animation: wall-scar-twitch 23s steps(2, end) infinite;
+}
+
+@keyframes wall-scar-twitch {
+    0%,
+    97.4% {
+        opacity: 0;
+        transform: none;
+    }
+    97.6% {
+        opacity: 0.5;
+        transform: translateX(-3px) skewX(-2deg);
+    }
+    98.2% {
+        opacity: 0.2;
+        transform: translateX(2px);
+    }
+    98.8%,
+    100% {
+        opacity: 0;
+        transform: none;
+    }
+}
+
+/* Con movimiento reducido no hay temblor ni grano: quedan quietos. */
+@media (prefers-reduced-motion: reduce) {
+    .wall-scar,
+    .wall-static {
+        animation: none;
+    }
+    .wall-scar {
+        opacity: 0;
+    }
+}
