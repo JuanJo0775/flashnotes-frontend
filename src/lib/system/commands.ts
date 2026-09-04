@@ -27,8 +27,10 @@ import {
     clearLie,
     countExchange,
     markDared,
+    markFavor,
     markGave,
     markJokeOver,
+    markProved,
     markDodged,
     markLieStanding,
     markLieSwallowed,
@@ -59,7 +61,25 @@ import {
     reportedIt,
     unbind,
 } from '@/lib/system/entityEnding';
-import { willingNow } from '@/lib/system/entityFavors';
+import {
+    favorDone,
+    favorDue,
+    favorLine,
+    willingNow,
+    type FavorWorld,
+} from '@/lib/system/entityFavors';
+
+/**
+ * Lo que se asume cuando nadie dice lo contrario: que no hiciste nada.
+ *
+ * `ctx.favors` es opcional por lo mismo que `ctx.lockedOut`: obligatorio dejaría
+ * en rojo los ficheros de test que arman un contexto a mano.
+ */
+const SIN_FAVORES: FavorWorld = {
+    sawV02Trash: false,
+    idleMs: 0,
+    filledNote: false,
+};
 import { allDropped } from '@/lib/system/dropped';
 import type { Lang } from '@/config/lang';
 import type { Localized, LocalizedPlural, Vars } from '@/i18n';
@@ -120,6 +140,14 @@ export interface CommandContext {
      * único que lo rellena de verdad es `useNoteCommands`, y lo hace siempre.
      */
     lockedOut?: boolean;
+    /**
+     * Lo que hace falta para saber si le cumpliste el favor que te pidió.
+     *
+     * Entra por acá y no se lee desde este módulo porque sale de sitios que
+     * `lib/system` no puede tocar —la papelera de la v0.2, el reloj de
+     * inactividad—, igual que `lockedOut`. Opcional por el mismo motivo.
+     */
+    favors?: FavorWorld;
     /**
      * En qué idioma contesta el sistema.
      *
@@ -788,6 +816,28 @@ function askEntity(
 
     // Se fue. En los dos finales no vuelve a contestar nunca.
     if (entityGone()) return null;
+
+    /*
+     * ⚠ LOS FAVORES VAN ANTES QUE LAS TRAMPAS, y después de haberse decidido.
+     *
+     * Cuando ya notó que sabés lo que no deberías, deja de jugar y empieza a
+     * pedir. Seguir tendiéndote trampas ahí sería no haberse enterado de nada:
+     * lo que quiere de vos a estas alturas es otra cosa.
+     *
+     * PRIMERO SE MIRA SI EL QUE PIDIÓ YA ESTÁ HECHO. Es lo que hace que
+     * cumplirlo tenga efecto sin que haya que avisarle: él simplemente lo nota
+     * la próxima vez que le hablás, como todo lo demás que sabe de vos.
+     */
+    const favor = favorDue(readEntity(), ctx.secretsFound);
+
+    if (favor !== null) {
+        if (favorDone(favor, ctx.favors ?? SIN_FAVORES)) {
+            markFavor(favor);
+        } else {
+            countExchange();
+            return favorLine(favor, lang);
+        }
+    }
 
     const toca = trialDue(readEntity(), { word: tripWord() });
 
@@ -1771,8 +1821,16 @@ export function run(
         setAsk(null);
 
         if (wordIsRight(corto, tripWord())) {
-            // El primer momento en que el intercambio va en las dos
-            // direcciones. Por eso abre fase y no da sólo una frase.
+            /*
+             * El primer momento en que el intercambio va en las dos
+             * direcciones. Por eso abre fase y no da sólo una frase.
+             *
+             * ⚠ Y ANOTA QUE LE PASASTE UNA PRUEBA, que es distinto de estar en
+             * `hablando`: a `hablando` también se llega y después se sigue sin
+             * demostrar nada más. Sin esto, `willingNow` no da `true` nunca y
+             * el final no existe.
+             */
+            markProved();
             setPhase('hablando');
 
             return {
@@ -1973,6 +2031,8 @@ export function run(
     let pillado: string | null = null;
     if (readEntity().lieStanding === true && command.name === '//ps') {
         clearLie();
+        // La otra prueba. Las dos abren `hablando` y las dos cuentan.
+        markProved();
         setPhase('hablando');
         pillado = TRIAL_REPLY.lieProved[lang];
     }

@@ -371,6 +371,17 @@ export function markDodged() {
     store({ ...readEntity(), dodged: true });
 }
 
+/**
+ * Fuiste a la papelera de la v0.2.
+ *
+ * Lo avisa `V02TrashView` al montarse. Es el único de los tres favores que la
+ * app no registraba ya por su cuenta — el silencio lo mide `idle.ts` y la nota
+ * llena tiene su propia pieza.
+ */
+export function markV02TrashSeen() {
+    store({ ...readEntity(), didV02Trash: true });
+}
+
 /** Ya te pasó el comando. */
 export function markGave() {
     store({ ...readEntity(), gaveCommand: true });

@@ -4,6 +4,9 @@
 import { useCallback, useState } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { formatLog } from '@/lib/system/requestLog';
+import { idleMs } from '@/lib/system/idle';
+import { readEntity } from '@/lib/system/entity';
+import { readFound } from '@/lib/system/asciiArt';
 import { startDrift } from '@/lib/system/timeDrift';
 
 import { formatFileSize, formatTime } from '@/lib/utils/formatters';
@@ -152,6 +155,20 @@ export function useNoteCommands({
                 // Uno de los dos sitios donde no deberías haber estado. Se le
                 // pasa hecho porque `lib/system` no importa de `hooks`.
                 lockedOut: isLockedOutNow(),
+                /*
+                 * LOS TRES FAVORES, comprobados contra lo que la app ya sabe.
+                 *
+                 * Ninguno inventa un registro: el silencio sale del reloj de
+                 * inactividad que ya existía, la nota llena sale de SU PIEZA
+                 * —que se gana justamente llenándola— y lo único que hubo que
+                 * anotar aparte es que fuiste a la papelera de la v0.2, porque
+                 * eso no dejaba rastro en ningún lado.
+                 */
+                favors: {
+                    sawV02Trash: readEntity().didV02Trash === true,
+                    idleMs: idleMs(),
+                    filledNote: readFound().has('quill'),
+                },
             };
 
             // La cuenta sólo se toca cuando el comando es el saludo: contar en
