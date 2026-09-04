@@ -24,7 +24,10 @@ import {
     v02Label,
 } from '@/lib/system/v02';
 import {
+    clearLie,
     countExchange,
+    markLieStanding,
+    markLieSwallowed,
     phaseAfter,
     readEntity,
     setAsk,
@@ -37,7 +40,7 @@ import {
     trialLine,
     TRIAL_REPLY,
 } from '@/lib/system/entityVoice';
-import { trialDue, wordIsRight } from '@/lib/system/entityTrials';
+import { lieGoneStale, trialDue, wordIsRight } from '@/lib/system/entityTrials';
 import { allDropped } from '@/lib/system/dropped';
 import type { Lang } from '@/config/lang';
 import type { Localized, LocalizedPlural, Vars } from '@/i18n';
@@ -744,6 +747,27 @@ function askEntity(
         setAsk('word');
         countExchange();
         return trialLine('word', lang);
+    }
+
+    if (toca === 'lie') {
+        // Queda EN PIE. No se resuelve acá: se resuelve si vas a comprobarlo
+        // —`//ps`, más abajo— o si dejás de intentarlo, unas frases después.
+        markLieStanding();
+        countExchange();
+        return trialLine('lie', lang);
+    }
+
+    /*
+     * SE TE PASÓ.
+     *
+     * Seguiste hablándole y no fuiste a mirar. Él no te dice nada: sólo deja de
+     * estar disponible esa puerta, y sigue con la fachada puesta. Que no haya
+     * ningún aviso ES el castigo — te enterás de que había algo cuando ya no
+     * está.
+     */
+    if (lieGoneStale(readEntity(), { word: tripWord() })) {
+        clearLie();
+        markLieSwallowed();
     }
 
     // ⚠ `dicho` y no `texto`: `texto()` es el helper de respuestas de este
@@ -1731,13 +1755,40 @@ export function run(
         (v02Complete() ? awardFrom('v02') : null) ??
         (allCommandsFound() ? awardFrom('all-commands') : null);
 
-    return {
-        output: ganada ? `${output}
+    /*
+     * LA PRUEBA DE SU MENTIRA.
+     *
+     * Dijo que acá no corre nada más que él, y `//ps` lista varios procesos. No
+     * se añadió un comando para desmentirlo: se eligió una mentira que el juego
+     * YA PODÍA desmentir, que es lo que la hace justa.
+     *
+     * ⚠ Va acá, DESPUÉS de resolver, y se AÑADE a la salida en vez de
+     * reemplazarla. La lista de procesos tiene que seguir viéndose: es la
+     * prueba. Tragársela para poner en su lugar lo que él dice convertiría una
+     * comprobación en un truco de la app.
+     */
+    let pillado: string | null = null;
+    if (readEntity().lieStanding === true && command.name === '//ps') {
+        clearLie();
+        setPhase('hablando');
+        pillado = TRIAL_REPLY.lieProved[lang];
+    }
 
-${T.artEarned[lang]}` : output,
+    // Un `if` y no un ternario anidado: son dos añadidos distintos al mismo
+    // texto, y encadenarlos con `?:` lo dejaba ilegible.
+    let salida = output;
+    if (pillado) salida = `${output}
+
+${pillado}`;
+    else if (ganada) salida = `${output}
+
+${T.artEarned[lang]}`;
+
+    return {
+        output: salida,
         effect,
         rows,
-        secretId: secretId ?? command.secretId,
+        secretId: pillado ? 'entity-proved' : secretId ?? command.secretId,
     };
 }
 

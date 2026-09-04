@@ -11,7 +11,12 @@
  * callejón — y de los que no dan ningún error.
  */
 
-import { trialDue, wordIsRight, type TrialWorld } from '@/lib/system/entityTrials';
+import {
+    lieGoneStale,
+    trialDue,
+    wordIsRight,
+    type TrialWorld,
+} from '@/lib/system/entityTrials';
 import type { EntityPhase, EntitySnapshot } from '@/lib/system/entity';
 
 const mundo = (parcial: Partial<TrialWorld> = {}): TrialWorld => ({
@@ -86,6 +91,30 @@ describe('la palabra se comprueba', () => {
         // Si no hay nada que comprobar, no se puede acertar por accidente.
         expect(wordIsRight('nido', null)).toBe(false);
         expect(wordIsRight('', null)).toBe(false);
+    });
+});
+
+describe('la mentira sólo caduca si queda otra puerta', () => {
+    it('con palabra guardada, dejarla pasar la cierra', () => {
+        // Queda la pregunta, así que cerrarla no encierra a nadie.
+        expect(
+            lieGoneStale(en('burlon', 7, { lieStanding: true }), mundo())
+        ).toBe(true);
+    });
+
+    it('sin palabra, no caduca nunca', () => {
+        /*
+         * Es el único camino a `hablando`. Darla por tragada obligaba a volver
+         * a decirla para no encerrarte, y repetir una afirmación dos frases
+         * después lo delata como un guion en bucle. Se queda en pie esperando.
+         */
+        expect(
+            lieGoneStale(en('burlon', 99, { lieStanding: true }), mundo({ word: null }))
+        ).toBe(false);
+    });
+
+    it('y una que no está en pie no caduca', () => {
+        expect(lieGoneStale(en('burlon', 99), mundo())).toBe(false);
     });
 });
 

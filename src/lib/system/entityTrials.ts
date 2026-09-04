@@ -42,6 +42,15 @@ const OFRECE_A_LOS = 2;
 const RETA_A_LOS = 5;
 
 /**
+ * Cuántos intercambios aguanta la mentira antes de darse por tragada.
+ *
+ * Se dice a los tres, así que esto son cuatro más hablando con él sin ir a
+ * comprobar nada. No es un cronómetro castigándote: es que a la quinta frase
+ * después de afirmar algo, si no fuiste a mirar, ya no vas a ir.
+ */
+const TRAGADA_A_LOS = 7;
+
+/**
  * Qué trampa toca ahora, o `null` si ninguna.
  *
  * ⚠ EN `burlon` SIEMPRE HAY UNA PUERTA ABIERTA. Las dos que llevan a `hablando`
@@ -85,6 +94,31 @@ export function trialDue(
     }
 
     return null;
+}
+
+/**
+ * ¿Se te pasó la mentira?
+ *
+ * Se la tragó quien siguió hablando sin ir a comprobar nada. No es que él te
+ * castigue: es que dejaste pasar la ocasión de pillarlo, y él se dio cuenta —
+ * que es peor.
+ *
+ * ⚠ SÓLO CADUCA SI QUEDA OTRA PUERTA, o sea si hay palabra que preguntarte.
+ *
+ * Sin palabra, la mentira es el único camino a `hablando`. Darla por tragada
+ * ahí obligaba a volver a decirla para no encerrarte, y repetir una afirmación
+ * dos frases después lo delata como un guion en bucle. Dejándola en pie no hay
+ * ni repetición ni callejón: sigue esperando a que vayas a mirar, todo el
+ * tiempo que haga falta. Que tenga paciencia le queda bien.
+ */
+export function lieGoneStale(
+    snapshot: EntitySnapshot,
+    world: TrialWorld
+): boolean {
+    if (snapshot.lieStanding !== true) return false;
+    if (world.word === null) return false;
+
+    return snapshot.exchanges >= TRAGADA_A_LOS;
 }
 
 /**
