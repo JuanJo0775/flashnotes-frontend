@@ -192,6 +192,14 @@ export const SECRET_IDS = [
      * etiquetas.
      */
     'entity-refused',
+    /*
+     * HABER VUELTO, Y HABERLE HECHO CASO.
+     *
+     * Te fuiste, volviste al día siguiente y había una nota esperándote con
+     * instrucciones. Es lo único del juego que premia haber vuelto — y lo único
+     * que él no puede fingir que pasó.
+     */
+    'entity-gift',
 ] as const;
 
 export type SecretId = (typeof SECRET_IDS)[number];

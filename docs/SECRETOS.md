@@ -3612,13 +3612,68 @@ direcciones, y ahí cuenta por qué está ahí y por qué mantiene todo funciona
 > combinaciones, porque un juego que se queda sin final **sin dar ningún error**
 > es la peor forma de romperse.
 
+## Lo que te deja cuando no estás
+
+Desde `burlón` empieza a **dejarte cosas en la papelera**. No entre tus notas: la
+papelera es donde el sistema pone lo que ya no sirve, y por eso es donde nadie
+mira dos veces — el único sitio donde algo puede llevarte días esperando.
+
+⚠ **Ninguna la firma.** Una nota firmada es un mensaje; sin firmar es *algo que
+apareció*, que es mucho peor de encontrarse.
+
+⚠ Y como el archivo fantasma y el resto de arte, **nunca existen en la base de
+datos**: se inyectan al leer la papelera. Una nota suya que llegara al backend
+sería una nota de verdad, y borrarla fallaría.
+
+| Archivo | Qué dice | Cómo se descubre |
+| --- | --- | --- |
+| `MANTENIMIENTO.txt` | Que `//panic` devuelve la integridad al 100 | Hace lo contrario: provoca el colapso (§13) |
+| `INDICE.parcial` | Que queda un archivo más ahí abajo | No queda. Vas a mirar y no está |
+| `PARA_CUANDO_VUELVAS.txt` | Sólo si volviste tras **ocho horas** | No miente. Trae instrucciones |
+
+La que toca **se queda hasta que vos la quitás** —restaurándola o borrándola—,
+no hasta que la ves. Marcarla como dejada al mostrarla haría que abrir la
+papelera dos veces enseñara dos notas distintas y la primera desapareciera sin
+que hicieras nada. Restaurarla la convierte en una nota tuya de verdad, como el
+resto de arte.
+
+### La broma, y su remate
+
+`INDICE.parcial` te manda a buscar un archivo que no existe. **El remate llega
+cuando volvés a hablarle después de haber ido a mirar** — se cuenta como «fuiste»
+en la segunda vez que abrís la papelera con la broma ya dicha, porque la primera
+es cuando la leés.
+
+> *ah, ese archivo. no está. nunca estuvo.*
+
+No dice «era broma» con esas palabras: lo dice como si acabara de acordarse, que
+es peor. Una broma anunciada se perdona. **No hay premio ni castigo** — sólo se
+rió de vos, que es lo suyo.
+
+### La nota del día siguiente
+
+Es **lo único que él no puede fingir**: que volviste. Hacen falta ocho horas
+—largo a propósito: si bastaran veinte minutos saldría por irse a comer, y eso
+no dice «volviste», dice «te distrajiste»— y gana a las otras dos, porque ese
+momento dura una vez.
+
+Trae instrucciones, y **la palabra va escrita en la nota**: si hubiera que
+adivinarla no serían instrucciones, sería otro acertijo. Cumplirlas da el
+secreto `entity-gift` y **una pista, no una llave**:
+
+> *los que no están en la lista se escriben igual que los que están. y con _
+> donde pondrías un espacio.*
+
+⚠ **Acerca, no entrega.** Un favor que desbloquea algo es una misión, y entonces
+él pasa a ser un dispensador de contenido. Te deja mirando en la dirección
+correcta y ya.
+
 ## Lo que todavía no hace
 
 | Qué | Etapa |
 | --- | --- |
 | `pidiendo` — que empiece a pedirte cosas | 4, con los favores |
-| La broma de mandarte a buscar algo que no está | 3 |
-| Las notas que te deja, con información falsa | 3 |
+| Las ventanas con datos y bromas | 4, con la pared |
 | La pared que se safa a golpes, el ojo, los dos finales | 4 |
 
 La pista del guión bajo —que se le escapa que los espacios no le llegan— ya está
@@ -3626,9 +3681,9 @@ escrita y probada, pero **todavía no se enseña**: sólo debe salir si ya
 encontraste `//help`, y esa condición se conecta en la etapa 2 con el resto de lo
 que él nota de vos.
 
-# Los 31 secretos que cuenta el panel
+# Los 32 secretos que cuenta el panel
 
-Lo que va en `SECRETOS n/31` (§7). **Sólo entra lo que provocás vos**: lo
+Lo que va en `SECRETOS n/32` (§7). **Sólo entra lo que provocás vos**: lo
 ambiental —el glitch, los fragmentos de la barra, el barrido trabado, el arranque
 en vídeo inverso, el encendido del monitor— te pasa, no lo encontrás, y contarlo
 inflaría el denominador con cosas que nadie puede buscar.
@@ -3670,6 +3725,7 @@ así que no puede dejar el contador en `29/28`.
 | 29 | `entity-awake` | Que el ente conteste: preguntarle quién es **después** de haber estado donde no se podía (§26) | `commands.ts` |
 | 30 | `entity-proved` | Contestarle bien cuando te pregunta con qué palabra entraste a la v0.2 (§26) | `commands.ts` |
 | 31 | `entity-refused` | Decirle que **no** cuando ofrece «limpiar todo esto» (§26) | `commands.ts` |
+| 32 | `entity-gift` | Volver al día siguiente y cumplir lo que pide la nota que te dejó (§26) | `commands.ts` |
 
 **La mitad de estos identificadores se marcan en un archivo distinto del que los
 declara**, y así es exactamente como se desincronizan: la lista está en
@@ -3710,6 +3766,7 @@ Para inspeccionar o limpiar a mano. **Todas** las que escribe el juego:
 | `flashnotes:v02word` | La palabra con la que se entró — **es la salida** | ✅ |
 | `flashnotes:v02trip` | Si ya entraste **y saliste** con el código (§18 · pieza 10) | ✅ |
 | `flashnotes:entity` | En qué fase está el ente y cuántos intercambios lleva en ella (§26) | ✅ |
+| `flashnotes:seen` | Cuándo estuviste por última vez — de acá sale la nota del día siguiente (§26) | ✅ |
 | `flashnotes:v02notes` | Los archivos de la v0.2 | ✅ |
 | `flashnotes:v02trash` | Su papelera | ✅ |
 | `flashnotes:effects` | El interruptor de efectos (`on` / `off`) | ❌ — es tu preferencia |

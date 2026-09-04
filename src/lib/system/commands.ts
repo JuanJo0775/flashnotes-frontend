@@ -49,6 +49,7 @@ import {
     trialDue,
     wordIsRight,
 } from '@/lib/system/entityTrials';
+import { GIFT_WORD } from '@/lib/system/entityNotes';
 import { allDropped } from '@/lib/system/dropped';
 import type { Lang } from '@/config/lang';
 import type { Localized, LocalizedPlural, Vars } from '@/i18n';
@@ -1818,6 +1819,25 @@ export function run(
          * Que hable desde el sitio de «no te entiendo» tampoco es casualidad:
          * está encerrado, y lo único que le llega es lo que el sistema descarta.
          */
+        /*
+         * LAS INSTRUCCIONES DE LA NOTA DEL DÍA SIGUIENTE.
+         *
+         * La palabra va ESCRITA en la nota, así que no hay nada que adivinar:
+         * lo que se premia es haber vuelto y haberle hecho caso. Y sin la nota
+         * de por medio la palabra no existe — teclearla por casualidad no puede
+         * dar nada, porque el regalo es por haber vuelto.
+         *
+         * ⚠ Lo que suelta ACERCA, no entrega: la pista del `_`. Un favor que
+         * desbloquea algo es una misión, y entonces él pasa a ser un menú.
+         */
+        if (readEntity().leftVuelta === true && corto === GIFT_WORD) {
+            return {
+                output: TRIAL_REPLY.gift[lang],
+                effect: SIN_EFECTO,
+                secretId: 'entity-gift',
+            };
+        }
+
         const dicho = askEntity(corto, ctx, lang);
         if (dicho !== null) {
             return { output: dicho, effect: SIN_EFECTO, secretId: 'entity-awake' };

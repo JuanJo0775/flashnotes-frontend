@@ -274,6 +274,7 @@ export type TrialOutcome =
     | 'offerTaken'
     | 'offerRefused'
     | 'jokeOver'
+    | 'gift'
     | 'dareLater';
 
 /** Lo que dice según cómo saliste de ella. */
@@ -321,6 +322,20 @@ export const TRIAL_REPLY: Readonly<Record<TrialOutcome, Localized>> = {
     jokeOver: {
         es: 'ah, ese archivo. no está. nunca estuvo.',
         en: 'oh, that file. it is gone. it never was.',
+    },
+    /**
+     * EL REGALO: cumpliste las instrucciones de la nota del día siguiente.
+     *
+     * ⚠ ACERCA, NO ENTREGA. Lo que suelta es que los comandos que no están en
+     * la lista se escriben igual que los que están, y que los espacios no le
+     * llegan — la pista del `_` que llevaba desde el principio sin sitio.
+     *
+     * No desbloquea nada: te deja mirando en la dirección correcta, que es la
+     * única forma de que un favor siga siendo un favor y no una misión.
+     */
+    gift: {
+        es: 'los que no están en la lista se escriben igual que los que están. y con _ donde pondrías un espacio.',
+        en: 'the ones missing from the list are typed like the ones on it. and with _ wherever you would put a space.',
     },
     /** No te atreviste, y él se acuerda. */
     dareLater: {
