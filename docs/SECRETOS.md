@@ -3668,18 +3668,119 @@ secreto `entity-gift` y **una pista, no una llave**:
 él pasa a ser un dispensador de contenido. Te deja mirando en la dirección
 correcta y ya.
 
-## Lo que todavía no hace
+## Los favores
 
-| Qué | Etapa |
+Cuando nota que sabés lo que no deberías —doce secretos— empieza a **pedirte
+cosas**. ⚠ No son tareas y no hay contador: lo que cambia al cumplirlas no es un
+número, es **lo que él sabe de vos**.
+
+| Favor | Lo que pide | Contra qué se comprueba |
+| --- | --- | --- |
+| La papelera de la 0.2 | *andá a la 0.2 y mirá qué hay en la papelera. yo no puedo.* | Que la hayas abierto |
+| El silencio | *dejame en paz diez minutos. después seguimos.* | El reloj de inactividad |
+| La nota llena | *llená una nota entera. quiero ver si podés.* | La pieza que ya se gana llenándola |
+
+Los tres se comprueban contra **estado que ya existe**, así que ninguno inventa
+un registro. Y los tres suenan a que le sirven a él: *«yo no puedo»* no es una
+excusa de diseño, es cierto — está encerrado.
+
+⚠ **No conducen a secretos: acercan.** Uno que desbloquea algo es una misión, y
+entonces él pasa a ser un dispensador de contenido.
+
+## Cuándo te pasa el comando
+
+⚠ **No es «confiado».** No es que él confíe en general: es que **vos le inspirás
+confianza a él** para pedirte esto.
+
+Y **no se abre por una suma**. Hacen falta las **tres cosas a la vez**, y cada
+una le dice algo que ninguna otra puede decirle:
+
+| Lo que se da | Lo que le dice de vos |
 | --- | --- |
-| `pidiendo` — que empiece a pedirte cosas | 4, con los favores |
-| Las ventanas con datos y bromas | 4, con la pared |
-| La pared que se safa a golpes, el ojo, los dos finales | 4 |
+| Le pasaste alguna prueba | **no sos tonto** |
+| Le hiciste algún favor | **harías cosas por él** |
+| Sabés lo que no deberías | **no te vas a asustar** |
 
-La pista del guión bajo —que se le escapa que los espacios no le llegan— ya está
-escrita y probada, pero **todavía no se enseña**: sólo debe salir si ya
-encontraste `//help`, y esa condición se conecta en la etapa 2 con el resto de lo
-que él nota de vos.
+Hay un test que intenta compensar una con muchísimo de otra y tiene que seguir
+dando que no: con un contador volvería a ser una barra de progreso, y con ella se
+pierde lo único que hace especial esta fase — que **él** decide.
+
+## El final · un hueco, dos dibujos
+
+Te pasa `//unbind` *«para ayudarlo»*. **Afloja una parte de la pantalla y no dice
+cuál.**
+
+⚠ **Es un fallo de verdad, no un botón mágico.** De ahí que reportarlo sea una
+opción coherente y no un capricho: estás eligiendo entre aprovechar una grieta o
+taparla.
+
+### Qué quedó suelto
+
+Una **ventana de error**. Y ahí está todo: las fantasmas llevan
+`pointer-events: none` desde que existen —cuadros pintados encima que no pueden
+atrapar nada— así que **una que responde al clic es, por sí sola, lo que está
+mal**.
+
+Se le pega. **Clic tras clic, como golpes, no como clics de interfaz**: sin
+botón, sin foco, sin cursor de mano y **sin contador**. Cada golpe la deja peor
+y eso se ve — es la única forma de que alguien siga pegando sin que nadie se lo
+pida. A los siete **cae como una pared**. Detrás hay **estática**, y en la
+estática **un ojo**: la misma pieza que después te llevás, no un dibujo aparte.
+Luego todo falla, reinicia, y vuelve la «normalidad» con el arranque de siempre.
+
+### Los dos caminos
+
+| Camino | Cómo | Qué pasa | Pieza |
+| --- | --- | --- | --- |
+| **Ayudarlo** | Tirar la pared | Se va. No vuelve a contestar | El **ojo** |
+| **Reportarlo** | `//report` | El fallo se arregla, él sigue atrapado | El **ojo vedado** |
+
+En los dos, **silencio para siempre**. `//hi` sigue dando el saludo
+institucional de siempre, como si nada hubiera pasado — que es justamente lo que
+más se nota.
+
+⚠ **La pieza 14 sigue siendo UNA.** Si fueran dos, la colección pasaría a
+diecisiete y **nunca se podría completar**: sólo se puede tener una, y el
+cuaderno firmado exige todas las demás. Es el mismo agujero que ya se cazó con
+el secreto `collection`.
+
+Con un hueco, **los dos finales completan la colección** — y queda marcada para
+siempre por la decisión: dos personas que la tienen entera la tienen distinta.
+**Y por eso `//reset` deja de ser sólo el botón peligroso: es la forma de ver el
+otro final.**
+
+### La cicatriz
+
+Después del reinicio la pared está de vuelta **como si no hubiera pasado nada**
+— pero esa zona **tiembla de vez en cuando**. Nadie te lo cuenta, no se puede
+volver a tirar, y sólo vos sabés por qué pasa.
+
+Sólo la deja el final en que se fue. Reportarlo **arregla el fallo de verdad**:
+ahí no queda marca, y eso hace ese final más limpio y más frío.
+
+### Sus ventanas
+
+⚠ **No abre ventanas nuevas: usa las que ya había.** Un cuadro con otro formato
+se leería como una función de la app; uno idéntico a los de siempre, diciendo
+otra cosa, se lee como que alguien se metió donde no debía.
+
+Hay de dos clases. Los **datos** —*«sesión registrada. no es la primera»*— son
+**todos ciertos**, y ahí está el escalofrío: la app siempre supo eso. Las
+**bromas** son averías que no existen con la cara seria de las que sí. Ninguna
+habla de tus notas ni de guardar: esa regla sigue valiendo.
+
+Van en **mayúsculas**, al revés que todo lo suyo, porque ahí no está hablando él
+— está hablando el sistema con sus palabras.
+
+## Lo que queda fuera, y por qué
+
+La pieza de la **cinta** (`reserved-tape`) sigue sin cablear. Su hueco pasó por
+tres dueños —el ojo, la polilla, la cinta— y cada mudanza dejó un pie contando
+algo que ya no pasaba. Se queda quieta hasta que su camino esté decidido, que es
+más barato que volver a mudarla.
+
+Con el ojo cableado, **el cuaderno (`everything`) es alcanzable por primera vez
+desde el rediseño de la colección**.
 
 # Los 33 secretos que cuenta el panel
 
