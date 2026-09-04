@@ -10,7 +10,18 @@
  * podía desmentir.
  */
 
+import { MIDE_A_LOS } from '@/lib/system/entityTrials';
+
 export {};
+
+/**
+ * Cuántas veces hay que hablarle para que suelte la mentira.
+ *
+ * Se lee de la constante y no se escribe a mano: los tramos se alargaron una
+ * vez —eran demasiado cortos y el arco entero cabía en una docena de comandos—
+ * y estos números escritos a pelo fueron lo único que se rompió.
+ */
+const HASTA_QUE_MIENTE = MIDE_A_LOS + 1;
 
 const load = async () => {
     jest.resetModules();
@@ -70,7 +81,7 @@ beforeEach(() => {
 it('sin palabra que comprobar, miente', async () => {
     const { run } = await hastaLaMentira();
 
-    const salida = hablarle(run as never, 4);
+    const salida = hablarle(run as never, HASTA_QUE_MIENTE);
 
     expect(salida).toBe(salida.toLowerCase());
     expect(salida).toMatch(/corre/);
@@ -79,7 +90,7 @@ it('sin palabra que comprobar, miente', async () => {
 it('y no la repite mientras siga en pie', async () => {
     // Decirla dos veces la delata como guion, no como afirmación.
     const { run } = await hastaLaMentira();
-    hablarle(run as never, 4);
+    hablarle(run as never, HASTA_QUE_MIENTE);
 
     const siguiente = run('//whoareu', ctx())!.output;
 
@@ -88,7 +99,7 @@ it('y no la repite mientras siga en pie', async () => {
 
 it('//ps la desmiente: eso abre hablando', async () => {
     const { run, entity } = await hastaLaMentira();
-    hablarle(run as never, 4);
+    hablarle(run as never, HASTA_QUE_MIENTE);
 
     const salida = run('//ps', ctx())!.output;
 
@@ -125,7 +136,7 @@ describe('⚠ CUÁNDO CADUCA, QUE NO ES SIEMPRE', () => {
     it('sin palabra, no caduca nunca: sigue esperando', async () => {
         const { run, entity } = await hastaLaMentira();
 
-        hablarle(run as never, 12);
+        hablarle(run as never, HASTA_QUE_MIENTE + 8);
 
         expect(entity.readEntity().lieSwallowed).toBeFalsy();
         expect(entity.readEntity().lieStanding).toBe(true);
@@ -133,7 +144,7 @@ describe('⚠ CUÁNDO CADUCA, QUE NO ES SIEMPRE', () => {
 
     it('y no la repite en todo ese rato', async () => {
         const { run } = await hastaLaMentira();
-        hablarle(run as never, 4);
+        hablarle(run as never, HASTA_QUE_MIENTE);
 
         const despues = Array.from(
             { length: 8 },
@@ -145,7 +156,7 @@ describe('⚠ CUÁNDO CADUCA, QUE NO ES SIEMPRE', () => {
 
     it('así que //ps sigue valiendo mucho después', async () => {
         const { run, entity } = await hastaLaMentira();
-        hablarle(run as never, 12);
+        hablarle(run as never, HASTA_QUE_MIENTE + 8);
 
         expect(run('//ps', ctx())!.output).toMatch(/miraste/);
         expect(entity.readEntity().phase).toBe('hablando');

@@ -18,6 +18,10 @@
  * rompe por algún sitio, este test se para justo ahí.
  */
 
+import { MIDE_A_LOS, OFRECE_A_LOS } from '@/lib/system/entityTrials';
+import { PIDE_CON, PIDE_TRAS } from '@/lib/system/entityFavors';
+import { RETURN_AT } from '@/lib/system/entity';
+
 export {};
 
 const load = async () => {
@@ -66,8 +70,16 @@ it('se puede llegar al final tecleando, sin tocar el estado', async () => {
     v02.forgetV02Cache();
 
     /* ── 2 · Hablarle hasta que se suelte y te mida ──────────────────────── */
+    /*
+     * ⚠ LAS CUENTAS SALEN DE LAS CONSTANTES, no escritas a mano.
+     *
+     * `RETURN_AT` para que pase de `receloso` a `burlon`, y `MIDE_A_LOS` más
+     * uno dentro de `burlon` para que suelte la pregunta. Cuando los tramos se
+     * alargaron —eran tan cortos que el arco entero cabía en una docena de
+     * comandos— los números a pelo fueron lo único que se rompió.
+     */
     let ultima = '';
-    for (let i = 0; i < 7; i += 1) {
+    for (let i = 0; i < RETURN_AT + MIDE_A_LOS + 1; i += 1) {
         ultima = run('//whoareu', ctx())!.output;
     }
 
@@ -87,13 +99,22 @@ it('se puede llegar al final tecleando, sin tocar el estado', async () => {
     expect(entity.readEntity().provedIt).toBe(true);
 
     /* ── 4 · Que te pida un favor, y hacérselo ───────────────────────────── */
+    /*
+     * ⚠ AHORA TARDA, Y ESO ES EL ARREGLO. Antes pasaba de contestarte de lado a
+     * pedirte favores en cuatro frases; `hablando` tiene que ser un tramo en
+     * que simplemente habla —lo que te ganaste— antes de querer algo de vos.
+     *
+     * Y le pide la papelera de la v0.2 porque en esta partida SÍ cruzó. A quien
+     * lo despierta insistiendo con `//hi` no se le manda ahí: para esa persona
+     * es un sitio que no existe.
+     */
     let pedido = '';
-    for (let i = 0; i < 6; i += 1) {
-        const salida = run('//whoareu', ctx(12))!.output;
-        if (/papelera|0\.2/.test(salida)) pedido = salida;
+    for (let i = 0; i < PIDE_TRAS + OFRECE_A_LOS + 4; i += 1) {
+        const salida = run('//whoareu', ctx(PIDE_CON))!.output;
+        if (/papelera/.test(salida)) pedido = salida;
 
         // La oferta envenenada aparece por el camino: se rechaza y se sigue.
-        if (salida.includes('[s/n]')) run('n', ctx(12));
+        if (salida.includes('[s/n]')) run('n', ctx(PIDE_CON));
     }
 
     expect(pedido).toBeTruthy();
@@ -104,8 +125,8 @@ it('se puede llegar al final tecleando, sin tocar el estado', async () => {
 
     /* ── 6 · Y que se decida a pasarte el comando ────────────────────────── */
     let entregado = '';
-    for (let i = 0; i < 4 && !entregado; i += 1) {
-        const salida = run('//whoareu', ctx(12))!.output;
+    for (let i = 0; i < 6 && !entregado; i += 1) {
+        const salida = run('//whoareu', ctx(PIDE_CON))!.output;
         if (salida.includes('//unbind')) entregado = salida;
     }
 
@@ -113,11 +134,11 @@ it('se puede llegar al final tecleando, sin tocar el estado', async () => {
     expect(ending.commandGiven()).toBe(true);
 
     /* ── 7 · Los dos comandos del final existen ahora, y antes no ────────── */
-    expect(run('//unbind', ctx(12))!.output).toBeTruthy();
+    expect(run('//unbind', ctx(PIDE_CON))!.output).toBeTruthy();
     expect(ending.somethingLoose()).toBe(true);
 
     /* ── 8 · Reportarlo cierra el arco ───────────────────────────────────── */
-    const fin = run('//report', ctx(12))!;
+    const fin = run('//report', ctx(PIDE_CON))!;
 
     expect(fin.secretId).toBe('entity-reported');
     expect(entity.readEntity().phase).toBe('rencoroso');

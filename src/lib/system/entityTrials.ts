@@ -33,13 +33,17 @@ export interface TrialWorld {
 /*
  * A los cuántos intercambios de la fase salta cada cosa.
  *
- * No son cifras de dificultad: son márgenes para que nada suene a formulario.
- * Soltar la pregunta en la primera frase de `burlon` la convertiría en un
- * trámite; dejarla para la décima haría que casi nadie llegara.
+ * ⚠ SE DOBLARON DESPUÉS DE VERLO CORRER. Con las cifras de antes, el arco
+ * entero cabía en una docena de comandos: se pasaba de que te ignorara a que te
+ * pidiera favores sin que ninguna de las dos cosas hubiera durado lo suficiente
+ * para reconocerse.
+ *
+ * No son cifras de dificultad: son el tiempo que necesita un tono para
+ * volverse familiar. Sólo cuando algo se te hizo familiar notás que cambió.
  */
-const MIDE_A_LOS = 3;
-const OFRECE_A_LOS = 2;
-const RETA_A_LOS = 5;
+export const MIDE_A_LOS = 7;
+export const OFRECE_A_LOS = 4;
+export const RETA_A_LOS = 14;
 
 /**
  * Cuántos intercambios aguanta la mentira antes de darse por tragada.
@@ -48,7 +52,7 @@ const RETA_A_LOS = 5;
  * comprobar nada. No es un cronómetro castigándote: es que a la quinta frase
  * después de afirmar algo, si no fuiste a mirar, ya no vas a ir.
  */
-const TRAGADA_A_LOS = 7;
+export const TRAGADA_A_LOS = 13;
 
 /**
  * Qué trampa toca ahora, o `null` si ninguna.
@@ -128,7 +132,7 @@ export function lieGoneStale(
  * hacerle caso. Suficiente para que no sea un cronómetro, corto para que el
  * reproche llegue mientras todavía te acordás de qué te pidió.
  */
-const ESQUIVA_A_LOS = 10;
+export const ESQUIVA_A_LOS = 20;
 
 /**
  * ¿Se le nota que no vas a escribirlo?

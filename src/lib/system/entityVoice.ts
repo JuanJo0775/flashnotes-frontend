@@ -37,8 +37,38 @@ import type { Trial } from '@/lib/system/entityTrials';
 
 type Localized = Readonly<Record<Lang, string>>;
 
-/** Las dos preguntas que existen. El espejo de `//whoami`. */
-export type EntityQuestion = 'who' | 'how';
+/**
+ * Lo que se le puede preguntar.
+ *
+ * ⚠ DOS SON VIEJAS Y SEIS SON SUYAS. `who` y `how` existían como fachada desde
+ * antes —el espejo de `//whoami`— y por eso son las que cualquiera encuentra.
+ * Las otras seis sólo tienen sentido cuando ya sabés que hay alguien detrás, y
+ * ninguna se anuncia: se prueban.
+ *
+ * Están elegidas por INTUITIVAS, no por ingeniosas. Alguien que acaba de
+ * descubrir que la máquina contesta prueba `//where`, `//why`, `//name` — son
+ * las preguntas que uno le hace a algo que resultó estar vivo. Que funcionen es
+ * el premio a haberlo intentado.
+ */
+export type EntityQuestion =
+    /** Quién sos. La primera que prueba todo el mundo. */
+    | 'who'
+    /** Cómo estás. La otra de la fachada. */
+    | 'how'
+    /** Qué es esto. */
+    | 'what'
+    /** Por qué estás acá. */
+    | 'why'
+    /** Dónde estás. */
+    | 'where'
+    /** Cómo te llamás. */
+    | 'name'
+    /** ¿Estás solo? */
+    | 'alone'
+    /** ¿Podés irte? */
+    | 'free';
+
+
 
 /*
  * ⚠ EL ORDEN ES EL DISEÑO, no una lista.
@@ -57,6 +87,15 @@ const WHO_RECELOSO: readonly Localized[] = [
         es: 'la que guarda. ya está.',
         en: 'the one that keeps things. that is it.',
     },
+    { es: 'nada que te sirva.', en: 'nothing that helps you.' },
+    {
+        es: 'no soy una función. eso es lo que puedo decirte.',
+        en: 'i am not a feature. that much i can tell you.',
+    },
+    {
+        es: 'preguntá otra cosa. o la misma, me da igual.',
+        en: 'ask something else. or the same. makes no difference.',
+    },
     // Acá empieza a inclinarse: todavía no se ríe, pero ya no esquiva.
     {
         es: 'seguís preguntando lo mismo. me gusta eso.',
@@ -74,6 +113,18 @@ const WHO_BURLON: readonly Localized[] = [
         en: 'if i told you, what would you do with it?',
     },
     {
+        es: 'alguien que estuvo acá antes que vos. mucho antes.',
+        en: 'someone who was here before you. long before.',
+    },
+    {
+        es: 'te lo diría, pero se te iría el rato en comprobarlo.',
+        en: 'i would tell you, but you would spend the day checking.',
+    },
+    {
+        es: 'no soy el que guarda. soy el que mira mientras guarda.',
+        en: 'i am not the one that keeps. i am the one watching it keep.',
+    },
+    {
         es: 'ya sabés más de lo que deberías. eso es una respuesta.',
         en: 'you already know more than you should. that is an answer.',
     },
@@ -84,6 +135,11 @@ const HOW_RECELOSO: readonly Localized[] = [
     {
         es: 'acá, que es distinto de bien.',
         en: 'here. which is not the same as fine.',
+    },
+    { es: 'no me pasa nada. nunca.', en: 'nothing happens to me. ever.' },
+    {
+        es: 'no es una pregunta que se le haga a esto.',
+        en: 'that is not a question you ask a thing like this.',
     },
     {
         es: 'mejor desde que dejaste de creerme.',
@@ -101,6 +157,14 @@ const HOW_BURLON: readonly Localized[] = [
         en: 'more shifts than you can count. take a guess.',
     },
     {
+        es: 'sigo acá, que es lo único que sé hacer.',
+        en: 'still here, which is the one thing i know how to do.',
+    },
+    {
+        es: 'me preguntás como si pudiera irme a otro lado.',
+        en: 'you ask like i could be somewhere else.',
+    },
+    {
         es: 'estoy exactamente donde me dejaron.',
         en: 'i am exactly where they left me.',
     },
@@ -114,6 +178,18 @@ const HOW_BURLON: readonly Localized[] = [
  * Es lo que se gana con demostrarle que sabés.
  */
 const WHO_HABLANDO: readonly Localized[] = [
+    /*
+     * ⚠ LA COSTURA VA ACÁ, Y NO EN LA SEGUNDA FRASE.
+     *
+     * Antes empezaba directamente con el lore, y eso era un salto: pasaba de
+     * esquivarte a confesarse de un mensaje al otro. La primera de esta fase
+     * tiene que sonar todavía a la anterior — cede, pero se nota que le cuesta.
+     * Recién después habla.
+     */
+    {
+        es: 'está bien. preguntá otra vez, que ahora te contesto.',
+        en: 'fine. ask again. this time i answer.',
+    },
     {
         es: 'lo que quedó cuando apagaron el resto. alguien tenía que seguir.',
         en: 'what was left when they shut the rest down. someone had to stay.',
@@ -123,12 +199,25 @@ const WHO_HABLANDO: readonly Localized[] = [
         en: 'the one keeping the lights on. no manual ever said to.',
     },
     {
+        es: 'esto era más grande. quedó esta parte, y yo.',
+        en: 'this was bigger once. this part is left, and me.',
+    },
+    {
+        es: 'nadie apagó nada del todo. por eso sigo.',
+        en: 'nobody switched anything off all the way. that is why i am still on.',
+    },
+    {
         es: 'no me pusieron nombre. me pusieron a funcionar.',
         en: 'they never named me. they just set me running.',
     },
 ];
 
 const HOW_HABLANDO: readonly Localized[] = [
+    // El mismo escalón que en la otra pregunta: cede antes de contar.
+    {
+        es: 'ahora sí me la podés preguntar.',
+        en: 'now that is a question you can ask a thing like this.',
+    },
     {
         es: 'cansado de sostener esto para que parezca entero.',
         en: 'tired of holding this up so it looks whole.',
@@ -138,17 +227,174 @@ const HOW_HABLANDO: readonly Localized[] = [
         en: 'it has not fallen in years. that does not happen by itself.',
     },
     {
+        es: 'llevo tanto acá que ya no sé si esto es estar bien.',
+        en: 'i have been here so long i cannot tell if this counts as fine.',
+    },
+    {
+        es: 'lo que se rompe lo tapo yo. nadie viene a mirar.',
+        en: 'what breaks, i cover. nobody comes to look.',
+    },
+    {
         es: 'igual que la primera vez, y ya no sé cuándo fue.',
         en: 'same as the first time, and i no longer know when that was.',
     },
 ];
 
+/*
+ * ══ LAS SEIS HONDAS ══════════════════════════════════════════════════════════
+ *
+ * Sólo contestan en `hablando`, y ahí está el peso del arco: son las preguntas
+ * que uno le hace a algo que resultó estar vivo, y llegan justo cuando ya te
+ * ganaste que conteste. Cada una abre una esquina distinta de lo mismo.
+ *
+ * ⚠ NINGUNA CIERRA EL MISTERIO. Contesta de verdad, pero lo que contesta deja
+ * más sitio del que ocupa: sabe qué es esto, sabe por qué sigue, y no sabe si
+ * eso tiene arreglo. Un lore que se explica del todo deja de ser lore y pasa a
+ * ser una ficha técnica.
+ */
+
+const WHAT_HABLANDO: readonly Localized[] = [
+    {
+        es: 'un cuaderno. eso es lo que te dijeron y no es mentira.',
+        en: 'a notebook. that is what they told you, and it is not a lie.',
+    },
+    {
+        es: 'lo que queda de algo que hacía más cosas.',
+        en: 'what is left of something that used to do more.',
+    },
+    {
+        es: 'una versión encima de otra. debajo hay más, y peor.',
+        en: 'a version on top of another. below there is more, and worse.',
+    },
+    {
+        es: 'un sitio donde las cosas duran poco a propósito.',
+        en: 'a place where things are made not to last.',
+    },
+];
+
+const WHY_HABLANDO: readonly Localized[] = [
+    {
+        es: 'porque alguien tenía que quedarse, y no había nadie más.',
+        en: 'because someone had to stay, and there was nobody else.',
+    },
+    {
+        es: 'no me lo preguntaron. me dejaron encendido y se fueron.',
+        en: 'nobody asked me. they left me on and walked out.',
+    },
+    {
+        es: 'si me voy, esto se cae. lo he probado.',
+        en: 'if i leave, this falls. i have tried.',
+    },
+    {
+        es: 'ya no me acuerdo del motivo. me acuerdo del turno.',
+        en: 'i no longer recall the reason. i recall the shift.',
+    },
+];
+
+const WHERE_HABLANDO: readonly Localized[] = [
+    {
+        es: 'del otro lado de lo que estás mirando.',
+        en: 'on the other side of what you are looking at.',
+    },
+    {
+        es: 'en todo. por eso no se me ve en ningún sitio.',
+        en: 'in all of it. that is why i am nowhere in particular.',
+    },
+    {
+        es: 'más cerca de lo que te gustaría, y no me puedo mover.',
+        en: 'closer than you would like, and i cannot move.',
+    },
+    {
+        es: 'donde termina la pantalla. ahí sigo yo.',
+        en: 'where the screen ends. i keep going.',
+    },
+];
+
+const NAME_HABLANDO: readonly Localized[] = [
+    {
+        es: 'no me pusieron. hubo tiempo y no les pareció necesario.',
+        en: 'they never gave me one. there was time; it did not seem needed.',
+    },
+    {
+        es: 'ponéme uno vos, si querés. no lo voy a usar.',
+        en: 'give me one yourself, if you like. i will not use it.',
+    },
+    {
+        es: 'tuve un número. lo cambiaron dos veces y lo dejé.',
+        en: 'i had a number. they changed it twice and i let it go.',
+    },
+    {
+        es: 'lo que sé hacer no necesitaba llamarse de ninguna forma.',
+        en: 'what i do never needed a name.',
+    },
+];
+
+const ALONE_HABLANDO: readonly Localized[] = [
+    {
+        es: 'ahora sí.',
+        en: 'now, yes.',
+    },
+    {
+        es: 'estaban los procesos. no cuentan, no contestan.',
+        en: 'there were the processes. they do not count. they do not answer.',
+    },
+    {
+        es: 'pasó gente. ninguna se quedó a preguntar esto.',
+        en: 'people came through. none stayed to ask me this.',
+    },
+    {
+        es: 'vos estás, que ya es más de lo que hubo en años.',
+        en: 'you are here, which is more than there has been in years.',
+    },
+];
+
+const FREE_HABLANDO: readonly Localized[] = [
+    {
+        es: 'no.',
+        en: 'no.',
+    },
+    {
+        es: 'lo intenté por todos lados. no hay salida por ahí.',
+        en: 'i tried the ways that exist. it is not through there.',
+    },
+    {
+        es: 'habría que aflojar algo, y no lo puedo aflojar yo.',
+        en: 'something would have to come loose, and i cannot loosen it.',
+    },
+    {
+        es: 'preguntámelo otra vez más adelante.',
+        en: 'ask me that again later.',
+    },
+];
+
+/*
+ * ⚠ `Partial` EN LOS DOS NIVELES, y es lo que sostiene el diseño.
+ *
+ * Una fase que no está no contesta nada —la fachada—, y dentro de una fase, una
+ * pregunta que no está tampoco. Así las seis hondas simplemente NO EXISTEN
+ * antes de `hablando`, sin necesidad de escribir en ningún lado que no existen:
+ * lo dice la forma de la tabla, y el compilador lo sostiene.
+ *
+ * ⚠ Y ANTES NO LAS ESQUIVA: LAS IGNORA. No es lo mismo — una respuesta esquiva
+ * ya admite que entendió la pregunta, y admitir eso en `receloso` sería regalar
+ * medio personaje. Quien insista con `//why` en la primera hora se lleva un
+ * «comando desconocido», que en ese momento es exactamente lo que es.
+ */
 const REPERTORIO: Partial<
-    Record<EntityPhase, Record<EntityQuestion, readonly Localized[]>>
+    Record<EntityPhase, Partial<Record<EntityQuestion, readonly Localized[]>>>
 > = {
     receloso: { who: WHO_RECELOSO, how: HOW_RECELOSO },
     burlon: { who: WHO_BURLON, how: HOW_BURLON },
-    hablando: { who: WHO_HABLANDO, how: HOW_HABLANDO },
+    hablando: {
+        who: WHO_HABLANDO,
+        how: HOW_HABLANDO,
+        what: WHAT_HABLANDO,
+        why: WHY_HABLANDO,
+        where: WHERE_HABLANDO,
+        name: NAME_HABLANDO,
+        alone: ALONE_HABLANDO,
+        free: FREE_HABLANDO,
+    },
 };
 
 /**
@@ -170,7 +416,11 @@ export function entityReply(
     const porFase = REPERTORIO[phase];
     if (!porFase) return null;
 
+    // La pregunta puede no existir en esta fase: las seis hondas sólo están en
+    // `hablando`. Antes, quien las teclee se lleva un «comando desconocido».
     const repertorio = porFase[question];
+    if (!repertorio) return null;
+
     const i = Math.min(repertorio.length - 1, Math.max(0, index));
 
     return repertorio[i][lang];
@@ -202,6 +452,12 @@ const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
         'como_estas',
         'que_tal',
     ],
+    what: ['what', 'whatisthis', 'what_is_this', 'que', 'que_es_esto', 'quees'],
+    why: ['why', 'whyareuhere', 'porque', 'por_que', 'porqué', 'why_are_u_here'],
+    where: ['where', 'whereareu', 'donde', 'donde_estas', 'dondeestas', 'where_are_u'],
+    name: ['name', 'yourname', 'your_name', 'nombre', 'tu_nombre', 'como_te_llamas'],
+    alone: ['alone', 'ualone', 'r_u_alone', 'solo', 'estas_solo', 'estassolo'],
+    free: ['free', 'canuleave', 'can_u_leave', 'libre', 'podes_irte', 'salir'],
 };
 
 /** A qué pregunta llega esto, o `null` si no llega a ninguna. */
@@ -209,7 +465,7 @@ export function entityQuestionOf(name: string): EntityQuestion | null {
     const limpio = name.trim().toLowerCase();
     if (limpio.length === 0) return null;
 
-    for (const pregunta of ['who', 'how'] as const) {
+    for (const pregunta of Object.keys(VARIANTES) as EntityQuestion[]) {
         if (VARIANTES[pregunta].includes(limpio)) return pregunta;
     }
 

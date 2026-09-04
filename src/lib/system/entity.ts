@@ -468,11 +468,15 @@ export interface EntityWorld {
 /**
  * Cuántos intercambios en `receloso` hacen falta para que se suelte.
  *
- * Tres. No es una cifra de dificultad: es lo mínimo para que se lea como VOLVER.
- * Con uno sería la misma conversación; con dos, insistir; con tres ya sos
- * alguien que vuelve, y eso es lo que le interesa.
+ * ⚠ SIETE, Y ANTES ERAN TRES. Con tres, `receloso` duraba lo que tarda alguien
+ * en teclear el mismo comando tres veces: no daba tiempo a notar que estaba
+ * seco, así que soltarse tampoco significaba nada. Un tramo tiene que durar lo
+ * bastante para que se reconozca, o el cambio no se lee como cambio.
+ *
+ * No es una cifra de dificultad: es lo que hace falta para que se lea como
+ * VOLVER, y no como seguir tecleando.
  */
-export const RETURN_AT = 3;
+export const RETURN_AT = 7;
 
 /**
  * Dónde debería estar el ente, dado dónde está y qué pasó.

@@ -8,6 +8,8 @@
  * sólo te señala dónde está y se queda mirando.
  */
 
+import { ESQUIVA_A_LOS, RETA_A_LOS } from '@/lib/system/entityTrials';
+
 export {};
 
 const load = async () => {
@@ -57,7 +59,7 @@ it('en hablando, al final, te reta a escribir //reset', async () => {
     entity.clearEntity();
     entity.setPhase('hablando');
 
-    const salida = hablarle(run as never, 6);
+    const salida = hablarle(run as never, RETA_A_LOS + 1);
 
     expect(salida).toContain('//reset');
     expect(entity.readEntity().dared).toBe(true);
@@ -112,7 +114,7 @@ it('no escribirlo se le queda, y te lo saca después', async () => {
     entity.setPhase('hablando');
 
     // Te reta, y vos seguís hablando sin escribirlo. Él lo nota.
-    const salida = hablarle(run as never, 11);
+    const salida = hablarle(run as never, ESQUIVA_A_LOS + 1);
 
     expect(entity.readEntity().dodged).toBe(true);
     expect(salida).toMatch(/miedo/);
@@ -127,7 +129,7 @@ it('pero te lo saca UNA vez, no en cada frase', async () => {
     entity.clearEntity();
     entity.setPhase('hablando');
 
-    hablarle(run as never, 11);
+    hablarle(run as never, ESQUIVA_A_LOS + 1);
     const despues = Array.from(
         { length: 4 },
         () => run('//whoareu', ctx())!.output

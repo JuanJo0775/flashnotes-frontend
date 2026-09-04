@@ -8,6 +8,8 @@
  * tecleaste vos, y que él vio.
  */
 
+import { MIDE_A_LOS } from '@/lib/system/entityTrials';
+
 export {};
 
 const load = async () => {
@@ -60,10 +62,16 @@ const hastaBurlon = async () => {
     return cargado;
 };
 
-/** Cuatro preguntas: las tres del repertorio y la que dispara la trampa. */
+/**
+ * Le habla hasta que suelta la pregunta.
+ *
+ * ⚠ EL NÚMERO SE LEE DE LA CONSTANTE. Estaba escrito a mano y fue lo único que
+ * se rompió cuando los tramos se alargaron — eran demasiado cortos y el arco
+ * entero cabía en una docena de comandos.
+ */
 const hastaQuePregunte = (run: (l: string, c: unknown) => unknown) => {
     let salida = '';
-    for (let i = 0; i < 4; i += 1) {
+    for (let i = 0; i < MIDE_A_LOS + 1; i += 1) {
         salida = (run('//whoareu', ctx()) as { output: string }).output;
     }
     return salida;

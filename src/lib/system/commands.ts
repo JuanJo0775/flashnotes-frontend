@@ -828,7 +828,21 @@ function askEntity(
      * cumplirlo tenga efecto sin que haya que avisarle: él simplemente lo nota
      * la próxima vez que le hablás, como todo lo demás que sabe de vos.
      */
-    const favor = favorDue(readEntity(), ctx.secretsFound);
+    const favor = favorDue(readEntity(), ctx.secretsFound, {
+        /*
+         * ⚠ LA PUERTA ES HABER VISTO LO QUE NO SE VE, y el mismo dato que
+         * despierta al ente: cruzar la v0.2 o sobrevivir al fallo total.
+         */
+        sawTooMuch: mundo.trespassed,
+        /*
+         * ⚠ Y SÓLO SABÉS QUÉ ES LA v0.2 SI ESTUVISTE.
+         *
+         * A quien lo despertó insistiendo con `//hi` no se le manda a la 0.2:
+         * para esa persona es un sitio que no existe, y la frase se leía como
+         * un error del juego en vez de como un favor.
+         */
+        knowsV02: didV02RoundTrip(),
+    });
 
     if (favor !== null) {
         if (favorDone(favor, ctx.favors ?? SIN_FAVORES)) {

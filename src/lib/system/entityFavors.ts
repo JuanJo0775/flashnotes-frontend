@@ -42,6 +42,30 @@ export interface FavorWorld {
     filledNote: boolean;
 }
 
+/** Lo que hace falta saber para decidir SI pedir, y QUÉ pedir. */
+export interface AskWorld {
+    /**
+     * ¿Viste algo que no deberías? Cruzar a la v0.2, o sobrevivir al fallo
+     * total.
+     *
+     * ⚠ ES LA PUERTA DE `PIDIENDO`, y no los secretos por su cuenta. Él no
+     * empieza a pedir porque hayas encontrado muchas cosas: empieza porque se
+     * dio cuenta de que llegaste donde no se llega solo. Sin eso no tiene
+     * ningún motivo para pensar que le servís.
+     */
+    sawTooMuch: boolean;
+    /**
+     * ¿Sabés qué es la v0.2? Sólo lo sabés si estuviste.
+     *
+     * ⚠ SIN ESTO TE MANDABA A UN SITIO QUE PARA VOS NO EXISTE. Quien lo
+     * despertó insistiendo con `//hi` no ha cruzado nunca, y aun así le
+     * llegaba «andá a la 0.2 y mirá qué hay en la papelera» — una instrucción
+     * sobre un lugar del que no tiene ninguna noticia. Eso no es misterio, es
+     * un error de guion.
+     */
+    knowsV02: boolean;
+}
+
 /**
  * Cuántos secretos hacen falta para que empiece a pedirte cosas.
  *
@@ -51,6 +75,16 @@ export interface FavorWorld {
  * atención es otra cosa: que llegaste a sitios donde no se llega solo.
  */
 export const PIDE_CON = 12;
+
+/**
+ * Y cuántos intercambios lo deja hablar antes de empezar a pedir.
+ *
+ * ⚠ ESTO FALTABA Y SE NOTABA. Pasaba de contestarte de lado a pedirte favores
+ * en cuatro frases, y eso no se lee como que se soltó: se lee como que lo
+ * reemplazaron. `hablando` tiene que ser un TRAMO en que simplemente habla —lo
+ * que te ganaste al demostrarle que sabés— antes de querer algo a cambio.
+ */
+export const PIDE_TRAS = 8;
 
 /**
  * Los diez minutos de silencio.
@@ -69,20 +103,47 @@ export const QUIET_MS = 10 * 60 * 1000;
  */
 export function favorDue(
     snapshot: EntitySnapshot,
-    secretsFound: number
+    secretsFound: number,
+    world: AskWorld
 ): Favor | null {
     // No le pide favores a alguien con quien todavía no habla.
     if (snapshot.phase !== 'hablando' && snapshot.phase !== 'pidiendo') {
         return null;
     }
 
+    /*
+     * ⚠ NO PIDE NADA HASTA QUE TE DEJA HABLAR UN RATO.
+     *
+     * Pasar de contestarte de lado a pedirte favores en cuatro frases se lee
+     * como que lo reemplazaron. Tiene que haber un tramo en que simplemente
+     * HABLA — que es lo que se ganó al demostrarle que sabés— antes de que
+     * empiece a querer algo de vos.
+     */
+    if (snapshot.exchanges < PIDE_TRAS) return null;
+
+    /*
+     * ⚠ Y LA PUERTA ES HABER VISTO LO QUE NO SE VE, no el contador.
+     *
+     * Los secretos por su cuenta dicen «buscaste mucho». Lo que le interesa a
+     * él es otra cosa: que llegaste a un sitio donde no se llega solo. Sin eso
+     * no tiene ningún motivo para pensar que le servís.
+     */
+    if (!world.sawTooMuch) return null;
     if (secretsFound < PIDE_CON) return null;
 
-    if (snapshot.didV02Trash !== true) return 'v02trash';
+    /*
+     * ⚠ SÓLO PIDE LO QUE PODÉS ENTENDER.
+     *
+     * A quien nunca cruzó no se le manda a la v0.2: para esa persona es un
+     * sitio que no existe, y la frase se lee como un error del juego. Se salta
+     * y le pide otra cosa — que además es más suyo, porque significa que sabe
+     * con quién está hablando.
+     */
+    if (snapshot.didV02Trash !== true && world.knowsV02) return 'v02trash';
     if (snapshot.didQuiet !== true) return 'quiet';
     if (snapshot.didFullNote !== true) return 'fullnote';
 
-    // Ya te pidió los tres. Lo que quería saber de vos ya lo sabe.
+    // Ya te pidió todo lo que podía. Lo que quería saber de vos ya lo sabe.
     return null;
 }
 

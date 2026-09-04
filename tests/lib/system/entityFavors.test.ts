@@ -22,7 +22,9 @@ import {
     favorDue,
     favorLine,
     PIDE_CON,
+    PIDE_TRAS,
     QUIET_MS,
+    type AskWorld,
     type Favor,
     type FavorWorld,
 } from '@/lib/system/entityFavors';
@@ -43,43 +45,89 @@ const en = (
     extra: Partial<EntitySnapshot> = {}
 ): EntitySnapshot => ({ phase, exchanges: 0, ...extra });
 
+/** Alguien que cruzó a la v0.2 y por tanto sabe qué es. */
+const cruzo = (): AskWorld => ({ sawTooMuch: true, knowsV02: true });
+
+/** Y alguien que lo despertó insistiendo, sin haber cruzado nunca. */
+const insistio = (): AskWorld => ({ sawTooMuch: true, knowsV02: false });
+
+/** Ya hablado lo bastante para que empiece a querer algo. */
+const hablado = (extra: Partial<EntitySnapshot> = {}) =>
+    en('hablando', { exchanges: PIDE_TRAS, ...extra });
+
 describe('⚠ PIDIENDO no se abre por hablar', () => {
-    it('hablar mucho no basta', () => {
+    it('hablar mucho no basta si no viste nada', () => {
         /*
-         * Se abre porque él nota que sabés lo que no deberías. Un contador de
-         * intercambios diría «insististe», que ya es lo que abre `burlon` — y
-         * repetir la misma puerta dos veces la vacía de significado.
+         * Se abre porque él nota que sabés lo que no deberías. Los secretos por
+         * su cuenta dicen «buscaste mucho»; lo que le interesa es que llegaste a
+         * un sitio donde no se llega solo.
          */
-        expect(favorDue(en('hablando', { exchanges: 99 }), 0)).toBeNull();
+        expect(
+            favorDue(hablado({ exchanges: 99 }), 99, {
+                sawTooMuch: false,
+                knowsV02: false,
+            })
+        ).toBeNull();
     });
 
-    it('pero saber demasiado sí', () => {
-        expect(favorDue(en('hablando'), PIDE_CON)).toBe('v02trash');
+    it('⚠ ni tampoco basta con haber visto, si acaba de soltarse', () => {
+        /*
+         * Pasar de contestarte de lado a pedirte favores en cuatro frases se lee
+         * como que lo reemplazaron. `hablando` tiene que ser un tramo en que
+         * simplemente habla antes de querer algo a cambio.
+         */
+        expect(favorDue(en('hablando'), PIDE_CON, cruzo())).toBeNull();
+    });
+
+    it('con las dos cosas, y después de un rato, sí', () => {
+        expect(favorDue(hablado(), PIDE_CON, cruzo())).toBe('v02trash');
     });
 
     it('y antes de hablando no pide nada, sepas lo que sepas', () => {
         // No le pide favores a alguien con quien todavía no habla.
-        expect(favorDue(en('burlon'), 99)).toBeNull();
-        expect(favorDue(en('receloso'), 99)).toBeNull();
+        expect(favorDue(en('burlon', { exchanges: 99 }), 99, cruzo())).toBeNull();
+        expect(favorDue(en('receloso', { exchanges: 99 }), 99, cruzo())).toBeNull();
+    });
+});
+
+describe('⚠ SÓLO PIDE LO QUE PODÉS ENTENDER', () => {
+    it('a quien nunca cruzó no lo manda a la v0.2', () => {
+        /*
+         * Para esa persona la 0.2 es un sitio que no existe, y «andá a la 0.2 y
+         * mirá qué hay en la papelera» se lee como un error del juego, no como
+         * un favor. Se salta y le pide otra cosa.
+         *
+         * Pasaba de verdad: quien lo despertaba insistiendo con `//hi` nunca ha
+         * cruzado, y le llegaba igual.
+         */
+        expect(favorDue(hablado(), PIDE_CON, insistio())).toBe('quiet');
+    });
+
+    it('y aun así llega al final: el resto de favores sirve igual', () => {
+        // Saltarse uno no puede dejar a nadie sin final.
+        expect(
+            favorDue(hablado({ didQuiet: true }), PIDE_CON, insistio())
+        ).toBe('fullnote');
     });
 });
 
 describe('los pide en orden, uno por uno', () => {
     it('primero el de la v0.2, que es el que él no puede hacer', () => {
-        expect(favorDue(en('hablando'), PIDE_CON)).toBe('v02trash');
+        expect(favorDue(hablado(), PIDE_CON, cruzo())).toBe('v02trash');
     });
 
     it('después el silencio', () => {
-        expect(favorDue(en('hablando', { didV02Trash: true }), PIDE_CON)).toBe(
-            'quiet'
-        );
+        expect(
+            favorDue(hablado({ didV02Trash: true }), PIDE_CON, cruzo())
+        ).toBe('quiet');
     });
 
     it('y por último la nota llena', () => {
         expect(
             favorDue(
-                en('hablando', { didV02Trash: true, didQuiet: true }),
-                PIDE_CON
+                hablado({ didV02Trash: true, didQuiet: true }),
+                PIDE_CON,
+                cruzo()
             )
         ).toBe('fullnote');
     });
@@ -88,12 +136,13 @@ describe('los pide en orden, uno por uno', () => {
         // No inventa un cuarto. Lo que quería saber de vos ya lo sabe.
         expect(
             favorDue(
-                en('hablando', {
+                hablado({
                     didV02Trash: true,
                     didQuiet: true,
                     didFullNote: true,
                 }),
-                PIDE_CON
+                PIDE_CON,
+                cruzo()
             )
         ).toBeNull();
     });

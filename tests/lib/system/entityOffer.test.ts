@@ -11,6 +11,8 @@
  * un botón con dos etiquetas.
  */
 
+import { OFRECE_A_LOS } from '@/lib/system/entityTrials';
+
 export {};
 
 const load = async () => {
@@ -46,7 +48,7 @@ const hastaLaOferta = async () => {
     cargado.entity.setPhase('hablando');
 
     // Tres frases: las dos primeras contesta, en la tercera ofrece.
-    for (let i = 0; i < 3; i += 1) cargado.run('//whoareu', ctx());
+    for (let i = 0; i < OFRECE_A_LOS + 1; i += 1) cargado.run('//whoareu', ctx());
     return cargado;
 };
 
@@ -60,7 +62,9 @@ it('en hablando, al rato, ofrece limpiarlo todo', async () => {
     entity.setPhase('hablando');
 
     let salida = '';
-    for (let i = 0; i < 3; i += 1) salida = run('//whoareu', ctx())!.output;
+    for (let i = 0; i < OFRECE_A_LOS + 1; i += 1) {
+        salida = run('//whoareu', ctx())!.output;
+    }
 
     expect(salida).toContain('[s/n]');
 });

@@ -3485,10 +3485,17 @@ el código.
 | --- | --- | --- |
 | `dormido` | — | No contesta. La fachada entera. |
 | `receloso` | Uno de los dos caminos de arriba | Corto, de lado, sin admitir nada |
-| `burlón` | **Volver**: tres intercambios más | Juega con vos. Sabe que vas a seguir |
+| `burlón` | **Volver**: siete intercambios más | Juega con vos. Sabe que vas a seguir |
+| `hablando` | Pasar la pregunta, o desmentirle la mentira | Contesta. Suelta el lore |
 
 > ⚠ Se abre por **volver**, no por descubrir más. La primera vez fue curiosidad;
-> a la tercera ya sos alguien que insiste, y eso es lo que le interesa.
+> a la séptima ya sos alguien que insiste, y eso es lo que le interesa.
+
+> ⚠ **LOS TRAMOS SON LARGOS A PROPÓSITO, y antes no lo eran.** Con las cifras de
+> la primera versión el arco entero cabía en una docena de comandos: se pasaba de
+> que te ignorara a que te pidiera favores sin que ninguna de las dos cosas
+> hubiera durado lo bastante para reconocerse. Un tono necesita volverse familiar
+> antes de que puedas notar que cambió.
 
 **Una fase no es una voz: es un tramo.** El repertorio de cada una va ordenado y
 se indexa por cuántos intercambios llevás dentro de ella, así que el tono se
@@ -3502,10 +3509,30 @@ respuesta llega en minúsculas ya se sabe que no está contestando la máquina.
 
 ## Cómo se le habla
 
-Entiende un puñado de variantes escritas a mano —`//quien`, `//quien_eres`,
-`//who`, `//como`, `//como_estas`, `//que_tal`— y **nada más**. No es una IA: es
-algo encerrado que intenta comunicarse con el único canal que tiene. Si
-entendiera cualquier cosa dejaría de estar atrapado.
+Hay **ocho preguntas**, y ninguna se anuncia en ningún sitio. Están elegidas por
+**intuitivas**, no por ingeniosas: son las que uno le hace a algo que resultó
+estar vivo. Que funcionen es el premio a haberlo intentado.
+
+| Pregunta | Cómo se escribe | Desde cuándo |
+| --- | --- | --- |
+| Quién sos | `//whoareu` `//who` `//quien` `//quien_eres` | Siempre — es la fachada |
+| Cómo estás | `//howareu` `//how` `//como` `//como_estas` `//que_tal` | Siempre — es la fachada |
+| Qué es esto | `//what` `//que` `//que_es_esto` | `hablando` |
+| Por qué estás acá | `//why` `//porque` `//por_que` | `hablando` |
+| Dónde estás | `//where` `//donde` `//donde_estas` | `hablando` |
+| Cómo te llamás | `//name` `//nombre` `//como_te_llamas` | `hablando` |
+| ¿Estás solo? | `//alone` `//solo` `//estas_solo` | `hablando` |
+| ¿Podés irte? | `//free` `//libre` `//salir` `//podes_irte` | `hablando` |
+
+⚠ **Las seis hondas no existen antes de `hablando`, y no las esquiva: las
+IGNORA.** No es lo mismo — una respuesta esquiva ya admite que entendió la
+pregunta, y admitir eso en `receloso` sería regalar medio personaje. Quien
+insista con `//why` en la primera hora se lleva un «comando desconocido», que en
+ese momento es exactamente lo que es.
+
+Y el repertorio de variantes es **cerrado**. No es una IA: es algo encerrado que
+intenta comunicarse con el único canal que tiene. Si entendiera cualquier cosa
+dejaría de estar atrapado.
 
 > ⚠ Esas variantes **no son comandos declarados**, y no pueden serlo. Se recogen
 > en la rama del «comando desconocido», que es de donde el ente escucha. Metidas
@@ -3670,9 +3697,19 @@ correcta y ya.
 
 ## Los favores
 
-Cuando nota que sabés lo que no deberías —doce secretos— empieza a **pedirte
-cosas**. ⚠ No son tareas y no hay contador: lo que cambia al cumplirlas no es un
-número, es **lo que él sabe de vos**.
+Empieza a **pedirte cosas** cuando se dan **tres condiciones**: que ya te haya
+soltado el lore, que lleve un rato hablándote sin querer nada, y —lo que de
+verdad importa— que **haya visto que llegaste donde no se llega solo**: cruzar la
+v0.2 o sobrevivir al fallo total.
+
+⚠ No son tareas y no hay contador: lo que cambia al cumplirlas no es un número,
+es **lo que él sabe de vos**.
+
+> ⚠ **SÓLO PIDE LO QUE PODÉS ENTENDER, y antes no era así.** A quien lo despertó
+> insistiendo con `//hi` —sin haber cruzado nunca— le llegaba igual «andá a la
+> 0.2 y mirá qué hay en la papelera»: una instrucción sobre un sitio del que no
+> tiene ninguna noticia. Eso no es misterio, es un error de guion. Ahora ese
+> favor se salta y le pide otro, y el arco sigue llegando al final.
 
 | Favor | Lo que pide | Contra qué se comprueba |
 | --- | --- | --- |

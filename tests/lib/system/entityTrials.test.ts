@@ -13,6 +13,10 @@
 
 import {
     lieGoneStale,
+    MIDE_A_LOS,
+    OFRECE_A_LOS,
+    RETA_A_LOS,
+    TRAGADA_A_LOS,
     trialDue,
     wordIsRight,
     type TrialWorld,
@@ -44,34 +48,34 @@ describe('en burlón te mide', () => {
     });
 
     it('pero al rato pregunta con qué palabra entraste', () => {
-        expect(trialDue(en('burlon', 3), mundo())).toBe('word');
+        expect(trialDue(en('burlon', MIDE_A_LOS), mundo())).toBe('word');
     });
 
     it('y si nunca entraste, no puede preguntarlo: miente en su lugar', () => {
         // Es la única pregunta cuya respuesta el sistema conoce. Sin palabra
         // guardada no hay nada que comprobar, y preguntarla sería un farol.
-        expect(trialDue(en('burlon', 3), mundo({ word: null }))).toBe('lie');
+        expect(trialDue(en('burlon', MIDE_A_LOS), mundo({ word: null }))).toBe('lie');
     });
 
     it('no repite la mentira mientras siga en pie', () => {
         // Decirla dos veces la delata como guion, no como afirmación.
         expect(
-            trialDue(en('burlon', 3, { lieStanding: true }), mundo({ word: null }))
+            trialDue(en('burlon', MIDE_A_LOS, { lieStanding: true }), mundo({ word: null }))
         ).toBeNull();
     });
 });
 
 describe('en hablando ya no mide: juega', () => {
     it('ofrece limpiarlo todo', () => {
-        expect(trialDue(en('hablando', 2), mundo())).toBe('offer');
+        expect(trialDue(en('hablando', OFRECE_A_LOS), mundo())).toBe('offer');
     });
 
     it('y más tarde te reta al reset', () => {
-        expect(trialDue(en('hablando', 5), mundo())).toBe('dare');
+        expect(trialDue(en('hablando', RETA_A_LOS), mundo())).toBe('dare');
     });
 
     it('pero no te reta dos veces', () => {
-        expect(trialDue(en('hablando', 5, { dared: true }), mundo())).toBeNull();
+        expect(trialDue(en('hablando', RETA_A_LOS, { dared: true }), mundo())).toBeNull();
     });
 });
 
@@ -98,7 +102,7 @@ describe('la mentira sólo caduca si queda otra puerta', () => {
     it('con palabra guardada, dejarla pasar la cierra', () => {
         // Queda la pregunta, así que cerrarla no encierra a nadie.
         expect(
-            lieGoneStale(en('burlon', 7, { lieStanding: true }), mundo())
+            lieGoneStale(en('burlon', TRAGADA_A_LOS, { lieStanding: true }), mundo())
         ).toBe(true);
     });
 
@@ -129,7 +133,7 @@ describe('⚠ NINGUNA COMBINACIÓN TE ENCIERRA', () => {
         for (const word of ['NIDO', null]) {
             for (const tragada of [false, true]) {
                 const toca = trialDue(
-                    en('burlon', 3, tragada ? { lieSwallowed: true } : {}),
+                    en('burlon', MIDE_A_LOS, tragada ? { lieSwallowed: true } : {}),
                     mundo({ word })
                 );
 
@@ -142,7 +146,7 @@ describe('⚠ NINGUNA COMBINACIÓN TE ENCIERRA', () => {
         // Es el único caso donde tiene que desdecirse de sí mismo, y es
         // preferible a dejar a alguien encerrado para siempre.
         expect(
-            trialDue(en('burlon', 3, { lieSwallowed: true }), mundo({ word: null }))
+            trialDue(en('burlon', MIDE_A_LOS, { lieSwallowed: true }), mundo({ word: null }))
         ).toBe('lie');
     });
 });
