@@ -128,3 +128,59 @@ export function entityReply(
 
     return repertorio[i][lang];
 }
+
+/*
+ * ⚠ EL REPERTORIO DE VARIANTES ES CERRADO, Y ESO ES EL PERSONAJE.
+ *
+ * Reconoce unas cuantas formas de cada pregunta porque INTENTA entenderte, no
+ * porque sea listo. Escrito a mano, sin normalizar acentos ni buscar parecidos:
+ * si entendiera cualquier cosa dejaría de estar atrapado.
+ */
+const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
+    who: [
+        'whoareu',
+        'whoare',
+        'who',
+        'quien',
+        'quienes',
+        'quien_eres',
+        'quieneres',
+    ],
+    how: [
+        'howareu',
+        'howare',
+        'how',
+        'como',
+        'comoestas',
+        'como_estas',
+        'que_tal',
+    ],
+};
+
+/** A qué pregunta llega esto, o `null` si no llega a ninguna. */
+export function entityQuestionOf(name: string): EntityQuestion | null {
+    const limpio = name.trim().toLowerCase();
+    if (limpio.length === 0) return null;
+
+    for (const pregunta of ['who', 'how'] as const) {
+        if (VARIANTES[pregunta].includes(limpio)) return pregunta;
+    }
+
+    return null;
+}
+
+/**
+ * Lo que se le escapa cuando le escribís con espacios.
+ *
+ * ⚠ NO ES UNA INSTRUCCIÓN. Una máquina que te corrige cada vez es un tutorial;
+ * ésta se DELATA — deja ver que los espacios no le llegan y no puede decirlo
+ * derecho, que es exactamente lo que es.
+ *
+ * Quien la enseña decide cuándo: sólo si ya se encontró `//help`, y sólo a
+ * veces. ⏳ Esa condición se conecta en la etapa 2, junto con el resto de lo que
+ * él nota de vos.
+ */
+export const UNDERSCORE_HINT: Localized = {
+    es: 'los espacios no me llegan. lo demás sí, con _ en medio.',
+    en: 'spaces do not reach me. the rest does, with _ between.',
+};
