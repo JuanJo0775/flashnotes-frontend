@@ -77,6 +77,19 @@ export interface EntitySnapshot {
     dared?: boolean;
     /** Te retó y no lo escribiste. De acá sale el «te dio miedo». */
     dodged?: boolean;
+    /*
+     * LAS NOTAS QUE YA TE DEJÓ.
+     *
+     * Una por una y no un contador: cada una es distinta y ninguna se repite.
+     * Un número diría «lleva tres» sin decir cuáles, y entonces habría que
+     * deducirlo del orden — que es justo la clase de dato que se desincroniza.
+     */
+    /** La que dice que `//panic` repara la integridad. */
+    leftFalsa?: boolean;
+    /** La que te manda a buscar un archivo que no existe. */
+    leftBroma?: boolean;
+    /** La que te encontraste al volver al día siguiente. */
+    leftVuelta?: boolean;
 }
 
 const DORMIDO: EntitySnapshot = { phase: 'dormido', exchanges: 0 };
@@ -97,6 +110,9 @@ export function readEntity(): EntitySnapshot {
             lieSwallowed,
             dared,
             dodged,
+            leftFalsa,
+            leftBroma,
+            leftVuelta,
         } = leido as Partial<EntitySnapshot>;
 
         // Una fase que el código ya no conoce se ignora: renombrar una no puede
@@ -118,6 +134,9 @@ export function readEntity(): EntitySnapshot {
             ...(lieSwallowed ? { lieSwallowed: true } : {}),
             ...(dared ? { dared: true } : {}),
             ...(dodged ? { dodged: true } : {}),
+            ...(leftFalsa ? { leftFalsa: true } : {}),
+            ...(leftBroma ? { leftBroma: true } : {}),
+            ...(leftVuelta ? { leftVuelta: true } : {}),
         };
     } catch {
         return { ...DORMIDO };
@@ -295,6 +314,15 @@ export function markDared() {
 /** Te lo lanzó y no lo escribiste. */
 export function markDodged() {
     store({ ...readEntity(), dodged: true });
+}
+
+/** Anota que ya dejó esta nota. No se repiten. */
+export function markLeft(cual: 'falsa' | 'broma' | 'vuelta') {
+    const clave = (
+        { falsa: 'leftFalsa', broma: 'leftBroma', vuelta: 'leftVuelta' } as const
+    )[cual];
+
+    store({ ...readEntity(), [clave]: true });
 }
 
 /**
