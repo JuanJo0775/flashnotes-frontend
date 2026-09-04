@@ -13,6 +13,8 @@ import {
     shouldHaunt,
 } from '@/lib/system/ghostFile';
 import { SCRAP_ID, buildScrapNote, shouldScrap } from '@/lib/system/artScrap';
+import { LEFT_ID, buildLeftNote, shownLeftNote } from '@/lib/system/entityNotes';
+import { markLeft } from '@/lib/system/entity';
 import { formatLog } from '@/lib/system/requestLog';
 import { getSystemState, markSecretFound } from '@/hooks/useSystemState';
 
@@ -85,7 +87,27 @@ export const useTrash = (): UseTrashReturn => {
              */
             const resto = !scrapDismissed && shouldScrap() ? buildScrapNote() : null;
 
+            /*
+             * Y LO QUE DEJÓ EL ENTE, por el mismo camino que los otros dos.
+             *
+             * Va ARRIBA DEL TODO, y es lo único que rompe el orden de «quien
+             * llegó antes va debajo»: lo suyo apareció mientras no estabas, así
+             * que es lo más nuevo que hay acá. Y la del día siguiente sólo
+             * funciona si se ve al entrar — una nota que te espera enterrada
+             * bajo el registro del sistema no te espera, se esconde.
+             */
+            /*
+             * ⚠ SE MUESTRA, PERO NO SE DA POR DEJADA TODAVÍA.
+             *
+             * Marcarla acá haría que abrir la papelera dos veces enseñara dos
+             * notas distintas, y la primera desaparecería sin que hicieras
+             * nada. Se da por dejada cuando VOS la quitás —restaurándola o
+             * borrándola—, que es cuando de verdad la viste. Ver abajo.
+             */
+            const suya = buildLeftNote();
+
             const inyectadas = [
+                ...(suya ? [suya] : []),
                 ...(haunted ? [buildGhostNote(formatLog())] : []),
                 ...(resto ? [resto] : []),
             ];
@@ -127,6 +149,35 @@ export const useTrash = (): UseTrashReturn => {
          * notas para abrirla, leerla y quedártela. Es lo que «recuperar»
          * significa en cualquier papelera.
          */
+        /*
+         * LA SUYA: restaurarla la convierte en una nota tuya de verdad, como el
+         * resto de arte. La del día siguiente trae instrucciones, y quien la
+         * restaura es porque quiere quedárselas a mano.
+         *
+         * Y acá SÍ se da por dejada: la próxima vez habrá otra.
+         */
+        if (id === LEFT_ID) {
+            const suya = buildLeftNote();
+            if (suya === null) return false;
+
+            try {
+                setError(null);
+                await notesApi.create({
+                    title: suya.title,
+                    content: suya.content,
+                });
+            } catch (err) {
+                setError(getErrorInfo(err));
+                return false;
+            }
+
+            const cual = shownLeftNote();
+            if (cual !== null) markLeft(cual);
+
+            setTrashedNotes((prev) => prev.filter((note) => note._id !== LEFT_ID));
+            return true;
+        }
+
         if (id === SCRAP_ID) {
             const resto = buildScrapNote();
             if (resto === null) return false;
@@ -175,6 +226,19 @@ export const useTrash = (): UseTrashReturn => {
         if (id === GHOST_ID) {
             ghostDismissedAt = Date.now();
             setTrashedNotes((prev) => prev.filter((note) => note._id !== GHOST_ID));
+            return true;
+        }
+
+        /*
+         * LA SUYA: tirarla también es haberla visto.
+         *
+         * Se da por dejada acá y no al mostrarla, así que la próxima vez habrá
+         * otra. Tampoco sale a la red: no existe en el servidor.
+         */
+        if (id === LEFT_ID) {
+            const cual = shownLeftNote();
+            if (cual !== null) markLeft(cual);
+            setTrashedNotes((prev) => prev.filter((note) => note._id !== LEFT_ID));
             return true;
         }
 

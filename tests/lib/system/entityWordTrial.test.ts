@@ -129,7 +129,9 @@ it('y la pregunta sólo se come UNA línea', async () => {
     run('//casa', ctx());
     expect(entity.readEntity().asking).toBeUndefined();
 
-    expect(run('//help', ctx())!.output).toContain('//');
+    // ⚠ `//uptime` y no `//help`: la ayuda, antes de encontrar el faro,
+    // contesta una pulla elegida al azar, y el test dependía del dado.
+    expect(run('//uptime', ctx(), () => 0.5)!.output).toBeTruthy();
 });
 
 it('la trampa sustituye a la respuesta, no se le añade', async () => {

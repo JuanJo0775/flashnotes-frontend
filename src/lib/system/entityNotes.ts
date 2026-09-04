@@ -18,8 +18,10 @@
  */
 
 import type { Lang } from '@/config/lang';
+import type { Note } from '@/types/note.types';
+import { getLang } from '@/i18n';
 import type { EntitySnapshot } from '@/lib/system/entity';
-import { AWAY_ENOUGH } from '@/lib/system/entity';
+import { AWAY_ENOUGH, awayAtBoot, readEntity } from '@/lib/system/entity';
 
 type Localized = Readonly<Record<Lang, string>>;
 
@@ -159,4 +161,42 @@ const TEXTOS: Readonly<Record<LeftNote, Localized>> = {
 /** Lo que dice la nota. */
 export function leftNoteText(kind: LeftNote, lang: Lang): string {
     return TEXTOS[kind][lang];
+}
+
+/**
+ * El id de la nota que deja.
+ *
+ * ⚠ UNO SOLO PARA LAS TRES, y no uno por nota. En la papelera nunca hay más de
+ * una suya a la vez —`noteDue` devuelve una— y darle a cada una su id obligaría
+ * a la papelera a conocerlas todas para reconocerlas. Con uno fijo le basta con
+ * saber que ésa no es suya.
+ */
+export const LEFT_ID = 'entity-left-note';
+
+/**
+ * Arma la nota que toca, o `null` si no toca ninguna.
+ *
+ * Calcado de `buildScrapNote`: nota del lado del cliente, marcada como borrada,
+ * que nunca existe en la base de datos.
+ */
+export function buildLeftNote(
+    lang: Lang = getLang(),
+    away: number = awayAtBoot()
+): Note | null {
+    const cual = noteDue(readEntity(), { awayMs: away });
+    if (cual === null) return null;
+
+    return {
+        _id: LEFT_ID,
+        title: LEFT_TITLE[cual][lang],
+        content: leftNoteText(cual, lang),
+        isDeleted: true,
+        versions: [],
+        redoStack: [],
+    };
+}
+
+/** Cuál es la que se está enseñando, para saber qué marcar como dejada. */
+export function shownLeftNote(away: number = awayAtBoot()): LeftNote | null {
+    return noteDue(readEntity(), { awayMs: away });
 }
