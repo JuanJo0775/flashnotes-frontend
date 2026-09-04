@@ -3450,9 +3450,9 @@ de carga llegaba al final, contando que el sistema se recuperó solo.
 
 ---
 
-# Los 28 secretos que cuenta el panel
+# Los 29 secretos que cuenta el panel
 
-Lo que va en `SECRETOS n/28` (§7). **Sólo entra lo que provocás vos**: lo
+Lo que va en `SECRETOS n/29` (§7). **Sólo entra lo que provocás vos**: lo
 ambiental —el glitch, los fragmentos de la barra, el barrido trabado, el arranque
 en vídeo inverso, el encendido del monitor— te pasa, no lo encontrás, y contarlo
 inflaría el denominador con cosas que nadie puede buscar.
@@ -3491,6 +3491,7 @@ así que no puede dejar el contador en `29/28`.
 | 26 | `v02-recover` | `//recover`, dentro de la v0.2 (§24.4) | `commands.ts` |
 | 27 | `v02-todo` | `//todo`, dentro de la v0.2 (§24.4) | `commands.ts` |
 | 28 | `v02-corrupt` | Recuperar una nota de la papelera de la v0.2 y que vuelva rota (§24.2) | `V02TrashView.tsx` |
+| 29 | `entity-awake` | Que el ente conteste: preguntarle quién es **después** de haber estado donde no se podía (§25) | `commands.ts` |
 
 **La mitad de estos identificadores se marcan en un archivo distinto del que los
 declara**, y así es exactamente como se desincronizan: la lista está en

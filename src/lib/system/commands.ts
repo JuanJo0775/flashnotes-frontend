@@ -16,7 +16,15 @@ import {
     readAnswer,
 } from '@/lib/system/confirm';
 import { isSessionWord } from '@/lib/system/morse';
-import { isV02, v02Word } from '@/lib/system/v02';
+import { isV02, v02Word, didV02RoundTrip } from '@/lib/system/v02';
+import {
+    countExchange,
+    phaseAfter,
+    readEntity,
+    setPhase,
+    type EntityWorld,
+} from '@/lib/system/entity';
+import { entityQuestionOf, entityReply } from '@/lib/system/entityVoice';
 import { allDropped } from '@/lib/system/dropped';
 import type { Lang } from '@/config/lang';
 import type { Localized, LocalizedPlural, Vars } from '@/i18n';
@@ -65,6 +73,18 @@ export interface CommandContext {
     chat: number;
     /** Cuántas veces te ha echado de la nota, contando ÉSTA si toca. */
     kicks: number;
+    /**
+     * ¿Sobreviviste alguna vez al fallo total?
+     *
+     * Lo usa el ente para saber si estuviste donde no se podía. Entra por acá y
+     * no se lee directamente porque vive en `useSystemState`, y este módulo no
+     * importa de `hooks` — la misma razón por la que `helpHint.ts` está suelto.
+     *
+     * ⚠ OPCIONAL A PROPÓSITO. Obligatorio dejaría en rojo los diez ficheros de
+     * test que arman un contexto a mano. Ausente significa «que se sepa, no»: el
+     * único que lo rellena de verdad es `useNoteCommands`, y lo hace siempre.
+     */
+    lockedOut?: boolean;
     /**
      * En qué idioma contesta el sistema.
      *
@@ -654,6 +674,51 @@ function allCommandsFound(): boolean {
     return escondidos.length > 0 && escondidos.every((c) => isUnlocked(c.name));
 }
 
+/**
+ * La respuesta del ente a esta pregunta, o `null` si todavía no hay nadie.
+ *
+ * ⚠ AVANZA LA FASE ANTES DE CONTESTAR, no después. Si contestara primero, la
+ * frase que abre `burlon` saldría una pregunta tarde y la costura se vería justo
+ * donde el diseño existe para que no se vea.
+ *
+ * `null` significa «sigue dormido»: quien llama tiene que caer al comportamiento
+ * de siempre, que es la fachada intacta.
+ */
+function askEntity(
+    linea: string,
+    ctx: CommandContext,
+    lang: Lang
+): string | null {
+    const pregunta = entityQuestionOf(linea);
+    if (pregunta === null) return null;
+
+    const mundo: EntityWorld = {
+        /*
+         * Los dos sitios que esta etapa reconoce. El morse se suma en la etapa
+         * 2, cuando exista la pregunta que lo comprueba.
+         */
+        trespassed: didV02RoundTrip() || ctx.lockedOut === true,
+        /*
+         * ⚠ `> 1`, NO `> 0`. `ctx.kicks` es la cuenta prospectiva —
+         * `kickCount() + 1`, «cuántas van contando ésta»— así que en una sesión
+         * limpia vale 1. Con `> 0` el ente despertaría en el primer comando.
+         */
+        kicked: ctx.kicks > 1,
+    };
+
+    const antes = readEntity();
+    const fase = phaseAfter(antes, mundo);
+    if (fase !== antes.phase) setPhase(fase);
+
+    // ⚠ `dicho` y no `texto`: `texto()` es el helper de respuestas de este
+    // fichero, y una constante con ese nombre lo ensombrecería aquí dentro.
+    const dicho = entityReply(pregunta, fase, readEntity().exchanges, lang);
+    if (dicho === null) return null;
+
+    countExchange();
+    return dicho;
+}
+
 const COMMANDS: readonly Command[] = [
     {
         name: '//help',
@@ -921,11 +986,16 @@ const COMMANDS: readonly Command[] = [
         // El espejo de `//whoami`: allá no puede saber quién sos vos —la cookie
         // es httpOnly— y acá sí sabe quién es ella. La máquina se conoce mejor a
         // sí misma que a vos, y eso dice todo lo que hay que decir de esta app.
-        resolve: (ctx, _args, lang) =>
-            texto(
+        resolve: (ctx, _args, lang) => {
+            // El ente primero. Si sigue dormido cae a la fachada de siempre.
+            const dicho = askEntity('whoareu', ctx, lang);
+            if (dicho !== null) return { ...texto(dicho), secretId: 'entity-awake' };
+
+            return texto(
                 chatReplyFor('who', ctx.chat, lang).text ??
                     unknownCommand('whoareu', lang)
-            ),
+            );
+        },
     },
     {
         name: '//howareu',
@@ -933,11 +1003,15 @@ const COMMANDS: readonly Command[] = [
         notInV02: true,
         hidden: true,
         summary: { es: 'preguntarle cómo está', en: 'ask how it is doing' },
-        resolve: (ctx, _args, lang) =>
-            texto(
+        resolve: (ctx, _args, lang) => {
+            const dicho = askEntity('howareu', ctx, lang);
+            if (dicho !== null) return { ...texto(dicho), secretId: 'entity-awake' };
+
+            return texto(
                 chatReplyFor('how', ctx.chat, lang).text ??
                     unknownCommand('howareu', lang)
-            ),
+            );
+        },
     },
     {
         name: '//date_off',
@@ -1494,6 +1568,31 @@ export function run(
     }
 
     if (!command) {
+        /*
+         * ⚠ EL ENTE ESCUCHA JUSTO ACÁ, donde la máquina deja de entender.
+         *
+         * Las variantes escritas a mano —`//quien`, `//como_estas`, `//who`— no
+         * son comandos declarados, y NO PUEDEN SERLO por dos razones concretas:
+         *
+         *  · `allCommandsFound()` exige que TODOS los ocultos estén
+         *    desbloqueados. Uno más, que no se lista en ningún lado, dejaría el
+         *    arte de la terminal prácticamente inalcanzable.
+         *  · Un comando con patrón abierto se tragaría los desconocidos de
+         *    verdad, y con ellos el `rememberHint()` de abajo, que es de donde
+         *    cuelga el faro de `//help`.
+         *
+         * Puesto acá no toca ninguna de las dos cosas. Y de regalo funciona
+         * DENTRO DE LA v0.2 sin nada especial: ahí `//whoareu` está filtrado por
+         * `notInV02`, así que cae solo en esta rama.
+         *
+         * Que hable desde el sitio de «no te entiendo» tampoco es casualidad:
+         * está encerrado, y lo único que le llega es lo que el sistema descarta.
+         */
+        const dicho = askEntity(corto, ctx, lang);
+        if (dicho !== null) {
+            return { output: dicho, effect: SIN_EFECTO, secretId: 'entity-awake' };
+        }
+
         const desconocido = say(T.unknownCommand, lang, { name: nombre.toUpperCase() });
 
         // ACÁ ES DONDE SE ENCIENDE EL FARO. Tecleaste algo que no existe y la

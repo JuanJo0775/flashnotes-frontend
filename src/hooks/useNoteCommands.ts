@@ -23,6 +23,7 @@ import {
     registerKick,
     registerV02Toggle,
     kickCount,
+    isLockedOutNow,
     resetEverything,
     setEffectsEnabled,
 } from '@/hooks/useSystemState';
@@ -148,6 +149,9 @@ export function useNoteCommands({
                 greetings: 0,
                 chat: 0,
                 kicks: 0,
+                // Uno de los dos sitios donde no deberías haber estado. Se le
+                // pasa hecho porque `lib/system` no importa de `hooks`.
+                lockedOut: isLockedOutNow(),
             };
 
             // La cuenta sólo se toca cuando el comando es el saludo: contar en

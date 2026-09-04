@@ -116,8 +116,22 @@ describe('docs/SECRETOS.md dice la verdad', () => {
      *
      * Enumerar es justo lo que un test puede vigilar sin opinar de nada.
      */
-    it('la tabla de secretos nombra los 28 que cuenta el panel', () => {
-        const seccion = DOC.slice(DOC.indexOf('# Los 28 secretos'));
+    it('la tabla de secretos nombra todos los que cuenta el panel', () => {
+        /*
+         * ⚠ EL ANCLA NO LLEVA EL NÚMERO, y antes sí lo llevaba.
+         *
+         * Estaba escrito `'# Los 28 secretos'`, así que el secreto veintinueve
+         * dejaba el corte vacío y el test fallaba diciendo que faltaba
+         * `commands` — el primero de la lista, que sí estaba. Un test que se
+         * desfasa con la lista que vigila es exactamente lo que este bloque
+         * existe para impedir, y caía en ello él mismo.
+         *
+         * La cuenta se sigue comprobando, pero abajo y contra la longitud real.
+         */
+        const inicio = DOC.search(/^# Los \d+ secretos/m);
+        expect(inicio).toBeGreaterThanOrEqual(0);
+
+        const seccion = DOC.slice(inicio);
         expect(seccion.length).toBeGreaterThan(0);
 
         expect(DOC).toContain(`SECRETOS n/${SECRET_IDS.length}`);

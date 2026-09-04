@@ -166,6 +166,14 @@ export const SECRET_IDS = [
     'v02-recover',
     'v02-todo',
     'v02-corrupt',
+    /*
+     * HABER DESPERTADO AL ENTE.
+     *
+     * No es lo mismo que `chat`: aquél es haber hablado con la fachada —dos
+     * respuestas y se acaba—, éste es haber notado que detrás hay alguien. Son
+     * dos hallazgos distintos y el contador tiene que decirlo.
+     */
+    'entity-awake',
 ] as const;
 
 export type SecretId = (typeof SECRET_IDS)[number];
