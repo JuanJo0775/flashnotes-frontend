@@ -53,10 +53,30 @@ const PHASES: readonly EntityPhase[] = [
     'rencoroso',
 ];
 
+/** Qué te preguntó y está esperando que contestes. */
+export type EntityAsk = 'word';
+
 export interface EntitySnapshot {
     phase: EntityPhase;
     /** Cuántos intercambios llevás DENTRO de la fase actual. */
     exchanges: number;
+    /**
+     * La pregunta que dejó en el aire, si dejó alguna.
+     *
+     * ⚠ PERSISTE, al revés que el `[y/n]` de `//reset`. Aquélla vive en memoria
+     * porque una pregunta pendiente al recargar sería una trampa esperando una
+     * `y` distraída. Ésta ES una trampa, y que siga ahí cuando volvés es justo
+     * lo que se busca.
+     */
+    asking?: EntityAsk;
+    /** Dijo su mentira y sigue sin desmentir. La puerta está abierta. */
+    lieStanding?: boolean;
+    /** Te la tragaste sin mirar. Esa puerta se cerró. */
+    lieSwallowed?: boolean;
+    /** Ya te retó a escribir `//reset`. No se reta dos veces. */
+    dared?: boolean;
+    /** Te retó y no lo escribiste. De acá sale el «te dio miedo». */
+    dodged?: boolean;
 }
 
 const DORMIDO: EntitySnapshot = { phase: 'dormido', exchanges: 0 };
@@ -69,15 +89,35 @@ export function readEntity(): EntitySnapshot {
         const leido: unknown = JSON.parse(crudo);
         if (typeof leido !== 'object' || leido === null) return { ...DORMIDO };
 
-        const { phase, exchanges } = leido as Partial<EntitySnapshot>;
+        const {
+            phase,
+            exchanges,
+            asking,
+            lieStanding,
+            lieSwallowed,
+            dared,
+            dodged,
+        } = leido as Partial<EntitySnapshot>;
 
         // Una fase que el código ya no conoce se ignora: renombrar una no puede
         // dejar a nadie atrapado en un estado inexistente.
         if (!PHASES.includes(phase as EntityPhase)) return { ...DORMIDO };
 
+        /*
+         * ⚠ LO FALSO SE OMITE, no se guarda como `false`.
+         *
+         * Así «no hay pregunta en el aire» tiene UNA sola forma —`undefined`— y
+         * no dos. Con `null` y `false` conviviendo, cada sitio que lo mire
+         * elegiría su comprobación y alguno elegiría mal.
+         */
         return {
             phase: phase as EntityPhase,
             exchanges: typeof exchanges === 'number' ? exchanges : 0,
+            ...(asking === 'word' ? { asking: 'word' as const } : {}),
+            ...(lieStanding ? { lieStanding: true } : {}),
+            ...(lieSwallowed ? { lieSwallowed: true } : {}),
+            ...(dared ? { dared: true } : {}),
+            ...(dodged ? { dodged: true } : {}),
         };
     } catch {
         return { ...DORMIDO };
@@ -104,7 +144,9 @@ export function setPhase(phase: EntityPhase) {
     const actual = readEntity();
     if (actual.phase === phase) return;
 
-    store({ phase, exchanges: 0 });
+    // ⚠ La cuenta a cero, pero lo que RECUERDA se conserva. Pasar de fase no es
+    // una amnistía: él no perdona, sólo cambia de tono.
+    store({ ...actual, phase, exchanges: 0 });
 }
 
 /** Suma un intercambio y devuelve el nuevo total. */
@@ -123,6 +165,50 @@ export function clearEntity() {
     } catch {
         // Nada que hacer.
     }
+}
+
+/**
+ * Deja una pregunta en el aire, o la retira.
+ *
+ * Retirarla BORRA el campo en vez de ponerlo a `null`: ver el comentario de
+ * `readEntity` sobre por qué «nada» tiene una sola forma.
+ */
+export function setAsk(ask: EntityAsk | null) {
+    const actual = readEntity();
+
+    if (ask === null) {
+        const { asking: _retirada, ...resto } = actual;
+        store(resto);
+        return;
+    }
+
+    store({ ...actual, asking: ask });
+}
+
+/** Dijo su mentira. Queda en pie hasta que la desmientas o la dejes pasar. */
+export function markLieStanding() {
+    store({ ...readEntity(), lieStanding: true });
+}
+
+/** La mentira deja de estar en pie: la desmentiste, o ya no vas a hacerlo. */
+export function clearLie() {
+    const { lieStanding: _caida, ...resto } = readEntity();
+    store(resto);
+}
+
+/** Te la tragaste sin mirar. Esa puerta se cerró. */
+export function markLieSwallowed() {
+    store({ ...readEntity(), lieSwallowed: true });
+}
+
+/** Ya te lanzó el reto del `//reset`. */
+export function markDared() {
+    store({ ...readEntity(), dared: true });
+}
+
+/** Te lo lanzó y no lo escribiste. */
+export function markDodged() {
+    store({ ...readEntity(), dodged: true });
 }
 
 /**
