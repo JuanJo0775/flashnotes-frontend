@@ -26,6 +26,8 @@ import {
 import {
     clearLie,
     countExchange,
+    markDared,
+    markDodged,
     markLieStanding,
     markLieSwallowed,
     phaseAfter,
@@ -40,7 +42,12 @@ import {
     trialLine,
     TRIAL_REPLY,
 } from '@/lib/system/entityVoice';
-import { lieGoneStale, trialDue, wordIsRight } from '@/lib/system/entityTrials';
+import {
+    dodgedNow,
+    lieGoneStale,
+    trialDue,
+    wordIsRight,
+} from '@/lib/system/entityTrials';
 import { allDropped } from '@/lib/system/dropped';
 import type { Lang } from '@/config/lang';
 import type { Localized, LocalizedPlural, Vars } from '@/i18n';
@@ -758,6 +765,19 @@ function askEntity(
         return trialLine('word', lang);
     }
 
+    if (toca === 'dare') {
+        /*
+         * TE EMPUJA A UNA PUERTA QUE YA ESTABA.
+         *
+         * No te da nada: `//reset` y su broma existen desde mucho antes. Él
+         * sólo te señala dónde está y se queda mirando. Es el ejemplo exacto de
+         * su forma de pedir las cosas.
+         */
+        markDared();
+        countExchange();
+        return trialLine('dare', lang);
+    }
+
     if (toca === 'offer') {
         // El mismo `[s/n]` de `//reset`. La respuesta la recoge el bloque del
         // principio de `run()`, que mira PRIMERO cuál de las dos preguntas era.
@@ -785,6 +805,23 @@ function askEntity(
     if (lieGoneStale(readEntity(), { word: tripWord() })) {
         clearLie();
         markLieSwallowed();
+    }
+
+    /*
+     * «TE DIO MIEDO».
+     *
+     * Te retó, seguiste hablando y nunca lo escribiste. Se lo guarda y te lo
+     * saca ahora.
+     *
+     * ⚠ UNA SOLA VEZ, en el intercambio en que lo nota. Un reproche que sale en
+     * cada frase deja de ser un reproche y pasa a ser un aviso del sistema —y
+     * él no avisa, comenta.
+     */
+    const suyo = readEntity();
+    if (suyo.dared === true && suyo.dodged !== true && dodgedNow(suyo)) {
+        markDodged();
+        countExchange();
+        return TRIAL_REPLY.dareLater[lang];
     }
 
     // ⚠ `dicho` y no `texto`: `texto()` es el helper de respuestas de este
@@ -1602,7 +1639,21 @@ export function run(
              * borre y que a veces no borre sería una app que no hace lo que le
              * pedís, y eso no es un secreto, es un fallo.
              */
-            if (isPrank(random)) {
+            /*
+             * ⚠ SI EL RETO VINO DE ÉL, LA BROMA ES SEGURA.
+             *
+             * Fuera del reto sigue mandando el dado —una de cada cinco— porque
+             * ahí la gracia es justamente que no se sabe. Pero él prometió que
+             * ibas a descubrir algo, y una promesa que se cumple una de cada
+             * cinco veces no es una promesa: es un fallo con buena prensa.
+             *
+             * Sólo vale si todavía no te lo dio por esquivado: cumplirle a
+             * quien ya se rajó no premia nada.
+             */
+            const prometido =
+                readEntity().dared === true && readEntity().dodged !== true;
+
+            if (prometido || isPrank(random)) {
                 // Y da su pieza: una carita. Es el único momento en que la
                 // máquina se ríe CON vos y no de vos.
                 awardFrom('prank');

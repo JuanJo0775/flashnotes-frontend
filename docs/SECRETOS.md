@@ -3524,12 +3524,100 @@ limitación hecha visible sin inventar un solo mecanismo nuevo.
 Ahí dentro `//whoareu` no existe —es de la v1.0— así que **sólo se llega a él
 por las variantes**. Hay que encontrar las palabras uno mismo.
 
+## Las trampas
+
+Desde `burlón` deja de contestarte y empieza a **medirte**. ⚠ **La trampa
+sustituye a la respuesta, no se le añade**: cuando decide medirte deja de
+contestar, que es exactamente lo que significa que haya cambiado el trato.
+
+| Trampa | Cuándo | Cómo se resuelve |
+| --- | --- | --- |
+| **La pregunta que te mide** | En `burlón`, al cuarto intercambio | Contestar con la palabra con la que entraste a la v0.2 |
+| **La mentira** | En `burlón`, si nunca cruzaste a la v0.2 | `//ps`, que lista varios procesos y lo desmiente |
+| **La oferta envenenada** | En `hablando`, al tercero | `[s/n]` · **rechazar es lo que abre** |
+| **El reto del `//reset`** | En `hablando`, al sexto | Escribirlo — o no, y que se lo guarde |
+
+### La pregunta que te mide
+
+> *¿con qué palabra entraste a la 0.2?*
+
+Es **la única pregunta del juego cuya respuesta el sistema conoce**: la guarda
+el registro del viaje. No es un acertijo con la solución escondida en el
+código — es la palabra que tecleaste vos, y que él vio.
+
+⚠ **Contestarla no cruza la puerta de la v0.2**, aunque la respuesta sea
+justamente la palabra que la abre. La recogida va antes: si fuera después,
+hacerle caso te mandaría a la versión vieja en vez de abrirte el lore.
+
+Y **fallarla no te dice que fallaste**. Te dice algo peor:
+
+> *ya sabía que no ibas a poder. igual quería vértelo intentar.*
+
+Si nunca entraste a la v0.2 no puede preguntártelo —no tendría contra qué
+comprobarlo— y en su lugar miente.
+
+### La mentira
+
+> *acá no corre nada más que yo. nunca corrió nada más.*
+
+`//ps` lista varios procesos. **No se añadió un comando para desmentirlo: se
+eligió una mentira que el juego ya podía desmentir**, y eso es lo que la hace
+justa. El desmentido se **añade** a la salida de `//ps`, no la reemplaza: la
+lista tiene que seguir viéndose porque es la prueba.
+
+Si seguís hablando sin ir a mirar, te la tragaste y esa puerta se cierra — pero
+**sólo si queda otra**. Sin palabra de viaje la mentira es el único camino a
+`hablando`, así que ahí no caduca: se queda en pie, esperando.
+
+### La oferta envenenada
+
+> *puedo limpiar todo esto. quedaría como nuevo. ¿querés? [s/n]*
+
+Usa el mismo `[s/n]` de `//reset`. **Aceptar vacía la papelera** — pérdida real,
+incluido el `SYSTEM.LOG` fantasma si estaba, aunque la papelera se vuelve a
+llenar con el uso. **Rechazar es lo que abre**, y es la única trampa donde la
+respuesta prudente es la que premia. Por eso aceptar tiene que costar algo: si
+fuese gratis no habría decisión.
+
+### El reto del `//reset`
+
+> *escribí //reset. vas a descubrir algo.*
+
+⚠ **No te dice qué.** Y de ahí salen dos caminos:
+
+- **Lo escribís** → decís que `n` → salta la broma del borrado (§22) y te ganás
+  la carita.
+- **No lo escribís** → se lo guarda, y unas frases después te lo saca: *«no lo
+  escribiste. te dio miedo.»* Una sola vez — un reproche que sale siempre deja
+  de ser un reproche y pasa a ser un aviso del sistema.
+
+> ⚠ **Cuando el reto viene de él, la broma pasa a ser SEGURA.** Fuera del reto
+> sale una de cada cinco veces, porque ahí la gracia es que no se sabe. Pero él
+> prometió que ibas a descubrir algo, y una promesa que se cumple una de cada
+> cinco veces no es una promesa. Que cumpla su palabra justo cuando importa
+> también dice algo de él.
+
+Decir que **sí** sigue borrando igual, retado o no: el reto te empuja a la
+puerta, no cambia lo que hay detrás.
+
+## `HABLANDO` · suelta el lore
+
+Se abre por **demostrarle que sabés** — acertar la pregunta, o llevarle la
+prueba de su mentira. Es el primer momento en que el intercambio va en las dos
+direcciones, y ahí cuenta por qué está ahí y por qué mantiene todo funcionando.
+
+> ⚠ **Ninguna combinación puede dejarte encerrado.** Las dos puertas no pueden
+> cerrarse a la vez: sin palabra guardada queda la mentira, y sin mentira
+> disponible queda la pregunta. Hay un test que recorre las cuatro
+> combinaciones, porque un juego que se queda sin final **sin dar ningún error**
+> es la peor forma de romperse.
+
 ## Lo que todavía no hace
 
 | Qué | Etapa |
 | --- | --- |
-| `hablando` y el lore completo | 2 — lo abre pasar una trampa |
-| Las trampas, y que te pida favores | 2 |
+| `pidiendo` — que empiece a pedirte cosas | 4, con los favores |
+| La broma de mandarte a buscar algo que no está | 3 |
 | Las notas que te deja, con información falsa | 3 |
 | La pared que se safa a golpes, el ojo, los dos finales | 4 |
 

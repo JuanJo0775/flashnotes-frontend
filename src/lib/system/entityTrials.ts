@@ -122,6 +122,25 @@ export function lieGoneStale(
 }
 
 /**
+ * Cuántos intercambios le das para escribirlo antes de darlo por esquivado.
+ *
+ * El reto sale a los cinco, así que son cinco frases más hablando con él sin
+ * hacerle caso. Suficiente para que no sea un cronómetro, corto para que el
+ * reproche llegue mientras todavía te acordás de qué te pidió.
+ */
+const ESQUIVA_A_LOS = 10;
+
+/**
+ * ¿Se le nota que no vas a escribirlo?
+ *
+ * Te retó, seguiste hablando y no lo hiciste. Él no te lo impide ni te lo
+ * recuerda: espera, y cuando ya está claro te lo dice una vez.
+ */
+export function dodgedNow(snapshot: EntitySnapshot): boolean {
+    return snapshot.dared === true && snapshot.exchanges >= ESQUIVA_A_LOS;
+}
+
+/**
  * ¿Acertó la palabra?
  *
  * Se compara sin mayúsculas ni espacios: la palabra se descifra del morse a
