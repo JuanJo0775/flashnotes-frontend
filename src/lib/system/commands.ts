@@ -16,7 +16,7 @@ import {
     readAnswer,
 } from '@/lib/system/confirm';
 import { isSessionWord } from '@/lib/system/morse';
-import { isV02, v02Word, didV02RoundTrip } from '@/lib/system/v02';
+import { isV02, v02Word, didV02RoundTrip, v02Label } from '@/lib/system/v02';
 import {
     countExchange,
     phaseAfter,
@@ -710,13 +710,36 @@ function askEntity(
     const fase = phaseAfter(antes, mundo);
     if (fase !== antes.phase) setPhase(fase);
 
+    // El índice se captura ANTES de sumar y se usa para todo: para elegir la
+    // frase y para la clave del destrozo. Leerlo dos veces daría dos números.
+    const cuantos = readEntity().exchanges;
+
     // ⚠ `dicho` y no `texto`: `texto()` es el helper de respuestas de este
     // fichero, y una constante con ese nombre lo ensombrecería aquí dentro.
-    const dicho = entityReply(pregunta, fase, readEntity().exchanges, lang);
+    const dicho = entityReply(pregunta, fase, cuantos, lang);
     if (dicho === null) return null;
 
     countExchange();
-    return dicho;
+
+    if (!isV02()) return dicho;
+
+    /*
+     * ⚠ DESDE LA v0.2 SALE ROTO.
+     *
+     * Un canal más viejo es un canal peor, y el destrozo YA EXISTE: `v02Label`
+     * rompe una de cada cuatro etiquetas —sin traducir, a medio hacer, o mal
+     * traducida— y siempre igual para la misma clave. Pasarlo por ahí es la
+     * limitación hecha visible sin inventar un solo mecanismo nuevo.
+     *
+     * La clave lleva la fase y la cuenta, así que cada frase tiene SU avería y
+     * la misma frase se rompe siempre igual. Y el inglés va de `raw`: una de
+     * las tres averías es quedarse sin traducir, y ahí es él llegando en el
+     * idioma en que lo escribieron.
+     */
+    return v02Label(`ente:${fase}:${cuantos}`, {
+        ok: dicho,
+        raw: entityReply(pregunta, fase, cuantos, 'en') ?? dicho,
+    });
 }
 
 const COMMANDS: readonly Command[] = [

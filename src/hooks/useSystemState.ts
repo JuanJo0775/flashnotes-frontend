@@ -14,6 +14,7 @@ import {
 import { countGreeting, CHAT_WINDOW_MS } from '@/lib/system/greeting';
 import { clearFound as clearArt, onlyMissing, ART_SOURCES } from '@/lib/system/asciiArt';
 import { forgetHint } from '@/lib/system/helpHint';
+import { clearEntity } from '@/lib/system/entity';
 import { resetScores } from '@/lib/system/pongScores';
 import { clearUsed } from '@/lib/system/commandUnlock';
 import { leaveV02, isV02, toggleV02, forgetV02Trip } from '@/lib/system/v02';
@@ -712,6 +713,10 @@ export function resetEverything() {
     // ⚠ ESTO FALTABA: era la única clave que el borrado no tocaba, y el faro
     // se recuperaba con el primer `//help` de después.
     forgetHint();
+    // El ente vuelve a estar dormido. Dejarlo despierto tras un borrado sería
+    // la única cosa del sistema que se acuerda de vos cuando ya nada más lo
+    // hace — y eso es otro secreto, no el que hay.
+    clearEntity();
     clearV02Notes();
     clearDropped();
     forgetWord();

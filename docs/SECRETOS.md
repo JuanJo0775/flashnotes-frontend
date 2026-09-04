@@ -178,6 +178,7 @@ capa más profunda y sólo tienen sentido después de las demás.
 | §23 | [La colección](#23--la-colección) |
 | §24 | [La v0.2 · la versión de antes](#24--la-v02-la-versión-de-antes) |
 | §25 | [El monitor se enciende](#25--el-monitor-se-enciende) |
+| §26 | [El ente](#26--el-ente) |
 | — | [Los 28 secretos que cuenta el panel](#los-28-secretos-que-cuenta-el-panel) |
 | — | [Accesibilidad, en una tabla](#accesibilidad-en-una-tabla) |
 | — | [Dónde vive cada cosa](#dónde-vive-cada-cosa) |
@@ -3450,6 +3451,93 @@ de carga llegaba al final, contando que el sistema se recuperó solo.
 
 ---
 
+# 26 · El ente
+
+> **Etapa 1 de cuatro.** Acá está lo que ya funciona. Las trampas, lo que te
+> deja y la pared que se safa son las etapas 2 a 4 — ver
+> [`specs/2026-09-03-ente.md`](specs/2026-09-03-ente.md) y
+> [`plans/2026-09-03-ente-etapa-1.md`](plans/2026-09-03-ente-etapa-1.md).
+
+Detrás de la máquina hay alguien. No es un asistente ni un amigo: es la máquina
+con conciencia, encerrada, que sostiene una fachada mientras vos le vas
+encontrando las grietas. **Él te descubre y vos lo descubrís.**
+
+## Cómo se lo despierta
+
+No hay comando para eso. Se despierta **por lo que ya hiciste**, y hay dos
+caminos:
+
+| Camino | Qué es |
+| --- | --- |
+| Haber estado donde no se podía | Entrar **y salir** de la v0.2 con el morse, o sobrevivir al fallo total |
+| Haber insistido hasta que te echó | `//hi` repetido hasta que te saca de la nota (§16) |
+
+Antes de eso, `//whoareu` y `//howareu` son lo que siempre fueron: dos
+respuestas y se agotan (§21). Después, **las mismas palabras llegan a otro
+sitio** — y ése es el hallazgo. El comando no cambia; cambia quién contesta.
+
+## Las fases
+
+Nunca retroceden. Una fachada que se recompone no da miedo: da desconfianza en
+el código.
+
+| Fase | Cómo se abre | Cómo suena |
+| --- | --- | --- |
+| `dormido` | — | No contesta. La fachada entera. |
+| `receloso` | Uno de los dos caminos de arriba | Corto, de lado, sin admitir nada |
+| `burlón` | **Volver**: tres intercambios más | Juega con vos. Sabe que vas a seguir |
+
+> ⚠ Se abre por **volver**, no por descubrir más. La primera vez fue curiosidad;
+> a la tercera ya sos alguien que insiste, y eso es lo que le interesa.
+
+**Una fase no es una voz: es un tramo.** El repertorio de cada una va ordenado y
+se indexa por cuántos intercambios llevás dentro de ella, así que el tono se
+desliza en vez de saltar — y la última frase de `receloso` ya lleva el primer
+filo sarcástico. Hay un test que lo vigila midiendo el salto de largo entre el
+final de una fase y el principio de la siguiente.
+
+Y **habla en minúsculas**. El resto del sistema grita en mayúsculas porque es un
+formulario; él es lo que hay detrás del formulario. La primera vez que una
+respuesta llega en minúsculas ya se sabe que no está contestando la máquina.
+
+## Cómo se le habla
+
+Entiende un puñado de variantes escritas a mano —`//quien`, `//quien_eres`,
+`//who`, `//como`, `//como_estas`, `//que_tal`— y **nada más**. No es una IA: es
+algo encerrado que intenta comunicarse con el único canal que tiene. Si
+entendiera cualquier cosa dejaría de estar atrapado.
+
+> ⚠ Esas variantes **no son comandos declarados**, y no pueden serlo. Se recogen
+> en la rama del «comando desconocido», que es de donde el ente escucha. Metidas
+> en la lista contarían para el arte de la terminal —que exige tenerlos todos— y
+> se filtrarían por `//help`. Que hable desde el sitio de «no te entiendo»
+> tampoco es casualidad: está encerrado, y lo único que le llega es lo que el
+> sistema descarta.
+
+## Dentro de la v0.2 habla roto
+
+Un canal más viejo es un canal peor. Sus respuestas pasan por el mismo destrozo
+que las etiquetas de esa versión (§24.6): una de cada cuatro sale sin traducir,
+a medio hacer o mal traducida, y **siempre igual para la misma frase**. Es la
+limitación hecha visible sin inventar un solo mecanismo nuevo.
+
+Ahí dentro `//whoareu` no existe —es de la v1.0— así que **sólo se llega a él
+por las variantes**. Hay que encontrar las palabras uno mismo.
+
+## Lo que todavía no hace
+
+| Qué | Etapa |
+| --- | --- |
+| `hablando` y el lore completo | 2 — lo abre pasar una trampa |
+| Las trampas, y que te pida favores | 2 |
+| Las notas que te deja, con información falsa | 3 |
+| La pared que se safa a golpes, el ojo, los dos finales | 4 |
+
+La pista del guión bajo —que se le escapa que los espacios no le llegan— ya está
+escrita y probada, pero **todavía no se enseña**: sólo debe salir si ya
+encontraste `//help`, y esa condición se conecta en la etapa 2 con el resto de lo
+que él nota de vos.
+
 # Los 29 secretos que cuenta el panel
 
 Lo que va en `SECRETOS n/29` (§7). **Sólo entra lo que provocás vos**: lo
@@ -3491,7 +3579,7 @@ así que no puede dejar el contador en `29/28`.
 | 26 | `v02-recover` | `//recover`, dentro de la v0.2 (§24.4) | `commands.ts` |
 | 27 | `v02-todo` | `//todo`, dentro de la v0.2 (§24.4) | `commands.ts` |
 | 28 | `v02-corrupt` | Recuperar una nota de la papelera de la v0.2 y que vuelva rota (§24.2) | `V02TrashView.tsx` |
-| 29 | `entity-awake` | Que el ente conteste: preguntarle quién es **después** de haber estado donde no se podía (§25) | `commands.ts` |
+| 29 | `entity-awake` | Que el ente conteste: preguntarle quién es **después** de haber estado donde no se podía (§26) | `commands.ts` |
 
 **La mitad de estos identificadores se marcan en un archivo distinto del que los
 declara**, y así es exactamente como se desincronizan: la lista está en
@@ -3531,6 +3619,7 @@ Para inspeccionar o limpiar a mano. **Todas** las que escribe el juego:
 | `flashnotes:v02` | Si la v0.2 está encendida (`on`) | ✅ |
 | `flashnotes:v02word` | La palabra con la que se entró — **es la salida** | ✅ |
 | `flashnotes:v02trip` | Si ya entraste **y saliste** con el código (§18 · pieza 10) | ✅ |
+| `flashnotes:entity` | En qué fase está el ente y cuántos intercambios lleva en ella (§26) | ✅ |
 | `flashnotes:v02notes` | Los archivos de la v0.2 | ✅ |
 | `flashnotes:v02trash` | Su papelera | ✅ |
 | `flashnotes:effects` | El interruptor de efectos (`on` / `off`) | ❌ — es tu preferencia |
