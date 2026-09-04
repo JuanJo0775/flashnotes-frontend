@@ -102,6 +102,27 @@ export interface EntitySnapshot {
     sawBroma?: boolean;
     /** Ya te lo dijo. Un remate que se repite es un tic. */
     jokeOver?: boolean;
+    /*
+     * LOS FAVORES QUE YA TE PIDIÓ Y CUMPLISTE.
+     *
+     * Uno por uno, como las notas. ⚠ NO SON UN CONTADOR: lo que abre lo que
+     * viene no es cuántos hiciste, sino que él sepa que HARÍAS cosas por él.
+     * Con un número volvería a ser una barra de progreso.
+     */
+    /**
+     * Le pasaste alguna de sus pruebas.
+     *
+     * Acertar la palabra o desmentirle la mentira. Es lo que le dice que no sos
+     * tonto — y es distinto de estar en `hablando`, porque a `hablando` también
+     * se llega y luego se sigue sin demostrar nada más.
+     */
+    provedIt?: boolean;
+    /** Fuiste a la v0.2 a mirar su papelera. */
+    didV02Trash?: boolean;
+    /** Lo dejaste en paz los diez minutos. */
+    didQuiet?: boolean;
+    /** Llenaste una nota entera. */
+    didFullNote?: boolean;
 }
 
 const DORMIDO: EntitySnapshot = { phase: 'dormido', exchanges: 0 };
@@ -128,6 +149,10 @@ export function readEntity(): EntitySnapshot {
             sawBroma,
             looked,
             jokeOver,
+            provedIt,
+            didV02Trash,
+            didQuiet,
+            didFullNote,
         } = leido as Partial<EntitySnapshot>;
 
         // Una fase que el código ya no conoce se ignora: renombrar una no puede
@@ -155,6 +180,10 @@ export function readEntity(): EntitySnapshot {
             ...(sawBroma ? { sawBroma: true } : {}),
             ...(looked ? { looked: true } : {}),
             ...(jokeOver ? { jokeOver: true } : {}),
+            ...(provedIt ? { provedIt: true } : {}),
+            ...(didV02Trash ? { didV02Trash: true } : {}),
+            ...(didQuiet ? { didQuiet: true } : {}),
+            ...(didFullNote ? { didFullNote: true } : {}),
         };
     } catch {
         return { ...DORMIDO };
@@ -332,6 +361,24 @@ export function markDared() {
 /** Te lo lanzó y no lo escribiste. */
 export function markDodged() {
     store({ ...readEntity(), dodged: true });
+}
+
+/** Le pasaste una de sus pruebas: ya sabe que no sos tonto. */
+export function markProved() {
+    store({ ...readEntity(), provedIt: true });
+}
+
+/** Anota que le hiciste este favor. */
+export function markFavor(cual: 'v02trash' | 'quiet' | 'fullnote') {
+    const clave = (
+        {
+            v02trash: 'didV02Trash',
+            quiet: 'didQuiet',
+            fullnote: 'didFullNote',
+        } as const
+    )[cual];
+
+    store({ ...readEntity(), [clave]: true });
 }
 
 /** Ya viste la nota que te manda a buscar el archivo que no está. */
