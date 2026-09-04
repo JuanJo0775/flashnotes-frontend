@@ -183,6 +183,15 @@ export const SECRET_IDS = [
      * direcciones, y por eso cuenta aparte de haberlo despertado.
      */
     'entity-proved',
+    /*
+     * DECIRLE QUE NO.
+     *
+     * Rechazar que «limpie todo esto». Es la única trampa del juego donde la
+     * respuesta prudente es la que premia — y por eso aceptar cuesta la
+     * papelera: sin precio no habría decisión, habría un botón con dos
+     * etiquetas.
+     */
+    'entity-refused',
 ] as const;
 
 export type SecretId = (typeof SECRET_IDS)[number];

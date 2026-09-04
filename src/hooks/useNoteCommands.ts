@@ -219,6 +219,30 @@ export function useNoteCommands({
                 case 'reset-prank':
                     onWipe(true);
                     break;
+                case 'empty-trash':
+                    /*
+                     * LO ÚNICO QUE CUESTA ACEPTARLE ALGO AL ENTE.
+                     *
+                     * Sale a la red desde acá, como `//history`, y no por un
+                     * callback: la papelera vive en `TrashView` y el editor no
+                     * la tiene a mano. Hacer que se la pasara alguien obligaría
+                     * a subir ese estado dos componentes para una sola línea.
+                     *
+                     * Si falla, se calla. Él dijo que iba a limpiar; que no
+                     * pudiera es exactamente el tipo de cosa que no te va a
+                     * contar.
+                     */
+                    try {
+                        const { notes: enPapelera } = await notesApi.listTrash();
+                        await Promise.all(
+                            enPapelera.map((nota) =>
+                                notesApi.deletePermanently(nota._id)
+                            )
+                        );
+                    } catch {
+                        // Nada que decir.
+                    }
+                    break;
                 case 'kill-page':
                     registerKick();
                     onKillPage();

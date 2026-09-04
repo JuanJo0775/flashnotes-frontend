@@ -3538,9 +3538,9 @@ escrita y probada, pero **todavía no se enseña**: sólo debe salir si ya
 encontraste `//help`, y esa condición se conecta en la etapa 2 con el resto de lo
 que él nota de vos.
 
-# Los 30 secretos que cuenta el panel
+# Los 31 secretos que cuenta el panel
 
-Lo que va en `SECRETOS n/30` (§7). **Sólo entra lo que provocás vos**: lo
+Lo que va en `SECRETOS n/31` (§7). **Sólo entra lo que provocás vos**: lo
 ambiental —el glitch, los fragmentos de la barra, el barrido trabado, el arranque
 en vídeo inverso, el encendido del monitor— te pasa, no lo encontrás, y contarlo
 inflaría el denominador con cosas que nadie puede buscar.
@@ -3581,6 +3581,7 @@ así que no puede dejar el contador en `29/28`.
 | 28 | `v02-corrupt` | Recuperar una nota de la papelera de la v0.2 y que vuelva rota (§24.2) | `V02TrashView.tsx` |
 | 29 | `entity-awake` | Que el ente conteste: preguntarle quién es **después** de haber estado donde no se podía (§26) | `commands.ts` |
 | 30 | `entity-proved` | Contestarle bien cuando te pregunta con qué palabra entraste a la v0.2 (§26) | `commands.ts` |
+| 31 | `entity-refused` | Decirle que **no** cuando ofrece «limpiar todo esto» (§26) | `commands.ts` |
 
 **La mitad de estos identificadores se marcan en un archivo distinto del que los
 declara**, y así es exactamente como se desincronizan: la lista está en

@@ -135,7 +135,16 @@ export type CommandEffect =
     /** Enseña el borrado entero y no borra nada. La broma del «no». */
     | { kind: 'reset-prank' }
     | { kind: 'recover'; text: string }
-    | { kind: 'set-effects'; enabled: boolean };
+    | { kind: 'set-effects'; enabled: boolean }
+    /**
+     * Vacía la papelera.
+     *
+     * Lo único que cuesta aceptarle algo al ente. Es una pérdida de verdad —se
+     * va lo que hubiera ahí, incluido el `SYSTEM.LOG` fantasma— pero la
+     * papelera se vuelve a llenar con el uso, así que no cierra ningún secreto
+     * para siempre.
+     */
+    | { kind: 'empty-trash' };
 
 /** Una fila de la respuesta: texto, o un nombre que no se deja leer. */
 export type ReplyRow =
@@ -747,6 +756,14 @@ function askEntity(
         setAsk('word');
         countExchange();
         return trialLine('word', lang);
+    }
+
+    if (toca === 'offer') {
+        // El mismo `[s/n]` de `//reset`. La respuesta la recoge el bloque del
+        // principio de `run()`, que mira PRIMERO cuál de las dos preguntas era.
+        askConfirm('entity-clean');
+        countExchange();
+        return trialLine('offer', lang);
     }
 
     if (toca === 'lie') {
@@ -1531,11 +1548,43 @@ export function run(
      * su texto tiene que seguir su camino, incluido volver a ser una nota
      * normal.
      */
-    if (pendingConfirm() !== null) {
+    const preguntando = pendingConfirm();
+    if (preguntando !== null) {
         const respuesta = readAnswer(content);
 
         if (respuesta !== null) {
             clearConfirm();
+
+            /*
+             * ⚠ PRIMERO CUÁL, DESPUÉS QUÉ.
+             *
+             * Las dos preguntas del juego usan la misma letra en la misma
+             * línea. Sin esta rama, aceptarle al ente que limpie la papelera
+             * caería en el borrado del progreso entero — secretos, piezas,
+             * marcadores— por un `s` que quería decir otra cosa.
+             */
+            if (preguntando === 'entity-clean') {
+                if (respuesta === 'yes') {
+                    return {
+                        output: TRIAL_REPLY.offerTaken[lang],
+                        effect: { kind: 'empty-trash' },
+                    };
+                }
+
+                /*
+                 * Decirle que no es lo que abre, y no cuesta nada.
+                 *
+                 * Es la única trampa donde la respuesta prudente es la que
+                 * premia. Por eso aceptar tiene que costar algo de verdad: si
+                 * fuese gratis no habría decisión, habría un botón con dos
+                 * etiquetas.
+                 */
+                return {
+                    output: TRIAL_REPLY.offerRefused[lang],
+                    effect: SIN_EFECTO,
+                    secretId: 'entity-refused',
+                };
+            }
 
             if (respuesta === 'yes') {
                 return { output: '', effect: { kind: 'reset-all' } };
