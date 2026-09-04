@@ -126,20 +126,58 @@ export function forgetV02Cache() {
     dentro = null;
 }
 
-/** El código te sacó de la v0.2: ida y vuelta completas. */
+/**
+ * El código te sacó de la v0.2: ida y vuelta completas.
+ *
+ * ⚠ GUARDA LA PALABRA CON LA QUE SE HIZO EL VIAJE, y no un simple `'on'`.
+ *
+ * `leaveV02()` borra `flashnotes:v02word` un instante después de esto —la
+ * bandera y la palabra se pierden juntas, que es la invariante que impide el
+ * estado «dentro y sin salida»—, así que si el viaje no se la quedara, no
+ * quedaría en ningún sitio.
+ *
+ * Y hace falta: el ente despierta AL VOLVER de la v0.2, o sea siempre después
+ * de que la palabra se borre, y la única pregunta del juego que él puede
+ * comprobar es justamente con cuál entraste. Sin esto, esa pregunta no tendría
+ * contra qué compararse y no podría existir.
+ *
+ * No es una clave nueva: es la misma que ya decía que cruzaste, diciendo además
+ * por dónde.
+ */
 export function markV02RoundTrip() {
     try {
-        localStorage.setItem(TRIP_KEY, 'on');
+        localStorage.setItem(TRIP_KEY, v02Word() ?? 'on');
     } catch {
         // Sin persistencia dura lo que la pestaña. Aceptable.
     }
 }
 
 export function didV02RoundTrip(): boolean {
+    // Cualquier valor cuenta, no sólo `'on'`: desde que el viaje guarda la
+    // palabra con la que se hizo, lo que importa es que la clave exista.
     try {
-        return localStorage.getItem(TRIP_KEY) === 'on';
+        return localStorage.getItem(TRIP_KEY) !== null;
     } catch {
         return false;
+    }
+}
+
+/**
+ * Con qué palabra se hizo el viaje, si se hizo alguno.
+ *
+ * Es lo único que queda de ella cuando ya saliste: `leaveV02()` borra la suya.
+ * La usa el ente para la única pregunta que puede comprobar.
+ *
+ * Devuelve `null` si no hubo viaje, y también para los viajes viejos, que se
+ * guardaron con un `'on'` cuando esto todavía no existía. Preferible a
+ * inventarles una palabra que nadie tecleó.
+ */
+export function tripWord(): string | null {
+    try {
+        const guardado = localStorage.getItem(TRIP_KEY);
+        return guardado === null || guardado === 'on' ? null : guardado;
+    } catch {
+        return null;
     }
 }
 

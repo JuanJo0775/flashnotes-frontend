@@ -177,8 +177,11 @@ export function setAsk(ask: EntityAsk | null) {
     const actual = readEntity();
 
     if (ask === null) {
-        const { asking: _retirada, ...resto } = actual;
-        store(resto);
+        // `delete` y no desestructurar-para-omitir: aquello deja una variable
+        // sin usar y el linter la marca, con razón.
+        const sin: EntitySnapshot = { ...actual };
+        delete sin.asking;
+        store(sin);
         return;
     }
 
@@ -192,8 +195,9 @@ export function markLieStanding() {
 
 /** La mentira deja de estar en pie: la desmentiste, o ya no vas a hacerlo. */
 export function clearLie() {
-    const { lieStanding: _caida, ...resto } = readEntity();
-    store(resto);
+    const sin: EntitySnapshot = { ...readEntity() };
+    delete sin.lieStanding;
+    store(sin);
 }
 
 /** Te la tragaste sin mirar. Esa puerta se cerró. */

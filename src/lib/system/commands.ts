@@ -16,15 +16,28 @@ import {
     readAnswer,
 } from '@/lib/system/confirm';
 import { isSessionWord } from '@/lib/system/morse';
-import { isV02, v02Word, didV02RoundTrip, v02Label } from '@/lib/system/v02';
+import {
+    isV02,
+    v02Word,
+    didV02RoundTrip,
+    tripWord,
+    v02Label,
+} from '@/lib/system/v02';
 import {
     countExchange,
     phaseAfter,
     readEntity,
+    setAsk,
     setPhase,
     type EntityWorld,
 } from '@/lib/system/entity';
-import { entityQuestionOf, entityReply } from '@/lib/system/entityVoice';
+import {
+    entityQuestionOf,
+    entityReply,
+    trialLine,
+    TRIAL_REPLY,
+} from '@/lib/system/entityVoice';
+import { trialDue, wordIsRight } from '@/lib/system/entityTrials';
 import { allDropped } from '@/lib/system/dropped';
 import type { Lang } from '@/config/lang';
 import type { Localized, LocalizedPlural, Vars } from '@/i18n';
@@ -713,6 +726,25 @@ function askEntity(
     // El índice se captura ANTES de sumar y se usa para todo: para elegir la
     // frase y para la clave del destrozo. Leerlo dos veces daría dos números.
     const cuantos = readEntity().exchanges;
+
+    /*
+     * ⚠ LA TRAMPA SUSTITUYE A LA RESPUESTA, no se le añade.
+     *
+     * Si dijera las dos cosas —contestarte y además medirte— la pregunta se
+     * leería como un adorno pegado al final y no como lo que hace él. Cuando
+     * decide medirte DEJA DE CONTESTAR, que es exactamente lo que significa que
+     * haya cambiado el trato.
+     */
+    // ⚠ `tripWord()` y NO `v02Word()`: la segunda ya se borró. `leaveV02()`
+    // la tira al salir, y el ente sólo despierta al VOLVER — o sea siempre
+    // después. Lo único que sobrevive es la palabra del viaje.
+    const toca = trialDue(readEntity(), { word: tripWord() });
+
+    if (toca === 'word') {
+        setAsk('word');
+        countExchange();
+        return trialLine('word', lang);
+    }
 
     // ⚠ `dicho` y no `texto`: `texto()` es el helper de respuestas de este
     // fichero, y una constante con ese nombre lo ensombrecería aquí dentro.
@@ -1546,6 +1578,37 @@ export function run(
     const command =
         disponibles.find((c) => c.name === buscado) ??
         disponibles.find((c) => c.match?.test(corto));
+
+    /*
+     * ⚠ LA RESPUESTA A SU PREGUNTA VA ANTES QUE LA PUERTA DE LA v0.2.
+     *
+     * La respuesta ES la palabra de la v0.2, y teclear esa palabra normalmente
+     * cruza la puerta. Si esta recogida fuera después, contestarle bien te
+     * mandaría a la versión vieja en lugar de abrirte el lore: la recompensa
+     * exacta que no corresponde, y encima confusa — hiciste lo que te pidió y
+     * el sistema te llevó a otro sitio.
+     *
+     * CONSUME UNA SOLA LÍNEA. Aciertes o falles, la pregunta se retira: una
+     * pregunta que se queda puesta se come el comando siguiente y parece que la
+     * app se colgó.
+     */
+    if (readEntity().asking === 'word') {
+        setAsk(null);
+
+        if (wordIsRight(corto, tripWord())) {
+            // El primer momento en que el intercambio va en las dos
+            // direcciones. Por eso abre fase y no da sólo una frase.
+            setPhase('hablando');
+
+            return {
+                output: TRIAL_REPLY.wordOk[lang],
+                effect: SIN_EFECTO,
+                secretId: 'entity-proved',
+            };
+        }
+
+        return { output: TRIAL_REPLY.wordBad[lang], effect: SIN_EFECTO };
+    }
 
     // LA PALABRA DEL MORSE. Se reconoce acá y no como un comando declarado
     // porque cambia por sesión: metida en la lista se filtraría por `//help` y

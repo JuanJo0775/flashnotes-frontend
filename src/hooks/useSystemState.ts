@@ -175,6 +175,14 @@ export const SECRET_IDS = [
      * dos hallazgos distintos y el contador tiene que decirlo.
      */
     'entity-awake',
+    /*
+     * DEMOSTRARLE QUE SABÉS.
+     *
+     * Contestar bien la única pregunta del juego cuya respuesta el sistema
+     * conoce. Es el primer momento en que el intercambio va en las dos
+     * direcciones, y por eso cuenta aparte de haberlo despertado.
+     */
+    'entity-proved',
 ] as const;
 
 export type SecretId = (typeof SECRET_IDS)[number];
@@ -709,6 +717,8 @@ export function resetEverything() {
     resetScores();
     clearUsed();
     leaveV02();
+    // Se lleva por delante la palabra del viaje, que es la única que el ente
+    // puede preguntarte. Ver `markV02RoundTrip()`.
     forgetV02Trip();
     // ⚠ ESTO FALTABA: era la única clave que el borrado no tocaba, y el faro
     // se recuperaba con el primer `//help` de después.
