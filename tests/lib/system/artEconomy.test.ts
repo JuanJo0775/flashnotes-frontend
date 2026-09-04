@@ -79,7 +79,19 @@ describe('lo que falta por cablear', () => {
          * inalcanzable sin querer — que es el fallo que este test existe para
          * cazar, porque no rompe nada visible.
          */
-        const PENDIENTES = ['entity', 'reserved-tape'];
+        /*
+         * ⚠ `entity` YA NO ESTÁ ACÁ, y era la deuda más vieja del proyecto.
+         *
+         * Llevaba sin cablear desde el rediseño de la colección, y mientras
+         * siguió así el CUADERNO fue inalcanzable, porque exige todas las demás.
+         * La cierra el final del ente: ayudarlo da el ojo, reportarlo da el ojo
+         * tapado, y es el mismo hueco.
+         *
+         * `reserved-tape` sigue: su sitio pasó por tres dueños —el ojo, la
+         * polilla, la cinta— y cada mudanza dejó un pie contando algo que ya no
+         * pasaba. Se queda quieta hasta que su camino esté decidido.
+         */
+        const PENDIENTES = ['reserved-tape'];
 
         const { readFileSync, readdirSync, statSync } = await import('node:fs');
         const { join } = await import('node:path');

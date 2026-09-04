@@ -123,6 +123,10 @@ export interface EntitySnapshot {
     didQuiet?: boolean;
     /** Llenaste una nota entera. */
     didFullNote?: boolean;
+    /** Ya te pasó el comando. Hasta entonces no existe. */
+    gaveCommand?: boolean;
+    /** Lo ejecutaste: hay una parte de la pantalla floja. */
+    loose?: boolean;
 }
 
 const DORMIDO: EntitySnapshot = { phase: 'dormido', exchanges: 0 };
@@ -153,6 +157,8 @@ export function readEntity(): EntitySnapshot {
             didV02Trash,
             didQuiet,
             didFullNote,
+            gaveCommand,
+            loose,
         } = leido as Partial<EntitySnapshot>;
 
         // Una fase que el código ya no conoce se ignora: renombrar una no puede
@@ -184,6 +190,8 @@ export function readEntity(): EntitySnapshot {
             ...(didV02Trash ? { didV02Trash: true } : {}),
             ...(didQuiet ? { didQuiet: true } : {}),
             ...(didFullNote ? { didFullNote: true } : {}),
+            ...(gaveCommand ? { gaveCommand: true } : {}),
+            ...(loose ? { loose: true } : {}),
         };
     } catch {
         return { ...DORMIDO };
@@ -361,6 +369,29 @@ export function markDared() {
 /** Te lo lanzó y no lo escribiste. */
 export function markDodged() {
     store({ ...readEntity(), dodged: true });
+}
+
+/** Ya te pasó el comando. */
+export function markGave() {
+    store({ ...readEntity(), gaveCommand: true });
+}
+
+/** Lo ejecutaste: hay algo suelto en la pantalla. */
+export function markLoose() {
+    store({ ...readEntity(), loose: true });
+}
+
+/**
+ * ¿El ojo sale tapado?
+ *
+ * ⚠ VIVE ACÁ Y NO EN EL MÓDULO DEL FINAL, y no es capricho de orden:
+ * `asciiArt.ts` necesita preguntarlo para elegir el dibujo, y el módulo del
+ * final importa `asciiArt` para dar la pieza. Puesto allá, sería un ciclo.
+ *
+ * Este módulo no importa nada, así que es el único sitio donde puede estar.
+ */
+export function eyeIsBarred(): boolean {
+    return readEntity().phase === 'rencoroso';
 }
 
 /** Le pasaste una de sus pruebas: ya sabe que no sos tonto. */

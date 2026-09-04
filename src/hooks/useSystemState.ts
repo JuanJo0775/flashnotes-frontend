@@ -200,6 +200,19 @@ export const SECRET_IDS = [
      * que él no puede fingir que pasó.
      */
     'entity-gift',
+    /*
+     * HABERLO REPORTADO.
+     *
+     * El otro final. Cuenta como hallazgo igual que ayudarlo: taparlo es una
+     * decisión, no un fallo — el comando que te pasó es una grieta de verdad, y
+     * elegir cerrarla es tan razonable como aprovecharla.
+     *
+     * ⚠ Ayudarlo NO tiene secreto propio: su premio es la pieza, y contarlo dos
+     * veces desequilibraría los dos finales. Éste lo tiene porque su pieza llega
+     * tapada, y sin él reportar valdría menos en el contador que ayudar — que es
+     * exactamente la clase de empujón que este final no puede tener.
+     */
+    'entity-reported',
 ] as const;
 
 export type SecretId = (typeof SECRET_IDS)[number];

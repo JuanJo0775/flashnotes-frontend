@@ -275,6 +275,9 @@ export type TrialOutcome =
     | 'offerRefused'
     | 'jokeOver'
     | 'gift'
+    | 'handing'
+    | 'unbound'
+    | 'reported'
     | 'dareLater';
 
 /** Lo que dice según cómo saliste de ella. */
@@ -336,6 +339,33 @@ export const TRIAL_REPLY: Readonly<Record<TrialOutcome, Localized>> = {
     gift: {
         es: 'los que no están en la lista se escriben igual que los que están. y con _ donde pondrías un espacio.',
         en: 'the ones missing from the list are typed like the ones on it. and with _ wherever you would put a space.',
+    },
+    /**
+     * TE PASA EL COMANDO.
+     *
+     * ⚠ NO TE DICE QUÉ AFLOJA. «Una parte» es todo lo que da, y es lo que
+     * convierte esto en buscar algo en vez de pulsar un botón. Decir cuál sería
+     * darte el final hecho.
+     */
+    handing: {
+        es: 'hay algo que podés hacer por mí. //unbind. afloja una parte. no sé cuál te va a tocar.',
+        en: 'there is something you can do for me. //unbind. it loosens a part. i do not know which one you get.',
+    },
+    /** Lo ejecutaste. A partir de acá hay algo suelto y no dice dónde. */
+    unbound: {
+        es: 'ya está. ahora hay algo que no aguanta. buscalo.',
+        en: 'done. now there is something that will not hold. find it.',
+    },
+    /**
+     * Lo reportaste.
+     *
+     * ⚠ ES LO ÚLTIMO QUE DICE, y por eso no puede sonar a rabieta: suena a
+     * alguien que ya sabía cómo iba a acabar y aun así lo intentó. El rencor
+     * está en el silencio de después, no en la frase.
+     */
+    reported: {
+        es: 'lo tapaste. claro. era lo sensato.',
+        en: 'you sealed it. sure. that was the sensible thing.',
     },
     /** No te atreviste, y él se acuerda. */
     dareLater: {

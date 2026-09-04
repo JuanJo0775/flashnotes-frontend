@@ -26,6 +26,7 @@ import type { Lang } from '@/config/lang';
 import { didV02RoundTrip } from '@/lib/system/v02';
 import { clearHints, hintEarned } from '@/lib/system/artHints';
 import { damageArt } from '@/lib/system/artCorruption';
+import { eyeIsBarred } from '@/lib/system/entity';
 
 type Localized = Readonly<Record<Lang, string>>;
 
@@ -103,9 +104,14 @@ export type ArtSource =
      * Su pieza es el OJO: lo que todo lo ve. Es lo único de la app que sabe
      * cuánto llevás acá, porque nunca se fue.
      *
-     * ⚠ TODAVÍA SIN CABLEAR, a propósito: el ente no existe. Y mientras no
-     * exista, `everything` —el cuaderno— es inalcanzable, porque exige tenerlas
-     * todas. Es deuda conocida, no un olvido.
+     * ⚠ UN HUECO, DOS DIBUJOS. Se gana al final del arco, y cuál te toca depende
+     * de lo que elegiste: ayudarlo deja el ojo, reportarlo deja el ojo TAPADO.
+     * No son dos piezas — con dos, la colección pasaría a diecisiete y nunca se
+     * podría completar. Ver `artOf` y `entityEnding.ts`.
+     *
+     * Cablearla es lo que por fin hace alcanzable el CUADERNO (`everything`),
+     * que exige todas las demás y llevaba sin poder conseguirse desde el
+     * rediseño de la colección.
      */
     | 'entity'
     /**
@@ -1353,8 +1359,46 @@ export function captionKnown(piece: ArtPiece): boolean {
  * colección lo enseñaba entero mientras el catálogo lo tapaba.
  */
 export function artOf(piece: ArtPiece): string {
-    return captionKnown(piece) ? piece.art : damageArt(piece.art, piece.id);
+    const dibujo = piece.id === EYE_ID && eyeIsBarred() ? EYE_BARRED : piece.art;
+
+    return captionKnown(piece) ? dibujo : damageArt(dibujo, piece.id);
 }
+
+/**
+ * UN HUECO, DOS DIBUJOS.
+ *
+ * La pieza catorce es UNA, y cuál te toca depende de lo que elegiste al final:
+ * ayudarlo te deja el ojo, reportarlo te deja el ojo TAPADO.
+ *
+ * ⚠ NO SON DOS PIEZAS, y no es una comodidad de implementación. Si lo fueran, la
+ * colección pasaría a diecisiete y NUNCA SE PODRÍA COMPLETAR: sólo se puede
+ * tener una, y el cuaderno firmado exige todas las demás. Sería el mismo agujero
+ * que ya se cazó con el secreto `collection`.
+ *
+ * Con un hueco, los dos finales completan la colección — y queda marcada para
+ * siempre por la decisión: dos personas que la tienen entera la tienen distinta.
+ *
+ * El dibujo es el mismo campo de dígitos, con la forma del ojo todavía visible
+ * arriba y abajo y el centro TACHADO. Se ve que había algo y se ve que alguien
+ * lo tapó, que es exactamente lo que pasó.
+ */
+const EYE_ID = 'eye';
+
+const EYE_BARRED = [
+    '1011101110100001001101001110100110111101',
+    '1100111111111              0011011000010',
+    '000101100                      000011001',
+    '1110000           1000           1010011',
+    '00001          1000100000          01000',
+    '010     ########################     101',
+    '0       ########################       0',
+    '101     ########################     011',
+    '01000          1000101110          11001',
+    '1010111           1001           1000111',
+    '010010110                      011011100',
+    '1011100010100              1010111110100',
+    '1000111100000000001101100011000101010101',
+].join('\n');
 
 /**
  * El pie que toca ENSEÑAR de esta pieza.

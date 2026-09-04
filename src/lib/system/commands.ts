@@ -27,6 +27,7 @@ import {
     clearLie,
     countExchange,
     markDared,
+    markGave,
     markJokeOver,
     markDodged,
     markLieStanding,
@@ -50,6 +51,15 @@ import {
     wordIsRight,
 } from '@/lib/system/entityTrials';
 import { GIFT_WORD } from '@/lib/system/entityNotes';
+import {
+    REPORT,
+    UNBIND,
+    commandGiven,
+    entityGone,
+    reportedIt,
+    unbind,
+} from '@/lib/system/entityEnding';
+import { willingNow } from '@/lib/system/entityFavors';
 import { allDropped } from '@/lib/system/dropped';
 import type { Lang } from '@/config/lang';
 import type { Localized, LocalizedPlural, Vars } from '@/i18n';
@@ -759,6 +769,26 @@ function askEntity(
     // ⚠ `tripWord()` y NO `v02Word()`: la segunda ya se borró. `leaveV02()`
     // la tira al salir, y el ente sólo despierta al VOLVER — o sea siempre
     // después. Lo único que sobrevive es la palabra del viaje.
+    /*
+     * ⚠ CUANDO SE DECIDE, TE LO PASA. Y ESTO VA ANTES QUE TODO LO DEMÁS.
+     *
+     * Es lo último que hace y lo único que le importa: una trampa después de
+     * haberse decidido sería él perdiendo el tiempo con juegos justo cuando
+     * acaba de pedirte ayuda de verdad.
+     *
+     * Una sola vez — `markGave()` cierra la puerta, y a partir de ahí lo que
+     * hay son dos comandos y una decisión tuya.
+     */
+    if (readEntity().gaveCommand !== true && willingNow(readEntity(), ctx.secretsFound)) {
+        markGave();
+        setPhase('dispuesto');
+        countExchange();
+        return TRIAL_REPLY.handing[lang];
+    }
+
+    // Se fue. En los dos finales no vuelve a contestar nunca.
+    if (entityGone()) return null;
+
     const toca = trialDue(readEntity(), { word: tripWord() });
 
     if (toca === 'word') {
@@ -1819,6 +1849,39 @@ export function run(
          * Que hable desde el sitio de «no te entiendo» tampoco es casualidad:
          * está encerrado, y lo único que le llega es lo que el sistema descarta.
          */
+        /*
+         * LOS DOS COMANDOS DEL FINAL.
+         *
+         * No están declarados en `COMMANDS`, por lo mismo que las variantes de
+         * sus preguntas: `allCommandsFound()` exige tener TODOS los ocultos, y
+         * dos que sólo existen después de un arco entero dejarían el arte de la
+         * terminal fuera del alcance de casi cualquiera.
+         *
+         * ⚠ Y NO EXISTEN HASTA QUE ÉL TE PASA EL SUYO. Antes contestan «comando
+         * desconocido», que es lo que son: teclear `//unbind` por casualidad no
+         * puede abrirte el final.
+         */
+        if (commandGiven() && !entityGone()) {
+            if (corto === UNBIND) {
+                unbind();
+                return { output: TRIAL_REPLY.unbound[lang], effect: SIN_EFECTO };
+            }
+
+            /*
+             * REPORTARLO ES EL OTRO FINAL, y se puede desde que te lo pasa —
+             * incluso sin haberlo ejecutado. Elegir taparlo sin mirar qué era es
+             * una decisión tan válida como la otra, y bastante más humana.
+             */
+            if (corto === REPORT) {
+                reportedIt();
+                return {
+                    output: TRIAL_REPLY.reported[lang],
+                    effect: SIN_EFECTO,
+                    secretId: 'entity-reported',
+                };
+            }
+        }
+
         /*
          * LAS INSTRUCCIONES DE LA NOTA DEL DÍA SIGUIENTE.
          *
