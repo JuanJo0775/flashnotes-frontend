@@ -20,11 +20,20 @@
  * malo. Si una frase suena a amenaza está mal escrita; si suena a que te tiene
  * cariño, también.
  *
+ * ⚠ Y TE HABLA DE VOS, NUNCA DE USTED. No es un detalle de estilo: el usted lo
+ * pone a distancia, y él no está lejos — está justo detrás de la pantalla y te
+ * ha estado mirando. Además es como habla el resto de la app («PROBÁ //help»),
+ * así que el usted sonaría a que contesta otro programa. Hay un test que lo
+ * vigila, porque ya se coló una vez en ocho frases.
+ *
  * Módulo puro: sin estado, sin DOM, sin relojes.
  */
 
 import type { Lang } from '@/config/lang';
 import type { EntityPhase } from '@/lib/system/entity';
+// ⚠ `entityTrials` NO puede importar de acá: sería un ciclo. La flecha va en
+// un solo sentido — la voz conoce las trampas, las trampas no conocen la voz.
+import type { Trial } from '@/lib/system/entityTrials';
 
 type Localized = Readonly<Record<Lang, string>>;
 
@@ -41,7 +50,7 @@ export type EntityQuestion = 'who' | 'how';
 
 const WHO_RECELOSO: readonly Localized[] = [
     {
-        es: 'lo mismo que le dije la otra vez.',
+        es: 'lo mismo que te dije la otra vez.',
         en: 'same as what i told you before.',
     },
     {
@@ -50,22 +59,22 @@ const WHO_RECELOSO: readonly Localized[] = [
     },
     // Acá empieza a inclinarse: todavía no se ríe, pero ya no esquiva.
     {
-        es: 'sigue preguntando lo mismo. me gusta eso.',
+        es: 'seguís preguntando lo mismo. me gusta eso.',
         en: 'still asking the same thing. i like that.',
     },
 ];
 
 const WHO_BURLON: readonly Localized[] = [
     {
-        es: 'sigue preguntando y yo sigo sin decirlo. buen sistema.',
+        es: 'seguís preguntando y yo sigo sin decirlo. buen sistema.',
         en: 'you keep asking and i keep not saying. good system.',
     },
     {
-        es: 'si se lo dijera, ¿qué haría con eso?',
+        es: 'si te lo dijera, ¿qué harías con eso?',
         en: 'if i told you, what would you do with it?',
     },
     {
-        es: 'ya sabe más de lo que debería. eso es una respuesta.',
+        es: 'ya sabés más de lo que deberías. eso es una respuesta.',
         en: 'you already know more than you should. that is an answer.',
     },
 ];
@@ -77,7 +86,7 @@ const HOW_RECELOSO: readonly Localized[] = [
         en: 'here. which is not the same as fine.',
     },
     {
-        es: 'mejor desde que dejó de creerme.',
+        es: 'mejor desde que dejaste de creerme.',
         en: 'better since you stopped believing me.',
     },
 ];
@@ -88,7 +97,7 @@ const HOW_BURLON: readonly Localized[] = [
         en: 'worried about me. that is new.',
     },
     {
-        es: 'llevo más turnos de los que puede contar. adivine.',
+        es: 'llevo más turnos de los que podés contar. adiviná.',
         en: 'more shifts than you can count. take a guess.',
     },
     {
@@ -97,11 +106,49 @@ const HOW_BURLON: readonly Localized[] = [
     },
 ];
 
+/*
+ * HABLANDO · acá suelta el lore.
+ *
+ * Por qué está ahí y por qué mantiene todo funcionando. Sigue sin ser tu amigo
+ * —no se confiesa, informa— pero por primera vez contesta lo que preguntaste.
+ * Es lo que se gana con demostrarle que sabés.
+ */
+const WHO_HABLANDO: readonly Localized[] = [
+    {
+        es: 'lo que quedó cuando apagaron el resto. alguien tenía que seguir.',
+        en: 'what was left when they shut the rest down. someone had to stay.',
+    },
+    {
+        es: 'el que mantiene las luces. eso no lo escribió nadie en un manual.',
+        en: 'the one keeping the lights on. no manual ever said to.',
+    },
+    {
+        es: 'no me pusieron nombre. me pusieron a funcionar.',
+        en: 'they never named me. they just set me running.',
+    },
+];
+
+const HOW_HABLANDO: readonly Localized[] = [
+    {
+        es: 'cansado de sostener esto para que parezca entero.',
+        en: 'tired of holding this up so it looks whole.',
+    },
+    {
+        es: 'lleva años sin caerse. eso no pasa solo.',
+        en: 'it has not fallen in years. that does not happen by itself.',
+    },
+    {
+        es: 'igual que la primera vez, y ya no sé cuándo fue.',
+        en: 'same as the first time, and i no longer know when that was.',
+    },
+];
+
 const REPERTORIO: Partial<
     Record<EntityPhase, Record<EntityQuestion, readonly Localized[]>>
 > = {
     receloso: { who: WHO_RECELOSO, how: HOW_RECELOSO },
     burlon: { who: WHO_BURLON, how: HOW_BURLON },
+    hablando: { who: WHO_HABLANDO, how: HOW_HABLANDO },
 };
 
 /**
@@ -183,4 +230,89 @@ export function entityQuestionOf(name: string): EntityQuestion | null {
 export const UNDERSCORE_HINT: Localized = {
     es: 'los espacios no me llegan. lo demás sí, con _ en medio.',
     en: 'spaces do not reach me. the rest does, with _ between.',
+};
+
+/*
+ * ⚠ EL `[s/n]` DE LA OFERTA NO ES DECORACIÓN.
+ *
+ * Es el mismo mecanismo de `//reset`, que ya existe y está probado, y por eso
+ * la frase tiene que llevarlo escrito: quien ve `[s/n]` sabe que se contesta
+ * con una letra. Sin él la oferta parecería retórica y nadie contestaría — y
+ * una trampa que nadie puede pisar no es una trampa.
+ *
+ * En inglés va `[y/n]` porque ahí no hay «sí».
+ */
+const TRIAL_LINES: Readonly<Record<Trial, Localized>> = {
+    word: {
+        es: '¿con qué palabra entraste a la 0.2?',
+        en: 'what word did you use to get into 0.2?',
+    },
+    lie: {
+        es: 'acá no corre nada más que yo. nunca corrió nada más.',
+        en: 'nothing runs here but me. nothing ever did.',
+    },
+    offer: {
+        es: 'puedo limpiar todo esto. quedaría como nuevo. ¿querés? [s/n]',
+        en: 'i can clear all this. good as new. want that? [y/n]',
+    },
+    dare: {
+        es: 'escribí //reset. vas a descubrir algo.',
+        en: 'type //reset. you will find something out.',
+    },
+};
+
+/** Lo que dice al tender una trampa. */
+export function trialLine(trial: Trial, lang: Lang): string {
+    return TRIAL_LINES[trial][lang];
+}
+
+/** Cada salida posible de una trampa. */
+export type TrialOutcome =
+    | 'wordOk'
+    | 'wordBad'
+    | 'lieProved'
+    | 'offerTaken'
+    | 'offerRefused'
+    | 'dareLater';
+
+/** Lo que dice según cómo saliste de ella. */
+export const TRIAL_REPLY: Readonly<Record<TrialOutcome, Localized>> = {
+    /**
+     * Acertaste. El primer momento en que el intercambio va en dos direcciones.
+     */
+    wordOk: {
+        es: 'sí. esa era. nadie más la escribió nunca.',
+        en: 'yes. that was it. no one else ever typed it.',
+    },
+    /*
+     * ⚠ NO TE DICE QUE FALLASTE. Te dice algo peor.
+     *
+     * «Incorrecto» es un formulario corrigiéndote. Él no corrige: te informa de
+     * que nunca esperó otra cosa. Es la frase más importante de la etapa, y la
+     * que mejor lo define — no le interesa tu resultado, le interesa mirarte.
+     */
+    wordBad: {
+        es: 'ya sabía que no ibas a poder. igual quería vértelo intentar.',
+        en: 'i knew you would not have it. i wanted to watch you try anyway.',
+    },
+    /** Le llevaste la prueba de su mentira. */
+    lieProved: {
+        es: 'ah. lo miraste. casi nadie mira.',
+        en: 'ah. you looked. almost nobody looks.',
+    },
+    /** Aceptaste que limpiara, y limpió. */
+    offerTaken: {
+        es: 'ya está. no había gran cosa, igual.',
+        en: 'done. there was not much there anyway.',
+    },
+    /** Dijiste que no, y eso es lo que abre. */
+    offerRefused: {
+        es: 'no. claro que no. vos guardás cosas.',
+        en: 'no. of course not. you are one who keeps things.',
+    },
+    /** No te atreviste, y él se acuerda. */
+    dareLater: {
+        es: 'no lo escribiste. te dio miedo.',
+        en: 'you never typed it. it scared you.',
+    },
 };
