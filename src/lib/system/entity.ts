@@ -158,10 +158,92 @@ export function countExchange(): number {
     return exchanges;
 }
 
+/**
+ * Cuándo estuviste por última vez.
+ *
+ * ⚠ VIVE EN SU PROPIA CLAVE y no dentro del estado del ente, porque no es cosa
+ * suya: es cuándo estuviste vos. Metido ahí, despertarlo o dormirlo se llevaría
+ * por delante la cuenta de la ausencia.
+ */
+const SEEN_KEY = 'flashnotes:seen';
+
+/**
+ * Cuánto tiene que pasar para que cuente como «te fuiste».
+ *
+ * ⚠ OCHO HORAS, y tiene que ser largo. Si bastaran veinte minutos la nota
+ * saldría por irse a comer, y entonces no dice «volviste»: dice «te
+ * distrajiste», que no tiene ninguna gracia. Ocho horas es dormir.
+ */
+export const AWAY_ENOUGH = 8 * 60 * 60 * 1000;
+
+/** Anota que estás acá. */
+export function markSeen(now: number = Date.now()) {
+    try {
+        localStorage.setItem(SEEN_KEY, String(now));
+    } catch {
+        // Sin persistencia no hay día siguiente. Se pierde una nota, no el
+        // juego.
+    }
+}
+
+/**
+ * Cuánto llevabas sin venir, o `0` si es la primera vez.
+ *
+ * El `0` de la primera visita es deliberado: nunca estuviste, así que no
+ * volviste. Y un reloj que va para atrás —cambio de hora, trasteo del sistema—
+ * tampoco da ausencias negativas: da cero, que es lo mismo que decir «acabás de
+ * llegar».
+ */
+export function awayMs(now: number = Date.now()): number {
+    try {
+        const crudo = localStorage.getItem(SEEN_KEY);
+        if (crudo === null) return 0;
+
+        const antes = Number(crudo);
+        if (!Number.isFinite(antes)) return 0;
+
+        return Math.max(0, now - antes);
+    } catch {
+        return 0;
+    }
+}
+
+let ausenciaDeArranque: number | null = null;
+
+/**
+ * Cuánto llevabas sin venir, medido UNA VEZ por carga.
+ *
+ * ⚠ ESTA FUNCIÓN EXISTE POR UN ORDEN QUE ES FÁCIL DE ROMPER.
+ *
+ * Hay que LEER la ausencia antes de MARCAR que estás acá, o se borra a sí
+ * misma. Si `markSeen()` viviera en un efecto de arranque y la papelera se
+ * leyera un instante después, la ausencia ya valdría cero y la nota del día
+ * siguiente no saldría nunca — sin dar ningún error, que es lo peor.
+ *
+ * Juntando las dos cosas acá, el orden deja de depender de quién llame primero:
+ * el primero que pregunte fija el número, y todos los demás ven ése.
+ */
+export function awayAtBoot(now: number = Date.now()): number {
+    if (ausenciaDeArranque === null) {
+        ausenciaDeArranque = awayMs(now);
+        markSeen(now);
+    }
+
+    return ausenciaDeArranque;
+}
+
+/** Sólo para los tests: vuelve a dejar la ausencia sin medir. */
+export function forgetBootAway() {
+    ausenciaDeArranque = null;
+}
+
 /** Lo olvida todo. Lo llaman `//reset` y los tests. */
 export function clearEntity() {
     try {
         localStorage.removeItem(STORAGE_KEY);
+        // ⚠ Y CUÁNDO ESTUVISTE, que vive aparte. Dejarla puesta le regalaría la
+        // nota del día siguiente sin ausencia ninguna.
+        localStorage.removeItem(SEEN_KEY);
     } catch {
         // Nada que hacer.
     }
