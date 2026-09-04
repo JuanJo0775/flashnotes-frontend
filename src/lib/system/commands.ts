@@ -27,6 +27,7 @@ import {
     clearLie,
     countExchange,
     markDared,
+    markJokeOver,
     markDodged,
     markLieStanding,
     markLieSwallowed,
@@ -805,6 +806,25 @@ function askEntity(
     if (lieGoneStale(readEntity(), { word: tripWord() })) {
         clearLie();
         markLieSwallowed();
+    }
+
+    /*
+     * «ESE ARCHIVO NO ESTÁ».
+     *
+     * Te mandó a buscar algo que no existe y fuiste a mirar. El remate llega
+     * ACÁ y no antes: sin haber ido no hay nada de qué reírse, y soltarlo antes
+     * lo convertiría en un aviso de que no busques justo después de mandarte a
+     * buscar.
+     *
+     * ⚠ Una sola vez. Un remate que se repite deja de ser un remate y pasa a
+     * ser un tic. Y no da ni premio ni castigo: sólo se rió de vos, que es lo
+     * suyo — meterle un secreto lo convertiría en contenido.
+     */
+    const eso = readEntity();
+    if (eso.leftBroma === true && eso.looked === true && eso.jokeOver !== true) {
+        markJokeOver();
+        countExchange();
+        return TRIAL_REPLY.jokeOver[lang];
     }
 
     /*

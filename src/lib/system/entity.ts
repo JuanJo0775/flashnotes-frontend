@@ -90,6 +90,18 @@ export interface EntitySnapshot {
     leftBroma?: boolean;
     /** La que te encontraste al volver al día siguiente. */
     leftVuelta?: boolean;
+    /**
+     * Fuiste a la papelera DESPUÉS de que te mandara a buscar.
+     *
+     * Es lo que habilita el remate de la broma. Sin esto, «era broma» saldría
+     * antes de que hubieras ido, y entonces no es un remate: es un aviso de que
+     * no busques, justo después de mandarte a buscar.
+     */
+    looked?: boolean;
+    /** Ya viste la nota que te manda a buscar. */
+    sawBroma?: boolean;
+    /** Ya te lo dijo. Un remate que se repite es un tic. */
+    jokeOver?: boolean;
 }
 
 const DORMIDO: EntitySnapshot = { phase: 'dormido', exchanges: 0 };
@@ -113,6 +125,9 @@ export function readEntity(): EntitySnapshot {
             leftFalsa,
             leftBroma,
             leftVuelta,
+            sawBroma,
+            looked,
+            jokeOver,
         } = leido as Partial<EntitySnapshot>;
 
         // Una fase que el código ya no conoce se ignora: renombrar una no puede
@@ -137,6 +152,9 @@ export function readEntity(): EntitySnapshot {
             ...(leftFalsa ? { leftFalsa: true } : {}),
             ...(leftBroma ? { leftBroma: true } : {}),
             ...(leftVuelta ? { leftVuelta: true } : {}),
+            ...(sawBroma ? { sawBroma: true } : {}),
+            ...(looked ? { looked: true } : {}),
+            ...(jokeOver ? { jokeOver: true } : {}),
         };
     } catch {
         return { ...DORMIDO };
@@ -314,6 +332,21 @@ export function markDared() {
 /** Te lo lanzó y no lo escribiste. */
 export function markDodged() {
     store({ ...readEntity(), dodged: true });
+}
+
+/** Ya viste la nota que te manda a buscar el archivo que no está. */
+export function markSawBroma() {
+    store({ ...readEntity(), sawBroma: true });
+}
+
+/** Fuiste a la papelera después de que te mandara a buscar. */
+export function markLooked() {
+    store({ ...readEntity(), looked: true });
+}
+
+/** Ya soltó el remate. No se repite. */
+export function markJokeOver() {
+    store({ ...readEntity(), jokeOver: true });
 }
 
 /** Anota que ya dejó esta nota. No se repiten. */

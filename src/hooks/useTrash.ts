@@ -14,7 +14,12 @@ import {
 } from '@/lib/system/ghostFile';
 import { SCRAP_ID, buildScrapNote, shouldScrap } from '@/lib/system/artScrap';
 import { LEFT_ID, buildLeftNote, shownLeftNote } from '@/lib/system/entityNotes';
-import { markLeft } from '@/lib/system/entity';
+import {
+    markLeft,
+    markLooked,
+    markSawBroma,
+    readEntity,
+} from '@/lib/system/entity';
 import { formatLog } from '@/lib/system/requestLog';
 import { getSystemState, markSecretFound } from '@/hooks/useSystemState';
 
@@ -95,16 +100,28 @@ export const useTrash = (): UseTrashReturn => {
              * que es lo más nuevo que hay acá. Y la del día siguiente sólo
              * funciona si se ve al entrar — una nota que te espera enterrada
              * bajo el registro del sistema no te espera, se esconde.
-             */
-            /*
-             * ⚠ SE MUESTRA, PERO NO SE DA POR DEJADA TODAVÍA.
              *
-             * Marcarla acá haría que abrir la papelera dos veces enseñara dos
-             * notas distintas, y la primera desaparecería sin que hicieras
-             * nada. Se da por dejada cuando VOS la quitás —restaurándola o
-             * borrándola—, que es cuando de verdad la viste. Ver abajo.
+             * ⚠ SE MUESTRA, PERO NO SE DA POR DEJADA TODAVÍA. Marcarla acá
+             * haría que abrir la papelera dos veces enseñara dos notas
+             * distintas, y la primera desaparecería sin que hicieras nada. Se
+             * da por dejada cuando VOS la quitás —restaurándola o borrándola—,
+             * que es cuando de verdad la viste. Ver abajo.
              */
             const suya = buildLeftNote();
+
+            /*
+             * ⚠ QUE FUISTE A BUSCAR EL ARCHIVO QUE TE DIJO.
+             *
+             * La broma te manda a mirar acá abajo. Se cuenta como «fuiste» en
+             * la SEGUNDA lectura de la papelera con la broma ya dicha, no en la
+             * primera: en la primera es cuando la leés, y contarla ahí sería
+             * darte por buscado antes de haber podido buscar.
+             *
+             * Por eso se mira si YA la había visto antes de esta lectura.
+             */
+            const yaLaVio = readEntity().sawBroma === true;
+            if (shownLeftNote() === 'broma') markSawBroma();
+            if (yaLaVio) markLooked();
 
             const inyectadas = [
                 ...(suya ? [suya] : []),
@@ -136,20 +153,6 @@ export const useTrash = (): UseTrashReturn => {
         }
 
         /*
-         * ⚠ RECUPERARLO LO CONVIERTE EN UNA NOTA DE VERDAD.
-         *
-         * Acá estaba copiado el comportamiento del fantasma —descartar y ya— y
-         * era un fallo: en el fantasma «recuperar» significa «quitámelo de
-         * encima», porque es un registro que se lee de un vistazo en la propia
-         * tarjeta. El resto es un DIBUJO de cuarenta columnas, y la tarjeta sólo
-         * enseña ciento cuarenta caracteres recortados: pulsar recuperar hacía
-         * desaparecer justo lo que se quería mirar.
-         *
-         * Ahora se crea de verdad, con su contenido entero, y queda entre tus
-         * notas para abrirla, leerla y quedártela. Es lo que «recuperar»
-         * significa en cualquier papelera.
-         */
-        /*
          * LA SUYA: restaurarla la convierte en una nota tuya de verdad, como el
          * resto de arte. La del día siguiente trae instrucciones, y quien la
          * restaura es porque quiere quedárselas a mano.
@@ -178,6 +181,20 @@ export const useTrash = (): UseTrashReturn => {
             return true;
         }
 
+        /*
+         * ⚠ RECUPERARLO LO CONVIERTE EN UNA NOTA DE VERDAD.
+         *
+         * Acá estaba copiado el comportamiento del fantasma —descartar y ya— y
+         * era un fallo: en el fantasma «recuperar» significa «quitámelo de
+         * encima», porque es un registro que se lee de un vistazo en la propia
+         * tarjeta. El resto es un DIBUJO de cuarenta columnas, y la tarjeta sólo
+         * enseña ciento cuarenta caracteres recortados: pulsar recuperar hacía
+         * desaparecer justo lo que se quería mirar.
+         *
+         * Ahora se crea de verdad, con su contenido entero, y queda entre tus
+         * notas para abrirla, leerla y quedártela. Es lo que «recuperar»
+         * significa en cualquier papelera.
+         */
         if (id === SCRAP_ID) {
             const resto = buildScrapNote();
             if (resto === null) return false;

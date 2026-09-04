@@ -273,6 +273,7 @@ export type TrialOutcome =
     | 'lieProved'
     | 'offerTaken'
     | 'offerRefused'
+    | 'jokeOver'
     | 'dareLater';
 
 /** Lo que dice según cómo saliste de ella. */
@@ -309,6 +310,17 @@ export const TRIAL_REPLY: Readonly<Record<TrialOutcome, Localized>> = {
     offerRefused: {
         es: 'no. claro que no. vos guardás cosas.',
         en: 'no. of course not. you are one who keeps things.',
+    },
+    /**
+     * Fuiste a buscar el archivo que te dijo, y no estaba.
+     *
+     * ⚠ No dice «era broma» con esas palabras: lo dice como si acabara de
+     * acordarse, que es peor. Una broma anunciada se perdona; una que te dejan
+     * descubrir solo, no.
+     */
+    jokeOver: {
+        es: 'ah, ese archivo. no está. nunca estuvo.',
+        en: 'oh, that file. it is gone. it never was.',
     },
     /** No te atreviste, y él se acuerda. */
     dareLater: {
