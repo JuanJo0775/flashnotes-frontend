@@ -124,3 +124,59 @@ export function clearEntity() {
         // Nada que hacer.
     }
 }
+
+/**
+ * Lo que el ente necesita saber del mundo para decidir si avanza.
+ *
+ * ⚠ SON DATOS QUE YA EXISTEN, traídos por quien llama. El ente no los guarda ni
+ * los consulta él: recibirlos lo deja puro y hace que las transiciones se
+ * prueben como una tabla.
+ */
+export interface EntityWorld {
+    /**
+     * ¿Estuvo donde no se podía? La v0.2, el fallo total, el morse.
+     *
+     * Cada uno es un sitio al que no debería haber llegado.
+     */
+    trespassed: boolean;
+    /** ¿Insistió con `//hi` hasta que lo echó de la nota? */
+    kicked: boolean;
+}
+
+/**
+ * Cuántos intercambios en `receloso` hacen falta para que se suelte.
+ *
+ * Tres. No es una cifra de dificultad: es lo mínimo para que se lea como VOLVER.
+ * Con uno sería la misma conversación; con dos, insistir; con tres ya sos
+ * alguien que vuelve, y eso es lo que le interesa.
+ */
+export const RETURN_AT = 3;
+
+/**
+ * Dónde debería estar el ente, dado dónde está y qué pasó.
+ *
+ * ⚠ NUNCA RETROCEDE. Devuelve la fase actual o una posterior, jamás una
+ * anterior. Una fachada que se recompone no da miedo: da desconfianza en el
+ * código.
+ */
+export function phaseAfter(
+    snapshot: EntitySnapshot,
+    world: EntityWorld
+): EntityPhase {
+    if (snapshot.phase === 'dormido') {
+        return world.trespassed || world.kicked ? 'receloso' : 'dormido';
+    }
+
+    if (snapshot.phase === 'receloso') {
+        return snapshot.exchanges >= RETURN_AT ? 'burlon' : 'receloso';
+    }
+
+    /*
+     * ⏳ `burlon` NO AVANZA EN ESTA ETAPA.
+     *
+     * Lo que abre `hablando` es demostrarle que sabés, y las dos formas de
+     * hacerlo —la pregunta que te mide y la mentira comprobable— son TRAMPAS,
+     * que son la etapa 2. Abrirlo antes dejaría una fase sin repertorio.
+     */
+    return snapshot.phase;
+}
