@@ -183,7 +183,7 @@ export default function StatusBar({
                 [SYSTEM_OK] se queda como texto plano —sin role ni tabindex—
                 porque esta barra es una región viva: un objetivo enfocable aquí
                 dentro es incómodo con lector de pantalla, y el panel ya tiene su
-                vía accesible por teclado con el comando >diag.
+                vía accesible por teclado con el comando //diag.
 
                 Es Alt+clic y no Ctrl+clic a propósito: en macOS Ctrl+clic ES el
                 clic secundario y abre el menú contextual. */}

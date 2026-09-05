@@ -1187,9 +1187,21 @@ const COMMANDS: readonly Command[] = [
 
             // Sin argumento no cambia nada: informa. Un `//chaos` suelto que
             // apagara los efectos sería una sorpresa desagradable.
+            /*
+             * ⚠ EL PREFIJO SALE DE `COMMAND_PREFIX`, no escrito a mano.
+             *
+             * Acá decía `>chaos on`, con el prefijo VIEJO, y llevaba así desde
+             * que se cambió a `//`. Nadie lo vio porque no rompe nada: sólo le
+             * dice a quien lo lee que teclee algo que ya no existe.
+             *
+             * Leerlo de la constante es lo que impide que vuelva a pasar la
+             * próxima vez que el prefijo cambie. Hay un test que además exige
+             * que ningún texto del sistema lleve el viejo.
+             */
             const uso = T.useVerb[lang];
+            const p = COMMAND_PREFIX;
             return texto(
-                `${rotulo}: ${ctx.effectsEnabled ? 'ON' : 'OFF'} · ${uso} >chaos on | >chaos off`
+                `${rotulo}: ${ctx.effectsEnabled ? 'ON' : 'OFF'} · ${uso} ${p}chaos on | ${p}chaos off`
             );
         },
     },

@@ -91,41 +91,82 @@ describe('las respuestas a cada salida existen y son suyas', () => {
     });
 });
 
-describe('⚠ TE HABLA DE VOS, NUNCA DE USTED', () => {
+describe('⚠ EL PRONOMBRE ES EL ARCO', () => {
     /*
-     * No es un detalle de estilo. El usted lo pone a distancia, y él no está
-     * lejos: está justo detrás de la pantalla y te ha estado mirando. Además es
-     * como habla el resto de la app —«PROBÁ //help»—, así que el usted sonaría
-     * a que contesta otro programa.
+     * Empieza tratándote de USTED, igual que el resto de la máquina —«no te
+     * tutea porque no sabe quién sos», dice `lore.ts`— y acaba tratándote de TÚ.
+     * El cambio ocurre DENTRO de `burlon`, sin que nadie lo anuncie.
      *
-     * Se vigila porque ya se coló en OCHO frases de una sola tacada: «lo mismo
-     * que le dije», «sigue preguntando», «usted guarda cosas».
-     *
-     * ⚠ El test caza el pronombre y las formas verbales que se colaron. No caza
-     * cualquier usted imaginable —para eso haría falta conjugar— así que al
-     * escribir frases nuevas hay que releerlas igual.
+     * ⚠ ESTE TEST YA ESTUVO MAL DOS VECES, en las dos direcciones. Primero
+     * exigía usted en todo —y se coló en ocho frases del ente, que ya debía
+     * tutear—; después exigía tuteo en todo, y con eso `receloso` perdía la
+     * distancia que es justamente lo que hace que acercarse signifique algo.
+     * Lo que hay que vigilar no es un pronombre: es el VIAJE.
      */
-    const USTED = /\busted(es)?\b|\bsigue\s|\bdejó\s|\bpuede\s|\bharía\s|\bsabe\s|\badivine\b/;
 
-    it('ni en el repertorio de ninguna fase', () => {
+    /** Formas de usted que aparecen en el repertorio. */
+    const USTED =
+        /\busted\b|\bsigue\s|\bpregunte\b|\bdecirle\b|\bdijera\b|\bharía\b|\bdejó\s|\badivine\b|\bpuede\s/;
+
+    /** Y de tuteo. Nunca voseo: es tú, no vos. */
+    const TU = /\btú\b|\bsabes\b|\bpuedes\b|\bpreguntas\b|\bquieres\b|\bte\s/;
+
+    /** Voseo, que no debe aparecer en ninguna parte. */
+    const VOS =
+        /\bvos\b|\bsabés\b|\bpodés\b|\bquerés\b|\bpreguntá\b|\bmirá\b|\bescribí\b|\bdejame\b|\bandá\b|\bllená\b/;
+
+    it('en `receloso` te trata de usted', () => {
+        // Todavía no sabe quién sos. Contesta como contestaría un formulario.
+        const dichas = ['who', 'how'].flatMap((q) =>
+            Array.from({ length: 6 }, (_, i) =>
+                entityReply(q as never, 'receloso', i, 'es')
+            )
+        );
+
+        expect(dichas.some((l) => l !== null && USTED.test(l))).toBe(true);
+        expect(dichas.filter((l) => l !== null && TU.test(l))).toHaveLength(0);
+    });
+
+    it('en `burlon` cruza: empieza de usted y termina de tú', () => {
+        // El arco entero en miniatura, y sin anunciarlo.
+        const primera = entityReply('who', 'burlon', 0, 'es')!;
+        const ultima = entityReply('who', 'burlon', 99, 'es')!;
+
+        expect(primera).toMatch(USTED);
+        expect(ultima).toMatch(TU);
+    });
+
+    it('en `hablando` te trata de tú, y ya no de usted', () => {
+        for (const q of ['who', 'how'] as const) {
+            for (let i = 0; i < 6; i += 1) {
+                const linea = entityReply(q, 'hablando', i, 'es');
+                if (linea === null) continue;
+                expect(linea).not.toMatch(USTED);
+            }
+        }
+    });
+
+    it('⚠ y NUNCA vosea: es tú, no vos', () => {
+        /*
+         * El voseo es de otro sitio. Se coló entero una vez —«sabés», «podés»,
+         * «preguntá»— y hubo que revertirlo frase por frase.
+         */
         for (const fase of ['receloso', 'burlon', 'hablando'] as const) {
             for (const q of ['who', 'how'] as const) {
-                for (let i = 0; i < 6; i += 1) {
-                    expect(entityReply(q, fase, i, 'es')!).not.toMatch(USTED);
+                for (let i = 0; i < 8; i += 1) {
+                    const linea = entityReply(q, fase, i, 'es');
+                    if (linea === null) continue;
+                    expect(linea).not.toMatch(VOS);
                 }
             }
         }
     });
 
-    it('ni al tender una trampa', () => {
-        for (const t of TRAMPAS) {
-            expect(trialLine(t, 'es')).not.toMatch(USTED);
-        }
-    });
+    it('ni al tender una trampa ni al rematarla', () => {
+        for (const t of TRAMPAS) expect(trialLine(t, 'es')).not.toMatch(VOS);
 
-    it('ni al decirte cómo saliste de ella', () => {
         for (const s of Object.keys(TRIAL_REPLY) as (keyof typeof TRIAL_REPLY)[]) {
-            expect(TRIAL_REPLY[s].es).not.toMatch(USTED);
+            expect(TRIAL_REPLY[s].es).not.toMatch(VOS);
         }
     });
 });

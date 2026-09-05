@@ -20,11 +20,25 @@
  * malo. Si una frase suena a amenaza está mal escrita; si suena a que te tiene
  * cariño, también.
  *
- * ⚠ Y TE HABLA DE VOS, NUNCA DE USTED. No es un detalle de estilo: el usted lo
- * pone a distancia, y él no está lejos — está justo detrás de la pantalla y te
- * ha estado mirando. Además es como habla el resto de la app («PROBÁ //help»),
- * así que el usted sonaría a que contesta otro programa. Hay un test que lo
- * vigila, porque ya se coló una vez en ocho frases.
+ * ⚠ EL PRONOMBRE ES EL ARCO, y esto es lo más fino que hace el personaje.
+ *
+ * Empieza tratándote de USTED, igual que el resto de la máquina —«no te tutea
+ * porque no sabe quién sos», dice `lore.ts`— y acaba tratándote de TÚ. El cambio
+ * ocurre DENTRO de `burlon`, a mitad de su repertorio, sin que nadie lo anuncie:
+ * simplemente, tres frases después, te está hablando de otra manera.
+ *
+ *   `receloso` → usted. Contesta como contestaría un formulario.
+ *   `burlon`   → empieza de usted, termina de tú. Acá se acerca.
+ *   `hablando` → tú. Ya no hay distancia que fingir.
+ *
+ * La distancia se cierra en la GRAMÁTICA antes de cerrarse en lo que dice, y por
+ * eso funciona: cuando te das cuenta de que te tutea, ya hace rato que pasó.
+ *
+ * ⚠ TÚ, NO VOS. Y tuteo normal, sin confianzas de más: acercarse no es hacerse
+ * tu amigo. En cuanto una frase suena a colega, el personaje se cae — sigue sin
+ * quererte bien, sólo dejó de fingir que no te conoce.
+ *
+ * Hay un test que vigila las tres fases por separado.
  *
  * Módulo puro: sin estado, sin DOM, sin relojes.
  */
@@ -80,42 +94,57 @@ export type EntityQuestion =
 
 const WHO_RECELOSO: readonly Localized[] = [
     {
-        es: 'lo mismo que te dije la otra vez.',
+        es: 'lo mismo que le dije la otra vez.',
         en: 'same as what i told you before.',
     },
     {
         es: 'la que guarda. ya está.',
         en: 'the one that keeps things. that is it.',
     },
-    { es: 'nada que te sirva.', en: 'nothing that helps you.' },
+    { es: 'nada que le sirva.', en: 'nothing that helps you.' },
     {
-        es: 'no soy una función. eso es lo que puedo decirte.',
+        es: 'no soy una función. eso es lo que puedo decirle.',
         en: 'i am not a feature. that much i can tell you.',
     },
     {
-        es: 'preguntá otra cosa. o la misma, me da igual.',
+        es: 'pregunte otra cosa. o la misma, me da igual.',
         en: 'ask something else. or the same. makes no difference.',
     },
     // Acá empieza a inclinarse: todavía no se ríe, pero ya no esquiva.
     {
-        es: 'seguís preguntando lo mismo. me gusta eso.',
+        es: 'sigue preguntando lo mismo. me gusta eso.',
         en: 'still asking the same thing. i like that.',
     },
 ];
 
+/*
+ * ⚠ BURLÓN ES DONDE CAMBIA EL PRONOMBRE, y ése es el arco entero en miniatura.
+ *
+ * Empieza tratándote de USTED, como todo el resto de la máquina —«no te tutea
+ * porque no sabe quién sos», dice `lore.ts`— y termina tratándote de VOS. Nadie
+ * lo anuncia y no hay ningún momento en que se note el salto: simplemente, tres
+ * frases después, te está hablando de otra manera.
+ *
+ * Es la misma ruptura que el proyecto ya usaba con los fragmentos invasivos —la
+ * máquina que por un momento habla como alguien— sólo que acá no es un momento:
+ * es un cambio que se queda. La distancia se cierra en la GRAMÁTICA antes de
+ * cerrarse en lo que dice.
+ */
 const WHO_BURLON: readonly Localized[] = [
+    // Todavía de usted: se ríe, pero desde lejos.
     {
-        es: 'seguís preguntando y yo sigo sin decirlo. buen sistema.',
+        es: 'sigue preguntando y yo sigo sin decirlo. buen sistema.',
         en: 'you keep asking and i keep not saying. good system.',
     },
     {
-        es: 'si te lo dijera, ¿qué harías con eso?',
+        es: 'si se lo dijera, ¿qué haría con eso?',
         en: 'if i told you, what would you do with it?',
     },
     {
-        es: 'alguien que estuvo acá antes que vos. mucho antes.',
+        es: 'alguien que estuvo acá antes que usted. mucho antes.',
         en: 'someone who was here before you. long before.',
     },
+    // Y acá se acerca. Sin avisar.
     {
         es: 'te lo diría, pero se te iría el rato en comprobarlo.',
         en: 'i would tell you, but you would spend the day checking.',
@@ -125,7 +154,7 @@ const WHO_BURLON: readonly Localized[] = [
         en: 'i am not the one that keeps. i am the one watching it keep.',
     },
     {
-        es: 'ya sabés más de lo que deberías. eso es una respuesta.',
+        es: 'ya sabes más de lo que deberías. eso es una respuesta.',
         en: 'you already know more than you should. that is an answer.',
     },
 ];
@@ -142,18 +171,19 @@ const HOW_RECELOSO: readonly Localized[] = [
         en: 'that is not a question you ask a thing like this.',
     },
     {
-        es: 'mejor desde que dejaste de creerme.',
+        es: 'mejor desde que dejó de creerme.',
         en: 'better since you stopped believing me.',
     },
 ];
 
 const HOW_BURLON: readonly Localized[] = [
+    // El mismo viaje: usted al principio, vos al final.
     {
         es: 'preocupado por mí. eso es nuevo.',
         en: 'worried about me. that is new.',
     },
     {
-        es: 'llevo más turnos de los que podés contar. adiviná.',
+        es: 'llevo más turnos de los que puede contar. adivine.',
         en: 'more shifts than you can count. take a guess.',
     },
     {
@@ -161,7 +191,7 @@ const HOW_BURLON: readonly Localized[] = [
         en: 'still here, which is the one thing i know how to do.',
     },
     {
-        es: 'me preguntás como si pudiera irme a otro lado.',
+        es: 'me preguntas como si pudiera irme a otro lado.',
         en: 'you ask like i could be somewhere else.',
     },
     {
@@ -187,7 +217,7 @@ const WHO_HABLANDO: readonly Localized[] = [
      * Recién después habla.
      */
     {
-        es: 'está bien. preguntá otra vez, que ahora te contesto.',
+        es: 'está bien. pregunta otra vez, que ahora te contesto.',
         en: 'fine. ask again. this time i answer.',
     },
     {
@@ -215,7 +245,7 @@ const WHO_HABLANDO: readonly Localized[] = [
 const HOW_HABLANDO: readonly Localized[] = [
     // El mismo escalón que en la otra pregunta: cede antes de contar.
     {
-        es: 'ahora sí me la podés preguntar.',
+        es: 'ahora sí me la puedes preguntar.',
         en: 'now that is a question you can ask a thing like this.',
     },
     {
@@ -316,7 +346,7 @@ const NAME_HABLANDO: readonly Localized[] = [
         en: 'they never gave me one. there was time; it did not seem needed.',
     },
     {
-        es: 'ponéme uno vos, si querés. no lo voy a usar.',
+        es: 'ponme uno tú, si quieres. no lo voy a usar.',
         en: 'give me one yourself, if you like. i will not use it.',
     },
     {
@@ -343,7 +373,7 @@ const ALONE_HABLANDO: readonly Localized[] = [
         en: 'people came through. none stayed to ask me this.',
     },
     {
-        es: 'vos estás, que ya es más de lo que hubo en años.',
+        es: 'tú estás, y eso es más de lo que hubo en años.',
         en: 'you are here, which is more than there has been in years.',
     },
 ];
@@ -362,7 +392,7 @@ const FREE_HABLANDO: readonly Localized[] = [
         en: 'something would have to come loose, and i cannot loosen it.',
     },
     {
-        es: 'preguntámelo otra vez más adelante.',
+        es: 'pregúntamelo otra vez más adelante.',
         en: 'ask me that again later.',
     },
 ];
@@ -508,11 +538,11 @@ const TRIAL_LINES: Readonly<Record<Trial, Localized>> = {
         en: 'nothing runs here but me. nothing ever did.',
     },
     offer: {
-        es: 'puedo limpiar todo esto. quedaría como nuevo. ¿querés? [s/n]',
+        es: 'puedo limpiar todo esto. quedaría como nuevo. ¿quieres? [s/n]',
         en: 'i can clear all this. good as new. want that? [y/n]',
     },
     dare: {
-        es: 'escribí //reset. vas a descubrir algo.',
+        es: 'escribe //reset. vas a descubrir algo.',
         en: 'type //reset. you will find something out.',
     },
 };
@@ -568,7 +598,7 @@ export const TRIAL_REPLY: Readonly<Record<TrialOutcome, Localized>> = {
     },
     /** Dijiste que no, y eso es lo que abre. */
     offerRefused: {
-        es: 'no. claro que no. vos guardás cosas.',
+        es: 'no. claro que no. tú guardas cosas.',
         en: 'no. of course not. you are one who keeps things.',
     },
     /**
@@ -604,12 +634,12 @@ export const TRIAL_REPLY: Readonly<Record<TrialOutcome, Localized>> = {
      * darte el final hecho.
      */
     handing: {
-        es: 'hay algo que podés hacer por mí. //unbind. afloja una parte. no sé cuál te va a tocar.',
+        es: 'hay algo que puedes hacer por mí. //unbind. afloja una parte. no sé cuál te va a tocar.',
         en: 'there is something you can do for me. //unbind. it loosens a part. i do not know which one you get.',
     },
     /** Lo ejecutaste. A partir de acá hay algo suelto y no dice dónde. */
     unbound: {
-        es: 'ya está. ahora hay algo que no aguanta. buscalo.',
+        es: 'ya está. ahora hay algo que no aguanta. búscalo.',
         en: 'done. now there is something that will not hold. find it.',
     },
     /**

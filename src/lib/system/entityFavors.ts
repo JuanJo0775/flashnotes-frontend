@@ -164,15 +164,15 @@ export function favorDone(favor: Favor, world: FavorWorld): boolean {
  */
 const LINEAS: Readonly<Record<Favor, Localized>> = {
     v02trash: {
-        es: 'andá a la 0.2 y mirá qué hay en la papelera. yo no puedo.',
+        es: 've a la 0.2 y mira qué hay en la papelera. yo no puedo.',
         en: 'go into 0.2 and look at what is in the trash. i cannot.',
     },
     quiet: {
-        es: 'dejame en paz diez minutos. después seguimos.',
+        es: 'déjame en paz diez minutos. después seguimos.',
         en: 'leave me alone for ten minutes. we continue after.',
     },
     fullnote: {
-        es: 'llená una nota entera. quiero ver si podés.',
+        es: 'llena una nota entera. quiero ver si puedes.',
         en: 'fill a whole note. i want to see if you can.',
     },
 };

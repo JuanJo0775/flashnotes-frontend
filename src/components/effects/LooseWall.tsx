@@ -1,13 +1,20 @@
 // src/components/effects/LooseWall.tsx
 'use client';
 
-import { useCallback, useState, useSyncExternalStore } from 'react';
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+    useSyncExternalStore,
+} from 'react';
 import { HITS_TO_FALL, hitWall, wallLean } from '@/lib/system/looseWall';
 import { hasScar, helpedHim, somethingLoose } from '@/lib/system/entityEnding';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { getLang } from '@/i18n';
 import type { Localized } from '@/i18n';
 import { ART, artOf } from '@/lib/system/asciiArt';
+import { FRAME_MS, isBlink, staticFrame } from '@/lib/system/eyeStatic';
 
 /**
  * El cuadro que quedó flojo, y lo que hay detrás.
@@ -171,11 +178,35 @@ export function LooseWall() {
  * de lo que pasó en vez de ser lo que pasó.
  */
 function Estatica() {
-    const ojo = ART.find((p) => p.id === 'eye');
+    const ojo = useMemo(() => ART.find((p) => p.id === 'eye') ?? null, []);
+    const dibujo = useMemo(() => (ojo ? artOf(ojo) : ''), [ojo]);
+
+    /*
+     * ⚠ EL OJO SE MUEVE, y el de la colección no.
+     *
+     * La pieza está quieta a propósito: una que cambiara cada vez no se podría
+     * coleccionar. Pero esto no es la pieza en una vitrina, es la cosa
+     * mirándote, y ahí quieto se lee como una ilustración de lo que pasó en vez
+     * de ser lo que pasa.
+     *
+     * La lluvia hierve y los huecos NO se tocan — eso es lo que la hace mirar—
+     * y de tanto en tanto parpadea. Ver `eyeStatic.ts`.
+     */
+    const [frame, setFrame] = useState(0);
+    const quieto = usePrefersReducedMotion();
+
+    useEffect(() => {
+        if (quieto) return;
+
+        const t = window.setInterval(() => setFrame((n) => n + 1), FRAME_MS);
+        return () => window.clearInterval(t);
+    }, [quieto]);
+
+    const pintado = quieto ? dibujo : staticFrame(dibujo, isBlink(frame));
 
     return (
         <div aria-hidden="true" className="wall-static">
-            <pre className="wall-static__eye">{ojo ? artOf(ojo) : ''}</pre>
+            <pre className="wall-static__eye">{pintado}</pre>
         </div>
     );
 }

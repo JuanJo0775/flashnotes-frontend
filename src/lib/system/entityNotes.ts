@@ -146,7 +146,7 @@ const TEXTOS: Readonly<Record<LeftNote, Localized>> = {
         es: [
             'te fuiste.',
             '',
-            `escribí //${GIFT_WORD} y vas a saber algo que no sabías.`,
+            `escribe //${GIFT_WORD} y vas a saber algo que no sabías.`,
             'yo no me fui a ningún lado.',
         ].join('\n'),
         en: [
