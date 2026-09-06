@@ -1393,88 +1393,236 @@
 }
 
 /*
- * ══ LO QUE ÉL AFLOJÓ ═════════════════════════════════════════════════════════
+ * ══ EL PEDAZO DE PANTALLA QUE SE DESPRENDE ══════════════════════════════════
  *
- * El cuadro suelto es una ventana de error MÁS: hereda `.phantom-error` entera
- * y sólo cambia en que ésta recibe el clic. Que se vea idéntica a las que
- * llevan meses apareciendo es justamente lo que la esconde — lo raro no es cómo
- * se ve, es que responda.
+ * ⚠ NO ES UNA VENTANA: ES UN TROZO DEL FONDO. Una ventana es algo que la app
+ * pone encima, y romperla no dice nada del sitio donde estás. Un trozo de la
+ * PANTALLA que se despega dice que el fondo era una superficie, que tenía un
+ * detrás, y que ese detrás llevaba ahí todo el tiempo.
  *
- * ⚠ SIN `cursor: pointer` Y SIN `:hover`. Un cursor de mano la anunciaría como
- * un control, y esto no es un control: es un fallo. Lo que hay que notar se
- * nota pegándole, no pasando por encima.
+ * El truco es tonto y por eso funciona: `.loose-slab` es un rectángulo opaco
+ * pintado del MISMO color que la página. Mientras está en su sitio no se ve
+ * —es la pantalla— y en cuanto se mueve empieza a asomar el hueco de debajo.
  */
-.loose-wall {
-    /* A media altura y a la izquierda: lejos del editor, donde estorba poco
-       hasta que decidís mirarlo. */
-    top: 38%;
-    left: 6%;
-    /* Encima de las fantasmas, para que no se lo tapen justo cuando le pegás. */
+
+/*
+ * La zona: dónde está el pedazo flojo. Nadie te dice cuál es.
+ *
+ * ⚠ EL CUARTO INFERIOR DERECHO. Dividí la pantalla en cuatro y es ése — lejos
+ * del editor y de la lista, que es donde de verdad trabajás, y en la esquina
+ * que uno mira menos. Que el fallo esté justo donde nadie mira es parte de que
+ * haya que encontrarlo.
+ */
+.loose-zone {
+    position: fixed;
+    /*
+     * ⚠ ES UN PEDAZO, NO EL CUARTO ENTERO. El cuarto inferior derecho es sólo
+     * DÓNDE está; lo que se cae es un trozo de ese tamaño — como cuando se
+     * desprende un fragmento de una pared, no como cuando se cae la pared.
+     *
+     * Y por eso lo de detrás se ve SÓLO por ahí: el agujero es pequeño, así que
+     * asomarse cuesta, y lo que hay al otro lado no se enseña entero.
+     */
+    top: 58%;
+    left: 66%;
+    width: 268px;
+    height: 176px;
     z-index: 9994;
-    user-select: none;
+    /* Sólo el pedazo recibe el ratón. La zona es una referencia, no un muro. */
+    pointer-events: none;
+}
+
+/* El hueco. Lo que hay detrás de la pantalla, esperando a que se caiga. */
+/*
+ * El hueco.
+ *
+ * ⚠ SE REVELA DESDE ARRIBA, a medida que el pedazo se despega — no aparece
+ * entero de golpe. `--peel` va de `0` a `1` con los golpes, y el recorte lo
+ * convierte en una franja que crece hacia abajo, como una lámina que se levanta
+ * por el canto de arriba. Es lo que se ve en una pared cuando algo se está
+ * soltando: primero una raya, después el hueco.
+ */
+/*
+ * El hueco: lo que hay detrás de la pantalla.
+ *
+ * ⚠ ESTÁ ENTERO DESDE EL PRINCIPIO, y no se ve, porque el pedazo lo tapa
+ * exactamente. Lo que lo revela es que el pedazo SE MUEVA — primero una rendija
+ * por el canto con cada golpe, y al final el hueco entero cuando se cae. Ése es
+ * el principio y no hay que ayudarlo con recortes: si algo tapa y se quita, lo
+ * de detrás aparece solo.
+ */
+.loose-hole {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: #0a0c0d;
 }
 
 /*
- * LA ESTÁTICA, y en la estática un ojo.
+ * Y el pedazo.
  *
- * Ocupa la pantalla entera porque lo que se cayó era una pared: si sólo se
- * viera el hueco del cuadro, parecería que se rompió una ventana. Lo que se
- * rompió es el fondo.
+ * ⚠ ES LA PANTALLA: tapa el hueco y está pintado del MISMO color que el fondo.
+ * No es «parecido» — se midió: bajo esa zona lo que pinta es el `body`, y el
+ * `body` es `--color-primary`. Con el mismo token, el trozo es literalmente
+ * indistinguible mientras está en su sitio.
+ *
+ * Lo que lo delata no es el color: es que ESA ZONA GLITCHEA de vez en cuando.
+ * Un tic cada tantos segundos en la misma esquina basta para que alguien piense
+ * «¿eso se movió?» y vaya a mirar. Espaciado a propósito — seguido dejaría de
+ * ser un fallo y pasaría a ser un elemento animado.
+ *
+ * ⚠ SIN `cursor: pointer` Y SIN `:hover`. Un cursor de mano lo anunciaría como
+ * un control, y esto no es un control: es un fallo. Lo que hay que notar se
+ * nota pegándole, no pasando por encima.
  */
-.wall-static {
-    position: fixed;
+.loose-slab {
+    position: absolute;
     inset: 0;
-    z-index: 9999;
-    display: grid;
-    place-items: center;
-    background: var(--color-ink);
-    color: var(--color-inverse);
-    /* Grano: dos capas de ruido a distinta velocidad, sin imágenes. */
-    animation: wall-static-grain 90ms steps(3, end) infinite;
+    background: var(--color-primary);
+    pointer-events: auto;
+    cursor: default;
+    user-select: none;
+    /* Desde el canto de arriba: se despega por abajo, como una lámina mal
+       pegada, no como una ficha que gira sobre su centro. */
+    transform-origin: 50% 0%;
+    animation: loose-slab-twitch 11s steps(2, end) infinite;
 }
 
-.wall-static__eye {
-    font-family: var(--font-mono);
-    font-size: clamp(6px, 1.6vw, 13px);
-    line-height: 1.15;
-    white-space: pre;
-    margin: 0;
-    /* Detrás de la estática, no encima: se adivina antes de verse. */
-    opacity: 0.82;
-}
-
-@keyframes wall-static-grain {
-    0% {
-        filter: contrast(1) brightness(1);
+@keyframes loose-slab-twitch {
+    0%,
+    95.6% {
+        transform: none;
+        filter: none;
     }
-    50% {
-        filter: contrast(1.6) brightness(0.85);
+    96% {
+        transform: translate3d(-2px, 1px, 0);
+        filter: invert(0.1);
+    }
+    96.8% {
+        transform: translate3d(3px, -1px, 0);
+    }
+    97.6%,
+    100% {
+        transform: none;
+        filter: none;
+    }
+}
+
+/*
+ * EL DESPRENDIMIENTO: se suelta, cae y se va de la pantalla.
+ *
+ * ⚠ Y AQUÍ SÍ SE PINTA, aunque en su sitio no pinte nada. Mientras está pegado
+ * tiene que ser invisible, y la única forma segura de acertarle el color al
+ * fondo es no pintar ninguno. Pero un pedazo que se cae TIENE que verse caer, o
+ * no se cayó: se desvaneció.
+ *
+ * La contradicción se resuelve sola con el movimiento. Un rectángulo del color
+ * del fondo, girando y saliéndose de la pantalla en un segundo y medio, no da
+ * tiempo a que nadie compare tonos — lo que se lee es la forma cayendo, no su
+ * relleno. El canto claro es lo que lo despega del fondo mientras vuela.
+ */
+.loose-slab--cae {
+    background: var(--color-primary);
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--color-line) 55%, transparent),
+        0 10px 24px rgba(0, 0, 0, 0.45);
+    animation: loose-slab-fall 1600ms cubic-bezier(0.45, 0, 0.9, 0.6) forwards;
+}
+
+@keyframes loose-slab-fall {
+    0% {
+        transform: rotate(7deg) translate(10px, 16px);
+        opacity: 1;
+    }
+    18% {
+        transform: rotate(-3deg) translate(-6px, 4px);
     }
     100% {
-        filter: contrast(0.9) brightness(1.1);
+        transform: rotate(24deg) translate(40px, 90vh);
+        opacity: 0.9;
     }
 }
+
+/*
+ * LA LLUVIA, y en la lluvia un ojo.
+ *
+ * ⚠ EL OJO ESTÁ RECORTADO, NO PINTADO. El campo se llena de unos y ceros y la
+ * forma es donde los dígitos NO están. Una silueta encima del ruido se leía
+ * como un emoji pegado sobre una textura: el problema no era el dibujo, era que
+ * el ojo y el fondo estaban hechos de cosas distintas.
+ *
+ * ⚠ Y ESTA CAPA NO OBEDECE AL TEMA. Todo lo demás cambia con claro/oscuro
+ * porque es interfaz; esto está DETRÁS de la interfaz. Que siguiera al tema
+ * sería admitir que es una parte más de la app — y además desaparecía en claro,
+ * que fue exactamente lo que pasó con la primera versión.
+ */
+.wall-rain {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    /*
+     * ⚠ EL HUECO ES OSCURO EN LOS DOS TEMAS, y por eso funciona en los dos.
+     *
+     * No es que ignore el tema por comodidad: un agujero es oscuro, eso es
+     * físico. Pintarlo claro en el tema claro diría que lo que hay detrás
+     * también es interfaz, y lo que hay detrás no es interfaz.
+     *
+     * ⚠ Y MONOCROMO. La referencia venía en cian y de ella se tomó la FORMA, no
+     * la paleta: esta app no tiene un solo color en ninguna parte, así que uno
+     * suelto acá sería lo más ruidoso de todo el producto — y llamaría la
+     * atención justo sobre lo que tiene que encontrarse solo.
+     */
+    background: #0a0c0d;
+    color: #d3d9da;
+    font-family: var(--font-mono);
+    /* ⚠ FIJO, no `clamp`: el campo tiene un número exacto de columnas y tiene
+       que caber entero. Ver la cuenta en `eyeStatic.ts`. */
+    font-size: 6px;
+    line-height: 1.06;
+    letter-spacing: 0.04em;
+    white-space: pre;
+    user-select: none;
+    /* Un halo mínimo: los fósforos de un tubo sangran un poco, y sin eso los
+       dígitos se ven impresos en vez de encendidos. */
+    text-shadow: 0 0 3px rgba(211, 217, 218, 0.35);
+}
+
+/*
+ * ⚠ EL CIERRE FINAL VIVE EN `eyeStatic.ts`, NO ACÁ.
+ *
+ * Hubo una versión en la que el ojo era SVG y se cerraba con una animación CSS.
+ * Ahora está hecho de dígitos, así que cerrarlo es cambiar el dibujo, no
+ * transformar un elemento — y todo el ritmo (mirar, parpadear, cerrarse) lo
+ * decide `eyeAt()`. Las reglas de aquella versión se borraron: CSS muerta que
+ * nadie aplica es peor que no tener nada, porque el siguiente que la lea va a
+ * creer que hace algo.
+ */
 
 /*
  * ⚠ LA CICATRIZ.
  *
- * La pared volvió como si nada, pero esa zona tiembla de vez en cuando. Va sin
- * cuadro y sin texto: es un temblor en el aire, no un elemento. Con contenido
+ * La pantalla volvió como si nada, pero esa zona tiembla de vez en cuando. Va
+ * sin contenido: es un temblor en el aire, no un elemento. Con algo dentro
  * sería un recordatorio, y un recordatorio es alguien contándotelo.
  *
- * Muy de tanto en tanto y muy corto: si se viera siempre dejaría de ser una
+ * Muy de tanto en tanto y muy corto: si se viera seguido dejaría de ser una
  * cicatriz para ser una decoración.
  */
 .wall-scar {
     position: fixed;
-    top: 38%;
-    left: 6%;
-    width: min(300px, calc(100vw - 48px));
-    height: 64px;
+    /* Exactamente donde estuvo el pedazo. Por eso tiembla ahí y no en otro
+       sitio: es el mismo trozo, recompuesto. */
+    top: 58%;
+    left: 66%;
+    width: 268px;
+    height: 176px;
     z-index: 9992;
     pointer-events: none;
     opacity: 0;
-    background: color-mix(in srgb, var(--color-line) 22%, transparent);
+    background: color-mix(in srgb, var(--color-line) 20%, transparent);
     animation: wall-scar-twitch 23s steps(2, end) infinite;
 }
 
@@ -1485,11 +1633,11 @@
         transform: none;
     }
     97.6% {
-        opacity: 0.5;
+        opacity: 0.45;
         transform: translateX(-3px) skewX(-2deg);
     }
     98.2% {
-        opacity: 0.2;
+        opacity: 0.18;
         transform: translateX(2px);
     }
     98.8%,
@@ -1502,7 +1650,9 @@
 /* Con movimiento reducido no hay temblor ni grano: quedan quietos. */
 @media (prefers-reduced-motion: reduce) {
     .wall-scar,
-    .wall-static {
+    .loose-slab,
+    .loose-slab--cae,
+    body.is-blow {
         animation: none;
     }
     .wall-scar {

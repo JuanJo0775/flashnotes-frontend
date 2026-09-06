@@ -1,65 +1,60 @@
 // src/components/effects/LooseWall.tsx
 'use client';
 
+import type { CSSProperties } from 'react';
 import {
     useCallback,
     useEffect,
-    useMemo,
     useState,
     useSyncExternalStore,
 } from 'react';
 import { HITS_TO_FALL, hitWall, wallLean } from '@/lib/system/looseWall';
 import { hasScar, helpedHim, somethingLoose } from '@/lib/system/entityEnding';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { getLang } from '@/i18n';
-import type { Localized } from '@/i18n';
-import { ART, artOf } from '@/lib/system/asciiArt';
-import { FRAME_MS, isBlink, staticFrame } from '@/lib/system/eyeStatic';
+import { ChromaSplitFilters } from '@/components/effects/ChromaticFailure';
+import { eyeAt, FRAME_MS, rainFrame } from '@/lib/system/eyeStatic';
 
 /**
- * El cuadro que quedó flojo, y lo que hay detrás.
+ * El pedazo de pantalla que quedó flojo, y lo que hay detrás.
  *
- * ⚠ ES UNA VENTANA DE ERROR MÁS, y ahí está todo el truco: las fantasmas llevan
- * `pointer-events: none` desde que existen —son cuadros pintados encima que no
- * pueden atrapar nada— así que UNA QUE RESPONDE AL CLIC es, por sí sola, lo que
- * está mal. Él te dijo que había algo suelto y no dijo qué. Esto es lo que hay
- * que notar.
+ * ⚠ NO ES UNA VENTANA: ES UN TROZO DEL FONDO, y la diferencia lo es todo.
+ *
+ * Una ventana de error es un objeto que la app pone ENCIMA — algo que aparece y
+ * desaparece sin que signifique nada— así que romperla no dice nada del sitio
+ * donde estás. Un trozo de la PANTALLA que se despega dice otra cosa: que el
+ * fondo era una superficie, que tenía un detrás, y que ese detrás estaba ahí
+ * todo el tiempo.
+ *
+ * Por eso el pedazo es un rectángulo opaco pintado del MISMO color que la
+ * página. Mientras está en su sitio no se ve, porque es la pantalla. Sólo
+ * cuando se mueve empieza a asomar lo que tapaba.
  *
  * ⚠ CLICS COMO GOLPES, NO COMO INTERFAZ. No hay botón, no hay foco, no hay
- * cursor de mano y no hay contador: cada clic la deja peor y eso se ve, que es
- * la única forma de que alguien siga pegando sin que nadie se lo pida.
+ * cursor de mano y no hay contador: cada golpe lo despega más y eso se ve, que
+ * es la única forma de que alguien siga pegando sin que nadie se lo pida. Es lo
+ * único de toda la app que responde al clic sin ser un control.
  *
- * Y por eso NO es accesible por teclado, que es la única vez en toda la app que
- * eso se decide a propósito: darle `role="button"` y un `tabIndex` la anunciaría
- * como un control, y un control es justo lo que no es. Lo que hay es un fallo.
  * Ver la nota de accesibilidad al final del fichero.
  */
 
-/** Cuánto dura el derrumbe antes de que todo falle, en milisegundos. */
-const CAIDA_MS = 2600;
+/** Cuánto tarda el pedazo en desprenderse del todo, en milisegundos. */
+const CAIDA_MS = 1600;
 
-/** Y cuánto se ve la estática con el ojo dentro. */
-const ESTATICA_MS = 1800;
+/**
+ * Cuánto te mira antes de cerrarse.
+ *
+ * Tiene que dar tiempo a que lo veas moverse: si se cerrara enseguida sería un
+ * parpadeo, y lo que hay que entender es que estuvo mirándote un rato.
+ */
+const MIRA_MS = 4200;
 
-type Fase = 'entera' | 'cayendo' | 'estatica' | 'nada';
+/** Y lo que tarda en cerrarse del todo, antes de que falle el sistema. */
+const CIERRE_MS = 1100;
+
+type Fase = 'entera' | 'cayendo' | 'abierto' | 'cerrando' | 'nada';
 
 /** Esto no cambia solo: se mira una vez al montar y ya. */
 const SIN_CAMBIOS = () => () => {};
-
-/**
- * Lo que dice el cuadro suelto.
- *
- * `Localized` y no un ternario sobre el idioma: al añadir una lengua deja de
- * compilar en vez de servir inglés en silencio. Hay un test que lo vigila en
- * todo `src/`.
- *
- * Y dice lo justo. «No está sujeto» es una avería más, igual que las otras seis
- * — sólo que ésta, si le pegás, se mueve.
- */
-const SUELTO: Localized = {
-    es: 'ESTE CUADRO NO ESTÁ SUJETO',
-    en: 'THIS WINDOW IS NOT FASTENED',
-};
 
 export function LooseWall() {
     const [golpes, setGolpes] = useState(0);
@@ -70,10 +65,10 @@ export function LooseWall() {
      * ⚠ NO SE LEE EL ALMACENAMIENTO AL PINTAR (REGLAS · C1/C2).
      *
      * `useSyncExternalStore` devuelve el snapshot del SERVIDOR en el primer
-     * render del cliente, así que hasta que está montado esto no existe — que
-     * es lo mismo que hace `page.tsx` con la colección. Leerlo directamente
-     * rompería la hidratación, y un `setState` en un efecto lo prohíbe el
-     * linter, con razón: son renders en cascada.
+     * render del cliente, así que hasta que está montado esto no existe — lo
+     * mismo que hace `page.tsx` con la colección. Leerlo directamente rompería
+     * la hidratación, y un `setState` en un efecto lo prohíbe el linter, con
+     * razón: son renders en cascada.
      */
     const montado = useSyncExternalStore(
         SIN_CAMBIOS,
@@ -83,15 +78,30 @@ export function LooseWall() {
 
     const suelto = montado && somethingLoose();
 
+    /*
+     * ⚠ CADA GOLPE SACUDE LA PANTALLA CON EL FALLO CROMÁTICO. EL DE VERDAD.
+     *
+     * No un efecto parecido: los mismos `@keyframes` que la avería de la señal
+     * (§14), sobre el `body`. Inventar uno propio para esto diría que es otra
+     * clase de avería, y es la misma — el sitio se rompe de una sola manera.
+     *
+     * Y si sólo se moviera el pedazo, se leería como arrastrar una ficha. Que
+     * se resienta todo lo demás es lo que lo convierte en pegarle a la
+     * superficie donde vive todo.
+     */
     const pegar = useCallback(() => {
         const van = hitWall();
         setGolpes(van);
 
+        document.body.classList.add('is-blow');
+        window.setTimeout(() => document.body.classList.remove('is-blow'), 240);
+
         if (van < HITS_TO_FALL) return;
 
         /*
-         * SE CAYÓ. Y el orden importa: primero se ve caer, después la estática
-         * con el ojo, y sólo al final falla todo y reinicia.
+         * SE DESPRENDIÓ. Y el orden importa: primero se ve caer el pedazo,
+         * después queda el hueco con lo que hay detrás, y sólo al final falla
+         * todo y reinicia.
          *
          * Contarlo al revés —premio primero, teatro después— convertiría el
          * derrumbe en una animación de recompensa, que es lo contrario de lo
@@ -99,14 +109,28 @@ export function LooseWall() {
          */
         setFase('cayendo');
 
-        window.setTimeout(() => setFase('estatica'), quieto ? 0 : CAIDA_MS);
+        // Cae el pedazo, y por el hueco aparece lo que había detrás.
+        window.setTimeout(() => setFase('abierto'), quieto ? 0 : CAIDA_MS);
+
+        /*
+         * ⚠ Y AL FINAL SE CIERRA. Eso es el remate, no un temporizador.
+         *
+         * Te mira un rato —el iris se mueve, se queda, mira a otro lado— y
+         * después cierra el ojo. Que el último gesto sea suyo y no del reloj es
+         * lo que convierte el momento en una despedida en vez de en una escena
+         * que se acaba porque sí.
+         */
+        window.setTimeout(
+            () => setFase('cerrando'),
+            quieto ? 0 : CAIDA_MS + MIRA_MS
+        );
 
         window.setTimeout(
             () => {
                 /*
-                 * ⚠ LA PIEZA SE DA ACÁ, con la estática todavía en pantalla.
+                 * ⚠ LA PIEZA SE DA ACÁ, con el hueco todavía abierto.
                  *
-                 * `helpedHim()` lo pone en `ido`, da el ojo y deja la pared
+                 * `helpedHim()` lo pone en `ido`, da el ojo y deja la pantalla
                  * como estaba. Lo que queda después es la cicatriz: esa zona
                  * temblando de vez en cuando, sin que nadie te lo cuente.
                  */
@@ -118,80 +142,98 @@ export function LooseWall() {
                 // rótulo, carga, inicio.
                 window.location.reload();
             },
-            quieto ? 0 : CAIDA_MS + ESTATICA_MS
+            quieto ? 0 : CAIDA_MS + MIRA_MS + CIERRE_MS
         );
     }, [quieto]);
 
-    if (fase === 'estatica') return <Estatica />;
     if (fase === 'nada') return null;
 
-    /*
-     * ⚠ MIENTRAS CAE SE SIGUE PINTANDO, aunque ya no esté «suelta».
-     *
-     * Esta condición llevaba `fase === 'entera'` metida y el derrumbe no se
-     * veía nunca: en cuanto empezaba a caer, el componente devolvía otra cosa y
-     * el cuadro desaparecía de golpe. Lo cazó el compilador, avisando de que la
-     * comparación de abajo con `'cayendo'` no podía darse.
-     */
+    // La cicatriz: la pantalla está entera otra vez, pero esa zona tiembla de
+    // vez en cuando.
     if (!suelto && fase === 'entera') {
-        // La cicatriz: en pie otra vez, pero esa zona tiembla de vez en cuando.
         return montado && hasScar() ? <Cicatriz /> : null;
     }
 
     const inclinacion = wallLean(golpes);
 
     return (
-        <div
-            aria-hidden="true"
-            onMouseDown={pegar}
-            className="phantom-error loose-wall"
-            style={{
-                // Cada golpe la deja más torcida y más despegada. Es continuo a
-                // propósito: con tres estados fijos, los golpes de en medio no
-                // harían nada visible y se dejaría de pegar.
-                transform: `rotate(${inclinacion * 9}deg) translate(${
-                    inclinacion * 14
-                }px, ${inclinacion * 22}px)`,
-                opacity: fase === 'cayendo' ? 0 : 1 - inclinacion * 0.25,
-                transition: quieto
-                    ? 'none'
-                    : `transform 180ms ease-out, opacity ${CAIDA_MS}ms linear`,
-                // ⚠ LA ÚNICA que recibe el clic. Las demás no.
-                pointerEvents: 'auto',
-                cursor: 'default',
-            }}
-        >
-            <span className="phantom-error__code">0x0000</span>
-            <span className="phantom-error__text">
-                {SUELTO[getLang()]}
-            </span>
-        </div>
+        <>
+            {/*
+                ⚠ LOS FILTROS DEL CROMO, montados mientras haya algo suelto.
+                `chroma-swap` apunta a `url(#chroma-split-a)`, y si esos `defs`
+                no están en el DOM la animación corre y no pinta nada. Fue
+                exactamente lo que pasó la primera vez.
+            */}
+            <ChromaSplitFilters />
+
+            <div aria-hidden="true" className="loose-zone">
+                {/*
+                    El hueco: lo que hay detrás de la pantalla, esperando.
+
+                    ⚠ SE ABRE CON LOS GOLPES. `--peel` va de 0 a 1 y el recorte
+                    lo convierte en una franja que crece desde arriba, como una
+                    lámina que se levanta por el canto. Antes el hueco estaba
+                    entero desde el principio y lo tapaba un rectángulo pintado
+                    — y por bien que se eligiera ese color, se notaba.
+                */}
+                <div className="loose-hole">
+                    <Estatica cerrando={fase === 'cerrando'} />
+                </div>
+
+                {/*
+                    Y el pedazo. ⚠ NO PINTA NADA: es transparente y sólo recibe
+                    los golpes. Lo que se ve es el hueco abriéndose detrás, no
+                    una lámina moviéndose encima.
+                */}
+                {(fase === 'entera' || fase === 'cayendo') && (
+                    <div
+                        className={`loose-slab${
+                            fase === 'cayendo' ? ' loose-slab--cae' : ''
+                        }`}
+                        onMouseDown={fase === 'entera' ? pegar : undefined}
+                        style={
+                            fase === 'cayendo'
+                                ? undefined
+                                : ({
+                                      /*
+                                       * Cada golpe lo despega un poco más, y
+                                       * por la rendija que deja empieza a
+                                       * asomar lo de detrás. Es continuo a
+                                       * propósito: con tres estados fijos, los
+                                       * golpes de en medio no harían nada
+                                       * visible y se dejaría de pegar.
+                                       */
+                                      transform: `rotate(${inclinacion * 6}deg) translate(${
+                                          inclinacion * 8
+                                      }px, ${inclinacion * 14}px)`,
+                                      transition: quieto
+                                          ? 'none'
+                                          : 'transform 150ms ease-out',
+                                      animation: golpes > 0 ? 'none' : undefined,
+                                  } as CSSProperties)
+                        }
+                    />
+                )}
+            </div>
+        </>
     );
 }
 
 /**
  * Lo que hay detrás: estática, y en la estática un ojo.
  *
- * El ojo es la MISMA pieza de la colección, no un dibujo aparte. Que lo que ves
- * detrás de la pared sea exactamente lo que después te llevás es lo que ata las
- * dos cosas — si fueran dos dibujos parecidos, el premio sería una ilustración
- * de lo que pasó en vez de ser lo que pasó.
+ * ⚠ UN OJO DE VERDAD, NO EL DIBUJO DE LA COLECCIÓN.
+ *
+ * La pieza en ASCII es lo que te LLEVÁS: un registro de lo que viste, hecho con
+ * los caracteres del sistema, quieto porque una pieza que cambiara no se podría
+ * coleccionar. Lo que hay detrás del agujero es otra cosa — es la cosa misma, y
+ * tiene que moverse. Un dibujo de texto ahí se leería como una ilustración de lo
+ * que pasó en vez de ser lo que está pasando.
+ *
+ * Todo es SVG y CSS: el grano sale de `feTurbulence` con la semilla animada, no
+ * de una imagen. Nada que descargar y nada que se vea borroso al ampliar.
  */
-function Estatica() {
-    const ojo = useMemo(() => ART.find((p) => p.id === 'eye') ?? null, []);
-    const dibujo = useMemo(() => (ojo ? artOf(ojo) : ''), [ojo]);
-
-    /*
-     * ⚠ EL OJO SE MUEVE, y el de la colección no.
-     *
-     * La pieza está quieta a propósito: una que cambiara cada vez no se podría
-     * coleccionar. Pero esto no es la pieza en una vitrina, es la cosa
-     * mirándote, y ahí quieto se lee como una ilustración de lo que pasó en vez
-     * de ser lo que pasa.
-     *
-     * La lluvia hierve y los huecos NO se tocan — eso es lo que la hace mirar—
-     * y de tanto en tanto parpadea. Ver `eyeStatic.ts`.
-     */
+function Estatica({ cerrando }: { cerrando: boolean }) {
     const [frame, setFrame] = useState(0);
     const quieto = usePrefersReducedMotion();
 
@@ -202,24 +244,39 @@ function Estatica() {
         return () => window.clearInterval(t);
     }, [quieto]);
 
-    const pintado = quieto ? dibujo : staticFrame(dibujo, isBlink(frame));
+    /*
+     * ⚠ EL CIERRE CUENTA SUS PROPIOS FOTOGRAMAS.
+     *
+     * Si usara el contador general, el ojo se cerraría desde donde estuviera el
+     * ciclo en ese momento — a veces de golpe, a veces a medias. El final tiene
+     * que ser siempre el mismo: baja, y se queda abajo.
+     */
+    const [desde, setDesde] = useState(0);
+    useEffect(() => {
+        if (cerrando) setDesde(frame);
+        // La dependencia es sólo `cerrando`: se marca el instante en que
+        // empieza, no cada fotograma.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [cerrando]);
+
+    const forma = eyeAt(cerrando ? frame - desde : frame, cerrando);
 
     return (
-        <div aria-hidden="true" className="wall-static">
-            <pre className="wall-static__eye">{pintado}</pre>
-        </div>
+        <pre className="wall-rain" aria-hidden="true">
+            {rainFrame(forma)}
+        </pre>
     );
 }
 
 /**
  * ⚠ LA CICATRIZ.
  *
- * La pared está de vuelta como si no hubiera pasado nada, pero esa zona tiembla
- * de vez en cuando. Nadie te lo cuenta y no se puede volver a tirar: sólo vos
- * sabés por qué pasa.
+ * La pantalla está de vuelta como si no hubiera pasado nada, pero esa zona
+ * tiembla de vez en cuando. Nadie te lo cuenta y no se puede volver a tirar:
+ * sólo vos sabés por qué pasa.
  *
- * Va sin texto y sin cuadro — es un temblor en el aire, no un elemento. Ponerle
- * contenido lo convertiría en un recordatorio, y un recordatorio es alguien
+ * Va sin contenido — es un temblor en el aire, no un elemento. Ponerle algo
+ * dentro lo convertiría en un recordatorio, y un recordatorio es alguien
  * contándotelo.
  */
 function Cicatriz() {
