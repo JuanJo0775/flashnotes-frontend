@@ -90,23 +90,25 @@ remate.
 
 ## Dónde está todo
 
-Rama `feat/secretos-del-sistema`, al día con el remoto hasta `a0245a7`.
+Rama `feat/secretos-del-sistema`, **todo commiteado y subido**. El árbol está
+limpio.
 
-**El ente está terminado y subido**: las cuatro etapas, 1624 tests del front y
-148 del back, lint, tipos y build en verde. Documentado en `docs/SECRETOS.md`
-§26 y en los planes `docs/plans/2026-09-0{3,4}-ente-etapa-{1,2,3,4}.md`.
+**El ente está terminado**: las cuatro etapas, 1624 tests del front y 148 del
+back, lint, tipos y build en verde. Documentado en `docs/SECRETOS.md` §26 y en
+los planes `docs/plans/2026-09-0{3,4}-ente-etapa-{1,2,3,4}.md`.
 
-**Sin commitear** quedan cuatro ficheros, todos de la escena final:
+La escena final vive en cuatro ficheros:
 
 ```
-src/components/effects/LooseWall.tsx
-src/lib/system/eyeStatic.ts
-src/styles/glitch.css
-tests/lib/system/eyeStatic.test.ts
+src/components/effects/LooseWall.tsx    el trozo, la caída, la cicatriz
+src/lib/system/eyeStatic.ts             el campo de dígitos y la forma del ojo
+src/styles/glitch.css                   la zona, el hueco, el golpe
+tests/lib/system/eyeStatic.test.ts      la forma, probada sin medidas a mano
 ```
 
-Pasan `npm run check` entero. No están commiteados sólo porque no llegué a
-verlos funcionando en pantalla.
+⚠ **Pasan todos los tests, pero NO se llegaron a ver en pantalla.** Eso es
+exactamente lo que falta, y por eso el commit lo dice en su primera línea: la
+lógica está probada, lo visual no está confirmado.
 
 ## Lo que falta, que es una sola cosa
 
