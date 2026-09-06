@@ -4,6 +4,90 @@
 > documento no es lo que falta —es poco— sino **los errores que ya se
 > cometieron**, para no repetirlos.
 
+## ⚠ El contrato de diseño
+
+**Esto es EL FINAL de todo el juego.** Es lo último que ve quien recorrió el
+sistema entero, y lo único que va a recordar de haberlo hecho. No puede quedar
+correcto: tiene que quedar **memorable**. Si sale «bien», salió mal.
+
+Antes de escribir una línea, cargar la skill `frontend-design` y trabajar con su
+método: plan de diseño primero —color, tipo, disposición, principios— revisarlo
+contra este contrato, y sólo entonces construir. Y criticarse mirando capturas,
+que para eso están.
+
+Los seis principios, en orden de importancia:
+
+### 1 · Nada nuevo. Todo sale de lo que ya existe
+
+Los colores, las texturas, los filtros y las animaciones **ya están construidos**
+en esta app: el fallo cromático y sus `<defs>` SVG, el barrido, el grano, los
+tirones, las bandas, el vídeo inverso, los `--color-*`. La escena se arma con
+ESO.
+
+Inventar un efecto propio para el final diría que es otra clase de avería, y es
+la misma: **el sitio se rompe de una sola manera**. Cada vez que haga falta algo,
+la primera pregunta es cuál de las averías que ya existen sirve — no cómo se
+haría una nueva. Ya se falló en esto una vez, con un `backdrop-filter` inventado
+en lugar del cromo de verdad.
+
+### 2 · ⚠ EL CUADRO ES LA PANTALLA. SIEMPRE, Y TAMBIÉN MIENTRAS CAE
+
+Éste es el principio que lo sostiene todo, y el que más veces se rompió.
+
+No es un rectángulo del color del fondo: **es un trozo de la pantalla**, y tiene
+que verse como tal en los tres momentos —quieto, aflojándose y cayendo—. Eso
+significa que **se lleva puesto lo que la pantalla estaba haciendo**: el barrido,
+el grano, la textura del tubo, los tirones. Si mientras cae la pantalla glitchea,
+el trozo glitchea con ella; si tiene línea de barrido, la lleva encima girando.
+
+Un rectángulo plano cayendo es una ficha. Un trozo con el barrido corriéndole por
+dentro mientras da vueltas es **la pantalla partiéndose**, que es lo que pasa.
+
+Quieto tiene que ser invisible: mismo color medido del fondo —`rgb(18,17,16)`,
+que es `var(--color-primary)`— y las mismas capas encima que el resto. Lo único
+que lo delata es que esa zona glitchea de vez en cuando.
+
+### 3 · El ojo: binario, estática e interferencia, las tres
+
+No es lluvia de dígitos a secas. Son **tres capas conviviendo**:
+
+- **Binario** — el campo de unos y ceros, y el ojo dibujado por AUSENCIA. La
+  forma no se pinta: se recorta. Ya está resuelto en `eyeStatic.ts`.
+- **Estática** — grano de verdad por encima, del que ya usa la app.
+- **Interferencia** — bandas que barren, saltos de sincronismo, el canal
+  partiéndose. Lo que hace una señal que no llega bien.
+
+Las tres a la vez son lo que convierte un dibujo en **algo que está transmitiendo
+desde el otro lado**. Con una sola es un gráfico bonito.
+
+El ojo mira, se queda, mira a otro lado, parpadea — y al final **te mira y se
+cierra**. Ese cierre es el remate, no un temporizador: el último gesto tiene que
+ser suyo.
+
+### 4 · Funciona en claro y en oscuro. Los dos, de verdad
+
+No «no se rompe» en uno de los dos: **se ve igual de bien en los dos**. El hueco
+es oscuro siempre, porque un agujero es oscuro y eso es físico. Todo lo que
+rodea al hueco —el trozo, los glitches, la cicatriz— sale de los tokens del
+tema, así que acompaña.
+
+Hay que **mirarlo en los dos** antes de darlo por hecho. Ya pasó una vez que en
+claro no se veía.
+
+### 5 · El color no se copia de la referencia
+
+La referencia del cliente viene en cian. De ella se toma **la forma**, no la
+paleta: esta app es monocroma estricta y un color suelto sería lo más ruidoso de
+todo el producto — y llamaría la atención justo sobre lo que tiene que
+encontrarse solo.
+
+### 6 · Gastar la audacia en un solo sitio
+
+Lo dice la skill y acá vale doble: que el momento memorable sea **el ojo mirando
+por el agujero**. Todo lo demás —el trozo, la caída, el reinicio— disciplinado y
+callado, al servicio de eso. Si tres cosas compiten por ser el remate, no hay
+remate.
+
 ## Dónde está todo
 
 Rama `feat/secretos-del-sistema`, al día con el remoto hasta `a0245a7`.
