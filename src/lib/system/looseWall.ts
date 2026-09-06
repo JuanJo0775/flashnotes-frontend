@@ -3,11 +3,16 @@
 /**
  * Lo que quedó flojo, y lo que pasa si le pegás.
  *
- * ⚠ LA PARTE SUELTA ES UNA VENTANA DE ERROR, y eso no es casualidad: todas las
- * ventanas fantasma llevan `pointer-events: none` desde que existen —son cuadros
- * pintados encima que no pueden atrapar nada— así que UNA QUE RESPONDE es, por
- * sí sola, lo que está mal. Él te dijo que había algo suelto y no dijo qué;
- * esto es lo que hay que notar.
+ * ⚠ LA PARTE SUELTA ES UN TROZO DE LA PANTALLA, no una ventana. Y la diferencia
+ * lo es todo: una ventana es algo que la app pone encima, así que romperla no
+ * dice nada del sitio donde estás. Un pedazo de la SUPERFICIE que se despega
+ * dice que el fondo era una superficie, que tenía un detrás, y que ese detrás
+ * llevaba ahí todo el tiempo.
+ *
+ * Por eso no pinta ningún color mientras está pegado —es la pantalla, en la
+ * vista que sea y en el tema que sea— y lo único que lo delata es que ESA ZONA
+ * GLITCHEA de vez en cuando. Él te dijo que había algo suelto y no dijo qué;
+ * eso es lo que hay que notar. Ver `LooseWall` y `glitch.css`.
  *
  * ⚠ Y NO SE TOCA HASTA QUE ÉL AFLOJA. Sin `//unbind` las ventanas siguen siendo
  * intocables, que es lo que han sido siempre. La grieta no estaba ahí antes: la

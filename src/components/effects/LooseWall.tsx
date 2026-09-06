@@ -5,14 +5,26 @@ import type { CSSProperties } from 'react';
 import {
     useCallback,
     useEffect,
+    useRef,
     useState,
     useSyncExternalStore,
 } from 'react';
 import { HITS_TO_FALL, hitWall, wallLean } from '@/lib/system/looseWall';
 import { hasScar, helpedHim, somethingLoose } from '@/lib/system/entityEnding';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { ChromaSplitFilters } from '@/components/effects/ChromaticFailure';
-import { eyeAt, FRAME_MS, rainFrame } from '@/lib/system/eyeStatic';
+import {
+    ChromaSplitFilters,
+    FLICKER_GAP_MS,
+    FLICKER_STEPS,
+} from '@/components/effects/ChromaticFailure';
+import { flipThemeVolatile } from '@/hooks/useTheme';
+import {
+    EYE_ARC_FRAMES,
+    EYE_STILL_FRAME,
+    FRAME_MS,
+    eyeAt,
+    rainFrame,
+} from '@/lib/system/eyeStatic';
 
 /**
  * El pedazo de pantalla que quedó flojo, y lo que hay detrás.
@@ -25,9 +37,9 @@ import { eyeAt, FRAME_MS, rainFrame } from '@/lib/system/eyeStatic';
  * fondo era una superficie, que tenía un detrás, y que ese detrás estaba ahí
  * todo el tiempo.
  *
- * Por eso el pedazo es un rectángulo opaco pintado del MISMO color que la
- * página. Mientras está en su sitio no se ve, porque es la pantalla. Sólo
- * cuando se mueve empieza a asomar lo que tapaba.
+ * Por eso el pedazo va pintado del MISMO color que la página y con el MISMO
+ * grano encima (ver `glitch.css`). Mientras está en su sitio no se ve, porque
+ * es la pantalla. Sólo cuando se mueve empieza a asomar lo que tapaba.
  *
  * ⚠ CLICS COMO GOLPES, NO COMO INTERFAZ. No hay botón, no hay foco, no hay
  * cursor de mano y no hay contador: cada golpe lo despega más y eso se ve, que
@@ -37,29 +49,132 @@ import { eyeAt, FRAME_MS, rainFrame } from '@/lib/system/eyeStatic';
  * Ver la nota de accesibilidad al final del fichero.
  */
 
+/**
+ * Cuánto dura un golpe.
+ *
+ * Lo que tarda en apagarse la sacudida, y por tanto lo que dura la clase en el
+ * `body` y la capa de franjas. Corto: un golpe es un instante, no un estado.
+ */
+const GOLPE_MS = 240;
+
 /** Cuánto tarda el pedazo en desprenderse del todo, en milisegundos. */
 const CAIDA_MS = 1600;
 
 /**
- * Cuánto te mira antes de cerrarse.
+ * Cuánto dura lo que hay detrás.
  *
- * Tiene que dar tiempo a que lo veas moverse: si se cerrara enseguida sería un
- * parpadeo, y lo que hay que entender es que estuvo mirándote un rato.
+ * ⚠ NO ES UN NÚMERO ELEGIDO: ES LA DURACIÓN DEL ARCO DEL OJO. Antes había dos
+ * temporizadores acá —uno para abrirlo y otro para cerrarlo— y entonces el ojo
+ * no se cerraba porque quisiera sino porque se acababa el tiempo. Ahora el arco
+ * entero (llegar, resolverse, abrirse, mirar, parpadear, cerrarse, irse) lo
+ * decide `eyeAt()`, y esto sólo lo espera.
  */
-const MIRA_MS = 4200;
+const OJO_MS = EYE_ARC_FRAMES * FRAME_MS;
 
-/** Y lo que tarda en cerrarse del todo, antes de que falle el sistema. */
-const CIERRE_MS = 1100;
+/**
+ * Y cuánto dura el fallo del sistema antes de reiniciar.
+ *
+ * ⚠ TIENE QUE CABER LA SACUDIDA DE TEMA ENTERA, con un respiro después: si la
+ * recarga llegara a mitad de la ráfaga, el final sería un corte en vez de un
+ * derrumbe.
+ */
+const FALLO_MS = FLICKER_STEPS * FLICKER_GAP_MS + 420;
 
-type Fase = 'entera' | 'cayendo' | 'abierto' | 'cerrando' | 'nada';
+/**
+ * Cuánto se queda el ojo quieto con `prefers-reduced-motion`.
+ *
+ * No corre el arco —la lluvia no hierve— así que se muestra el fotograma en que
+ * te mira y se aguanta ahí. El final se ve; lo que no hay es movimiento.
+ */
+const QUIETO_MS = 3400;
+
+type Fase = 'entera' | 'cayendo' | 'abierto' | 'fallando' | 'nada';
+
+/**
+ * Los sitios donde el clic es de la app y no de la pared.
+ *
+ * ⚠ EL PEDAZO ES EL CRISTAL, así que está por delante de todo — y por eso no
+ * puede quedarse los clics de nadie. Se escucha en captura, y si el golpe cae
+ * sobre algo con lo que se puede interactuar, es de la app y sigue su camino.
+ * Sin esto, un rectángulo invisible de 340×224 por delante del editor se
+ * comería las pulsaciones en mitad del texto.
+ *
+ * La lista es de HTML, no de esta app: son los elementos con los que se
+ * interactúa en cualquier página. Una lista de clases del proyecto habría que
+ * ir manteniéndola, y se rompería en silencio el día que alguien renombrara
+ * una.
+ */
+const CONTROLES =
+    'a, button, input, textarea, select, summary, [role="button"], [contenteditable], [tabindex]:not([tabindex="-1"])';
+
+/**
+ * De qué color está pintada la pantalla justo en este punto.
+ *
+ * ⚠ SE MIDE, NO SE SUPONE. El pedazo no pinta nada mientras está pegado —por
+ * eso es de verdad un trozo de pantalla— pero en cuanto se despega tiene que
+ * verse caer, y entonces sí necesita un color. Uno fijo sólo acierta en una
+ * vista y en un tema: sobre el papel del editor, el mismo trozo que era
+ * invisible se volvía un parche. Así que en el instante en que se suelta se
+ * mira qué hay pintado ahí de verdad y se lo lleva puesto.
+ *
+ * Se sube desde lo que hay bajo el punto hasta la raíz y se devuelve el primer
+ * fondo que pinte algo; los transparentes no cuentan, que es justo lo que
+ * significa ser transparente.
+ */
+function colorDeLaPantalla(x: number, y: number): string | null {
+    for (
+        let el = document.elementFromPoint(x, y);
+        el !== null && el !== document.documentElement;
+        el = el.parentElement
+    ) {
+        const fondo = getComputedStyle(el).backgroundColor;
+
+        if (fondo !== 'transparent' && !/,\s*0\)$/.test(fondo)) return fondo;
+    }
+
+    return null;
+}
 
 /** Esto no cambia solo: se mira una vez al montar y ya. */
 const SIN_CAMBIOS = () => () => {};
 
 export function LooseWall() {
     const [golpes, setGolpes] = useState(0);
+    const [golpeando, setGolpeando] = useState(false);
     const [fase, setFase] = useState<Fase>('entera');
     const quieto = usePrefersReducedMotion();
+
+    /*
+     * Los temporizadores de la escena, para poder cancelarlos.
+     *
+     * Sin esto, salir de la página a mitad del final dejaba corriendo una
+     * recarga y una llamada a `helpedHim()` sobre un componente que ya no
+     * existe. El premio se daba igual, pero en el momento equivocado.
+     */
+    const relojes = useRef(new Set<number>());
+
+    /** El pedazo, para saber dónde cae cada golpe. */
+    const trozo = useRef<HTMLDivElement | null>(null);
+
+    const luegoDe = useCallback((ms: number, fn: () => void) => {
+        const id = window.setTimeout(() => {
+            relojes.current.delete(id);
+            fn();
+        }, ms);
+        relojes.current.add(id);
+    }, []);
+
+    useEffect(() => {
+        const abiertos = relojes.current;
+
+        return () => {
+            abiertos.forEach((id) => window.clearTimeout(id));
+            abiertos.clear();
+            document.body.classList.remove('is-blow', 'is-failing');
+            document.body.style.removeProperty('--blow-amp');
+            document.body.style.removeProperty('--slab-bg');
+        };
+    }, []);
 
     /*
      * ⚠ NO SE LEE EL ALMACENAMIENTO AL PINTAR (REGLAS · C1/C2).
@@ -78,12 +193,58 @@ export function LooseWall() {
 
     const suelto = montado && somethingLoose();
 
+    /**
+     * ⚠ TODO FALLA, Y ENTONCES REINICIA.
+     *
+     * El ojo se fue y lo que queda es una pantalla con un agujero. Acá se cae:
+     * la separación de canales, el tirón y las franjas los pone `glitch.css`
+     * con la clase; el TEMA se cae desde acá, con la misma sacudida de la
+     * avería de señal — claro, oscuro, claro, oscuro. Es lo que convierte el
+     * reinicio en un derrumbe en vez de en una recarga.
+     */
+    const derrumbe = useCallback(() => {
+        setFase('fallando');
+        document.body.classList.add('is-failing');
+
+        /*
+         * ⚠ LA SACUDIDA DE TEMA NO CORRE CON MOVIMIENTO REDUCIDO. Un parpadeo
+         * de pantalla completa a 120 ms es exactamente lo que quien pide menos
+         * movimiento está pidiendo no tener, y acá no hay excusa que valga: es
+         * la única parte de todo esto que puede hacer daño de verdad.
+         *
+         * Los pasos son PARES, como en la avería: impares dejarían el tema
+         * cambiado al terminar, y lo que ve el ente no puede cambiarte una
+         * preferencia tuya.
+         */
+        if (!quieto) {
+            for (let i = 0; i < FLICKER_STEPS; i += 1) {
+                luegoDe(i * FLICKER_GAP_MS, flipThemeVolatile);
+            }
+        }
+
+        luegoDe(quieto ? 0 : FALLO_MS, () => {
+            /*
+             * ⚠ LA PIEZA SE DA ACÁ, con el sistema ya cayéndose.
+             *
+             * `helpedHim()` lo pone en `ido`, da el ojo y deja la pantalla como
+             * estaba. Lo que queda después es la cicatriz: esa zona temblando
+             * de vez en cuando, sin que nadie te lo cuente.
+             */
+            helpedHim();
+            setFase('nada');
+
+            // Y reinicia, con el arranque de siempre: apagón, barras, rótulo,
+            // carga, inicio. Eso es «vuelve la normalidad».
+            window.location.reload();
+        });
+    }, [luegoDe, quieto]);
+
     /*
      * ⚠ CADA GOLPE SACUDE LA PANTALLA CON EL FALLO CROMÁTICO. EL DE VERDAD.
      *
      * No un efecto parecido: los mismos `@keyframes` que la avería de la señal
-     * (§14), sobre el `body`. Inventar uno propio para esto diría que es otra
-     * clase de avería, y es la misma — el sitio se rompe de una sola manera.
+     * (§14). Inventar uno propio para esto diría que es otra clase de avería, y
+     * es la misma — el sitio se rompe de una sola manera.
      *
      * Y si sólo se moviera el pedazo, se leería como arrastrar una ficha. Que
      * se resienta todo lo demás es lo que lo convierte en pegarle a la
@@ -93,8 +254,48 @@ export function LooseWall() {
         const van = hitWall();
         setGolpes(van);
 
+        /*
+         * ⚠ EL PRIMER GOLPE ES CUANDO EL PEDAZO SE LLEVA PUESTO SU COLOR.
+         *
+         * Hasta ahora no pintaba nada, que es la única forma de ser de verdad
+         * un trozo de pantalla en cualquier vista y en los dos temas. Pero a
+         * partir de este golpe se despega, y algo que se despega tiene que
+         * tener superficie o ladearse no significa nada.
+         *
+         * Así que se mide AHORA, en el último instante en que sigue pegado y
+         * «lo que hay debajo» quiere decir algo: el lienzo si estás en la
+         * lista, el papel si estás en una nota, el tono que toque en claro o en
+         * oscuro. El fotograma siguiente es idéntico al anterior.
+         */
+        if (van === 1) {
+            const caja = trozo.current?.getBoundingClientRect();
+
+            if (caja !== undefined) {
+                const fondo = colorDeLaPantalla(
+                    caja.left + caja.width / 2,
+                    caja.top + caja.height / 2
+                );
+
+                if (fondo !== null) {
+                    document.body.style.setProperty('--slab-bg', fondo);
+                }
+            }
+        }
+
+        /*
+         * ⚠ Y PEGA MÁS FUERTE CADA VEZ. La amplitud llega por variable, igual
+         * que el temblor de fondo de la casa: es la misma señal contada más
+         * alto, no otra señal. Nadie te dice cuántos golpes faltan, así que lo
+         * único que puede decírtelo es que cada uno duela más.
+         */
+        document.body.style.setProperty('--blow-amp', `${2 + van * 1.2}px`);
         document.body.classList.add('is-blow');
-        window.setTimeout(() => document.body.classList.remove('is-blow'), 240);
+        setGolpeando(true);
+
+        luegoDe(GOLPE_MS, () => {
+            document.body.classList.remove('is-blow');
+            setGolpeando(false);
+        });
 
         if (van < HITS_TO_FALL) return;
 
@@ -107,44 +308,91 @@ export function LooseWall() {
          * derrumbe en una animación de recompensa, que es lo contrario de lo
          * que es: acabás de romper algo.
          */
-        setFase('cayendo');
+        if (quieto) {
+            // Sin movimiento no hay caída que ver: el hueco queda abierto y el
+            // ojo se enseña quieto.
+            setFase('abierto');
+            luegoDe(QUIETO_MS, derrumbe);
+            return;
+        }
 
-        // Cae el pedazo, y por el hueco aparece lo que había detrás.
-        window.setTimeout(() => setFase('abierto'), quieto ? 0 : CAIDA_MS);
+        setFase('cayendo');
+        luegoDe(CAIDA_MS, () => {
+            setFase('abierto');
+            luegoDe(OJO_MS, derrumbe);
+        });
+    }, [derrumbe, luegoDe, quieto]);
+
+    /*
+     * ⚠ LOS GOLPES SE RECOGEN DEL DOCUMENTO, no del propio pedazo.
+     *
+     * El trozo vive DETRÁS de la app —para caer por detrás de la barra de abajo
+     * y para que el editor lo tape— así que el área vacía del contenedor se
+     * queda el clic antes de que llegue, aunque sea transparente. Se escucha
+     * arriba, se mira si el golpe cae dentro del pedazo, y se comprueba que la
+     * pared esté a la vista ahí: si hay algo pintado en medio, es que el trozo
+     * está tapado y no se le puede pegar. Lo que tapa, tapa.
+     *
+     * Se escucha SÓLO mientras la pared está entera. Después no hay nada que
+     * golpear, y un oyente global vivo de más es un clic robado esperando.
+     */
+    useEffect(() => {
+        if (!suelto || fase !== 'entera') return;
+
+        const enElTrozo = (e: MouseEvent) => {
+            const caja = trozo.current?.getBoundingClientRect();
+            if (caja === undefined) return false;
+
+            const dentro =
+                e.clientX >= caja.left &&
+                e.clientX <= caja.right &&
+                e.clientY >= caja.top &&
+                e.clientY <= caja.bottom;
+
+            if (!dentro) return false;
+
+            // Si el golpe cae sobre un control, el clic es de la app.
+            const destino = e.target;
+
+            return !(
+                destino instanceof Element &&
+                destino.closest(CONTROLES) !== null
+            );
+        };
+
+        const golpe = (e: MouseEvent) => {
+            if (!enElTrozo(e)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            pegar();
+        };
 
         /*
-         * ⚠ Y AL FINAL SE CIERRA. Eso es el remate, no un temporizador.
-         *
-         * Te mira un rato —el iris se mueve, se queda, mira a otro lado— y
-         * después cierra el ojo. Que el último gesto sea suyo y no del reloj es
-         * lo que convierte el momento en una despedida en vez de en una escena
-         * que se acaba porque sí.
+         * ⚠ Y EL GOLPE SE LO TRAGA. Antes el pedazo era una capa por delante
+         * con `pointer-events`, así que el clic moría ahí solo. Ahora llega
+         * primero acá y seguiría su camino hasta la app: pegarle a la pared
+         * pasaría a hacer también lo que hubiera debajo. Se corta en captura,
+         * antes que nadie, y se cortan los tres eventos del ratón — parar el
+         * `mousedown` no impide el `click` ni el `dblclick`, que viajan solos.
          */
-        window.setTimeout(
-            () => setFase('cerrando'),
-            quieto ? 0 : CAIDA_MS + MIRA_MS
-        );
+        const tragar = (e: MouseEvent) => {
+            if (!enElTrozo(e)) return;
 
-        window.setTimeout(
-            () => {
-                /*
-                 * ⚠ LA PIEZA SE DA ACÁ, con el hueco todavía abierto.
-                 *
-                 * `helpedHim()` lo pone en `ido`, da el ojo y deja la pantalla
-                 * como estaba. Lo que queda después es la cicatriz: esa zona
-                 * temblando de vez en cuando, sin que nadie te lo cuente.
-                 */
-                helpedHim();
-                setFase('nada');
+            e.preventDefault();
+            e.stopPropagation();
+        };
 
-                // Y todo falla. Se recarga entero, que es el «reinicia y vuelve
-                // la normalidad» — con el arranque de siempre: apagón, barras,
-                // rótulo, carga, inicio.
-                window.location.reload();
-            },
-            quieto ? 0 : CAIDA_MS + MIRA_MS + CIERRE_MS
-        );
-    }, [quieto]);
+        document.addEventListener('mousedown', golpe, true);
+        document.addEventListener('click', tragar, true);
+        document.addEventListener('dblclick', tragar, true);
+
+        return () => {
+            document.removeEventListener('mousedown', golpe, true);
+            document.removeEventListener('click', tragar, true);
+            document.removeEventListener('dblclick', tragar, true);
+        };
+    }, [fase, pegar, suelto]);
 
     if (fase === 'nada') return null;
 
@@ -166,50 +414,105 @@ export function LooseWall() {
             */}
             <ChromaSplitFilters />
 
-            <div aria-hidden="true" className="loose-zone">
+            {/*
+                ⚠ LAS FRANJAS DEL GOLPE, Y LAS DEL DERRUMBE, SON LA MISMA CAPA
+                QUE LAS DEL GLITCH AMBIENTAL. La clase es la de la casa, sin una
+                regla nueva: el sitio se rompe de una sola manera.
+
+                Y va acá arriba, hermana de la zona, porque desde dentro del
+                contenedor no podía taparla: el contenedor abre contexto de
+                apilamiento, así que la pantalla salía rayada y el pedazo
+                limpio. Un golpe que respeta justo el trozo que estás golpeando
+                no es un golpe.
+            */}
+            {(golpeando || fase === 'fallando') && (
+                <div aria-hidden="true" className="glitch-bands" />
+            )}
+
+            <div
+                aria-hidden="true"
+                className={[
+                    'loose-zone',
+                    golpes > 0 ? 'loose-zone--suelta' : '',
+                    fase === 'entera' ? '' : 'loose-zone--cae',
+                ]
+                    .filter(Boolean)
+                    .join(' ')}
+            >
                 {/*
                     El hueco: lo que hay detrás de la pantalla, esperando.
 
-                    ⚠ SE ABRE CON LOS GOLPES. `--peel` va de 0 a 1 y el recorte
-                    lo convierte en una franja que crece desde arriba, como una
-                    lámina que se levanta por el canto. Antes el hueco estaba
-                    entero desde el principio y lo tapaba un rectángulo pintado
-                    — y por bien que se eligiera ese color, se notaba.
+                    ⚠ TRES CAPAS, NO UNA. Binario, estática e interferencia. Con
+                    la lluvia sola es un gráfico bonito; las tres conviviendo
+                    son lo que convierte un dibujo en algo que está
+                    TRANSMITIENDO desde el otro lado.
+
+                    Y en ese orden: primero lo que se transmite, y encima lo que
+                    lo estropea.
                 */}
                 <div className="loose-hole">
-                    <Estatica cerrando={fase === 'cerrando'} />
+                    {/*
+                        ⚠ LA ESTÁTICA VA DETRÁS DEL BINARIO, no sólo encima. Los
+                        dígitos son el velo; el ojo es donde el velo no está. Si
+                        detrás no hubiera nada, mirar por el ojo sería mirar un
+                        agujero negro — y lo que tiene que haber al otro lado es
+                        una señal.
+                    */}
+                    <div className="wall-noise" />
+
+                    {/*
+                        ⚠ LA `key` NO ES UN ADORNO: ES EL RELOJ DEL OJO.
+
+                        El arco tiene que empezar en cero cuando el hueco queda
+                        a la vista, y la lluvia lleva corriendo desde mucho
+                        antes. Poner el contador a cero desde un efecto es
+                        justo lo que prohíbe la regla de los renders en
+                        cascada; cambiar la `key` lo monta de nuevo, que es la
+                        forma de la casa de decir «esto vuelve a empezar».
+                    */}
+                    <Estatica
+                        key={fase === 'entera' || fase === 'cayendo' ? 'ruido' : 'ojo'}
+                        arco={fase === 'abierto' || fase === 'fallando'}
+                    />
+                    <div className="wall-grain" />
+                    <div className="wall-bands" />
                 </div>
 
                 {/*
-                    Y el pedazo. ⚠ NO PINTA NADA: es transparente y sólo recibe
-                    los golpes. Lo que se ve es el hueco abriéndose detrás, no
-                    una lámina moviéndose encima.
+                    Y el pedazo. Mientras esté puesto ES la pantalla; lo único
+                    que lo delata es que esa zona glitchea de vez en cuando.
                 */}
                 {(fase === 'entera' || fase === 'cayendo') && (
                     <div
-                        className={`loose-slab${
-                            fase === 'cayendo' ? ' loose-slab--cae' : ''
-                        }`}
-                        onMouseDown={fase === 'entera' ? pegar : undefined}
+                        ref={trozo}
+                        className={[
+                            'loose-slab',
+                            golpes > 0 ? 'loose-slab--suelto' : '',
+                            fase === 'cayendo' ? 'loose-slab--cae' : '',
+                        ]
+                            .filter(Boolean)
+                            .join(' ')}
                         style={
-                            fase === 'cayendo'
+                            fase === 'cayendo' || golpes === 0
                                 ? undefined
                                 : ({
                                       /*
-                                       * Cada golpe lo despega un poco más, y
+                                       * ⚠ CADA GOLPE LO DESPEGA UN POCO MÁS, y
                                        * por la rendija que deja empieza a
                                        * asomar lo de detrás. Es continuo a
                                        * propósito: con tres estados fijos, los
                                        * golpes de en medio no harían nada
                                        * visible y se dejaría de pegar.
+                                       *
+                                       * Gira sobre el canto de arriba, así que
+                                       * lo que se abre es una CUÑA — que es
+                                       * como se abre algo mal pegado, y no
+                                       * como se abre una persiana.
                                        */
-                                      transform: `rotate(${inclinacion * 6}deg) translate(${
-                                          inclinacion * 8
-                                      }px, ${inclinacion * 14}px)`,
-                                      transition: quieto
-                                          ? 'none'
-                                          : 'transform 150ms ease-out',
-                                      animation: golpes > 0 ? 'none' : undefined,
+                                      transform: `rotate(${inclinacion * 9}deg) translate(${
+                                          inclinacion * 10
+                                      }px, ${inclinacion * 26}px)`,
+                                      transition: 'transform 150ms ease-out',
                                   } as CSSProperties)
                         }
                     />
@@ -230,13 +533,26 @@ export function LooseWall() {
  * tiene que moverse. Un dibujo de texto ahí se leería como una ilustración de lo
  * que pasó en vez de ser lo que está pasando.
  *
- * Todo es SVG y CSS: el grano sale de `feTurbulence` con la semilla animada, no
- * de una imagen. Nada que descargar y nada que se vea borroso al ampliar.
+ * ⚠ Y PRIMERO NO HAY OJO. Mientras el pedazo sigue puesto, por la rendija que
+ * dejan los golpes se ve lluvia y nada más. El ojo empieza a contar cuando el
+ * hueco queda a la vista, y entonces SE RESUELVE del ruido — no aparece. Que lo
+ * primero que se vea sea ruido vacío es lo que hace que llegar a algo tenga
+ * peso.
  */
-function Estatica({ cerrando }: { cerrando: boolean }) {
+function Estatica({ arco }: { arco: boolean }) {
     const [frame, setFrame] = useState(0);
     const quieto = usePrefersReducedMotion();
 
+    /*
+     * ⚠ EL CONTADOR ARRANCA CUANDO SE VE EL HUECO, no cuando se monta la
+     * escena.
+     *
+     * La lluvia lleva corriendo desde que hay algo suelto —se la ve por la
+     * rendija de cada golpe— así que para cuando el pedazo caía el contador ya
+     * iba por donde fuera y el ojo se encontraba a media mirada. Lo que pasa
+     * antes de que se vea no le pasó a nadie: el arco empieza en cero, y quien
+     * se encarga de eso es la `key` de arriba, que vuelve a montar esto.
+     */
     useEffect(() => {
         if (quieto) return;
 
@@ -245,21 +561,13 @@ function Estatica({ cerrando }: { cerrando: boolean }) {
     }, [quieto]);
 
     /*
-     * ⚠ EL CIERRE CUENTA SUS PROPIOS FOTOGRAMAS.
-     *
-     * Si usara el contador general, el ojo se cerraría desde donde estuviera el
-     * ciclo en ese momento — a veces de golpe, a veces a medias. El final tiene
-     * que ser siempre el mismo: baja, y se queda abajo.
+     * Sin el arco en marcha no hay ojo: sólo el campo hirviendo. Y con
+     * movimiento reducido no hierve nada, así que se enseña el fotograma en que
+     * te mira y se queda ahí.
      */
-    const [desde, setDesde] = useState(0);
-    useEffect(() => {
-        if (cerrando) setDesde(frame);
-        // La dependencia es sólo `cerrando`: se marca el instante en que
-        // empieza, no cada fotograma.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [cerrando]);
-
-    const forma = eyeAt(cerrando ? frame - desde : frame, cerrando);
+    const forma = arco
+        ? eyeAt(quieto ? EYE_STILL_FRAME : frame)
+        : { look: 0, lid: 1, presence: 0 };
 
     return (
         <pre className="wall-rain" aria-hidden="true">
@@ -296,4 +604,9 @@ function Cicatriz() {
  * sentido entero es que NO es un botón le arruina el hallazgo a todo el mundo, y
  * encima mentiría sobre lo que hay. El resto de la colección, incluidos los dos
  * finales, sigue siendo alcanzable: `//report` es un comando y se teclea.
+ *
+ * Y con `prefers-reduced-motion` el final SE VE: no hay caída, ni lluvia
+ * hirviendo, ni sacudida de tema — pero el ojo se enseña, te mira, y el sistema
+ * se cae igual. Quien pide menos movimiento pide no marearse, no perderse el
+ * remate.
  */

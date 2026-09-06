@@ -3753,17 +3753,28 @@ taparla.
 
 ### Qué quedó suelto
 
-Una **ventana de error**. Y ahí está todo: las fantasmas llevan
-`pointer-events: none` desde que existen —cuadros pintados encima que no pueden
-atrapar nada— así que **una que responde al clic es, por sí sola, lo que está
-mal**.
+**Un trozo de la propia pantalla**, y ahí está todo. No es una ventana —una
+ventana es algo que la app pone encima, y romperla no diría nada del sitio donde
+estás—: es un pedazo de la superficie, así que tener un detrás significa que el
+fondo lo tenía desde el principio.
+
+⚠ **Mientras está pegado no pinta ningún color.** Ninguno. Por eso es de verdad
+la pantalla: se ve igual en la lista, en el editor y en los dos temas, sin que
+haya nada que acertar. Lo único que lo delata es que **esa zona glitchea de vez
+en cuando** — y el tic invierte el trozo de imagen que haya ahí, sea el que sea.
 
 Se le pega. **Clic tras clic, como golpes, no como clics de interfaz**: sin
-botón, sin foco, sin cursor de mano y **sin contador**. Cada golpe la deja peor
+botón, sin foco, sin cursor de mano y **sin contador**. Cada golpe lo despega más
 y eso se ve — es la única forma de que alguien siga pegando sin que nadie se lo
-pida. A los siete **cae como una pared**. Detrás hay **estática**, y en la
-estática **un ojo**: la misma pieza que después te llevás, no un dibujo aparte.
-Luego todo falla, reinicia, y vuelve la «normalidad» con el arranque de siempre.
+pida. Del primer golpe en adelante sí se pinta, con el color que se midió debajo
+en ese instante: es lo que separa «es la pantalla» de «es un objeto que se está
+soltando».
+
+A los siete **cae como una pared**, por detrás de la barra de abajo, perdiendo la
+luz. Detrás hay **estática**, y en la estática **un ojo**: la misma pieza que
+después te llevás, no un dibujo aparte. Luego todo falla —incluido el tema, que
+se cae de claro a oscuro y vuelve—, reinicia, y vuelve la «normalidad» con el
+arranque de siempre.
 
 ### Los dos caminos
 
