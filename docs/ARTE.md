@@ -270,19 +270,53 @@ Son **16**, todas de **40 caracteres** de ancho.
 **Se gana:** `entity` · **id:** `eye`
 
 ```
-1011101110100001001101001110100110111101
-1100111111111              0011011000010
-000101100                      000011001
-1110000           1000           1010011
-00001          1000100000          01000
-010           0001    0111           101
-0            0000      1011            0
-101           1111    0000           011
-01000          1000101110          11001
-1010111           1001           1000111
-010010110                      011011100
-1011100010100              1010111110100
-1000111100000000001101100011000101010101
+1110000011101101000010001100010011001010
+10011101010001              111011110010
+010110100                       00100011
+000001                             01100
+1111            01000                011
+00           01111000101              00
+0           0001 00  1010              1
+0          0011       1000             0
+11          1101     1100             01
+00011        10110010111           11100
+000110110       11001          010110011
+10110000101000             0000000110111
+0111101001011001110000000000010011100101
+1011011111110101111110010110000100001001
+```
+
+### Y su versión tapada
+
+⚠ **No es otra pieza: es la misma, con un tachón.** La catorce es UNA, y cuál te
+toca depende de lo que elegiste al final — ayudarlo te deja el ojo, reportarlo te
+deja el ojo VEDADO. Si fueran dos, la colección pasaría a diecisiete y nunca se
+podría completar.
+
+⚠ **Y el campo es el mismo dígito por dígito.** Va acá pegada a la otra por eso:
+quien retoque una tiene que retocar la otra, o dejarán de leerse como el mismo
+dibujo. Vive en `EYE_BARRED`, dentro de `asciiArt.ts`, y no lleva `id:` propio
+justamente porque no es una pieza aparte.
+
+El tachón cubre el iris y nada más: la almendra asoma arriba y abajo, y los dos
+arcos del anillo se salvan. Se ve que había un ojo, se ve dónde estaba, y se ve
+que alguien lo tapó. Tapado no es borrado.
+
+```
+1110000011101101000010001100010011001010
+10011101010001              111011110010
+010110100                       00100011
+000001                             01100
+1111            01000                011
+00       #####################        00
+0        #####################         1
+0        #####################         0
+11       #####################        01
+00011    #####################     11100
+000110110       11001          010110011
+10110000101000             0000000110111
+0111101001011001110000000000010011100101
+1011011111110101111110010110000100001001
 ```
 
 ## 15/16 · BIBLIOTECA · TODO LO QUE USTED VOLVIÓ A ESCRIBIR

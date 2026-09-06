@@ -981,24 +981,38 @@ export const ART: readonly ArtPiece[] = [
          * vez. Ese segundo cambio de lleno a vacío es lo que hace que mire: sin
          * él sólo hay una rendija.
          *
+         * ⚠ Y DENTRO DE LA PUPILA HAY UN BRILLO. Es lo más pequeño del dibujo y
+         * lo que más trabaja: un anillo con nada dentro se lee como un símbolo
+         * —una diana, una lente— y en cuanto tiene una chispa arriba a la
+         * izquierda se lee como algo húmedo que te está mirando. No es adorno:
+         * es lo que dice que está vivo. Va separado del anillo por una columna a
+         * cada lado; pegado se funde con él y lo único que parece es que el
+         * anillo engordó de un costado.
+         *
+         * ⚠ Y EL PÁRPADO NO ES SIMÉTRICO. La almendra se abre en cinco filas y
+         * se cierra en tres: el de arriba arquea y el de abajo es más plano, que
+         * es como son los de verdad. Con las dos mitades iguales el dibujo se
+         * lee como una LENTE —un óvalo partido por el medio— y no como un ojo.
+         *
          * El patrón sale de una semilla fija, no de `Math.random`: una pieza de
          * la colección tiene que ser SIEMPRE la misma. Si cambiara en cada
          * dibujado no habría nada que coleccionar.
          */
         art: [
-            '1011101110100001001101001110100110111101',
-            '1100111111111              0011011000010',
-            '000101100                      000011001',
-            '1110000           1000           1010011',
-            '00001          1000100000          01000',
-            '010           0001    0111           101',
-            '0            0000      1011            0',
-            '101           1111    0000           011',
-            '01000          1000101110          11001',
-            '1010111           1001           1000111',
-            '010010110                      011011100',
-            '1011100010100              1010111110100',
-            '1000111100000000001101100011000101010101',
+            '1110000011101101000010001100010011001010',
+            '10011101010001              111011110010',
+            '010110100                       00100011',
+            '000001                             01100',
+            '1111            01000                011',
+            '00           01111000101              00',
+            '0           0001 00  1010              1',
+            '0          0011       1000             0',
+            '11          1101     1100             01',
+            '00011        10110010111           11100',
+            '000110110       11001          010110011',
+            '10110000101000             0000000110111',
+            '0111101001011001110000000000010011100101',
+            '1011011111110101111110010110000100001001',
         ].join('\n'),
     },
     {
@@ -1378,26 +1392,32 @@ export function artOf(piece: ArtPiece): string {
  * Con un hueco, los dos finales completan la colección — y queda marcada para
  * siempre por la decisión: dos personas que la tienen entera la tienen distinta.
  *
- * El dibujo es el mismo campo de dígitos, con la forma del ojo todavía visible
- * arriba y abajo y el centro TACHADO. Se ve que había algo y se ve que alguien
- * lo tapó, que es exactamente lo que pasó.
+ * ⚠ ES EL MISMO CAMPO, DÍGITO POR DÍGITO. No es otro dibujo parecido: son las
+ * mismas cuarenta columnas con un tachón encima. Si el campo cambiara, las dos
+ * versiones se leerían como dos piezas distintas — y son una.
+ *
+ * El tachón cubre el IRIS y nada más. La almendra sigue asomando arriba y
+ * abajo, y los dos arcos del anillo —el de encima de la barra y el de debajo—
+ * se salvan: se ve que había un ojo, se ve dónde estaba, y se ve que alguien lo
+ * tapó. Tapado no es borrado, y ésa es la diferencia entre este final y el otro.
  */
 const EYE_ID = 'eye';
 
 const EYE_BARRED = [
-    '1011101110100001001101001110100110111101',
-    '1100111111111              0011011000010',
-    '000101100                      000011001',
-    '1110000           1000           1010011',
-    '00001          1000100000          01000',
-    '010     ########################     101',
-    '0       ########################       0',
-    '101     ########################     011',
-    '01000          1000101110          11001',
-    '1010111           1001           1000111',
-    '010010110                      011011100',
-    '1011100010100              1010111110100',
-    '1000111100000000001101100011000101010101',
+    '1110000011101101000010001100010011001010',
+    '10011101010001              111011110010',
+    '010110100                       00100011',
+    '000001                             01100',
+    '1111            01000                011',
+    '00       #####################        00',
+    '0        #####################         1',
+    '0        #####################         0',
+    '11       #####################        01',
+    '00011    #####################     11100',
+    '000110110       11001          010110011',
+    '10110000101000             0000000110111',
+    '0111101001011001110000000000010011100101',
+    '1011011111110101111110010110000100001001',
 ].join('\n');
 
 /**
