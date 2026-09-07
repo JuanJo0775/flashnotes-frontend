@@ -1,29 +1,15 @@
 // src/app/sonido/page.tsx
 
-import { notFound } from 'next/navigation';
-import SoundLab from '@/components/system/SoundLab';
+import { redirect } from 'next/navigation';
 
 /**
- * EL BANCO DE PRUEBAS DEL SONIDO. No existe en producción.
+ * El banco empezó siendo sólo de sonido y creció hasta cubrir también los
+ * efectos visuales, así que vive en `/banco`.
  *
- * ⚠ POR QUÉ HACE FALTA UNA RUTA ENTERA PARA ESTO.
- *
- * El plan del sonido repite tres veces que las decisiones que quedan «se
- * resuelven escuchando»: cuál de las capas de la tecla falla, si la sala está
- * corta o larga, si el parlante ahoga el cuerpo, cuáles de los ocho huecos de
- * muestra hacen falta de verdad. Ninguna de esas preguntas se contesta leyendo
- * código ni mirando un test, y dentro de la app cada sonido llega mezclado con
- * otros diez y sólo cuando el juego quiere.
- *
- * Acá cada voz se dispara suelta, se repite, y sus capas se oyen por separado.
- *
- * Se corta con `notFound()` en producción y no con una variable de entorno
- * leída dentro del componente: así el segmento entero deja de renderizarse en
- * el servidor, en vez de enviar al navegador un componente que decide no
- * pintarse. La ruta existe en el build y devuelve 404, que es lo que se quiere.
+ * Esta ruta se queda porque la dirección vieja está en manos de gente y en
+ * notas de sesión: un 404 ahí se leería como «lo quitaron», que es justo la
+ * confusión que ya costó una vuelta con los efectos apagados.
  */
 export default function Page() {
-    if (process.env.NODE_ENV === 'production') notFound();
-
-    return <SoundLab />;
+    redirect('/banco');
 }
