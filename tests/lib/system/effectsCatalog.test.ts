@@ -100,33 +100,29 @@ describe('cada entrada sirve para algo', () => {
         }
     });
 
-    it('y los que deforman con `filter` o `transform` van en la pantalla', () => {
+    it('y el que filtra con `filter: url()` va SOBRE la pantalla', () => {
         /*
-         * No es una opinion: se lee del CSS. Si la regla propia de la clase
-         * anima `transform` o `filter`, tiene que ir sobre el contenido — no
-         * hay nada que deformar en una capa vacia.
+         * No es una opinión: se lee del CSS. Un `filter: url()` aplica un filtro
+         * SVG al contenido del PROPIO elemento, así que sobre una capa vacía
+         * filtra la nada.
+         *
+         * ⚠ Antes esta comprobación decía «filter o transform» y NUNCA MIRÓ EL
+         * TRANSFORM: el patrón se escribió con un carácter de retroceso donde
+         * debía ir una frontera de palabra, así que esa mitad no coincidía
+         * jamás. Pasaba en verde comprobando la mitad de lo que prometía.
+         *
+         * Y el `transform` no vuelve acá, porque la regla sería FALSA: un
+         * elemento que se pinta a sí mismo —el barrido, las barras del colapso—
+         * se mueve él, y eso es una capa legítima. Ese caso, más fino, lo mira
+         * `effectsMove.test.ts`.
          */
         for (const e of VISUAL_EFFECTS) {
             const css = readFileSync(HOJAS[e.hoja], 'utf8');
-            // ⚠ `String.raw`: en una plantilla normal `\s` se evalúa como `s`
-            // y el patrón deja de coincidir con nada. La primera versión de
-            // este test pasaba en verde sin mirar un solo efecto.
             const cuerpo = new RegExp(
-                // ⚠ `String.raw`, y el salto de línea como clase: en una
-                // plantilla normal `\s` se evalúa como `s` y el patrón deja de
-                // coincidir con nada. La primera versión pasaba en verde sin
-                // haber mirado un solo efecto.
-                String.raw`@keyframes\s+` + e.id + String.raw`\s*\{([\s\S]*?)[
-
-]\}`
+                String.raw`@keyframes[ ]+` + e.id + String.raw`[ ]*\{([\s\S]*?)[\r\n]\}`
             ).exec(css)?.[1];
 
-            if (!cuerpo) continue;
-
-            const deforma = /(^|[^-])transform:|filter:\s*url\(/.test(cuerpo);
-            const propia = /backdrop-filter/.test(cuerpo);
-
-            if (deforma && !propia) expect(e.donde).toBe('pantalla');
+            if (cuerpo && /filter:[ ]*url\(/.test(cuerpo)) expect(e.donde).toBe('pantalla');
         }
     });
 
@@ -146,7 +142,8 @@ describe('cada entrada sirve para algo', () => {
         for (const e of VISUAL_EFFECTS) {
             const css = readFileSync(HOJAS[e.hoja], 'utf8');
             const cuerpo = new RegExp(
-                String.raw`@keyframes[ ]+` + e.id + String.raw`[ ]*\{([\s\S]*?)[
+                String.raw`@keyframes[ ]+` + e.id + String.raw`[ ]*\{([\s\S]*?)[
+
 ]\}`
             ).exec(css)?.[1];
 
@@ -170,7 +167,8 @@ describe('cada entrada sirve para algo', () => {
         for (const e of VISUAL_EFFECTS) {
             const css = readFileSync(HOJAS[e.hoja], 'utf8');
             const declara = new RegExp(
-                // ⚠ Las fronteras de palabra van como `[^a-z-]` y no como ``:
+                // ⚠ Las fronteras van como clases de caracteres y NO con la
+                // barra-b de toda la vida:
                 // este patron ya se escribio DOS veces con un caracter de
                 // retroceso literal en su sitio, y un patron asi no coincide
                 // nunca — el test recorria los veinticinco sin comprobar uno.
