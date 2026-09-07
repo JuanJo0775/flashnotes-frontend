@@ -44,6 +44,7 @@ const ctx = (secretos = 0) => ({
     integrity: 100,
     theme: 'light' as const,
     effectsEnabled: true,
+    soundEnabled: true,
     secretsFound: secretos,
     secretsTotal: 33,
     log: '',

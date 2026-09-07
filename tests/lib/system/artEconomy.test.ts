@@ -157,6 +157,7 @@ describe('«todos los comandos» significa USADOS, no vistos', () => {
             integrity: 100,
             theme: 'light',
             effectsEnabled: true,
+            soundEnabled: true,
             secretsFound: 0,
             secretsTotal: 18,
             log: '',

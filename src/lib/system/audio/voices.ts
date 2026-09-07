@@ -39,6 +39,8 @@ export const CATEGORY_OF = {
     key: 'keys',
     tick: 'keys',
     beep: 'confirm',
+    confirm: 'confirm',
+    drawer: 'confirm',
     relay: 'glitch',
     glitchBurst: 'glitch',
 } as const satisfies Record<string, SoundCategory>;
@@ -386,4 +388,95 @@ export function glitchBurst(
 
     arrancar(src, t0, random);
     src.stop(t0 + largo + 0.01);
+}
+
+/**
+ * EL CONFIRM DE UN HALLAZGO. Dos notas, y son SIEMPRE las mismas dos.
+ *
+ * ⚠ UNA FAMILIA, NO TREINTA Y TRES MELODÍAS. Treinta y tres jingles distintos
+ * son ruido y no diseño: nadie recuerda treinta y tres, y el primero que suena
+ * no significa nada porque no se parece a nada anterior. Un confirm corto
+ * repetido se aprende a la segunda y a la tercera ya es «encontré algo».
+ *
+ * ⚠ Y LOS DEL ENTE SUENAN MAL A PROPÓSITO. `wrong` da el mismo gesto al revés y
+ * corrido de tono, porque esos hallazgos NO LOS ENCONTRASTE VOS: te los dio él.
+ * Tiene que oírse, pero como VARIANTE — si fuera otro sonido, se leería como
+ * otra clase de suceso en vez de como la misma cosa torcida.
+ *
+ * Sale por la bocinita: es la máquina la que acusa recibo.
+ */
+export function confirm(
+    g: AudioGraph,
+    { wrong = false }: { wrong?: boolean } = {},
+    random: Random = Math.random
+) {
+    const t0 = g.ctx.currentTime;
+
+    /*
+     * Una quinta justa, que es el intervalo que el oído lee como «cerrado».
+     * Torcida se invierte Y se corre un cuarto de tono: invertirla a secas daría
+     * un confirm descendente afinado, y eso suena a «cancelado», que es otra
+     * cosa. Lo que tiene que sonar es roto.
+     */
+    const base = vary(660, 0.01, random);
+    const notas = wrong ? [base * 1.03, base * 0.69] : [base, base * 1.5];
+
+    notas.forEach((hz, i) => {
+        const osc = g.ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.value = hz;
+
+        const gain = g.ctx.createGain();
+        const desde = t0 + i * 0.075;
+        const largo = vary(0.07, 0.08, random);
+
+        percutir(gain, desde, vary(0.45, 0.1, random), 0.003, largo);
+
+        osc.connect(gain);
+        gain.connect(g.speaker);
+        gain.connect(g.room);
+
+        osc.start(desde);
+        osc.stop(desde + largo + 0.01);
+    });
+}
+
+/**
+ * LA ENTREGA DE UNA PIEZA. Un cajón que se abre.
+ *
+ * Más largo y más cálido que un confirm, y con razón: un confirm es un acuse de
+ * recibo —«sí, eso contaba»— y esto es un PREMIO. Si sonaran igual, ganarse un
+ * dibujo valdría lo mismo que tropezarse con un comando.
+ *
+ * Va por el aire y no por la bocinita: un cajón es un objeto de la habitación.
+ */
+export function drawer(g: AudioGraph, random: Random = Math.random) {
+    const t0 = g.ctx.currentTime;
+
+    // 1 · La madera corriendo: ruido largo por un filtro medio que se abre.
+    const corredera = fuenteDeRuido(g, random);
+    const f = filtro(g, 'bandpass', vary(520, 0.06, random), 2.4);
+    const gCorredera = g.ctx.createGain();
+    const largo = vary(0.34, 0.1, random);
+    gCorredera.gain.setValueAtTime(0.0001, t0);
+    gCorredera.gain.linearRampToValueAtTime(vary(0.3, 0.1, random) * f.makeup, t0 + 0.09);
+    gCorredera.gain.exponentialRampToValueAtTime(0.0001, t0 + largo);
+    corredera.connect(f.nodo).connect(gCorredera);
+    gCorredera.connect(g.air);
+    gCorredera.connect(g.room);
+    arrancar(corredera, t0, random);
+    corredera.stop(t0 + largo + 0.02);
+
+    // 2 · El tope al final del recorrido: el cajón llega y se detiene.
+    const tope = g.ctx.createOscillator();
+    tope.type = 'sine';
+    tope.frequency.value = vary(120, 0.06, random);
+    const gTope = g.ctx.createGain();
+    const cuando = t0 + largo * 0.72;
+    percutir(gTope, cuando, vary(0.35, 0.12, random), 0.002, 0.09);
+    tope.connect(gTope);
+    gTope.connect(g.air);
+    gTope.connect(g.room);
+    tope.start(cuando);
+    tope.stop(cuando + 0.11);
 }

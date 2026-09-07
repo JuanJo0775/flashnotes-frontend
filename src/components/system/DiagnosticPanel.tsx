@@ -13,6 +13,8 @@ import {
 import { coreTemperature, CORE_MAX_C, CORE_MIN_C } from '@/lib/system/diagnostics';
 import { strainedCore, strainedIntegrity } from '@/lib/system/strain';
 import { useGlitch } from '@/hooks/useGlitch';
+import { setSoundOn } from '@/lib/system/audio/context';
+import { useSound } from '@/hooks/useSound';
 import { secretsBar, secretsRank } from '@/lib/system/secretsRank';
 import { ART_TOTAL, readFound } from '@/lib/system/asciiArt';
 
@@ -68,6 +70,7 @@ export default function DiagnosticPanel({
     const ref = useRef<HTMLDialogElement>(null);
     const closeRef = useRef<HTMLButtonElement>(null);
     const system = useSystemState();
+    const sonando = useSound();
     const theme = useTheme();
     const t = useT();
     const lang = useLang();
@@ -327,6 +330,18 @@ export default function DiagnosticPanel({
                         {t('diag.effects', {
                             state: system.effectsEnabled ? 'ON' : 'OFF',
                         })}
+                    </button>
+                    {/*
+                        El sonido, al lado de los efectos y no en otra parte: son
+                        el mismo tipo de interruptor y quien busque uno va a
+                        buscar el otro donde encontró el primero.
+                    */}
+                    <button
+                        type="button"
+                        onClick={() => setSoundOn(!sonando)}
+                        className="btn-terminal"
+                    >
+                        {t('diag.sound', { state: sonando ? 'ON' : 'OFF' })}
                     </button>
                     <button
                         ref={closeRef}

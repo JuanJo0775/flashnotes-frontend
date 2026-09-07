@@ -107,6 +107,13 @@ export interface CommandContext {
     integrity: number;
     theme: 'light' | 'dark';
     effectsEnabled: boolean;
+    /**
+     * Si la máquina suena.
+     *
+     * Hermano de `effectsEnabled` y por el mismo motivo: este módulo es PURO y
+     * no puede leer `localStorage` ni `matchMedia` para averiguarlo.
+     */
+    soundEnabled: boolean;
     secretsFound: number;
     secretsTotal: number;
     /** El registro de peticiones ya formateado (ver requestLog.ts). */
@@ -183,6 +190,7 @@ export type CommandEffect =
     | { kind: 'reset-prank' }
     | { kind: 'recover'; text: string }
     | { kind: 'set-effects'; enabled: boolean }
+    | { kind: 'set-sound'; enabled: boolean }
     /**
      * Vacía la papelera.
      *
@@ -559,6 +567,7 @@ const T = {
     fetchingHistory: { es: 'CONSULTANDO ACTAS…', en: 'CONSULTING THE RECORDS…' },
     openingDiag: { es: 'ABRIENDO DIAGNÓSTICO…', en: 'OPENING DIAGNOSTICS…' },
     effectsLabel: { es: 'EFECTOS', en: 'EFFECTS' },
+    soundLabel: { es: 'SONIDO', en: 'SOUND' },
     useVerb: { es: 'USÁ', en: 'USE' },
     systemLabel: { es: 'SISTEMA', en: 'SYSTEM' },
     noFilesThisShift: {
@@ -1202,6 +1211,44 @@ const COMMANDS: readonly Command[] = [
             const p = COMMAND_PREFIX;
             return texto(
                 `${rotulo}: ${ctx.effectsEnabled ? 'ON' : 'OFF'} · ${uso} ${p}chaos on | ${p}chaos off`
+            );
+        },
+    },
+    {
+        /*
+         * ⚠ ESTE COMANDO NO ES UN SECRETO, y no llevar `secretId` es deliberado.
+         *
+         * Los hallazgos son cosas que descubrís del sistema; un interruptor es
+         * un ajuste. Y hay una razón más dura: contarlo subiría la colección a
+         * treinta y cuatro, y `SECRETOS.md`, el panel y media docena de tests
+         * dicen treinta y tres. Un ajuste no puede mover el marcador del juego.
+         */
+        name: '//sound',
+        notInV02: true,
+        hidden: true,
+        summary: {
+            es: 'encender o apagar el sonido (on | off)',
+            en: 'turn the sound on or off (on | off)',
+        },
+        resolve: (ctx, args, lang) => {
+            const arg = args.trim().toLowerCase();
+            // `on` y `off` son argumentos, no palabras: no se traducen.
+            const rotulo = T.soundLabel[lang];
+
+            if (arg === 'on' || arg === 'off') {
+                const enabled = arg === 'on';
+                return {
+                    output: `${rotulo}: ${enabled ? 'ON' : 'OFF'}`,
+                    effect: { kind: 'set-sound', enabled },
+                };
+            }
+
+            // Sin argumento informa y no cambia nada, igual que `//chaos`: un
+            // `//sound` suelto que apagara la máquina sería una sorpresa.
+            const uso = T.useVerb[lang];
+            const p = COMMAND_PREFIX;
+            return texto(
+                `${rotulo}: ${ctx.soundEnabled ? 'ON' : 'OFF'} · ${uso} ${p}sound on | ${p}sound off`
             );
         },
     },

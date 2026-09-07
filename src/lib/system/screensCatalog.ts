@@ -143,6 +143,9 @@ export const NOT_SCREENS: readonly string[] = [
     // Capas ambientales: no son un momento, son el fondo permanente.
     'GlitchLayer',
     'V02Glitches',
+    // No pinta NADA: es el enchufe del sonido, y el único sitio de la app que
+    // sabe que el sonido existe. Documentado en la sección de sonido.
+    'SoundWire',
     // Ventanas sueltas, ya documentadas como efecto.
     'PhantomError',
     // La escena del final: se documenta aparte porque exige su propio estado.

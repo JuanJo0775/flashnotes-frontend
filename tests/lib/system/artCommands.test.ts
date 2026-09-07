@@ -10,6 +10,7 @@ const ctx = (): CommandContext => ({
     integrity: 100,
     theme: 'light',
     effectsEnabled: true,
+    soundEnabled: true,
     secretsFound: 0,
     secretsTotal: 18,
     log: '',

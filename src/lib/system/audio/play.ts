@@ -20,13 +20,24 @@ import type { Random } from '@/lib/system/lore';
 import type { SoundCategory } from '@/lib/system/audio/mix';
 import { allow, gainFor } from '@/lib/system/audio/mix';
 import { ensureAudio, type AudioGraph } from '@/lib/system/audio/context';
-import { CATEGORY_OF, beep, glitchBurst, key, relay, tick } from '@/lib/system/audio/voices';
+import {
+    CATEGORY_OF,
+    beep,
+    confirm,
+    drawer,
+    glitchBurst,
+    key,
+    relay,
+    tick,
+} from '@/lib/system/audio/voices';
 
 /** Qué se le puede pedir a cada voz. */
 export interface VoiceArgs {
     key: undefined;
     tick: undefined;
     relay: undefined;
+    drawer: undefined;
+    confirm: { wrong: boolean };
     beep: { hz: number; ms: number };
     glitchBurst: { amplitudePx: number; durationMs: number };
 }
@@ -40,7 +51,7 @@ export type VoiceName = keyof VoiceArgs;
  * lo que permite que un test enumere las voces y exija que todas declaren
  * familia, en vez de descubrir una suelta el día que suene demasiado fuerte.
  */
-const VOICES = { key, tick, relay, beep, glitchBurst } as const;
+const VOICES = { key, tick, relay, drawer, beep, confirm, glitchBurst } as const;
 
 /**
  * Las ganancias de familia, creadas una vez y guardadas.

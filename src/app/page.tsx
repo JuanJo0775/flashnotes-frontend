@@ -20,6 +20,7 @@ import SystemCollapse from '@/components/effects/SystemCollapse';
 import ChromaticFailure from '@/components/effects/ChromaticFailure';
 import PhantomError from '@/components/effects/PhantomError';
 import { LooseWall } from '@/components/effects/LooseWall';
+import SoundWire from '@/components/effects/SoundWire';
 import SystemLockout from '@/components/effects/SystemLockout';
 import PongOverlay from '@/components/effects/PongOverlay';
 import DeadPage from '@/components/effects/DeadPage';
@@ -489,6 +490,8 @@ export default function Home() {
                 aria-hidden="true"
                 onAnimationIteration={() => setScanlineStutters(Math.random() < 0.25)}
             />
+            {/* El sonido, enchufado en un solo sitio. No pinta nada. */}
+            <SoundWire />
             <GlitchLayer />
             <ChromaticFailure />
             <PhantomError />

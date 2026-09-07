@@ -171,6 +171,7 @@ export const en: Dictionary = {
     'diag.core': 'CORE',
     'diag.coreMeter': 'Core temperature: {temp} of {max} degrees',
     'diag.effects': '[EFFECTS: {state}]',
+    'diag.sound': '[SOUND: {state}]',
     'diag.close': '[✗] Close',
 
     // vsync-test (el pong escondido, ver docs/SECRETOS.md)

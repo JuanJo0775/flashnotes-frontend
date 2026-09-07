@@ -468,6 +468,19 @@ export function subscribe(listener: () => void) {
     };
 }
 
+/**
+ * Los secretos hallados, por identificador.
+ *
+ * ⚠ EXISTE PARA QUE EL SONIDO SEPA CUÁL acaba de encontrarse. El almacén avisa
+ * de que la CUENTA subió, y con eso basta para pintar un contador — pero no
+ * para elegir sonido, porque los hallazgos del ente suenan distinto de los
+ * demás. Quien escucha compara este conjunto con el que tenía y deduce el
+ * nuevo, en vez de obligar a `markSecretFound` a avisar a alguien más.
+ */
+export function foundSecrets(): ReadonlySet<string> {
+    return secrets;
+}
+
 export function getSystemState(): SystemState {
     return state;
 }

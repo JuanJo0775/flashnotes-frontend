@@ -31,6 +31,7 @@ import {
     setEffectsEnabled,
 } from '@/hooks/useSystemState';
 import { useTheme } from '@/hooks/useTheme';
+import { isSoundOn, setSoundOn } from '@/lib/system/audio/context';
 import type { NoteHistory } from '@/types/note.types';
 import { getLang } from '@/i18n';
 import type { Localized } from '@/i18n';
@@ -143,6 +144,7 @@ export function useNoteCommands({
                 integrity: system.integrity,
                 theme,
                 effectsEnabled: system.effectsEnabled,
+                soundEnabled: isSoundOn(),
                 secretsFound: system.secretsFound,
                 secretsTotal: system.secretsTotal,
                 log: formatLog(),
@@ -279,6 +281,9 @@ export function useNoteCommands({
                     break;
                 case 'set-effects':
                     setEffectsEnabled(result.effect.enabled);
+                    break;
+                case 'set-sound':
+                    setSoundOn(result.effect.enabled);
                     break;
                 case 'fetch-history':
                     // `//history` deja primero un "CONSULTANDO ACTAS…" y lo

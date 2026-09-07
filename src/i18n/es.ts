@@ -191,6 +191,7 @@ export const es = {
     'diag.core': 'NÚCLEO',
     'diag.coreMeter': 'Temperatura del núcleo: {temp} de {max} grados',
     'diag.effects': '[EFECTOS: {state}]',
+    'diag.sound': '[SONIDO: {state}]',
     'diag.close': '[✗] Cerrar',
 
     // vsync-test (el pong escondido, ver docs/SECRETOS.md)
