@@ -30,6 +30,7 @@ import {
 } from '@/hooks/useSystemState';
 import { play } from '@/lib/system/audio/play';
 import { startAmbience, stopAmbience } from '@/lib/system/audio/ambience';
+import { startBarsTone, stopBarsTone } from '@/lib/system/audio/bars';
 
 /**
  * Cuánto aguanta el zumbido sin que pase nada.
@@ -96,12 +97,25 @@ function estaEscribiendo(target: EventTarget | null): boolean {
  */
 export function startSound(): () => void {
     /*
-     * EL ZUMBIDO, QUE ENTRA CON LO PRIMERO QUE HAGAS.
+     * EL ZUMBIDO, QUE ESTÁ DESDE EL PRINCIPIO.
      *
-     * No arranca al cargar: el navegador no deja sonar hasta que hay un gesto, y
-     * además un ambiente que aparece antes de que hagas nada se oye ENTRAR — y
-     * entonces deja de ser ambiente para ser un suceso. Entra tan despacio que
-     * no se nota, y para cuando reparás en él ya estaba.
+     * ⚠ ESTO ESTUVO MAL Y SE CORRIGIÓ TRAS UN MALENTENDIDO MÍO. Lo tenía
+     * arrancando con la primera actividad, razonando que un ambiente que
+     * aparece antes de que hagas nada se oye ENTRAR. Eso es cierto de un
+     * ambiente que sube de golpe, y me llevó a la conclusión equivocada:
+     *
+     *   «el sonido es ambiente, debe sonar desde el inicio sin que algo lo
+     *    active»
+     *
+     * El fondo no es una reacción a lo que hacés: es el ruido de que la máquina
+     * está encendida, y una máquina encendida no espera a que la toquen. Lo que
+     * evita que se oiga entrar no es retrasarlo — es que suba despacio, y eso ya
+     * lo hacía.
+     *
+     * Lo único que sigue mandando es el navegador: si todavía no deja sonar, los
+     * osciladores quedan programados y se oyen en cuanto el contexto despierte.
+     * Un zumbido continuo es justo lo que mejor sobrevive a esa espera, porque
+     * no es un instante: sigue ahí cuando llega el permiso.
      */
     let reloj: ReturnType<typeof setTimeout> | null = null;
 
@@ -111,6 +125,9 @@ export function startSound(): () => void {
         if (reloj) clearTimeout(reloj);
         reloj = setTimeout(stopAmbience, IDLE_MS);
     };
+
+    // Y arranca YA, sin esperar a nada.
+    huboActividad();
 
     /*
      * LAS TECLAS.
@@ -370,6 +387,28 @@ export function startSound(): () => void {
 
     observadorRaiz.observe(document.documentElement, { attributes: true });
 
+    /*
+     * LAS BARRAS DE AJUSTE Y SU TONO.
+     *
+     * ⚠ El tono de 1 kHz de las barras no es una licencia: es el de la
+     * industria. Las cartas de ajuste iban SIEMPRE con él, porque era la señal
+     * con la que se calibraba el nivel de audio de una emisión — y es justo lo
+     * que convierte unos rectángulos de colores en algo que se reconoce.
+     *
+     * Se engancha a que las barras APAREZCAN en pantalla y no a un temporizador:
+     * si el arranque cambia de ritmo, el tono lo sigue solo. Un temporizador
+     * paralelo se desincroniza el día que alguien ajuste una duración, y nadie
+     * lo nota hasta que el tono se queda sonando sobre el logo.
+     */
+    const mirarBarras = () => {
+        if (document.querySelector('.boot-bars')) startBarsTone();
+        else stopBarsTone();
+    };
+
+    const observadorBarras = new MutationObserver(mirarBarras);
+    observadorBarras.observe(document.body, { childList: true, subtree: true });
+    mirarBarras();
+
     return () => {
         if (reloj) clearTimeout(reloj);
         stopAmbience();
@@ -379,5 +418,7 @@ export function startSound(): () => void {
         quitarSistema();
         observador.disconnect();
         observadorRaiz.disconnect();
+        observadorBarras.disconnect();
+        stopBarsTone();
     };
 }

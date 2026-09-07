@@ -46,6 +46,16 @@ const SUMA = PESOS.armonicos.reduce((a, b) => a + b, 0) + PESOS.aire;
 /** Lo que suman las fuentes del zumbido, ya normalizado. Tiene que ser 1. */
 export const AMBIENCE_MIX = SUMA / SUMA;
 
+/**
+ * Cuánto tarda la línea del CRT en cruzar la pantalla.
+ *
+ * ⚠ TIENE QUE SER EL MISMO NÚMERO QUE EL CSS, y hay un test que lo ata contra
+ * `animations.css`. Si el sonido y la línea fueran a ritmos distintos dejarían
+ * de ser la misma cosa: se oiría un latido que no corresponde con nada de lo que
+ * se ve, y eso es peor que no oír nada.
+ */
+export const SCANLINE_S = 9;
+
 /** Cuánto tarda en aparecer. Segundos, no milisegundos: ver `startAmbience`. */
 export const FADE_IN_S = 4;
 
@@ -157,6 +167,31 @@ export function startAmbience(random: Random = Math.random) {
     gAire.connect(salida);
     aire.start(t0);
     fuentes.push(aire);
+
+    /*
+     * EL BARRIDO, QUE HASTA AHORA SE VEÍA Y NO SE OÍA.
+     *
+     * La línea del tubo cruza la pantalla cada nueve segundos y era la única
+     * cosa permanente del producto que no sonaba. Un barrido de verdad mueve el
+     * campo magnético del tubo, y eso no se oye como un silbido que pasa: se
+     * oye como una RESPIRACIÓN del propio zumbido.
+     *
+     * ⚠ Por eso va DENTRO del ambiente y no como voz aparte. Un sonido suelto
+     * sonando cada nueve segundos sería un metrónomo, y el plan es tajante: el
+     * ambiente es UN elemento, no un lecho de cosas apiladas.
+     */
+    const barrido = g.ctx.createOscillator();
+    barrido.type = 'sine';
+    barrido.frequency.value = 1 / SCANLINE_S;
+
+    const profundidadBarrido = g.ctx.createGain();
+    // Poco: es una respiración, no un vaivén. Si se nota como movimiento, ya se
+    // pasó — lo que tiene que pasar es que la sala parezca viva.
+    profundidadBarrido.gain.value = 0.28;
+    barrido.connect(profundidadBarrido);
+    profundidadBarrido.connect(salida.gain);
+    barrido.start(t0);
+    fuentes.push(barrido);
 
     vivo = { salida, fuentes };
 }

@@ -15,11 +15,13 @@
 
 import {
     AMBIENCE_MIX,
+    SCANLINE_S,
     ambienceGain,
     silence,
     startAmbience,
     stopAmbience,
 } from '@/lib/system/audio/ambience';
+import { readFileSync } from 'node:fs';
 import { PEAK_DBFS, dbToGain } from '@/lib/system/audio/mix';
 import { ensureAudio, setSoundOn, teardownAudio } from '@/lib/system/audio/context';
 import { contextCount, installFakeAudio, lastContext, reaches } from './fakeAudio';
@@ -65,6 +67,44 @@ describe('cómo está hecho', () => {
         startAmbience();
 
         expect(lastContext()!.count('bufferSource')).toBeGreaterThan(0);
+    });
+
+    it('⚠ el barrido de la pantalla TAMBIÉN se oye', () => {
+        /*
+         * PEDIDO: «quiero sonido de la barra horizontal que barre».
+         *
+         * La línea del CRT cruza la pantalla cada nueve segundos y hasta ahora
+         * era la única cosa permanente que se veía y no se oía. Un barrido de
+         * verdad mueve el campo magnético del tubo, y eso se nota: no como un
+         * silbido que pasa, sino como una respiración del propio zumbido.
+         *
+         * Por eso va DENTRO del ambiente y no como voz aparte: si fuera un
+         * sonido suelto sonando cada nueve segundos sería un metrónomo, y el
+         * plan es tajante con que el ambiente es UN elemento, no un lecho de
+         * cosas apiladas.
+         */
+        startAmbience();
+
+        const lentos = lastContext()!
+            .created.filter((n) => n.kind === 'oscillator')
+            .filter((o) => o.frequency.value > 0 && o.frequency.value < 0.2);
+
+        expect(lentos.length).toBeGreaterThan(0);
+    });
+
+    it('y ese barrido va al COMPÁS del que se ve', () => {
+        // Si el sonido y la línea van a ritmos distintos, dejan de ser la misma
+        // cosa: se oye un latido que no corresponde con nada de la pantalla.
+        startAmbience();
+
+        // ⚠ Se busca EL que va a 1/9, no el primero lento: las derivas del
+        // zumbido también son lentísimas y una de ellas ronda ese valor por
+        // casualidad. Agarrar la primera medía otra cosa.
+        const alCompas = lastContext()!
+            .created.filter((n) => n.kind === 'oscillator')
+            .some((o) => Math.abs(o.frequency.value - 1 / SCANLINE_S) < 0.0005);
+
+        expect(alCompas).toBe(true);
     });
 
     it('sale por el aire y llega a la salida', () => {
@@ -215,5 +255,19 @@ describe('con el sonido apagado', () => {
         startAmbience();
 
         expect(contextCount()).toBe(0);
+    });
+});
+
+describe('el barrido y el CSS dicen lo mismo', () => {
+    it('⚠ los nueve segundos salen del mismo sitio', () => {
+        /*
+         * Dos copias de la misma verdad en sitios distintos: la animación que
+         * mueve la línea y el oscilador que la respira. Si alguien ajusta el CSS
+         * y no esto, el latido deja de corresponder con lo que se ve — y no hay
+         * forma de notarlo salvo mirando y escuchando a la vez durante un rato.
+         */
+        const css = readFileSync('src/styles/animations.css', 'utf8');
+
+        expect(css).toContain(`animation: scanline ${SCANLINE_S}s`);
     });
 });

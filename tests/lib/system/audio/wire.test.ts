@@ -17,10 +17,11 @@
 
 import { IDLE_MS, startSound } from '@/lib/system/audio/wire';
 import { ambienceIsOn } from '@/lib/system/audio/ambience';
+import { barsToneIsOn } from '@/lib/system/audio/bars';
 import { teardownAudio } from '@/lib/system/audio/context';
 import { fireGlitch } from '@/hooks/useGlitch';
 import { markSecretFound, setEffectsEnabled } from '@/hooks/useSystemState';
-import { contextCount, installFakeAudio, lastContext, type FakeNode } from './fakeAudio';
+import { installFakeAudio, lastContext, type FakeNode } from './fakeAudio';
 
 let quitarFalso: () => void;
 let parar: () => void;
@@ -88,10 +89,14 @@ describe('las teclas', () => {
          */
         const div = document.createElement('div');
         document.body.append(div);
+        const antes = marca();
 
         teclear('a', div);
 
-        expect(contextCount()).toBe(0);
+        // ⚠ Se mide por FUENTES y no por «no hay contexto»: desde que el
+        // ambiente arranca al montar, el contexto existe siempre. Lo que se
+        // afirma es que no sonó nada nuevo, que es lo que importaba.
+        expect(fuentes(antes)).toHaveLength(0);
         div.remove();
     });
 
@@ -102,10 +107,12 @@ describe('las teclas', () => {
         const area = document.createElement('textarea');
         document.body.append(area);
 
+        const antes = marca();
+
         teclear('Shift', area);
         teclear('Control', area);
 
-        expect(contextCount()).toBe(0);
+        expect(fuentes(antes)).toHaveLength(0);
         area.remove();
     });
 });
@@ -196,29 +203,36 @@ describe('apagarlo lo apaga entero', () => {
 
         const area = document.createElement('textarea');
         document.body.append(area);
+        const antes = marca();
         teclear('a', area);
 
-        expect(contextCount()).toBe(0);
+        expect(fuentes(antes)).toHaveLength(0);
         area.remove();
     });
 });
 
 describe('el ambiente entra con la actividad y se va solo', () => {
-    it('escribir lo enciende', () => {
+    it('⚠ ESTÁ DESDE EL PRINCIPIO, sin que nadie lo active', () => {
         /*
-         * No se enciende al cargar: el navegador no deja sonar hasta que hay un
-         * gesto, y además un zumbido que aparece antes de que hagas nada se oye
-         * ENTRAR. Entra con la primera cosa que hagas, tan despacio que no se
-         * nota, y para cuando reparás en él ya estaba.
+         * CORREGIDO DESPUÉS DE UN MALENTENDIDO MÍO, y vale la pena escribirlo.
+         *
+         * Yo lo tenía arrancando con la primera actividad, razonando que un
+         * ambiente que aparece antes de que hagas nada se oye ENTRAR. Eso es
+         * cierto de un ambiente que SUBE de golpe, y me llevó a la conclusión
+         * equivocada:
+         *
+         *   «el sonido es ambiente, debe sonar desde el inicio sin que algo lo
+         *    active».
+         *
+         * Tiene razón. El fondo no es una reacción a lo que hacés: es el ruido
+         * de que la máquina está encendida, y una máquina encendida no espera a
+         * que la toquen. Lo que evita que se oiga entrar no es retrasarlo, es
+         * que suba despacio — y eso ya lo hacía.
+         *
+         * Lo único que sigue mandando es el navegador: si no deja sonar todavía,
+         * los osciladores quedan programados y se oyen en cuanto despierte.
          */
-        const area = document.createElement('textarea');
-        document.body.append(area);
-
-        expect(ambienceIsOn()).toBe(false);
-        teclear('a', area);
-
         expect(ambienceIsOn()).toBe(true);
-        area.remove();
     });
 
     it('⚠ y se va tras un rato quieto, sin que nadie se lo pida', () => {
@@ -461,6 +475,31 @@ describe('la maquina encendiendose y apagandose', () => {
 
         expect(fuentes(antes)).toHaveLength(0);
         area.remove();
+    });
+
+    it('⚠ las barras de ajuste traen su tono de 1 kHz', async () => {
+        /*
+         * PEDIDO: «el de las barras tiene un sonido de la industria».
+         *
+         * Y lo tiene de verdad: las barras de ajuste de television van SIEMPRE
+         * con un tono de referencia de 1 kHz. Es la señal con la que se
+         * calibraba el nivel de audio de una emision, y es lo que convierte unos
+         * rectangulos de colores en una CARTA DE AJUSTE.
+         *
+         * Se engancha a que las barras aparezcan en pantalla, no a un
+         * temporizador: si el arranque cambia de ritmo, el tono lo sigue.
+         */
+        const barras = document.createElement('div');
+        barras.className = 'boot-bars';
+        document.body.append(barras);
+        await esperar();
+
+        expect(barsToneIsOn()).toBe(true);
+
+        barras.remove();
+        await esperar();
+
+        expect(barsToneIsOn()).toBe(false);
     });
 
     it('el arranque suena cuando el documento dice que arranca', async () => {

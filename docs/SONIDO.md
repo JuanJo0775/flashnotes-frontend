@@ -191,9 +191,14 @@ ritmos que no son múltiplos entre ellos. Un bucle fijo se delata en treinta
 segundos: el oído aprende el patrón y a partir de ahí oye un fichero
 repitiéndose.
 
-**Entra con lo primero que hagas y se va solo.** Sube en 4 segundos —de golpe se
-oiría ENTRAR, y entonces dejaría de ser ambiente para ser un suceso— y se apaga
-tras **40 000 ms** sin actividad: bastante más de lo que dura una pausa
+⚠ **Está desde el principio, sin que nadie lo active.** Estuvo arrancando con la
+primera actividad, razonando que un ambiente que aparece antes de que hagas nada
+se oye ENTRAR. Eso es cierto de un ambiente que sube de golpe, y llevaba a la
+conclusión equivocada: el fondo no es una reacción a lo que hacés, es el ruido de
+que la máquina está encendida — y una máquina encendida no espera a que la
+toquen. Lo que evita que se oiga entrar no es retrasarlo: es que suba despacio.
+
+Sube en 4 segundos y se apaga tras **40 000 ms** sin actividad: bastante más de lo que dura una pausa
 escribiendo, bastante menos de lo que dura irse a leer otra cosa.
 
 Y sabe callarse de dos maneras distintas, que no son la misma:
@@ -201,7 +206,21 @@ Y sabe callarse de dos maneras distintas, que no son la misma:
 | | Qué hace | Para qué |
 | --- | --- | --- |
 | `duck` | Lo baja y lo devuelve | Cuando habla el ente: la sala se calla para escucharlo |
+| — | Respira al compás del barrido | La línea del CRT cruza cada 9 s, y el zumbido va con ella |
 | `silence` | Lo pone en **cero exacto** | El derrumbe. Un ambiente a −60 dB sigue estando ahí |
+
+## El arranque, y el tono de las barras
+
+⚠ **Las barras de ajuste van con un tono de 1 kHz, y no es una licencia.** Las
+cartas de ajuste de televisión lo llevaban SIEMPRE: era la señal con la que se
+calibraba el nivel de audio de una emisión, y por eso cualquiera la asocia con
+«esto es una carta de ajuste» sin saber por qué. Es lo que convierte unos
+rectángulos de colores en algo que se reconoce.
+
+Se engancha a que las barras **aparezcan en pantalla**, no a un temporizador: si
+el arranque cambia de ritmo, el tono lo sigue solo. Un temporizador paralelo se
+desincroniza el día que alguien ajuste una duración, y nadie lo nota hasta que el
+tono se queda sonando encima del logo.
 
 ## De dónde sale cada sonido
 
@@ -217,7 +236,8 @@ hipótesis: `awardFrom` ya se llama desde nueve sitios distintos.
 | Golpes a la pared | `MutationObserver` sobre el `body` | no |
 | Hallazgos | el almacén del sistema, comparando conjuntos | no |
 | Avería de señal | el mismo almacén | no |
-| Botones | `click` en el documento, en captura | no |
+| Botones y cualquier cosa con cursor de mano | `click` en el documento, en captura | no |
+| Las barras de ajuste | que `.boot-bars` aparezca en pantalla | no |
 | Arranque, barrido, colapso, apagado | los atributos que la app ya pone en el documento | no |
 | El tema cambiando | el mismo atributo `data-theme` | no |
 
