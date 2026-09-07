@@ -25,9 +25,14 @@ import {
     beep,
     confirm,
     drawer,
+    button,
+    capacitor,
     glitchBurst,
+    head,
     key,
     relay,
+    sweep,
+    thud,
     tick,
 } from '@/lib/system/audio/voices';
 
@@ -37,7 +42,12 @@ export interface VoiceArgs {
     tick: undefined;
     relay: undefined;
     drawer: undefined;
+    button: undefined;
+    capacitor: undefined;
+    head: undefined;
+    thud: undefined;
     confirm: { wrong: boolean };
+    sweep: { fromHz: number; toHz: number; ms: number };
     beep: { hz: number; ms: number };
     glitchBurst: { amplitudePx: number; durationMs: number };
 }
@@ -51,7 +61,20 @@ export type VoiceName = keyof VoiceArgs;
  * lo que permite que un test enumere las voces y exija que todas declaren
  * familia, en vez de descubrir una suelta el día que suene demasiado fuerte.
  */
-const VOICES = { key, tick, relay, drawer, beep, confirm, glitchBurst } as const;
+const VOICES = {
+    key,
+    tick,
+    relay,
+    drawer,
+    button,
+    capacitor,
+    head,
+    thud,
+    beep,
+    confirm,
+    sweep,
+    glitchBurst,
+} as const;
 
 /**
  * Las ganancias de familia, creadas una vez y guardadas.

@@ -100,6 +100,11 @@ del altavoz de la máquina, se oye con la oreja.
 | `beep` | `confirm` | bocinita | La onda cuadrada cruda. La única que suena barata a propósito |
 | `confirm` | `confirm` | bocinita | Dos notas. Una familia, no treinta y tres melodías |
 | `glitchBurst` | `glitch` | bocinita | El fallo, cortado en escalones |
+| `button` | `keys` | aire | El pulsador de la interfaz. NO es la misma voz que una tecla |
+| `head` | `keys` | aire | La búsqueda de cabezal: varios golpes, y no a compás |
+| `capacitor` | `glitch` | aire | La corriente entrando. Un golpe, sin tono |
+| `sweep` | `failure` | bocinita | La señal cayéndose. DOS osciladores desafinados |
+| `thud` | `failure` | aire | El impacto lejano: algo cayó, y cayó detrás |
 
 ⚠ **La tecla son TRES capas y hay un test que lo fija.** Un oscilador solo suena
 a juguete; tres capas suenan a objeto. El día que alguien la «simplifique» a una
@@ -183,11 +188,37 @@ hipótesis: `awardFrom` ya se llama desde nueve sitios distintos.
 | Golpes a la pared | `MutationObserver` sobre el `body` | no |
 | Hallazgos | el almacén del sistema, comparando conjuntos | no |
 | Avería de señal | el mismo almacén | no |
+| Botones | `click` en el documento, en captura | no |
+| Arranque, barrido, colapso, apagado | los atributos que la app ya pone en el documento | no |
+| El tema cambiando | el mismo atributo `data-theme` | no |
 
 La tecla suena **sólo si el foco está escribiendo de verdad**: con cualquier
 tecla, navegar con el tabulador haría ruido de teclado sin que nadie escriba. Y
 los modificadores solos no golpean nada, o escribir en mayúsculas sonaría al
 doble de velocidad.
+
+## La máquina encendiéndose y apagándose
+
+Todo esto cuelga de **atributos que la app ya pone en el documento** porque los
+necesita para el CSS —el arranque apaga a sus hermanos, el barrido desvanece la
+app entera—, así que enterarse no le pide nada a nadie:
+
+| Atributo | Qué suena |
+| --- | --- |
+| `data-booting` | El condensador, y 380 ms después el cabezal buscando |
+| `data-tube-off` | El barrido corto: al tubo le cortaron la corriente |
+| `data-wiping`, `data-collapsing` | El barrido largo, y un impacto lejano detrás |
+| `data-theme` | Un relé por cada cambio. Es lo que hace el parpadeo del tema roto |
+
+⚠ **Sólo cuenta la aparición.** Un observador ingenuo dispara con cualquier
+cambio, y entonces el arranque sonaría dos veces: al empezar y al acabar.
+
+⚠ **Y un botón NO es una tecla.** Son dos objetos distintos: una tecla tiene
+cuerpo de plástico y de placa, un botón es un chasquido más seco y más corto. Si
+sonaran igual, apretar un botón se leería como haber escrito una letra. Sólo
+cuentan los controles de verdad — un clic dentro del editor para poner el cursor
+no es apretar nada, y si sonara, colocar el cursor haría el mismo ruido que
+confirmar un borrado.
 
 ## Los confirms, y los que suenan mal
 

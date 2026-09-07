@@ -360,3 +360,95 @@ describe('⚠ mantener una tecla pulsada NO es teclear muchas veces', () => {
         area.remove();
     });
 });
+
+describe('la maquina encendiendose y apagandose', () => {
+    /*
+     * Reportado: «faltan muchos sonidos, al apretar botones, los demas glitches,
+     * el reinicio, cuando se apaga, todo».
+     *
+     * ⚠ Y NINGUNO DE ESTOS TOCA CODIGO DE LA APP. La app ya pone seis atributos
+     * en el documento —`data-booting`, `data-wiping`, `data-collapsing`,
+     * `data-tube-off`, `data-failing`, `data-theme`— porque los necesita para el
+     * CSS. Observarlos es enterarse de todo lo grande sin pedirle nada a nadie.
+     */
+
+    const esperar = () => new Promise((r) => setTimeout(r, 80));
+
+    it('apretar un boton suena', async () => {
+        const boton = document.createElement('button');
+        document.body.append(boton);
+
+        conLaSalaYaEncendida();
+        await esperar();
+        const antes = marca();
+
+        boton.click();
+        await esperar();
+
+        expect(fuentes(antes).length).toBeGreaterThan(0);
+        boton.remove();
+    });
+
+    it('⚠ pero escribir en un area de texto NO cuenta como boton', async () => {
+        /*
+         * Un clic dentro del editor para poner el cursor no es apretar nada: si
+         * sonara, colocar el cursor haria el mismo ruido que confirmar un
+         * borrado, y el sonido dejaria de significar «hice algo».
+         */
+        const area = document.createElement('textarea');
+        document.body.append(area);
+
+        conLaSalaYaEncendida();
+        await esperar();
+        const antes = marca();
+
+        area.click();
+        await esperar();
+
+        expect(fuentes(antes)).toHaveLength(0);
+        area.remove();
+    });
+
+    it('el arranque suena cuando el documento dice que arranca', async () => {
+        conLaSalaYaEncendida();
+        await esperar();
+        const antes = marca();
+
+        document.documentElement.setAttribute('data-booting', '');
+        await esperar();
+
+        expect(fuentes(antes).length).toBeGreaterThan(0);
+        document.documentElement.removeAttribute('data-booting');
+    });
+
+    it('y apagarse tambien', async () => {
+        conLaSalaYaEncendida();
+        await esperar();
+        const antes = marca();
+
+        document.documentElement.setAttribute('data-tube-off', '');
+        await esperar();
+
+        expect(fuentes(antes).length).toBeGreaterThan(0);
+        document.documentElement.removeAttribute('data-tube-off');
+    });
+
+    it('⚠ y QUITAR el atributo no vuelve a sonar', async () => {
+        /*
+         * Un observador ingenuo dispara con cualquier cambio, asi que el
+         * arranque sonaria dos veces: al empezar y al terminar. Solo cuenta la
+         * aparicion.
+         */
+        document.documentElement.setAttribute('data-booting', '');
+        // ⚠ Se espera a que el arranque TERMINE de sonar antes de marcar: la
+        // busqueda de cabezal llega 380 ms despues del condensador, y midiendo
+        // antes se contaban sus golpes como si los hubiera causado el quitar.
+        await new Promise((r) => setTimeout(r, 700));
+        const antes = marca();
+
+        document.documentElement.removeAttribute('data-booting');
+        await esperar();
+
+        expect(fuentes(antes)).toHaveLength(0);
+    });
+});

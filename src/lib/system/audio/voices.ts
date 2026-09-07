@@ -27,6 +27,13 @@ import type { Random } from '@/lib/system/lore';
 import { vary, varyInt } from '@/lib/system/audio/jitter';
 import { bandpassMakeup } from '@/lib/system/audio/speaker';
 
+/*
+ * Las voces de la máquina encendiéndose y apagándose viven en `power.ts` —este
+ * fichero ya era largo— pero se re-exportan desde acá a propósito: hay UNA sola
+ * puerta de voces, y `CATEGORY_OF` de abajo es la lista de todo lo que suena.
+ */
+export { button, capacitor, head, sweep, thud } from '@/lib/system/audio/power';
+
 /**
  * A qué familia de la mezcla pertenece cada voz.
  *
@@ -38,6 +45,17 @@ import { bandpassMakeup } from '@/lib/system/audio/speaker';
 export const CATEGORY_OF = {
     key: 'keys',
     tick: 'keys',
+    /*
+     * ⚠ El botón y el cabezal caen en `keys`, y no es un descuido semántico:
+     * estas familias son de MEZCLA y no de origen. Lo que las agrupa es cuánta
+     * atención merecen, y un pulsador y un cabezal buscando merecen la misma que
+     * una tecla — poca, porque suenan a menudo.
+     */
+    button: 'keys',
+    head: 'keys',
+    capacitor: 'glitch',
+    sweep: 'failure',
+    thud: 'failure',
     beep: 'confirm',
     confirm: 'confirm',
     drawer: 'confirm',
@@ -86,12 +104,20 @@ export function forgetNoise() {
  * que todos los chasquidos compartan la misma forma de onda inicial, y eso se
  * oye como repetición aunque el filtro cambie.
  */
-function fuenteDeRuido(g: AudioGraph, random: Random): AudioBufferSourceNode {
+export function fuenteDeRuido(g: AudioGraph, random: Random): AudioBufferSourceNode {
     const src = g.ctx.createBufferSource();
     src.buffer = bufferDeRuido(g.ctx);
     src.playbackRate.value = vary(1, 0.06, random);
     return src;
 }
+
+/*
+ * ⚠ LOS CUATRO AYUDANTES DE ABAJO SE EXPORTAN, y no es para los tests: los usa
+ * `power.ts`, que construye las voces de la máquina encendiéndose y apagándose
+ * con las MISMAS piezas. Si cada módulo tuviera su propia envolvente y su propia
+ * compensación de filtro, las voces empezarían a sonar de dos familias distintas
+ * sin que nadie lo hubiera decidido.
+ */
 
 /**
  * Arranca una fuente de ruido DESDE UN PUNTO AL AZAR del búfer.
@@ -105,7 +131,7 @@ function fuenteDeRuido(g: AudioGraph, random: Random): AudioBufferSourceNode {
  * Un `start(cuando)` a secas es exactamente ese fallo, y no se ve leyendo el
  * código — sólo escuchando un buen rato. Por eso arrancar pasa por acá.
  */
-function arrancar(src: AudioBufferSourceNode, cuando: number, random: Random) {
+export function arrancar(src: AudioBufferSourceNode, cuando: number, random: Random) {
     src.start(cuando, random() * (RUIDO_SEGUNDOS - 0.2));
 }
 
@@ -116,7 +142,7 @@ function arrancar(src: AudioBufferSourceNode, cuando: number, random: Random) {
  * es la marca del audio mal hecho. La caída es exponencial porque así se apagan
  * las cosas de verdad.
  */
-function percutir(gain: GainNode, t0: number, pico: number, ataqueS: number, largoS: number) {
+export function percutir(gain: GainNode, t0: number, pico: number, ataqueS: number, largoS: number) {
     gain.gain.setValueAtTime(0.0001, t0);
     gain.gain.linearRampToValueAtTime(pico, t0 + ataqueS);
     gain.gain.exponentialRampToValueAtTime(0.0001, t0 + largoS);
@@ -133,7 +159,7 @@ function percutir(gain: GainNode, t0: number, pico: number, ataqueS: number, lar
  *
  * Devolviéndolos en el mismo sitio, olvidarse de compensar cuesta trabajo.
  */
-function filtro(
+export function filtro(
     g: AudioGraph,
     type: BiquadFilterType,
     hz: number,

@@ -231,12 +231,93 @@ export function startSound(): () => void {
 
     observador.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'] });
 
+    /*
+     * LOS BOTONES.
+     *
+     * ⚠ Un botón NO es una tecla, y suena distinto a propósito: son dos objetos.
+     * Y sólo cuentan los controles de verdad — un clic dentro del editor para
+     * poner el cursor no es apretar nada, y si sonara, colocar el cursor haría
+     * el mismo ruido que confirmar un borrado.
+     */
+    const alPulsar = (e: MouseEvent) => {
+        const t = e.target;
+        if (!(t instanceof HTMLElement)) return;
+
+        if (!t.closest('button, a, [role="button"]')) return;
+
+        huboActividad();
+        play('button');
+    };
+
+    document.addEventListener('click', alPulsar, true);
+
+    /*
+     * LA MÁQUINA ENCENDIÉNDOSE Y APAGÁNDOSE.
+     *
+     * ⚠ NO TOCA UNA LÍNEA DE LA APP, y es la mejor parte: la app ya pone estos
+     * atributos en el documento porque los necesita para el CSS —el arranque
+     * apaga a sus hermanos, el barrido desvanece la app entera— así que
+     * observarlos es enterarse de todo lo grande sin pedirle nada a nadie.
+     *
+     * Sólo cuenta la APARICIÓN. Un observador ingenuo dispara con cualquier
+     * cambio, y entonces el arranque sonaría dos veces: al empezar y al acabar.
+     */
+    const ATRIBUTOS = ['data-booting', 'data-wiping', 'data-collapsing', 'data-tube-off'] as const;
+
+    const presentes = new Set(ATRIBUTOS.filter((a) => document.documentElement.hasAttribute(a)));
+    let temaAntes = document.documentElement.getAttribute('data-theme');
+
+    const observadorRaiz = new MutationObserver(() => {
+        const raiz = document.documentElement;
+
+        for (const attr of ATRIBUTOS) {
+            const hay = raiz.hasAttribute(attr);
+
+            if (hay && !presentes.has(attr)) {
+                huboActividad();
+
+                if (attr === 'data-booting') {
+                    // El reinicio: la corriente entra y algo busca. En ese orden.
+                    play('capacitor');
+                    setTimeout(() => play('head'), 380);
+                } else if (attr === 'data-tube-off') {
+                    // El tubo al que le cortan la corriente.
+                    play('sweep', { fromHz: 760, toHz: 45, ms: 420 });
+                } else {
+                    // El barrido y el colapso: la señal cayéndose, y algo que
+                    // llega al suelo detrás.
+                    play('sweep', { fromHz: 1_100, toHz: 60, ms: 900 });
+                    setTimeout(() => play('thud'), 620);
+                }
+            }
+
+            if (hay) presentes.add(attr);
+            else presentes.delete(attr);
+        }
+
+        /*
+         * EL TEMA FALLANDO. Cada parpadeo es un relé cerrando — es lo que el
+         * plan pide para el cambio de claro a oscuro cuando se rompe, y sale
+         * gratis porque el tema ya vive en un atributo.
+         */
+        const tema = raiz.getAttribute('data-theme');
+        if (tema !== temaAntes) {
+            temaAntes = tema;
+            huboActividad();
+            play('relay');
+        }
+    });
+
+    observadorRaiz.observe(document.documentElement, { attributes: true });
+
     return () => {
         if (reloj) clearTimeout(reloj);
         stopAmbience();
         document.removeEventListener('keydown', alTeclear, true);
+        document.removeEventListener('click', alPulsar, true);
         quitarGlitch();
         quitarSistema();
         observador.disconnect();
+        observadorRaiz.disconnect();
     };
 }
