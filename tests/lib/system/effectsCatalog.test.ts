@@ -79,6 +79,56 @@ describe('cada entrada sirve para algo', () => {
         expect(new Set(ids).size).toBe(ids.length);
     });
 
+    it('⚠ cada efecto declara DONDE va su clase', () => {
+        /*
+         * LA DISTINCION QUE HIZO QUE NO SE VIERA NINGUNO.
+         *
+         * Hay dos clases de efecto y tratarlos igual no funciona:
+         *
+         *  · CAPA — pintan algo propio encima. `.glitch-bands` trae su degradado
+         *    y su `position: fixed`; puesto sobre un div vacio funciona.
+         *  · PANTALLA — deforman el elemento en el que estan.
+         *    `.chromatic-failure` aplica `filter` A SI MISMO, y `.glitch-jolt`
+         *    un `transform`. Puestos sobre un div vacio por encima, filtran y
+         *    mueven la NADA: la animacion corre y no se ve absolutamente nada.
+         *
+         * Es exactamente el fallo que dejo el visor sin efectos. El campo es
+         * obligatorio para que una voz nueva no pueda entrar sin decidirlo.
+         */
+        for (const e of VISUAL_EFFECTS) {
+            expect(['capa', 'pantalla']).toContain(e.donde);
+        }
+    });
+
+    it('y los que deforman con `filter` o `transform` van en la pantalla', () => {
+        /*
+         * No es una opinion: se lee del CSS. Si la regla propia de la clase
+         * anima `transform` o `filter`, tiene que ir sobre el contenido — no
+         * hay nada que deformar en una capa vacia.
+         */
+        for (const e of VISUAL_EFFECTS) {
+            const css = readFileSync(HOJAS[e.hoja], 'utf8');
+            // ⚠ `String.raw`: en una plantilla normal `\s` se evalúa como `s`
+            // y el patrón deja de coincidir con nada. La primera versión de
+            // este test pasaba en verde sin mirar un solo efecto.
+            const cuerpo = new RegExp(
+                // ⚠ `String.raw`, y el salto de línea como clase: en una
+                // plantilla normal `\s` se evalúa como `s` y el patrón deja de
+                // coincidir con nada. La primera versión pasaba en verde sin
+                // haber mirado un solo efecto.
+                String.raw`@keyframes\s+` + e.id + String.raw`\s*\{([\s\S]*?)[
+]\}`
+            ).exec(css)?.[1];
+
+            if (!cuerpo) continue;
+
+            const deforma = /(^|[^-])transform:|filter:\s*url\(/.test(cuerpo);
+            const propia = /backdrop-filter/.test(cuerpo);
+
+            if (deforma && !propia) expect(e.donde).toBe('pantalla');
+        }
+    });
+
     it('⚠ y las clases de la muestra existen en su hoja', () => {
         /*
          * Ésta es la parte que hace que el banco no mienta.

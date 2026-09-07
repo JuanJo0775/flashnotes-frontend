@@ -39,6 +39,23 @@ export interface VisualEffect {
     /** La hoja donde vive. */
     hoja: EffectSheet;
     /**
+     * Dónde hay que poner la clase para que el efecto haga algo.
+     *
+     * ⚠ ES LA DISTINCIÓN QUE HIZO QUE NO SE VIERA NINGUNO, y no es un detalle
+     * de implementación: es lo que el efecto ES.
+     *
+     *  · `capa` — pinta algo PROPIO por encima. `.glitch-bands` trae su
+     *    degradado y su `position: fixed`; sobre un elemento vacío funciona.
+     *  · `pantalla` — deforma el elemento EN EL QUE ESTÁ. `.chromatic-failure`
+     *    se aplica `filter` a sí mismo y `.glitch-jolt` un `transform`. Puestos
+     *    sobre una capa vacía encima, filtran y mueven la NADA: la animación
+     *    corre a sesenta cuadros y no se ve absolutamente nada.
+     *
+     * Un test lo lee del CSS y no se fía de la declaración: si los fotogramas
+     * animan `transform` o `filter: url()`, exige `pantalla`.
+     */
+    donde: 'capa' | 'pantalla';
+    /**
      * Las clases que hay que ponerle a un elemento para verlo.
      *
      * Es lo que usa el banco para enseñar la muestra, y de paso documenta la
@@ -55,14 +72,18 @@ export interface VisualEffect {
      */
     necesitaFondo?: boolean;
     /**
-     * Si decora TEXTO en vez de pintar una capa.
+     * Qué hay que meterle DENTRO para que se vea lo que hace.
      *
-     * El cursor, los puntos de espera y el fantasma no dibujan nada por su
-     * cuenta: le hacen algo a unas letras. En un elemento vacío no se ve nada, y
-     * eso tampoco se lee como «falta el texto» — se lee como «este efecto no
-     * funciona», que es la confusión cara.
+     * ⚠ Un elemento vacío no basta para todos, y el fallo no se lee como «falta
+     * el contenido»: se lee como «este efecto no funciona».
+     *
+     *  · `texto` — el cursor, los puntos de espera y el fantasma no dibujan
+     *    nada por su cuenta: le hacen algo a unas letras.
+     *  · `ventana` — la ventana fantasma es un CONTENEDOR. Vacía sale de tres
+     *    píxeles de alto: tiene el ancho correcto y ninguna altura, así que no
+     *    se parece en nada a lo que documenta.
      */
-    necesitaTexto?: boolean;
+    relleno?: 'texto' | 'ventana';
 }
 
 /**
@@ -75,7 +96,8 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     // ── animations.css · lo ambiental, lo que siempre está ──────────────────
     {
         id: 'blink',
-        necesitaTexto: true,
+        donde: 'pantalla',
+        relleno: 'texto',
         nombre: 'Cursor',
         que: 'Enciende y apaga el bloque del cursor, a saltos y sin desvanecer.',
         cuando: 'Siempre que hay un cursor de texto o una línea escribiéndose.',
@@ -84,6 +106,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'flash-out',
+        donde: 'capa',
         nombre: 'Destello de tema',
         que: 'Un fogonazo que se apaga de golpe, sin transición.',
         cuando: 'Al cambiar entre claro y oscuro.',
@@ -92,6 +115,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'scanline',
+        donde: 'capa',
         nombre: 'Barrido CRT',
         que: 'La línea que baja por la pantalla, sin parar, en nueve segundos.',
         cuando: 'Siempre. Es la respiración del tubo.',
@@ -100,7 +124,8 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'loading-dots',
-        necesitaTexto: true,
+        donde: 'pantalla',
+        relleno: 'texto',
         nombre: 'Puntos de espera',
         que: 'Tres puntos que aparecen de a uno, a saltos.',
         cuando: 'Mientras algo tarda: guardar, consultar el historial.',
@@ -111,6 +136,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     // ── glitch.css · el fallo ambiental ─────────────────────────────────────
     {
         id: 'glitch-jolt',
+        donde: 'pantalla',
         nombre: 'Tirón',
         que: 'La imagen salta de lado en escalones secos. La amplitud sale de `--glitch-amp`.',
         cuando: 'El fallo ambiental, y cada golpe a la pared suelta.',
@@ -119,6 +145,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'band-roll',
+        donde: 'capa',
         nombre: 'Franjas',
         que: 'Bandas horizontales que barren la pantalla de arriba abajo.',
         cuando: 'Acompañan al tirón, y viven mientras dura el golpe.',
@@ -127,6 +154,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'negative-blink',
+        donde: 'capa',
         nombre: 'Vídeo inverso',
         que: 'Invierte la pantalla dos veces en doscientos milisegundos.',
         cuando: 'En los fallos que además dan la vuelta a la imagen.',
@@ -135,6 +163,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'scanline-stutter',
+        donde: 'capa',
         nombre: 'Barrido trabado',
         que: 'El barrido baja, SE QUEDA CLAVADO a media pantalla y termina de golpe.',
         cuando: 'Cuando la máquina se traba. Es el mismo barrido de siempre, atascado.',
@@ -143,7 +172,8 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'ghost-shift',
-        necesitaTexto: true,
+        donde: 'pantalla',
+        relleno: 'texto',
         nombre: 'Fantasma',
         que: 'Una sombra del texto desplazada que no se está quieta.',
         cuando: 'Texto que no termina de fijarse.',
@@ -152,6 +182,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'vhold-slip',
+        donde: 'pantalla',
         nombre: 'Salto de sincronismo',
         que: 'La imagen se va hacia arriba y vuelve, como un vertical mal ajustado.',
         cuando: 'Sólo en los fallos graves, montado sobre el tirón.',
@@ -160,6 +191,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'level-drop',
+        donde: 'capa',
         nombre: 'Caída de nivel',
         que: 'El brillo baja, sube de más y vuelve. Trabaja sobre lo que haya debajo.',
         cuando: 'Cuando la señal pierde fuerza un instante.',
@@ -169,6 +201,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'chroma-drift',
+        donde: 'pantalla',
         nombre: 'Deriva cromática',
         que: 'Los canales de color se separan despacio y vuelven.',
         cuando: 'Parte de la avería de señal, que se gana insistiendo con el tema.',
@@ -177,6 +210,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'chroma-jolt',
+        donde: 'pantalla',
         nombre: 'Tirón cromático',
         que: 'Un salto brusco cada tanto, dentro de la avería. Casi todo el ciclo está quieto.',
         cuando: 'Igual: durante la avería de señal.',
@@ -185,6 +219,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'chroma-swap',
+        donde: 'pantalla',
         nombre: 'Canales cruzados',
         que: 'Rojo y cian se intercambian a saltos.',
         cuando: 'El corazón de la avería cromática. También en el bloqueo.',
@@ -193,6 +228,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'chroma-roll',
+        donde: 'capa',
         nombre: 'Arrastre cromático',
         que: 'Una banda de color que recorre la imagen sin parar.',
         cuando: 'La rasgadura, y el velo de la lluvia binaria del ojo.',
@@ -201,6 +237,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'collapse-drag',
+        donde: 'capa',
         nombre: 'Arrastre del colapso',
         que: 'Barras que caen de arriba abajo y no paran.',
         cuando: 'Durante el fallo total del sistema.',
@@ -209,6 +246,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'collapse-dying',
+        donde: 'capa',
         nombre: 'Muerte del tubo',
         que: 'La imagen se aplasta a una raya, se queda, y se apaga. Un CRT desenchufado.',
         cuando: 'El instante final del colapso, antes del reinicio.',
@@ -217,6 +255,8 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'phantom-open',
+        relleno: 'ventana',
+        donde: 'capa',
         nombre: 'Ventana fantasma',
         que: 'La ventana de error aparece en dos saltos, sin crecer.',
         cuando: 'Cada ventana de error del bloqueo.',
@@ -225,6 +265,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'loose-slab-twitch',
+        donde: 'pantalla',
         nombre: 'Tic del pedazo',
         que: 'Cada once segundos, la zona suelta se invierte un instante. Lo único que la delata.',
         cuando: 'Con la pared aún entera, antes de tocarla.',
@@ -234,6 +275,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'loose-slab-fall',
+        donde: 'pantalla',
         nombre: 'La caída',
         que: 'El pedazo gira y cae fuera de la pantalla.',
         cuando: 'Cuando la pared cede, tras los golpes.',
@@ -242,6 +284,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'loose-slab-scan',
+        donde: 'capa',
         nombre: 'Barrido del pedazo',
         que: 'El trozo se lleva su propio barrido puesto mientras da vueltas.',
         cuando: 'Sólo mientras cae. Es lo que lo hace un trozo de PANTALLA y no una ficha.',
@@ -250,6 +293,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'wall-grain-boil',
+        donde: 'capa',
         nombre: 'Grano hirviendo',
         que: 'La estática del hueco se remueve, a saltos.',
         cuando: 'Por el agujero de la pared, detrás y delante de la lluvia.',
@@ -258,6 +302,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'wall-vhold',
+        donde: 'capa',
         nombre: 'Sincronismo de la lluvia',
         que: 'La señal del agujero se descuadra cada tanto.',
         cuando: 'Sobre la lluvia binaria. ⚠ Nunca sobre el agujero: lo que se descuadra es la señal, no la pared.',
@@ -266,6 +311,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'wall-scar-twitch',
+        donde: 'capa',
         nombre: 'Tic de la cicatriz',
         que: 'La marca que quedó parpadea un instante cada veintitrés segundos.',
         cuando: 'Después del reinicio, para siempre. La pared no vuelve a estar entera.',
@@ -276,6 +322,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     // ── v02.css · la versión vieja ──────────────────────────────────────────
     {
         id: 'v02-indeciso',
+        donde: 'pantalla',
         nombre: 'Indecisión de la v0.2',
         que: 'La avería cromática, pero peor hecha: la versión vieja ni siquiera falla bien.',
         cuando: 'Con la avería de señal activa dentro de la v0.2.',
