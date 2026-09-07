@@ -119,6 +119,35 @@ describe('el contexto', () => {
     });
 });
 
+describe('⚠ y si nace dormido, se le vuelve a pedir que despierte', () => {
+    it('cada llamada reintenta el arranque, no solo la primera', () => {
+        /*
+         * EL FALLO QUE ESTO CIERRA, Y ES DE LOS QUE DEJAN TODO MUDO SIN AVISAR.
+         *
+         * El contexto se crea la primera vez que alguien pide sonar, y ahi se le
+         * pide `resume()`. Pero si esa primera vez NO viene de un gesto de
+         * usuario —y puede pasar: la app pone atributos en el documento al
+         * arrancar, y el sonido los escucha— el navegador lo deja suspendido y
+         * la llamada no sirve de nada.
+         *
+         * A partir de ahi `ensureAudio` devolvia el grafo cacheado sin volver a
+         * intentarlo NUNCA, asi que ningun clic posterior lo despertaba: la app
+         * quedaba muda para el resto de la sesion y sin un solo error.
+         *
+         * Reintentar es gratis —si ya esta corriendo no hace nada— y convierte
+         * un fallo permanente en, como mucho, un sonido perdido.
+         */
+        ensureAudio();
+
+        const ctx = lastContext()!;
+        ctx.state = 'suspended';
+
+        ensureAudio();
+
+        expect(ctx.state).toBe('running');
+    });
+});
+
 describe('el bus maestro es el parlante', () => {
     it('mete la sala con una IR de dos canales generada por codigo', () => {
         ensureAudio();

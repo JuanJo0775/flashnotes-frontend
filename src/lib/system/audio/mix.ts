@@ -58,6 +58,26 @@ export const PEAK_DBFS: Readonly<Record<SoundCategory, number>> = {
 };
 
 /**
+ * Cuánto sube el maestro, en decibelios.
+ *
+ * ⚠ ERA UN AGUJERO DEL DISEÑO Y SE REPORTÓ JUGANDO: «el volumen está muy bajo,
+ * me toca subirle mucho el sonido al compu».
+ *
+ * El presupuesto de arriba es RELATIVO: dice quién suena más que quién, y lo
+ * hace bien. Pero nadie fijaba el nivel ABSOLUTO, así que lo más fuerte de todo
+ * el producto salía a −8 dBFS y una tecla a −24 — correcto entre ellos, y
+ * bajísimo contra cualquier otra pestaña del navegador.
+ *
+ * Y los dos síntomas reportados eran el mismo fallo: subir el equipo para oír la
+ * tecla convierte el zumbido del ambiente en un tono de prueba.
+ *
+ * ⚠ ES UN SOLO NÚMERO AL FINAL DE LA CADENA, y por eso no desordena nada. Subir
+ * las teclas «para oírlas mejor» habría desarmado la jerarquía de atención; esto
+ * sube todo por igual y deja la escalera intacta.
+ */
+export const MASTER_DB = 8;
+
+/**
  * El hueco mínimo entre dos sonidos de la misma familia.
  *
  * Sesenta milisegundos. Escribir rápido son unos 40 ms entre teclas, así que

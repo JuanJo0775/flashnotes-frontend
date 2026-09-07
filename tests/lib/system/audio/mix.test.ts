@@ -16,6 +16,7 @@
 
 import {
     GATE_MS,
+    MASTER_DB,
     PEAK_DBFS,
     allow,
     dbToGain,
@@ -98,6 +99,47 @@ describe('el presupuesto del §8', () => {
 
     it('y `gainFor` es el pico de la categoría ya convertido', () => {
         expect(gainFor('ambience')).toBeCloseTo(dbToGain(PEAK_DBFS.ambience), 9);
+    });
+});
+
+describe('el nivel absoluto', () => {
+    /*
+     * REPORTADO JUGANDO: «el volumen esta muy bajo, me toca subirle mucho el
+     * sonido al compu».
+     *
+     * ⚠ Y ERA UN AGUJERO DEL DISENO, no un ajuste olvidado. El presupuesto del
+     * §8 es RELATIVO: dice quien suena mas que quien, y lo hace bien. Pero nadie
+     * fijaba el nivel ABSOLUTO, asi que lo mas fuerte de todo el producto salia
+     * a −8 dBFS y una tecla a −24 — correcto entre ellos, y bajisimo contra
+     * cualquier otra pestana del navegador.
+     *
+     * Subir el equipo para oir la tecla convierte el zumbido del ambiente en un
+     * tono de prueba: los dos sintomas reportados eran el mismo fallo.
+     */
+
+    it('el maestro SUBE, no baja', () => {
+        expect(MASTER_DB).toBeGreaterThan(0);
+    });
+
+    it('y no tanto como para recortar de continuo', () => {
+        // Con el maestro puesto, lo mas fuerte tiene que quedar cerca del techo
+        // pero no clavado en el: ahi el limitador trabajaria siempre y todo
+        // sonaria aplastado.
+        const masFuerte = Math.max(...Object.values(PEAK_DBFS)) + MASTER_DB;
+
+        expect(masFuerte).toBeLessThanOrEqual(0);
+        expect(masFuerte).toBeGreaterThan(-6);
+    });
+
+    it('⚠ y no cambia el reparto: sube TODO por igual', () => {
+        /*
+         * Es lo que separa esto de «subirle a las teclas». La escalera del §8 es
+         * la jerarquia de atencion; tocarla de a una la desarma. El maestro es un
+         * solo numero al final de la cadena, y por eso no puede desordenar nada.
+         */
+        const distancia = PEAK_DBFS.failure - PEAK_DBFS.keys;
+
+        expect(PEAK_DBFS.failure + MASTER_DB - (PEAK_DBFS.keys + MASTER_DB)).toBe(distancia);
     });
 });
 

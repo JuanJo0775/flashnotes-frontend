@@ -22,6 +22,7 @@ import type { Random } from '@/lib/system/lore';
 import { ensureAudio } from '@/lib/system/audio/context';
 import { PEAK_DBFS, dbToGain } from '@/lib/system/audio/mix';
 import { vary } from '@/lib/system/audio/jitter';
+import { filtro, fuenteDeRuido } from '@/lib/system/audio/voices';
 
 /** La fundamental del zumbido. Grave, pero no tanto como para no oírse. */
 const HUM_HZ = 58;
@@ -108,6 +109,28 @@ export function startAmbience(random: Random = Math.random) {
         lfo.start(t0);
         fuentes.push(osc, lfo);
     }
+
+    /*
+     * EL AIRE DE LA CAJA.
+     *
+     * ⚠ SIN ESTO ES UN TONO DE PRUEBA, y se reportó jugando tal cual: «cuando
+     * sale da un pitido feo». Tres senos puros a 58, 116 y 174 Hz son
+     * exactamente lo que un laboratorio usa para calibrar — y cuanto más subís
+     * el volumen, más se nota que es un oscilador y no una máquina.
+     *
+     * Lo que convierte un zumbido en un CHASIS es el ruido ancho y grave de una
+     * caja de plástico con una fuente dentro. Va en bucle porque no tiene forma
+     * propia: es textura, y una textura no tiene principio ni final.
+     */
+    const aire = fuenteDeRuido(g, random);
+    aire.loop = true;
+    const cuerpo = filtro(g, 'bandpass', vary(180, 0.1, random), 0.7);
+    const gAire = g.ctx.createGain();
+    gAire.gain.value = vary(0.5, 0.15, random) * cuerpo.makeup;
+    aire.connect(cuerpo.nodo).connect(gAire);
+    gAire.connect(salida);
+    aire.start(t0);
+    fuentes.push(aire);
 
     vivo = { salida, fuentes };
 }

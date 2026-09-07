@@ -46,6 +46,21 @@ describe('cómo está hecho', () => {
         expect(osciladores).toBeGreaterThanOrEqual(4);
     });
 
+    it('⚠ NO es un tono: lleva aire, no sólo osciladores', () => {
+        /*
+         * REPORTADO JUGANDO: «cuando sale da un pitido feo».
+         *
+         * Tres senos puros a 58, 116 y 174 Hz son EXACTAMENTE un tono de prueba
+         * de laboratorio. Lo que convierte un zumbido en un chasis es el aire:
+         * el ruido ancho y grave de una caja de plástico con una fuente dentro.
+         * Sin él, cuanto más subís el volumen más se nota que es un oscilador —
+         * y el reporte llegó justo después de subir el volumen del equipo.
+         */
+        startAmbience();
+
+        expect(lastContext()!.count('bufferSource')).toBeGreaterThan(0);
+    });
+
     it('sale por el aire y llega a la salida', () => {
         // El chasis es un objeto de la habitación, no algo que emita la
         // bocinita: va por el mismo camino que la tecla y el relé.

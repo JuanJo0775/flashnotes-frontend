@@ -131,6 +131,15 @@ rompe.
 | `glitch` | −14 dBFS |
 | `failure` | −8 dBFS |
 
+⚠ **Y el presupuesto es RELATIVO: no fija el nivel absoluto.** Eso lo hace el
+maestro, `MASTER_DB`, un solo número al final de la cadena. Era un agujero del
+diseño y se reportó jugando —«el volumen está muy bajo, me toca subirle mucho el
+sonido al compu»— y los dos síntomas eran el mismo fallo: subir el equipo para
+oír la tecla convierte el zumbido del ambiente en un tono de prueba.
+
+Sube **todo por igual** a propósito. Subir las teclas «para oírlas mejor» habría
+desarmado la jerarquía de atención; un maestro no puede desordenar nada.
+
 Y una compuerta: **nunca dos sonidos de la misma familia dentro de 60 ms**. Sin
 eso, escribir rápido dispara una ametralladora.
 
@@ -191,6 +200,12 @@ hipótesis: `awardFrom` ya se llama desde nueve sitios distintos.
 | Botones | `click` en el documento, en captura | no |
 | Arranque, barrido, colapso, apagado | los atributos que la app ya pone en el documento | no |
 | El tema cambiando | el mismo atributo `data-theme` | no |
+
+⚠ **Borrar suena mientras borra, y calla al terminar.** Mantener el retroceso
+apretado hace que el navegador dispare una y otra vez, y cada repetición borra un
+carácter de verdad: suena. La que ya no borra nada —el cursor al principio, el
+campo vacío— no. El modelo no es el interruptor del teclado, es **lo que la
+máquina hace**.
 
 La tecla suena **sólo si el foco está escribiendo de verdad**: con cualquier
 tecla, navegar con el tabulador haría ruido de teclado sin que nadie escriba. Y

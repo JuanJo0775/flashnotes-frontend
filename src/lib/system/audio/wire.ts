@@ -127,15 +127,20 @@ export function startSound(): () => void {
         if (!estaEscribiendo(e.target)) return;
 
         /*
-         * ⚠ LA REPETICIÓN AUTOMÁTICA NO VUELVE A GOLPEAR.
+         * ⚠ LA REPETICIÓN SÍ SUENA, Y ESTO CORRIGE UN ARREGLO MÍO ANTERIOR.
          *
-         * Mantener una tecla apretada hace que el navegador dispare `keydown`
-         * una y otra vez, y tratarlos como pulsaciones nuevas era el «suena todo
-         * el tiempo y sigue sigue» que se reportó jugando. Un teclado de verdad
-         * no hace eso: el interruptor baja UNA vez y se queda abajo. No hay
-         * veinte chasquidos, hay uno.
+         * Primero la maté entera mirando `repeat`, razonando que un teclado de
+         * verdad no vuelve a chasquear con la tecla apretada. Es cierto del
+         * teclado y es el modelo equivocado, porque lo que se pidió fue esto:
+         *
+         *   «el borrar sí debe tener sonido, pero sólo cuando borra; cuando ya
+         *    termina de borrar no sale más el sonido».
+         *
+         * El modelo bueno no es el interruptor: es LO QUE LA MÁQUINA HACE. Cada
+         * repetición borra un carácter de verdad, así que suena. La que ya no
+         * borra nada, no — y de eso se encarga `borraAlgo`, que es donde estaba
+         * el problema desde el principio.
          */
-        if (e.repeat) return;
 
         // Los modificadores solos no golpean nada: pulsar Shift para una
         // mayúscula tiene que sonar UNA vez, la de la letra.

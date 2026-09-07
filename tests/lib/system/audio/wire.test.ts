@@ -291,26 +291,52 @@ describe('⚠ mantener una tecla pulsada NO es teclear muchas veces', () => {
     /** Deja pasar la ventana de la compuerta, para medir lo que se quiere. */
     const fueraDeLaVentana = () => new Promise((r) => setTimeout(r, 70));
 
-    it('la repetición automática del teclado no vuelve a golpear', async () => {
+    it('⚠ mantener borrar SÍ suena mientras borra', async () => {
         /*
-         * FALLO UNO. Mantener una tecla apretada hace que el navegador dispare
-         * `keydown` una y otra vez, y yo trataba cada uno como una pulsación
-         * nueva. Pero un teclado de verdad NO hace eso: el interruptor baja UNA
-         * vez y se queda abajo. No hay veinte chasquidos, hay uno.
+         * CORREGIDO DESPUÉS, Y ES UNA CORRECCIÓN A MI PROPIO ARREGLO. Primero
+         * maté la repetición entera mirando `repeat`, razonando que un teclado
+         * de verdad no vuelve a chasquear con la tecla apretada. Cierto para el
+         * teclado, y equivocado para lo que se pidió:
          *
-         * Se distingue por `repeat`, que el navegador ya marca.
+         *   «el borrar sí debe tener sonido, pero sólo cuando borra; cuando ya
+         *    termina de borrar no sale más el sonido».
+         *
+         * El modelo bueno no es el interruptor: es lo que la MÁQUINA HACE. Cada
+         * repetición borra un carácter de verdad, así que suena. Lo que no suena
+         * es la repetición que ya no borra nada.
          */
         const area = document.createElement('textarea');
-        area.value = 'hola';
+        area.value = 'hola que tal';
         document.body.append(area);
+        area.setSelectionRange(12, 12);
 
         conLaSalaYaEncendida();
         await fueraDeLaVentana();
         const antes = marca();
 
-        for (let i = 0; i < 10; i += 1) {
+        area.dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, repeat: true })
+        );
+
+        expect(fuentes(antes).length).toBeGreaterThan(0);
+        area.remove();
+    });
+
+    it('y deja de sonar en cuanto no queda nada que borrar', async () => {
+        // La otra mitad del reporte, y la que se ve fallando: con el campo ya
+        // vacío, seguir apretando no hace nada — así que no suena nada.
+        const area = document.createElement('textarea');
+        area.value = '';
+        document.body.append(area);
+        area.setSelectionRange(0, 0);
+
+        conLaSalaYaEncendida();
+        await fueraDeLaVentana();
+        const antes = marca();
+
+        for (let i = 0; i < 5; i += 1) {
             area.dispatchEvent(
-                new KeyboardEvent('keydown', { key: 'a', bubbles: true, repeat: true })
+                new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, repeat: true })
             );
             await fueraDeLaVentana();
         }

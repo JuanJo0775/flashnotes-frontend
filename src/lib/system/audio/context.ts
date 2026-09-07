@@ -19,7 +19,7 @@
  */
 
 import { impulseResponse } from '@/lib/system/audio/room';
-import { resetGate } from '@/lib/system/audio/mix';
+import { MASTER_DB, dbToGain, resetGate } from '@/lib/system/audio/mix';
 import {
     BAND_HIGH_HZ,
     BAND_LOW_HZ,
@@ -155,7 +155,26 @@ export function setSoundOn(on: boolean) {
  */
 export function ensureAudio(): AudioGraph | null {
     if (!isSoundOn()) return null;
-    if (grafo) return grafo;
+
+    if (grafo) {
+        /*
+         * ⚠ SE REINTENTA EL ARRANQUE EN CADA LLAMADA, y esto cierra un fallo que
+         * dejaba la app MUDA EL RESTO DE LA SESIÓN sin un solo error.
+         *
+         * El contexto se crea la primera vez que algo pide sonar. Si esa primera
+         * vez no viene de un gesto de usuario —y puede pasar, porque la app pone
+         * atributos en el documento al arrancar y el sonido los escucha— el
+         * navegador lo deja suspendido y aquel `resume()` no sirvió de nada.
+         *
+         * Antes se devolvía el grafo cacheado sin volver a intentarlo nunca, así
+         * que ningún clic posterior lo despertaba. Reintentar es gratis —si ya
+         * está corriendo no hace nada— y convierte un fallo permanente en, como
+         * mucho, un sonido perdido.
+         */
+        if (grafo.ctx.state === 'suspended') void grafo.ctx.resume?.();
+
+        return grafo;
+    }
 
     const Ctor = (globalThis as { AudioContext?: typeof AudioContext }).AudioContext;
     if (!Ctor) return null;
@@ -170,7 +189,9 @@ export function ensureAudio(): AudioGraph | null {
      * navegador recorta con el ruido feo de siempre.
      */
     const master = ctx.createGain();
-    master.gain.value = 1;
+    // El nivel absoluto de todo el producto. Ver `MASTER_DB`: el presupuesto
+    // reparte, y esto decide cuánto se oye el reparto entero.
+    master.gain.value = dbToGain(MASTER_DB);
     master.connect(ctx.destination);
 
     const limitador = ctx.createDynamicsCompressor();
