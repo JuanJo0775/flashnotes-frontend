@@ -14,7 +14,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { COLOR_TOKENS, FONT_TOKENS, TEXT_TOKENS } from '@/lib/system/identity';
+import { COLOR_TOKENS, FONT_TOKENS, SYSTEM_ICONS, TEXT_TOKENS } from '@/lib/system/identity';
 
 const CSS = readFileSync('src/app/globals.css', 'utf8');
 
@@ -60,5 +60,39 @@ describe('las familias', () => {
         expect(FONT_TOKENS).toHaveLength(2);
 
         for (const f of FONT_TOKENS) expect(CSS).toContain(`--${f.id}:`);
+    });
+});
+
+describe('los iconos', () => {
+    /**
+     * ⚠ SE COMPARAN CONTRA `DISENO.md` Y NO CONTRA EL CÓDIGO, y es a propósito:
+     * los iconos son literales repartidos por el JSX —no hay una constante que
+     * los reúna— así que la única lista que existe es la del documento. Atar el
+     * catálogo a ella es lo que impide que se separen.
+     */
+    /*
+     * ⚠ SÓLO EL PÁRRAFO DE LA LISTA, no la sección entera. Debajo, la prosa
+     * cuenta que el botón de papelera ERA `[🗑]` y se quitó por pintarse a
+     * color; leyendo la sección completa, el catálogo acababa exigiendo
+     * justamente el icono que el documento dice que ya no existe.
+     */
+    const SECCION = /## Iconos\n\n(Todos entre corchetes[\s\S]*?)\n\n/.exec(
+        readFileSync('docs/DISENO.md', 'utf8').replace(/\r/g, '')
+    )?.[1];
+
+    it('la sección existe en el documento', () => {
+        // Si alguien la renombra, el test de abajo pasaría con una lista vacía y
+        // diría que todo cuadra sin haber comparado nada.
+        expect(SECCION).toBeDefined();
+    });
+
+    it('el catálogo y el documento dicen los mismos', () => {
+        const enElDoc = [...SECCION!.matchAll(/`(\[[^\]]+\])`/g)].map((m) => m[1]);
+
+        expect(SYSTEM_ICONS.map((i) => i.glifo).sort()).toEqual([...new Set(enElDoc)].sort());
+    });
+
+    it('y cada uno dice para qué es', () => {
+        for (const i of SYSTEM_ICONS) expect(i.para.length).toBeGreaterThan(5);
     });
 });

@@ -77,3 +77,34 @@ export const FONT_TOKENS: readonly DesignToken[] = [
         para: 'VT323. Sólo cabecera, títulos de sección y rótulos. Si se usa para leer, cansa.',
     },
 ];
+
+/** Un icono y lo que quiere decir. */
+export interface SystemIcon {
+    /** El glifo, corchetes incluidos. Es su identidad y lo que ata el test. */
+    glifo: string;
+    para: string;
+}
+
+/**
+ * Los iconos, todos entre corchetes y de trazo fino.
+ *
+ * ⚠ NADA DE EMOJI, y hay una historia detrás. El botón de papelera era `[🗑]` y
+ * se pintaba A COLOR, con mucho más peso que las flechas de al lado: parecía una
+ * calcomanía pegada encima de la interfaz. Es la misma razón por la que el
+ * sistema es monocromo — un solo elemento con color se lleva toda la atención.
+ *
+ * Un test los ata a `DISENO.md`: el documento y esta lista tienen que decir lo
+ * mismo, en las dos direcciones.
+ */
+export const SYSTEM_ICONS: readonly SystemIcon[] = [
+    { glifo: '[+]', para: 'Crear. Nueva nota, nuevo archivo.' },
+    { glifo: '[←]', para: 'Volver.' },
+    { glifo: '[↶]', para: 'Deshacer.' },
+    { glifo: '[↷]', para: 'Rehacer.' },
+    { glifo: '[↧]', para: 'Mandar abajo: mover a la papelera. NO es borrar.' },
+    { glifo: '[X]', para: 'Borrado definitivo. El único que va en rojo.' },
+    { glifo: '[✓]', para: 'Confirmado.' },
+    { glifo: '[✗]', para: 'Fallido, o señal perdida.' },
+    { glifo: '[↓]', para: 'Descargar o desplegar.' },
+    { glifo: '[◐]', para: 'El tema. El semicírculo cambia de lado al invertirlo.' },
+];

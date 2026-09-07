@@ -16,7 +16,7 @@ import {
     SYSTEM_SCREENS_TOTAL,
     type SystemScreen,
 } from '@/lib/system/screensCatalog';
-import { COLOR_TOKENS, FONT_TOKENS, TEXT_TOKENS } from '@/lib/system/identity';
+import { COLOR_TOKENS, FONT_TOKENS, SYSTEM_ICONS, TEXT_TOKENS } from '@/lib/system/identity';
 import MetaTag from '@/components/ui/MetaTag';
 import ProgressBar from '@/components/ui/ProgressBar';
 import {
@@ -213,6 +213,9 @@ export default function Banco() {
                             {ART_TOTAL} piezas · {ART_TOTAL + ART_FACES.length} dibujos
                         </span>
                         <span className="diag-value tabular-nums">
+                            {SYSTEM_ICONS.length} iconos
+                        </span>
+                        <span className="diag-value tabular-nums">
                             {SYSTEM_SCREENS_TOTAL} pantallas
                         </span>
                         <span className="diag-value tabular-nums">
@@ -355,6 +358,30 @@ export default function Banco() {
                 <hr className="rule-dashed" />
 
                 <Seccion
+                    titulo={`ICONOS · LOS ${SYSTEM_ICONS.length}`}
+                    nota="todos entre corchetes y de trazo fino · ninguno es un emoji"
+                >
+                    {SYSTEM_ICONS.map((i) => (
+                        <div
+                            key={i.glifo}
+                            style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}
+                        >
+                            <span style={{ minWidth: '3.5rem', fontSize: 'var(--text-lg)' }}>
+                                {i.glifo}
+                            </span>
+                            <Guia />
+                            <span className="comment">{i.para}</span>
+                        </div>
+                    ))}
+                    <p className="comment">
+                        el de la papelera fue un emoji y se quitó: se pintaba a color y parecía una
+                        calcomanía pegada encima
+                    </p>
+                </Seccion>
+
+                <hr className="rule-dashed" />
+
+                <Seccion
                     titulo={`ARTE · ${ART_TOTAL} PIEZAS, ${ART_TOTAL + ART_FACES.length} DIBUJOS`}
                     nota="la catorce tiene dos caras: el hueco es uno y lo decide el final"
                 >
@@ -384,20 +411,38 @@ export default function Banco() {
                             })),
                         ].map((p) => (
                             <figure key={p.id} style={{ margin: 0 }}>
-                                <pre
-                                    className="mono"
+                                {/*
+                                    ⚠ TODOS EN UNA CAJA DEL MISMO ALTO. Los
+                                    dieciséis miden 40 columnas —eso lo fija
+                                    `ARTE.md`— pero van de diez a catorce filas,
+                                    así que en una rejilla quedaban desparejos y
+                                    la sección se leía como si estuviera rota.
+                                    El alto se toma del más largo y el dibujo se
+                                    centra: cambiar el tamaño de la LETRA para
+                                    igualarlos sería mentir sobre la pieza.
+                                */}
+                                <div
                                     style={{
-                                        margin: 0,
-                                        padding: '0.5rem',
-                                        fontSize: 9,
-                                        lineHeight: 1.15,
+                                        height: '11rem',
+                                        display: 'grid',
+                                        placeItems: 'center',
+                                        overflow: 'hidden',
                                         background: 'var(--color-tertiary)',
                                         border: '1px solid var(--color-line-soft)',
-                                        overflowX: 'auto',
                                     }}
                                 >
-                                    {p.art}
-                                </pre>
+                                    <pre
+                                        className="mono"
+                                        style={{
+                                            margin: 0,
+                                            padding: '0.5rem',
+                                            fontSize: 9,
+                                            lineHeight: 1.15,
+                                        }}
+                                    >
+                                        {p.art}
+                                    </pre>
+                                </div>
                                 <figcaption className="comment" style={{ marginTop: '0.35rem' }}>
                                     {p.id} · {p.pie}
                                 </figcaption>
