@@ -995,19 +995,20 @@ export const ART: readonly ArtPiece[] = [
          * dibujado no habría nada que coleccionar.
          */
         art: [
-            '                  .:;ll,.,.             ',
-            '           .cxK0NWMMMMMMMWN00;.         ',
-            '        :xONWN0xxxo:;::..ccoxXXXd.      ',
-            '      x0KXx;.                 .xKK;     ',
-            '    lx0d,                        .kO    ',
-            '    d;          cMMWWNo            l    ',
-            '    .          ,KWo,xWN.           ,    ',
-            '    cd,         dWWXWWO          :o,    ',
-            '     ,cc;.       ,;Ol.        ;;kl.     ',
-            '       .;00cc.           .;lkKol        ',
-            '          :oOXxxdl0lcOxO0Old,           ',
-            '              ..;:oloc;,                ',
-            '                                        ',
+            '                  .........             ',
+            '       ....:;;c:;ccll;ocl;c,;,,:..      ',
+            '    .,,cloloxxddk00k000kxkxxoxoxl;c,.   ',
+            '   ,;cxxdOO00KXNXNNNNNNNNNNXK0O0Oxll,   ',
+            '   dkdO0KXNNWWWMMMWWWWWWWWWWWNXXXOOOo   ',
+            '   ox0XXKdloc,. :0NWWKl      .,;x0KOd   ',
+            '   Oc:  .,,;.  ;WMMcOMMl   ,:::.   .d   ',
+            '        .:;;:. cMM:,,WMO   ,,,,     d   ',
+            '   ;loo         dNMMMWd.         xdcl   ',
+            '   ,oolodO0k      ..,      OO0xkddol;   ',
+            '   .:ccoxxxkO0kkkkKkk0OO0Odkodxdc::,.   ',
+            '     ..:c,;o;dllxoxxxxxdlod;l:::...     ',
+            '        ...,,,:cc;:;,c:,:;:,...         ',
+            '                 ....                   ',
         ].join('\n'),
     },
     {
@@ -1397,26 +1398,34 @@ export function artOf(piece: ArtPiece): string {
  * dos trazos se siguen leyendo los párpados y trozos del iris. Se ve que había
  * un ojo, se ve dónde estaba, y se ve que alguien lo anuló.
  *
- * ⚠ EL TRAZO SE MIDE PERPENDICULAR, NO EN VERTICAL. El aspa va muy tendida
- * —cuarenta columnas por trece filas— así que una tolerancia medida en vertical
- * se convierte en una banda horizontal enorme: salía un lazo, no una equis.
+ * ⚠ Y EL ASPA LLEVA UN CANAL DE AIRE ALREDEDOR. Ésta es la parte que la hace
+ * legible, y sin ella no funcionaba: la `X` YA EXISTE en la rampa de tonos del
+ * dibujo, así que dos trazos de equis sobre un campo lleno de equis se leían
+ * como más textura. Vaciando una celda a cada lado del trazo, el aspa deja de
+ * competir con el dibujo y pasa a estar POR DELANTE de él — que es lo que hace
+ * una marca puesta encima: ocupa sitio y tapa un poco alrededor.
+ *
+ * ⚠ Y EL TRAZO SE MIDE PERPENDICULAR, NO EN VERTICAL. El aspa va muy tendida
+ * —cuarenta columnas por catorce filas— así que una tolerancia medida en
+ * vertical se convierte en una banda horizontal enorme: salía un lazo.
  */
 const EYE_ID = 'eye';
 
 const EYE_BARRED = [
-    '   X              .:;ll,.,.         X   ',
-    '   XXXX    .cxK0NWMMMMMMMWN00;.  XXXX   ',
-    '      XXXXONWN0xxxo:;::..ccoxXXXXX      ',
-    '      x0KXXXX              XXXXxKK;     ',
-    '    lx0d,   XXXX        XXXX     .kO    ',
-    '    d;         XXXXWWXXXX          l    ',
-    '    .          ,KWXXXXN.           ,    ',
-    '    cd,        XXXXXWXXXX        :o,    ',
-    '     ,cc;.  XXXX ,;Ol.  XXXX  ;;kl.     ',
-    '       .;XXXX.           .;XXXXl        ',
-    '      XXXX:oOXxxdl0lcOxO0Old, XXXX      ',
-    '   XXXX       ..;:oloc;,         XXXX   ',
-    '   X                                X   ',
+    '  X               .........          X  ',
+    '  XXXX ....:;;c:;ccll;ocl;c,;,,:. XXXX  ',
+    '     XXXX loxxddk00k000kxkxxox XXXX .   ',
+    '   ,;cx XXXX KXNXNNNNNNNNNN XXXX xll,   ',
+    '   dkdO0KX XXXX MMWWWWWW XXXX XXXOOOo   ',
+    '   ox0XXKdloc XXX  WW  XXX   .,;x0KOd   ',
+    '   Oc:  .,,;.    XXXXXX    ,:::.   .d   ',
+    '        .:;;:.   XXXXXX    ,,,,     d   ',
+    '   ;loo       XXX  MM  XXX       xdcl   ',
+    '   ,oolodO XXXX   ..,    XXXX xkddol;   ',
+    '   .:cc XXXX 0kkkkKkk0OO0Od XXXX ::,.   ',
+    '     XXXX ;o;dllxoxxxxxdlod;l: XXXX     ',
+    '  XXXX  ...,,,:cc;:;,c:,:;:,...   XXXX  ',
+    '  X              ....                X  ',
 ].join('\n');
 
 /**
