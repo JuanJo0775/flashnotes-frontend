@@ -843,7 +843,7 @@ NOTAS CREADAS           12
 BYTES ESCRITOS          8.4kb
 INTEGRIDAD              100%
 TEMA                    CLARO
-SECRETOS                [█░░░░░░░░░░░░░] 6/33 · SE FIJA
+MMMM?                   [█░░░░░░░░░░░░░] 6/33 · SE FIJA
 PIEZAS                  [██░░░░░░░░░░░░] 2/16 · LINDO
 VSYNC-TEST              42  (7 partidas)
 VSYNC-TEST DEGRADADO    SIN DATOS
@@ -901,6 +901,18 @@ Cuenta **sólo lo que provocaste vos** (§ [Los 33 secretos](#los-33-secretos-qu
 Lo ambiental te pasa, no lo encontrás. El total sale de la longitud del registro,
 nunca de un número escrito a mano. Y no puede verse en `0/N`: para leer esa fila
 ya tuviste que encontrar el panel, así que lo primero que ves es `1/N`.
+
+> ⚠ **La fila no se llama `SECRETOS`: se llama `MMMM?`**, y este documento la
+> pintó mal durante mucho tiempo. No es un marcador de posición olvidado — es
+> deliberado y está razonado en `i18n/es.ts`: la máquina **no sabe** cómo llamar
+> a eso. Poner «SECRETOS» sería la app hablándole al jugador por encima del
+> panel, y rompería la ficción justo donde más cuesta sostenerla: un instrumento
+> que se explica a sí mismo deja de ser un instrumento. Es igual en los dos
+> idiomas porque no es una palabra, es un ruido — la misma voz que el `LINDO` de
+> las piezas.
+>
+> El título de esta sección la llama `SECRETOS` porque habla de la LECTURA, no
+> de la etiqueta.
 
 `6/33` es un dato. **Una barra y un rango son una invitación:** se ve de un
 vistazo que falta mucho, y el nombre del escalón siguiente da curiosidad sin

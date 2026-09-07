@@ -24,6 +24,7 @@ import { SECRET_IDS } from '@/hooks/useSystemState';
 import { ART, ART_TOTAL } from '@/lib/system/asciiArt';
 import { DUMP_COLS, DUMP_ROWS, PATTERN_LEN } from '@/lib/system/lockoutPuzzle';
 import { LOCKOUT_AT } from '@/lib/system/collapseEscalation';
+import { es } from '@/i18n/es';
 
 const DOC = readFileSync(join(process.cwd(), 'docs', 'SECRETOS.md'), 'utf8');
 
@@ -141,6 +142,25 @@ describe('docs/SECRETOS.md dice la verdad', () => {
         // Y ninguna mención al conjunto puede citar otro número.
         expect(DOC).toContain(`Los ${total} secretos`);
         expect(DOC).not.toMatch(/lista de los (?!33\b)\d+\*\*/);
+    });
+
+    it('⚠ la muestra del panel usa las etiquetas que la app pinta de verdad', () => {
+        /*
+         * ⚠ LA FILA NO SE LLAMA «SECRETOS»: SE LLAMA `MMMM?`. Es deliberado
+         * —la máquina no sabe cómo llamar a eso, y ponerle nombre sería la app
+         * hablándole al jugador por encima del panel— y este documento la pintó
+         * como `SECRETOS` durante mucho tiempo. Quien viniera a leerlo se
+         * encontraba un panel distinto del que describe.
+         */
+        const panel = DOC.slice(
+            DOC.indexOf('⚙ Diagnóstico del sistema'),
+            DOC.indexOf('[EFECTOS: ON]')
+        );
+
+        expect(panel.length).toBeGreaterThan(0);
+        expect(panel).toContain(es['diag.secrets']);
+        expect(panel).toContain(es['diag.pieces']);
+        expect(panel).toContain(es['diag.piecesNote']);
     });
 
     it('⚠ los enlaces internos del documento apuntan a algo que existe', () => {

@@ -3,7 +3,7 @@
 /**
  * Cuánto conocés del sistema, dicho de una forma que dé ganas de seguir.
  *
- * `7/28` es un dato. Una barra y un rango son una invitación: se ve de un
+ * `7/33` es un dato. Una barra y un rango son una invitación: se ve de un
  * vistazo que falta mucho, y el nombre del escalón siguiente da curiosidad sin
  * decir de qué va.
  *

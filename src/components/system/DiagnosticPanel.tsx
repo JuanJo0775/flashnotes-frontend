@@ -242,7 +242,7 @@ export default function DiagnosticPanel({
                     </Reading>
                     {/* No es un dato más: es lo que le dice a alguien cuánto
                         conoce del sistema, y por eso lleva barra y escalón. Un
-                        `7/28` seco se lee y se olvida; una barra a un cuarto da
+                        `7/33` seco se lee y se olvida; una barra a un cuarto da
                         ganas de saber qué hay en los otros tres. */}
                     <Reading label={t('diag.secrets')}>
                         <span className="flex items-center gap-2">
