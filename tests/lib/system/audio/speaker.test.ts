@@ -20,6 +20,7 @@ import {
     BAND_HIGH_HZ,
     BAND_LOW_HZ,
     SATURATION,
+    bandpassMakeup,
     saturationCurve,
 } from '@/lib/system/audio/speaker';
 
@@ -117,6 +118,51 @@ describe('la curva de saturación', () => {
         }
     });
 
+    it('⚠ NO CAMBIA EL NIVEL: ganancia unidad en senal pequena', () => {
+        /*
+         * ESTE ES EL TEST QUE FALTABA Y COSTO QUE NO SE OYERA NADA.
+         *
+         * Un saturador tiene que DEFORMAR los picos sin tocar el nivel. Si la
+         * curva se normaliza para que ±1 caiga en ±1, las senales pequenas
+         * salen multiplicadas por `k/tanh(k)` — o sea que la cantidad de
+         * saturacion se convierte, sin que nadie lo escriba, en un control de
+         * volumen escondido.
+         *
+         * Con dos caminos que saturan distinto (la bocinita a 2,2 y el aire a
+         * 0,6) eso son SEIS DECIBELIOS de desequilibrio invisible, encima de
+         * los que el §8 reparte a proposito. Medido en el navegador: la tecla
+         * salia a −33 dBFS y el bip la tapaba entera.
+         *
+         * La unica forma de que el presupuesto de `mix.ts` signifique algo es
+         * que nada por debajo lo altere en secreto.
+         */
+        const pequena = 0.02;
+
+        for (const cantidad of [0.6, 1.2, 2.2, 4]) {
+            const n = 40_001;
+            const curva = saturationCurve(cantidad, n);
+            const centro = (n - 1) / 2;
+            const i = Math.round(centro + pequena * centro);
+            const entrada = (i / (n - 1)) * 2 - 1;
+
+            // Sale practicamente lo que entra, sature lo que sature.
+            expect(curva[i] / entrada).toBeCloseTo(1, 2);
+        }
+    });
+
+    it('y nunca devuelve mas de lo que se le da', () => {
+        // La consecuencia de lo anterior: si en algun punto la salida superara
+        // a la entrada, la curva estaria amplificando y volveria a ser un
+        // control de volumen disfrazado.
+        const n = 1_025;
+        const curva = saturationCurve(SATURATION, n);
+
+        for (let i = 0; i < n; i += 1) {
+            const entrada = (i / (n - 1)) * 2 - 1;
+            expect(Math.abs(curva[i])).toBeLessThanOrEqual(Math.abs(entrada) + 1e-9);
+        }
+    });
+
     it('y con saturación cero no hace nada, para poder apagarla y comparar', () => {
         // El banco de pruebas necesita oír el parlante en on y en off. Si el
         // cero no fuera la identidad, «off» seguiría coloreando.
@@ -126,5 +172,68 @@ describe('la curva de saturación', () => {
         for (let i = 0; i < n; i += 1) {
             expect(curva[i]).toBeCloseTo((i / (n - 1)) * 2 - 1, 6);
         }
+    });
+});
+
+describe('lo que un pasabanda estrecho se lleva, y hay que devolver', () => {
+    /*
+     * ⚠ ESTA ES LA SEGUNDA CAUSA DE QUE NO SE OYERA NADA, Y LA GORDA.
+     *
+     * Las voces fisicas son ruido de banda ancha metido por pasabandas
+     * estrechos: asi se consigue que suenen a plastico y a metal en vez de a
+     * siseo. Pero un pasabanda a 310 Hz con Q=6,5 deja pasar unos 48 Hz de los
+     * 24 000 disponibles — TIRA EL 99,8% DE LA ENERGIA.
+     *
+     * El error de modelo fue tratar el numero de la envolvente como el NIVEL DE
+     * SALIDA. No lo es: es un multiplicador sobre lo que el filtro deja pasar,
+     * que ya viene diezmado. El bip no cruza ningun filtro estrecho y sale
+     * entero, y por eso tapaba a la tecla por 28 dB medidos en el navegador.
+     *
+     * La compensacion no es un numero a ojo: para ruido blanco la amplitud que
+     * sobrevive va con la RAIZ de la fraccion de espectro que el filtro
+     * conserva, y esa fraccion es (f0/Q) sobre la mitad del muestreo.
+     */
+
+    it('devuelve 1 cuando el filtro no quita nada', () => {
+        // Un ancho de banda igual a todo el espectro no tiene que compensar.
+        expect(bandpassMakeup(24_000, 1, 48_000)).toBeCloseTo(1, 3);
+    });
+
+    it('cuanto mas estrecho, mas hay que devolver', () => {
+        const ancho = bandpassMakeup(1_000, 1, 48_000);
+        const estrecho = bandpassMakeup(1_000, 8, 48_000);
+
+        expect(estrecho).toBeGreaterThan(ancho);
+    });
+
+    it('y cuanto mas grave a igual Q, tambien: la banda es mas angosta', () => {
+        // Q es un ancho RELATIVO, asi que a 300 Hz cubre mucho menos hertzios
+        // que a 3 kHz. Es la razon de que el cuerpo de la tecla sea el que mas
+        // pierde de todas las capas.
+        expect(bandpassMakeup(300, 6.5, 48_000)).toBeGreaterThan(
+            bandpassMakeup(3_000, 6.5, 48_000)
+        );
+    });
+
+    it('el cuerpo de la tecla necesita del orden de veinte veces', () => {
+        // 310 Hz con Q 6,5 son unos 48 Hz de banda sobre 24 000.
+        const m = bandpassMakeup(310, 6.5, 48_000);
+
+        expect(m).toBeGreaterThan(15);
+        expect(m).toBeLessThan(30);
+    });
+
+    it('⚠ pero nunca se dispara: hay tope', () => {
+        /*
+         * Sin tope, un Q alto a frecuencia baja pide multiplicar por cientos y
+         * lo que sale es el ruido de cuantizacion amplificado, no un sonido.
+         * El tope convierte un fallo silencioso en uno acotado.
+         */
+        expect(bandpassMakeup(20, 40, 48_000)).toBeLessThanOrEqual(40);
+        expect(bandpassMakeup(1, 1_000, 48_000)).toBeLessThanOrEqual(40);
+    });
+
+    it('nunca atenua, aunque la banda sea mas ancha que el espectro', () => {
+        expect(bandpassMakeup(20_000, 0.2, 48_000)).toBeGreaterThanOrEqual(1);
     });
 });

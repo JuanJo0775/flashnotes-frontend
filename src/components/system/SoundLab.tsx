@@ -82,7 +82,7 @@ export default function SoundLab() {
                 <p className="comment">
                     {/* Sin traducir a propósito: esto no existe en producción, y
                         pasarlo por i18n sería mantener texto que nadie va a leer. */}
-                    {'// no existe fuera de desarrollo · la pagina esta muda hasta el primer gesto'}
+                    no existe fuera de desarrollo · la pagina esta muda hasta el primer gesto
                 </p>
             </header>
 
@@ -126,7 +126,7 @@ export default function SoundLab() {
                         >
                             [{v.label}]
                         </button>
-                        <span className="comment">{`// ${v.nota}`}</span>
+                        <span className="comment">{v.nota}</span>
                     </div>
                 ))}
 
@@ -145,7 +145,7 @@ export default function SoundLab() {
                     >
                         [ERROR]
                     </button>
-                    <span className="comment">{'// la bocinita · tiene que sonar barata'}</span>
+                    <span className="comment">la bocinita · tiene que sonar barata</span>
                 </div>
             </section>
 
@@ -154,7 +154,7 @@ export default function SoundLab() {
             <section className="flex flex-col gap-3">
                 <h2 className="section-header">LA TECLA, CAPA POR CAPA</h2>
                 <p className="comment">
-                    {'// si suena mal hay que saber CUAL falla · mezcladas es imposible'}
+                    si suena mal hay que saber CUAL falla · mezcladas es imposible
                 </p>
                 <div className="flex flex-wrap items-center gap-3">
                     {KEY_LAYERS.map((capa) => (
@@ -218,7 +218,7 @@ export default function SoundLab() {
                         [GLITCH]
                     </button>
                     <span className="comment">
-                        {'// mas temblor = mas fuerte · como la imagen'}
+                        mas temblor = mas fuerte · como la imagen
                     </span>
                 </div>
             </section>
@@ -239,7 +239,7 @@ export default function SoundLab() {
                     <span className="diag-value tabular-nums">{sala}%</span>
                 </label>
                 <p className="comment">
-                    {'// a 0 es un navegador · a 50 es una habitacion · comparalo con la tecla'}
+                    a 0 es un navegador · a 50 es una habitacion · comparalo con la tecla
                 </p>
             </section>
 
@@ -248,7 +248,7 @@ export default function SoundLab() {
             <section className="flex flex-col gap-3">
                 <h2 className="section-header">A VELOCIDAD DE ESCRITURA</h2>
                 <p className="comment">
-                    {'// la prueba de verdad · aca actua la compuerta de 60 ms, como en la app'}
+                    la prueba de verdad · aca actua la compuerta de 60 ms, como en la app
                 </p>
                 <textarea
                     className="editor-textarea"

@@ -25,6 +25,7 @@ import type { AudioGraph } from '@/lib/system/audio/context';
 import type { SoundCategory } from '@/lib/system/audio/mix';
 import type { Random } from '@/lib/system/lore';
 import { vary, varyInt } from '@/lib/system/audio/jitter';
+import { bandpassMakeup } from '@/lib/system/audio/speaker';
 
 /**
  * A qué familia de la mezcla pertenece cada voz.
@@ -119,13 +120,33 @@ function percutir(gain: GainNode, t0: number, pico: number, ataqueS: number, lar
     gain.gain.exponentialRampToValueAtTime(0.0001, t0 + largoS);
 }
 
-/** Un filtro con su tipo, frecuencia y estrechez, en una línea. */
-function filtro(g: AudioGraph, type: BiquadFilterType, hz: number, q: number): BiquadFilterNode {
-    const f = g.ctx.createBiquadFilter();
-    f.type = type;
-    f.frequency.value = hz;
-    f.Q.value = q;
-    return f;
+/**
+ * Un filtro, y CUÁNTO HAY QUE DEVOLVERLE.
+ *
+ * ⚠ LOS DOS VALORES VIENEN JUNTOS A PROPÓSITO, y es la lección más cara de este
+ * módulo. El número que se le pasa a `percutir` no es el nivel de salida: es un
+ * multiplicador sobre lo que el filtro deja pasar, y un pasabanda estrecho deja
+ * pasar casi nada. Tratarlos como cosas separadas fue lo que dejó la tecla 28 dB
+ * por debajo de la bocinita, que no cruza ningún filtro y sale entera.
+ *
+ * Devolviéndolos en el mismo sitio, olvidarse de compensar cuesta trabajo.
+ */
+function filtro(
+    g: AudioGraph,
+    type: BiquadFilterType,
+    hz: number,
+    q: number
+): { nodo: BiquadFilterNode; makeup: number } {
+    const nodo = g.ctx.createBiquadFilter();
+    nodo.type = type;
+    nodo.frequency.value = hz;
+    nodo.Q.value = q;
+
+    // Sólo los pasabanda tiran espectro; un pasaaltos o un pasabajos conservan
+    // media banda y no hay nada que devolver.
+    const makeup = type === 'bandpass' ? bandpassMakeup(hz, q, g.ctx.sampleRate) : 1;
+
+    return { nodo, makeup };
 }
 
 /**
@@ -166,8 +187,14 @@ export function key(
         const chasquido = fuenteDeRuido(g, random);
         const agudo = filtro(g, 'bandpass', vary(2_800, 0.08, random), 1.1);
         const gChasquido = g.ctx.createGain();
-        percutir(gChasquido, t0, vary(0.5, 0.15, random), 0.0006, vary(0.008, 0.2, random));
-        chasquido.connect(agudo).connect(gChasquido);
+        percutir(
+            gChasquido,
+            t0,
+            vary(0.5, 0.15, random) * agudo.makeup,
+            0.0006,
+            vary(0.008, 0.2, random)
+        );
+        chasquido.connect(agudo.nodo).connect(gChasquido);
         gChasquido.connect(g.air);
         gChasquido.connect(g.room);
         arrancar(chasquido, t0, random);
@@ -180,8 +207,8 @@ export function key(
         const resonancia = filtro(g, 'bandpass', vary(310, 0.05, random), 6.5);
         const gCuerpo = g.ctx.createGain();
         const largoCuerpo = vary(0.07, 0.12, random);
-        percutir(gCuerpo, t0, vary(0.42, 0.12, random), 0.001, largoCuerpo);
-        cuerpo.connect(resonancia).connect(gCuerpo);
+        percutir(gCuerpo, t0, vary(0.42, 0.12, random) * resonancia.makeup, 0.001, largoCuerpo);
+        cuerpo.connect(resonancia.nodo).connect(gCuerpo);
         gCuerpo.connect(g.air);
         gCuerpo.connect(g.room);
         arrancar(cuerpo, t0, random);
@@ -218,8 +245,14 @@ export function tick(g: AudioGraph, random: Random = Math.random) {
     const golpe = fuenteDeRuido(g, random);
     const f = filtro(g, 'bandpass', vary(1_900, 0.09, random), 2.2);
     const gGolpe = g.ctx.createGain();
-    percutir(gGolpe, t0, vary(0.34, 0.15, random), 0.0005, vary(0.014, 0.18, random));
-    golpe.connect(f).connect(gGolpe);
+    percutir(
+        gGolpe,
+        t0,
+        vary(0.34, 0.15, random) * f.makeup,
+        0.0005,
+        vary(0.014, 0.18, random)
+    );
+    golpe.connect(f.nodo).connect(gGolpe);
     gGolpe.connect(g.air);
     gGolpe.connect(g.room);
     arrancar(golpe, t0, random);
@@ -228,8 +261,8 @@ export function tick(g: AudioGraph, random: Random = Math.random) {
     const madera = fuenteDeRuido(g, random);
     const fm = filtro(g, 'bandpass', vary(430, 0.06, random), 5);
     const gMadera = g.ctx.createGain();
-    percutir(gMadera, t0, vary(0.2, 0.15, random), 0.001, vary(0.016, 0.18, random));
-    madera.connect(fm).connect(gMadera);
+    percutir(gMadera, t0, vary(0.2, 0.15, random) * fm.makeup, 0.001, vary(0.016, 0.18, random));
+    madera.connect(fm.nodo).connect(gMadera);
     gMadera.connect(g.air);
     arrancar(madera, t0, random);
     madera.stop(t0 + 0.018);
@@ -285,8 +318,8 @@ export function relay(g: AudioGraph, random: Random = Math.random) {
         const f = filtro(g, 'bandpass', vary(hz, 0.08, random), 3.5);
         const gain = g.ctx.createGain();
 
-        percutir(gain, t0 + offset, pico, 0.0004, 0.006);
-        src.connect(f).connect(gain);
+        percutir(gain, t0 + offset, pico * f.makeup, 0.0004, 0.006);
+        src.connect(f.nodo).connect(gain);
         gain.connect(g.air);
         gain.connect(g.room);
 
@@ -342,11 +375,12 @@ export function glitchBurst(
         const t = t0 + (i / tramos) * largo;
         const caida = 1 - i / tramos;
 
-        gain.gain.setValueAtTime(i % 2 === 0 ? pico * caida : pico * 0.12 * caida, t);
+        const nivel = (i % 2 === 0 ? pico : pico * 0.12) * caida * f.makeup;
+        gain.gain.setValueAtTime(nivel, t);
     }
     gain.gain.setValueAtTime(0, t0 + largo);
 
-    src.connect(f).connect(gain);
+    src.connect(f.nodo).connect(gain);
     gain.connect(g.speaker);
     gain.connect(g.room);
 

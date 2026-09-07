@@ -177,6 +177,75 @@ describe('la tecla, que es la que más va a sonar', () => {
     });
 });
 
+describe('⚠ cada capa devuelve lo que su filtro se lleva', () => {
+    /*
+     * LA CORRECCION QUE HIZO QUE ESTO SE OYERA.
+     *
+     * Medido en el navegador antes de existir: la tecla salia a −47,5 dBFS de
+     * RMS y el bip a −19,4. Veintiocho decibelios, cuando el §8 pide seis. La
+     * tecla estaba, pero debajo de todo.
+     *
+     * La causa era de modelo: el numero de la envolvente NO es el nivel de
+     * salida, es un multiplicador sobre lo que el filtro deja pasar — y un
+     * pasabanda estrecho deja pasar casi nada. La bocinita no cruza ninguno y
+     * salia entera.
+     */
+
+    it('el cuerpo de la tecla pide MUCHO mas de uno, y eso es correcto', () => {
+        const g = ensureAudio()!;
+        const antes = lastContext()!.created.length;
+
+        key(g, azar(3), ['body']);
+
+        const pico = Math.max(
+            ...nuevos(antes)
+                .filter((n) => n.kind === 'gain')
+                .flatMap((n) => n.gain.calls.map((c) => c.value))
+        );
+
+        // Su filtro esta a 310 Hz con Q 6,5: se lleva mas del 99% de la energia.
+        expect(pico).toBeGreaterThan(5);
+    });
+
+    it('y el chasquido, que es ancho, pide bastante menos', () => {
+        /*
+         * Es la comprobacion de que la compensacion depende del FILTRO y no es
+         * un numero pegado a ojo. El chasquido va a 2,8 kHz con Q 1,1 — banda
+         * ancha y aguda— asi que pierde mucho menos que el cuerpo.
+         */
+        const g = ensureAudio()!;
+
+        const picoDe = (capa: 'click' | 'body') => {
+            const antes = lastContext()!.created.length;
+            key(g, azar(3), [capa]);
+            return Math.max(
+                ...nuevos(antes)
+                    .filter((n) => n.kind === 'gain')
+                    .flatMap((n) => n.gain.calls.map((c) => c.value))
+            );
+        };
+
+        expect(picoDe('click')).toBeLessThan(picoDe('body'));
+    });
+
+    it('la bocinita NO compensa nada: no cruza ningun filtro estrecho', () => {
+        // Y si algun dia alguien le mete uno, este test recuerda por que su
+        // nivel esta donde esta.
+        const g = ensureAudio()!;
+        const antes = lastContext()!.created.length;
+
+        beep(g, { hz: 880, ms: 90 }, azar(6));
+
+        const pico = Math.max(
+            ...nuevos(antes)
+                .filter((n) => n.kind === 'gain')
+                .flatMap((n) => n.gain.calls.map((c) => c.value))
+        );
+
+        expect(pico).toBeLessThanOrEqual(1);
+    });
+});
+
 describe('las capas de la tecla, sueltas', () => {
     /*
      * ⚠ PARA QUÉ EXISTE ESTO, QUE NO ES PARA LOS TESTS.

@@ -34,9 +34,20 @@ export const SATURATION = 2.2;
 /**
  * La tabla que se le pasa a un `WaveShaperNode`.
  *
- * `tanh` normalizada: manda ±1 a ±1 exactos y va perdiendo pendiente según se
- * acerca a los extremos, que es lo que aplasta los picos y genera los armónicos
- * IMPARES que el oído lee como «con cuerpo».
+ * `tanh(k·x)/k`: pendiente UNIDAD en el origen y cada vez menos según se acerca
+ * a los extremos. Eso aplasta los picos y genera los armónicos IMPARES que el
+ * oído lee como «con cuerpo».
+ *
+ * ⚠ SE DIVIDE POR `k` Y NO POR `tanh(k)`, Y LA DIFERENCIA COSTÓ QUE NO SE OYERA
+ * NADA. Normalizando para que ±1 caiga en ±1 —que es lo que parece correcto—
+ * las señales pequeñas salen multiplicadas por `k/tanh(k)`, o sea que la
+ * cantidad de saturación se convierte en un control de volumen escondido. Con
+ * la bocinita a 2,2 y el aire a 0,6 eso eran SEIS decibelios de desequilibrio
+ * que nadie escribió, encima de los que el §8 reparte a propósito: la tecla
+ * salía a −33 dBFS y el bip la tapaba entera.
+ *
+ * Un saturador deforma; no sube ni baja. Si algo por debajo altera el nivel en
+ * secreto, el presupuesto de `mix.ts` deja de significar nada.
  *
  * ⚠ LA CURVA TIENE QUE SER IMPAR. Una curva asimétrica genera armónicos pares,
  * suena a avería en vez de a altavoz, y mete corriente continua en el bus — o
@@ -54,14 +65,52 @@ export function saturationCurve(
     // admitiria un `SharedArrayBuffer` que el nodo no puede usar.
 ): Float32Array<ArrayBuffer> {
     const curva = new Float32Array(samples);
-    const techo = Math.tanh(amount);
 
     for (let i = 0; i < samples; i += 1) {
         // De índice a la entrada del shaper, que va de −1 a 1.
         const x = (i / (samples - 1)) * 2 - 1;
 
-        curva[i] = amount === 0 ? x : Math.tanh(amount * x) / techo;
+        curva[i] = amount === 0 ? x : Math.tanh(amount * x) / amount;
     }
 
     return curva;
+}
+
+/**
+ * El tope de la compensación.
+ *
+ * Sin él, un Q alto a frecuencia baja pide multiplicar por cientos, y lo que
+ * sale amplificado no es el sonido: es el ruido de cuantización. El tope
+ * convierte un fallo silencioso en uno acotado.
+ */
+export const MAKEUP_MAX = 40;
+
+/**
+ * Lo que hay que devolverle a un pasabanda estrecho.
+ *
+ * ⚠ POR QUÉ EXISTE ESTO, QUE ES LA CORRECCIÓN MÁS IMPORTANTE DEL SISTEMA.
+ *
+ * Las voces físicas se construyen metiendo ruido de banda ancha por pasabandas
+ * estrechos: así una tecla suena a plástico y a placa en vez de a siseo. Pero un
+ * pasabanda a 310 Hz con Q 6,5 deja pasar unos 48 Hz de los 24 000 disponibles,
+ * o sea que TIRA EL 99,8% DE LA ENERGÍA.
+ *
+ * El error que esto arregla fue tratar el número de la envolvente como el nivel
+ * de salida. No lo es: es un multiplicador sobre lo que el filtro deja pasar, y
+ * eso ya viene diezmado. La bocinita no cruza ningún filtro estrecho y sale
+ * entera — medido en el navegador, tapaba a la tecla por 28 dB, cuando el §8
+ * pide 6.
+ *
+ * Para ruido, la amplitud que sobrevive va con la RAÍZ de la fracción de
+ * espectro conservada, y esa fracción es el ancho de banda (`f0/Q`) sobre la
+ * mitad de la frecuencia de muestreo.
+ *
+ * Y nunca atenúa: si la banda es más ancha que el espectro no hay nada que
+ * devolver, pero tampoco nada que quitar.
+ */
+export function bandpassMakeup(f0: number, q: number, sampleRate: number): number {
+    const ancho = f0 / q;
+    const fraccion = ancho / (sampleRate / 2);
+
+    return Math.min(MAKEUP_MAX, Math.max(1, 1 / Math.sqrt(fraccion)));
 }
