@@ -46,7 +46,13 @@ export const SATURATION = 2.2;
  * pruebas necesita poder apagar el parlante para comparar, y un «apagado» que
  * siguiera coloreando no serviría de nada.
  */
-export function saturationCurve(amount: number = SATURATION, samples: number = 4_097): Float32Array {
+export function saturationCurve(
+    amount: number = SATURATION,
+    samples: number = 4_097
+    // El respaldo se declara `ArrayBuffer` y no el `ArrayBufferLike` que
+    // TypeScript infiere: `WaveShaperNode.curve` rechaza lo segundo, porque
+    // admitiria un `SharedArrayBuffer` que el nodo no puede usar.
+): Float32Array<ArrayBuffer> {
     const curva = new Float32Array(samples);
     const techo = Math.tanh(amount);
 

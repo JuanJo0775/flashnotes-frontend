@@ -48,7 +48,10 @@ export function impulseResponse(
     seconds: number = ROOM_SECONDS,
     decay: number = ROOM_DECAY,
     random: Random = Math.random
-): [Float32Array, Float32Array] {
+): [Float32Array<ArrayBuffer>, Float32Array<ArrayBuffer>] {
+    // El parámetro de `Float32Array` no es adorno: `copyToChannel` exige un
+    // respaldo de `ArrayBuffer` y rechaza el `ArrayBufferLike` que TypeScript
+    // infiere por defecto, que además admitiría un `SharedArrayBuffer`.
     const largo = Math.floor(sampleRate * seconds);
 
     const izq = new Float32Array(largo);
