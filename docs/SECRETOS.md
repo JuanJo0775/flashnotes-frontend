@@ -2406,7 +2406,7 @@ en `v02.ts` · `tests/lib/system/artNameGate.test.ts`
 | 11 | **CINTA PERFORADA** · todo está ahí, ilegible | `history` | `//history` | ✅ |
 | 12 | **FARO** · la luz estaba ahí desde el principio | `guidance` | Seguir la pista: teclear algo que no existe y hacerle caso a `//help` | ✅ |
 | 13 | **CARITA** · era broma, ya le dije | `prank` | La broma del `n` en `//reset` | ✅ |
-| 14 | **OJO** · te estoy viendo | `entity` | Hablar con el ente | ❌ |
+| 14 | **OJO** · te estoy viendo — o **OJO VEDADO** · usted no vio nada, si lo reportaste | `entity` | Hablar con el ente | ❌ |
 | 15 | **BIBLIOTECA** · todo lo que usted volvió a escribir | `many-notes` | Juntar doce notas | ✅ |
 | 16 | **LLAVE** · la cerradura ya no existe | `blackout-puzzle` | Resolver el puzzle del fallo total | ✅ |
 

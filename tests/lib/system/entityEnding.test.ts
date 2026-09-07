@@ -134,6 +134,44 @@ describe('camino B · reportarlo', () => {
     });
 });
 
+describe('⚠ y el ojo tapado tampoco se llama igual', () => {
+    /*
+     * La pieza es una y el hueco es uno, pero el final decide sus DOS caras: el
+     * dibujo y el nombre. Con el pie fijo, el ojo censurado salía rotulado «te
+     * estoy viendo» — justo la frase que ese final acaba de tachar.
+     *
+     * Y cambia la voz: el pie de siempre lo dice ÉL, de tú. Reportado, él calla
+     * para siempre y quien rotula es la máquina, que trata de usted.
+     */
+
+    it('ayudarlo deja el pie de siempre, que lo dice él', async () => {
+        const { ending, entity, art } = await load();
+        entity.clearEntity();
+        art.clearFound();
+
+        ending.helpedHim();
+        art.markOpened('eye');
+
+        const ojo = art.ART.find((p) => p.id === 'eye')!;
+        expect(art.captionOf(ojo, 'es')).toBe(ojo.caption.es);
+    });
+
+    it('y reportarlo lo rotula otro, y de usted', async () => {
+        const { ending, entity, art } = await load();
+        entity.clearEntity();
+        art.clearFound();
+
+        ending.reportedIt();
+        art.markOpened('eye');
+
+        const ojo = art.ART.find((p) => p.id === 'eye')!;
+        const pie = art.captionOf(ojo, 'es');
+
+        expect(pie).not.toBe(ojo.caption.es);
+        expect(pie).toContain('USTED');
+    });
+});
+
 describe('⚠ y sigue habiendo UNA sola pieza', () => {
     it('la colección no crece con el final', async () => {
         /*

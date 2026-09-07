@@ -989,6 +989,22 @@ export const ART: readonly ArtPiece[] = [
          * cada lado; pegado se funde con él y lo único que parece es que el
          * anillo engordó de un costado.
          *
+         * ⚠ Y EL CANTO SE DESHACE POR LOS FLANCOS, no se corta.
+         *
+         * La silueta acababa en una curva perfecta, y una curva perfecta en un
+         * campo de ruido se lee como un RECORTE: alguien pasó unas tijeras. En
+         * la referencia del cliente el ojo se disuelve — cerca del borde quedan
+         * dígitos sueltos, y el vacío gana terreno poco a poco.
+         *
+         * Sólo a los lados. Arriba y abajo la almendra se afila hasta una punta
+         * de pocas celdas, y tramarla ahí la parte en trozos en vez de
+         * suavizarla. A los lados hay sitio, y es donde la referencia disuelve.
+         *
+         * ⚠ Y EL CAMPO NO SE TOCA. Se añaden dígitos DENTRO del vacío; no se
+         * quitan del campo. Es la misma lección de más arriba dicha por el otro
+         * lado: lo único que dibuja es el contraste entre lleno y vacío, así que
+         * perforar el lleno borra el dibujo en vez de suavizarlo.
+         *
          * ⚠ Y EL PÁRPADO NO ES SIMÉTRICO. La almendra se abre en cinco filas y
          * se cierra en tres: el de arriba arquea y el de abajo es más plano, que
          * es como son los de verdad. Con las dos mitades iguales el dibujo se
@@ -1000,19 +1016,19 @@ export const ART: readonly ArtPiece[] = [
          */
         art: [
             '1110000011101101000010001100010011001010',
-            '10011101010001              111011110010',
-            '010110100                       00100011',
-            '000001                             01100',
-            '1111            01000                011',
-            '00           01111000101              00',
-            '0           0001 00  1010              1',
-            '0          0011       1000             0',
-            '11          1101     1100             01',
-            '00011        10110010111           11100',
-            '000110110       11001          010110011',
-            '10110000101000             0000000110111',
-            '0111101001011001110000000000010011100101',
-            '1011011111110101111110010110000100001001',
+            '1001110101000111101111001001011010000100',
+            '01100000101100              111101000011',
+            '0001111001                     000001001',
+            '0101001          00000             11011',
+            '1001          000 00  010           1011',
+            '11           000       000           110',
+            '110           000     000             11',
+            '01100            00100             00000',
+            '01101111                         0100101',
+            '100111000000                 00000100111',
+            '0010110110111111101011111100101100001000',
+            '0100101001010101010001110100110101100000',
+            '1101111100111000110011000010110011010011',
         ].join('\n'),
     },
     {
@@ -1396,29 +1412,53 @@ export function artOf(piece: ArtPiece): string {
  * mismas cuarenta columnas con un tachón encima. Si el campo cambiara, las dos
  * versiones se leerían como dos piezas distintas — y son una.
  *
- * El tachón cubre el IRIS y nada más. La almendra sigue asomando arriba y
- * abajo, y los dos arcos del anillo —el de encima de la barra y el de debajo—
- * se salvan: se ve que había un ojo, se ve dónde estaba, y se ve que alguien lo
- * tapó. Tapado no es borrado, y ésa es la diferencia entre este final y el otro.
+ * ⚠ Y EL TACHÓN VA DE CANTO A CANTO. Estuvo metido dentro del vacío —una barra
+ * más corta que el ojo, con la almendra asomando a los dos lados de cada fila— y
+ * así no se lee como algo puesto ENCIMA: se lee como un agujero más, dentro del
+ * agujero. Una censura de verdad no respeta el margen del dibujo; cruza la
+ * página entera, y por eso se sabe que la puso alguien después.
+ *
+ * Tres filas, no cinco. Con tres se salvan los dos arcos anchos del anillo —el
+ * de encima de la barra y el de debajo— así que se ve que había un ojo, se ve
+ * dónde estaba y se ve que alguien lo tapó. Tapado no es borrado, y ésa es la
+ * diferencia entre este final y el otro.
  */
 const EYE_ID = 'eye';
 
 const EYE_BARRED = [
     '1110000011101101000010001100010011001010',
-    '10011101010001              111011110010',
-    '010110100                       00100011',
-    '000001                             01100',
-    '1111            01000                011',
-    '00       #####################        00',
-    '0        #####################         1',
-    '0        #####################         0',
-    '11       #####################        01',
-    '00011    #####################     11100',
-    '000110110       11001          010110011',
-    '10110000101000             0000000110111',
-    '0111101001011001110000000000010011100101',
-    '1011011111110101111110010110000100001001',
+    '1001110101000111101111001001011010000100',
+    '01100000101100              111101000011',
+    '0001111001                     000001001',
+    '0101001          00000             11011',
+    '########################################',
+    '########################################',
+    '########################################',
+    '01100            00100             00000',
+    '01101111                         0100101',
+    '100111000000                 00000100111',
+    '0010110110111111101011111100101100001000',
+    '0100101001010101010001110100110101100000',
+    '1101111100111000110011000010110011010011',
 ].join('\n');
+
+/**
+ * Y cómo se llama la pieza cuando llega tapada.
+ *
+ * ⚠ NO ES EL MISMO PIE. La pieza es una y el hueco es uno, pero el final que te
+ * toca decide sus dos caras: el dibujo lo elige `artOf` y el nombre lo elige
+ * `captionOf`.
+ *
+ * ⚠ Y CAMBIA LA VOZ, que es el remate. El pie de siempre lo dice ÉL, de tú: «te
+ * estoy viendo». En el final en que lo reportás el ente calla para siempre, así
+ * que quien rotula la pieza es la máquina institucional — y ésa no tutea porque
+ * no sabe quién sos (ver `lore.ts` y `greeting.ts`). El archivo lo nombra el que
+ * lo tapó, y lo primero que hace es negar que hubiera algo.
+ */
+const EYE_BARRED_CAPTION: Record<Lang, string> = {
+    es: 'OJO VEDADO · USTED NO VIO NADA',
+    en: 'BARRED EYE · YOU SAW NOTHING',
+};
 
 /**
  * El pie que toca ENSEÑAR de esta pieza.
@@ -1439,8 +1479,18 @@ const EYE_BARRED = [
  */
 export function captionOf(piece: ArtPiece, lang: Lang): string {
     if (!readOpened().has(piece.id)) return UNOPENED[lang];
+    if (!captionKnown(piece)) return UNNAMED[lang];
 
-    return captionKnown(piece) ? piece.caption[lang] : UNNAMED[lang];
+    /*
+     * ⚠ Y EL OJO TAPADO SE LLAMA DISTINTO, igual que se dibuja distinto.
+     *
+     * `artOf` ya elegía el dibujo según el final y el pie se quedaba fijo, así
+     * que el ojo censurado salía rotulado «TE ESTOY VIENDO» — justo la frase
+     * que ese final acaba de tachar.
+     */
+    if (piece.id === EYE_ID && eyeIsBarred()) return EYE_BARRED_CAPTION[lang];
+
+    return piece.caption[lang];
 }
 
 export function catalogRows(lang: Lang = 'es'): CatalogRow[] {
