@@ -39,7 +39,7 @@ const HUM_HZ = 58;
  * salida es la SUMA. Normalizadas, el número de la tabla vuelve a significar lo
  * que dice.
  */
-const PESOS = { armonicos: [1, 0.45, 0.18], aire: 0.5 } as const;
+const PESOS = { armonicos: [1, 0.45, 0.18], aire: 0.22 } as const;
 
 const SUMA = PESOS.armonicos.reduce((a, b) => a + b, 0) + PESOS.aire;
 
@@ -137,15 +137,22 @@ export function startAmbience(random: Random = Math.random) {
      * exactamente lo que un laboratorio usa para calibrar — y cuanto más subís
      * el volumen, más se nota que es un oscilador y no una máquina.
      *
-     * Lo que convierte un zumbido en un CHASIS es el ruido ancho y grave de una
-     * caja de plástico con una fuente dentro. Va en bucle porque no tiene forma
-     * propia: es textura, y una textura no tiene principio ni final.
+     * ⚠ Y VA POR UN PASABAJOS, NO POR UN PASABANDA. Estuvo puesto como pasabanda
+     * con Q 0,7 —un ancho enorme, que deja pasar agudos de sobra— y encima con
+     * la compensación de un filtro estrecho, ×9,66. Eso no es un chasis: es
+     * siseo de banda ancha, y se reportó jugando tal cual, «suena a estática».
+     *
+     * Un chasis es GRAVE. Un pasabajos mata el siseo de raíz y de paso deja de
+     * necesitar compensación: lo que no se recorta no hay que devolverlo.
+     *
+     * Va en bucle porque no tiene forma propia: es textura, y una textura no
+     * tiene principio ni final.
      */
     const aire = fuenteDeRuido(g, random);
     aire.loop = true;
-    const cuerpo = filtro(g, 'bandpass', vary(180, 0.1, random), 0.7);
+    const cuerpo = filtro(g, 'lowpass', vary(150, 0.08, random), 0.9);
     const gAire = g.ctx.createGain();
-    gAire.gain.value = vary(PESOS.aire / SUMA, 0.15, random) * cuerpo.makeup;
+    gAire.gain.value = vary(PESOS.aire / SUMA, 0.15, random);
     aire.connect(cuerpo.nodo).connect(gAire);
     gAire.connect(salida);
     aire.start(t0);

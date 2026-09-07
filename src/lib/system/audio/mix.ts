@@ -63,10 +63,10 @@ export type SoundCategory =
  */
 export const PEAK_DBFS: Readonly<Record<SoundCategory, number>> = {
     ambience: -50,
-    keys: -24,
-    confirm: -18,
-    glitch: -14,
-    failure: -8,
+    keys: -18,
+    confirm: -14,
+    glitch: -10,
+    failure: -6,
 };
 
 /**
@@ -83,11 +83,16 @@ export const PEAK_DBFS: Readonly<Record<SoundCategory, number>> = {
  * Y los dos síntomas reportados eran el mismo fallo: subir el equipo para oír la
  * tecla convierte el zumbido del ambiente en un tono de prueba.
  *
- * ⚠ ES UN SOLO NÚMERO AL FINAL DE LA CADENA, y por eso no desordena nada. Subir
- * las teclas «para oírlas mejor» habría desarmado la jerarquía de atención; esto
- * sube todo por igual y deja la escalera intacta.
+ * ⚠ ES UN SOLO NÚMERO AL FINAL DE LA CADENA, y por eso no desordena nada. Sube
+ * todo por igual y deja la escalera intacta.
+ *
+ * Bajó de 8 a 6 cuando la escalera de arriba subió: lo que hacía falta no era
+ * más volumen general —el ambiente ya se oía de sobra— sino que las ACTIVIDADES
+ * subieran respecto al fondo. Con el maestro a 8 y las teclas en −18, lo más
+ * fuerte del producto se habría ido por encima del techo y el limitador estaría
+ * trabajando de continuo.
  */
-export const MASTER_DB = 8;
+export const MASTER_DB = 6;
 
 /**
  * El hueco mínimo entre dos sonidos de la misma familia.

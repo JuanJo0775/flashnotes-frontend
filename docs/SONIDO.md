@@ -126,10 +126,10 @@ rompe.
 | Familia | Pico |
 | --- | --- |
 | `ambience` | −50 dBFS |
-| `keys` | −24 dBFS |
-| `confirm` | −18 dBFS |
-| `glitch` | −14 dBFS |
-| `failure` | −8 dBFS |
+| `keys` | −18 dBFS |
+| `confirm` | −14 dBFS |
+| `glitch` | −10 dBFS |
+| `failure` | −6 dBFS |
 
 ⚠ **Y el presupuesto es RELATIVO: no fija el nivel absoluto.** Eso lo hace el
 maestro, `MASTER_DB`, un solo número al final de la cadena. Era un agujero del
@@ -154,8 +154,13 @@ Dos decisiones de la compuerta que costaría caro descubrir a oído:
 
 ## El ambiente
 
-Un zumbido de chasis con tres armónicos y aire, a −50 dBFS: **veintiséis**
+Un zumbido de chasis con tres armónicos y aire, a −50 dBFS: **treinta y dos**
 decibelios por debajo de las teclas.
+
+⚠ **Y el aire va por un PASABAJOS, no por un pasabanda.** Estuvo puesto como
+pasabanda con Q 0,7 —un ancho enorme, que deja pasar agudos de sobra— y encima
+con la compensación de un filtro estrecho. Eso no es un chasis: es siseo de banda
+ancha, y se reportó jugando tal cual, «suena a estática». Un chasis es GRAVE.
 
 ⚠ **Y no es exageración: es lo que compensa ser continuo.** El presupuesto mide
 picos, y ahí lo continuo hace trampa sin querer — el pico de un zumbido ES su

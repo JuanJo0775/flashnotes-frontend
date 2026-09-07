@@ -76,6 +76,37 @@ describe('cómo está hecho', () => {
         expect(reaches(g.air, 'destination')).toBe(true);
     });
 
+    it('⚠ el aire es OSCURO: no puede sonar a estática', () => {
+        /*
+         * REPORTADO JUGANDO: «ese ambiental se escucha raro», «suena a
+         * estática».
+         *
+         * Y era exactamente eso. El aire estaba puesto como PASABANDA con Q 0,7
+         * —un ancho enorme, que deja pasar agudos de sobra— y encima con la
+         * compensación que le corresponde a un filtro estrecho, ×9,66. El
+         * resultado es ruido de banda ancha, o sea siseo: la estática de un
+         * televisor sin señal, no el zumbido de una caja con una fuente dentro.
+         *
+         * Un chasis es GRAVE. Un pasabajos mata el siseo de raíz, y de paso deja
+         * de necesitar compensación: lo que no se recorta no hay que devolverlo.
+         */
+        // ⚠ Sólo los nodos DEL AMBIENTE: el bus ya trae su propio pasabajos, el
+        // del cono a 6 kHz, y mirando el contexto entero lo encontraba a él.
+        ensureAudio();
+        const antes = lastContext()!.created.length;
+
+        startAmbience();
+
+        const filtros = lastContext()!
+            .created.slice(antes)
+            .filter((n) => n.kind === 'biquad');
+        const aire = filtros.find((f) => f.type === 'lowpass');
+
+        expect(aire).toBeDefined();
+        expect(aire!.frequency.value).toBeLessThan(260);
+        expect(filtros.some((f) => f.type === 'bandpass')).toBe(false);
+    });
+
     it('⚠ sus fuentes están NORMALIZADAS antes del presupuesto', () => {
         /*
          * EL SEGUNDO MOTIVO DE QUE EL FONDO SE COMIERA A LAS ACTIVIDADES.
