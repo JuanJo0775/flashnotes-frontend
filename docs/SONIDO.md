@@ -104,6 +104,9 @@ del altavoz de la máquina, se oye con la oreja.
 | `head` | `keys` | aire | La búsqueda de cabezal: varios golpes, y no a compás |
 | `capacitor` | `glitch` | aire | La corriente entrando. Un golpe, sin tono |
 | `sweep` | `failure` | bocinita | La señal cayéndose. DOS osciladores desafinados |
+| `whine` | `ambience` | aire | El chillido del flyback, a 15,7 kHz. La firma de un tubo |
+| `powerUp` | `glitch` | aire | Encender: la corriente entra y el chillido sube |
+| `powerDown` | `glitch` | aire | Apagar: el chillido cae, golpe, y el tubo se descarga |
 | `thud` | `failure` | aire | El impacto lejano: algo cayó, y cayó detrás |
 
 ⚠ **La tecla son TRES capas y hay un test que lo fija.** Un oscilador solo suena
@@ -237,8 +240,8 @@ app entera—, así que enterarse no le pide nada a nadie:
 
 | Atributo | Qué suena |
 | --- | --- |
-| `data-booting` | El condensador, y 380 ms después el cabezal buscando |
-| `data-tube-off` | El barrido corto: al tubo le cortaron la corriente |
+| `data-booting` | El tubo prendiéndose, y 620 ms después el cabezal buscando |
+| `data-tube-off` | El tubo al que le cortan la corriente |
 | `data-wiping`, `data-collapsing` | El barrido largo, y un impacto lejano detrás |
 | `data-theme` | Un relé por cada cambio. Es lo que hace el parpadeo del tema roto |
 
@@ -285,11 +288,30 @@ sistema operativo, y en un portátil eso se paga en batería aunque no suene nad
 Y `prefers-reduced-motion` lo deja apagado: quien pide menos movimiento no está
 pidiendo más ruido.
 
+## Encender y apagar el tubo
+
+⚠ **Un CRT no hace un barrido de sierra.** Eso fue lo primero que se puso y se
+reportó como «poco natural», con razón: es el efecto de videojuego de toda la
+vida. Un CRT tiene un transformador de líneas —el flyback— que chilla a unos
+15,7 kHz mientras hay alta tensión, y ese chillido es la firma del aparato.
+
+Apagar son tres cosas a la vez: el chillido **cae** —la alta tensión se pierde
+poco a poco, cortarlo en seco suena a mute—, un golpe del chasis, y el tubo
+descargándose con un crujido corto. Encender es lo mismo al revés y **en el orden
+contrario**: primero entra la corriente, después aparece el chillido y sube hasta
+su sitio. Si el chillido llegara primero, sonaría a que algo ya estaba encendido.
+
 ## Lo que el navegador impone
 
-Todo `AudioContext` nace suspendido hasta que hay un gesto. En la primera carga
-no hay forma de sonar, y **el arranque en vídeo inverso de la primera visita es
-mudo**. No es un obstáculo: la máquina está muda hasta que la tocás.
+Todo `AudioContext` nace suspendido hasta que hay un gesto. En la **primera
+visita de la vida** no hay forma de sonar, y el arranque es mudo. No es un
+obstáculo: la máquina está muda hasta que la tocás.
+
+⚠ **Pero se intenta igual, y no es inútil.** Chrome levanta esa restricción en
+sitios con los que ya has interactuado bastante, así que en las visitas
+siguientes el arranque SÍ puede sonar — y no intentarlo era garantizar que no
+sonara nunca. Si el navegador lo bloquea no pasa nada: el contexto queda dormido
+y el primer gesto lo despierta, porque `ensureAudio` reintenta en cada llamada.
 
 ## Dónde escucharlo
 

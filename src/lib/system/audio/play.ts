@@ -27,6 +27,8 @@ import {
     drawer,
     button,
     capacitor,
+    powerDown,
+    powerUp,
     glitchBurst,
     head,
     key,
@@ -44,6 +46,8 @@ export interface VoiceArgs {
     drawer: undefined;
     button: undefined;
     capacitor: undefined;
+    powerUp: undefined;
+    powerDown: undefined;
     head: undefined;
     thud: undefined;
     confirm: { wrong: boolean };
@@ -68,6 +72,8 @@ const VOICES = {
     drawer,
     button,
     capacitor,
+    powerDown,
+    powerUp,
     head,
     thud,
     beep,

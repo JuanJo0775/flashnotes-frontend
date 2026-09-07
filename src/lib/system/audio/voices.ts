@@ -32,7 +32,16 @@ import { bandpassMakeup } from '@/lib/system/audio/speaker';
  * fichero ya era largo— pero se re-exportan desde acá a propósito: hay UNA sola
  * puerta de voces, y `CATEGORY_OF` de abajo es la lista de todo lo que suena.
  */
-export { button, capacitor, head, sweep, thud } from '@/lib/system/audio/power';
+export {
+    button,
+    capacitor,
+    head,
+    powerDown,
+    powerUp,
+    sweep,
+    thud,
+    whine,
+} from '@/lib/system/audio/power';
 
 /**
  * A qué familia de la mezcla pertenece cada voz.
@@ -54,6 +63,13 @@ export const CATEGORY_OF = {
     button: 'keys',
     head: 'keys',
     capacitor: 'glitch',
+    /*
+     * El chillido del flyback es de la familia del AMBIENTE: no es un suceso, es
+     * el ruido de que hay un tubo encendido. Encender y apagar sí son sucesos.
+     */
+    whine: 'ambience',
+    powerUp: 'glitch',
+    powerDown: 'glitch',
     sweep: 'failure',
     thud: 'failure',
     beep: 'confirm',

@@ -270,6 +270,26 @@ export function startSound(): () => void {
     const ATRIBUTOS = ['data-booting', 'data-wiping', 'data-collapsing', 'data-tube-off'] as const;
 
     const presentes = new Set(ATRIBUTOS.filter((a) => document.documentElement.hasAttribute(a)));
+
+    /*
+     * ⚠ EL ARRANQUE DE LA PRIMERA CARGA SE INTENTA IGUAL, aunque probablemente
+     * no suene. Se reportó jugando: «el inicio, cuando aparecen las barras de
+     * colores y el logo, no tiene el sonido de empezar».
+     *
+     * El navegador crea todo `AudioContext` suspendido hasta que hay un gesto, y
+     * en la primera carga de la vida no hay ninguno: ahí no hay nada que hacer.
+     * PERO Chrome levanta esa restricción en sitios con los que ya has
+     * interactuado bastante, así que en las visitas siguientes SÍ puede sonar —
+     * y no intentarlo era garantizar que no sonara nunca.
+     *
+     * Si el navegador lo bloquea no pasa nada malo: el contexto queda dormido y
+     * el primer gesto lo despierta, porque `ensureAudio` reintenta el arranque
+     * en cada llamada.
+     */
+    if (document.documentElement.hasAttribute('data-booting')) {
+        play('powerUp');
+        setTimeout(() => play('head'), 620);
+    }
     let temaAntes = document.documentElement.getAttribute('data-theme');
 
     const observadorRaiz = new MutationObserver(() => {
@@ -282,12 +302,14 @@ export function startSound(): () => void {
                 huboActividad();
 
                 if (attr === 'data-booting') {
-                    // El reinicio: la corriente entra y algo busca. En ese orden.
-                    play('capacitor');
-                    setTimeout(() => play('head'), 380);
+                    // El tubo prendiéndose, y después algo buscando.
+                    play('powerUp');
+                    setTimeout(() => play('head'), 620);
                 } else if (attr === 'data-tube-off') {
-                    // El tubo al que le cortan la corriente.
-                    play('sweep', { fromHz: 760, toHz: 45, ms: 420 });
+                    // El tubo al que le cortan la corriente. NO es un barrido:
+                    // ver `powerDown`, que fue lo que se reportó como poco
+                    // natural.
+                    play('powerDown');
                 } else {
                     // El barrido y el colapso: la señal cayéndose, y algo que
                     // llega al suelo detrás.

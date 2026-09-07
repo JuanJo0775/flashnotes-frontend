@@ -197,3 +197,129 @@ export function head(g: AudioGraph, random: Random = Math.random) {
         cuando += vary(0.075, 0.45, random);
     }
 }
+
+/**
+ * EL CHILLIDO DEL FLYBACK.
+ *
+ * ⚠ 15,7 kHz NO ES UN NÚMERO DECORATIVO: es la frecuencia de línea de la
+ * televisión analógica. Es EL sonido que delata a un tubo encendido en una
+ * habitación, y el motivo de que mucha gente supiera que había un televisor
+ * prendido sin verlo. Sin esto, un apagado es una nota descendente; con esto, es
+ * un televisor.
+ *
+ * Va por el aire porque no lo emite la máquina: lo emite un transformador
+ * vibrando dentro de una caja.
+ */
+export function whine(
+    g: AudioGraph,
+    { fromHz, toHz, ms }: { fromHz: number; toHz: number; ms: number },
+    random: Random = Math.random
+) {
+    const t0 = g.ctx.currentTime;
+    const largo = vary(ms / 1_000, 0.05, random);
+
+    const osc = g.ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(vary(fromHz, 0.01, random), t0);
+
+    // Sólo se programa la rampa si va a algún sitio: un `exponentialRamp` al
+    // mismo valor deja el parámetro marcado como animado sin serlo.
+    if (Math.abs(toHz - fromHz) > 1) {
+        osc.frequency.exponentialRampToValueAtTime(Math.max(30, toHz), t0 + largo);
+    }
+
+    const gain = g.ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.linearRampToValueAtTime(vary(0.16, 0.15, random), t0 + Math.min(0.12, largo * 0.3));
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + largo);
+
+    osc.connect(gain);
+    gain.connect(g.air);
+    gain.connect(g.room);
+    osc.start(t0);
+    osc.stop(t0 + largo + 0.02);
+}
+
+/**
+ * APAGAR EL TUBO.
+ *
+ * ⚠ SE REPORTÓ QUE «SUENA POCO NATURAL», y lo era: había un barrido de sierra
+ * bajando, o sea el efecto de videojuego de toda la vida. Un CRT no hace eso.
+ *
+ * Lo que hace un CRT al que le cortan la corriente son tres cosas a la vez, y
+ * las tres importan:
+ *
+ *  1 · EL CHILLIDO CAE. La alta tensión se pierde poco a poco, así que el
+ *      flyback baja de tono mientras se apaga. Cortarlo en seco suena a mute.
+ *  2 · UN GOLPE. La bobina de desmagnetización, o simplemente el chasis.
+ *  3 · EL TUBO SE DESCARGA, con un crujido corto de estática.
+ */
+export function powerDown(g: AudioGraph, random: Random = Math.random) {
+    const t0 = g.ctx.currentTime;
+
+    whine(g, { fromHz: vary(15_700, 0.02, random), toHz: 900, ms: 480 }, random);
+
+    // El golpe del chasis quedándose sin corriente.
+    const golpe = g.ctx.createOscillator();
+    golpe.type = 'sine';
+    golpe.frequency.setValueAtTime(vary(96, 0.1, random), t0);
+    golpe.frequency.exponentialRampToValueAtTime(vary(41, 0.1, random), t0 + 0.24);
+    const gGolpe = g.ctx.createGain();
+    percutir(gGolpe, t0, vary(0.5, 0.12, random), 0.002, 0.26);
+    golpe.connect(gGolpe);
+    gGolpe.connect(g.air);
+    gGolpe.connect(g.room);
+    golpe.start(t0);
+    golpe.stop(t0 + 0.3);
+
+    // Y la descarga: el fósforo colapsando. Corto y sucio.
+    const descarga = fuenteDeRuido(g, random);
+    const f = filtro(g, 'bandpass', vary(2_400, 0.15, random), 0.9);
+    const gDescarga = g.ctx.createGain();
+    percutir(gDescarga, t0 + 0.02, vary(0.22, 0.2, random) * f.makeup, 0.004, 0.16);
+    descarga.connect(f.nodo).connect(gDescarga);
+    gDescarga.connect(g.air);
+    gDescarga.connect(g.room);
+    arrancar(descarga, t0 + 0.02, random);
+    descarga.stop(t0 + 0.2);
+}
+
+/**
+ * ENCENDER EL TUBO. Lo contrario, y en el orden contrario.
+ *
+ * ⚠ REPORTADO: «el inicio, cuando aparecen las barras de colores y el logo, no
+ * tiene el sonido de empezar, como cuando un computador se prende».
+ *
+ * Primero entra la corriente —un golpe grave—, y DESPUÉS aparece el chillido,
+ * que sube hasta su sitio y se queda. Ese orden es el que se reconoce: si el
+ * chillido llegara primero, sonaría a que algo ya estaba encendido.
+ */
+export function powerUp(g: AudioGraph, random: Random = Math.random) {
+    const t0 = g.ctx.currentTime;
+
+    // 1 · La corriente entrando.
+    const golpe = g.ctx.createOscillator();
+    golpe.type = 'sine';
+    golpe.frequency.setValueAtTime(vary(58, 0.1, random), t0);
+    golpe.frequency.exponentialRampToValueAtTime(vary(34, 0.1, random), t0 + 0.18);
+    const gGolpe = g.ctx.createGain();
+    percutir(gGolpe, t0, vary(0.5, 0.12, random), 0.001, 0.2);
+    golpe.connect(gGolpe);
+    gGolpe.connect(g.air);
+    gGolpe.connect(g.room);
+    golpe.start(t0);
+    golpe.stop(t0 + 0.24);
+
+    // 2 · El chasquido del interruptor, encima del golpe.
+    const clic = fuenteDeRuido(g, random);
+    const f = filtro(g, 'bandpass', vary(1_600, 0.12, random), 2.2);
+    const gClic = g.ctx.createGain();
+    percutir(gClic, t0, vary(0.3, 0.2, random) * f.makeup, 0.0004, 0.018);
+    clic.connect(f.nodo).connect(gClic);
+    gClic.connect(g.air);
+    arrancar(clic, t0, random);
+    clic.stop(t0 + 0.03);
+
+    // 3 · Y el chillido apareciendo: sube hasta su sitio y se queda.
+    whine(g, { fromHz: 5_200, toHz: vary(15_700, 0.02, random), ms: 620 }, random);
+}
