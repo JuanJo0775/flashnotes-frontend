@@ -110,20 +110,27 @@ function Probeta() {
 
             <hr className="rule-dashed" style={{ margin: 0 }} />
 
-            {/* Detalle fino: donde la separación de canales se lee de verdad. */}
+            {/*
+                Detalle fino: donde la separación de canales se lee de verdad.
+
+                ⚠ POCAS LÍNEAS A PROPÓSITO. Un `filter: url()` SVG se recalcula
+                sobre TODO lo que haya debajo, y la aberración cromática lo
+                relanza cuatro veces por segundo y medio. Con dos columnas de
+                diez renglones de dígitos, abrir uno de los efectos de cromo
+                dejaba el navegador colgado — comprobado dos veces. Cinco
+                renglones dicen lo mismo y no cuestan un cuelgue.
+            */}
             <div
                 className="mono"
                 style={{
                     fontSize: 'var(--text-xs)',
                     lineHeight: 1.35,
-                    columnCount: 2,
-                    columnGap: '2rem',
-                    maxHeight: '9rem',
+                    maxHeight: '7rem',
                     overflow: 'hidden',
                     color: 'var(--color-soft)',
                 }}
             >
-                {Array.from({ length: 10 }, (_, i) => (
+                {Array.from({ length: 5 }, (_, i) => (
                     <div key={i}>
                         01001100 01001111 01010010 01000101 01001101 00100000 01001001 01010000
                     </div>
@@ -146,6 +153,20 @@ export default function EffectViewer({
 }) {
     const [pase, setPase] = useState(0);
     const [bucle, setBucle] = useState(false);
+    /**
+     * ⚠ HAY EFECTOS QUE SE VEN 176 ms CADA ONCE SEGUNDOS.
+     *
+     * El tic del pedazo suelto vive entre el 96% y el 97,6% de un ciclo de once
+     * segundos: en la app eso es exactamente la gracia —algo que pasa cuando no
+     * estás mirando— pero en una página de documentación significa quedarse
+     * esperando sin saber si el efecto está roto o si todavía no le tocó.
+     *
+     * Acelerar cambia SÓLO la duración, no los fotogramas, así que lo que se ve
+     * es el mismo gesto en menos tiempo. La ficha dice el periodo de verdad
+     * para que nadie se lleve una idea equivocada del ritmo.
+     */
+    const [acelerar, setAcelerar] = useState(false);
+    const duracionRef = useRef<string>('');
     const tema = useTheme();
     const cerrarRef = useRef<HTMLButtonElement>(null);
 
@@ -162,6 +183,25 @@ export default function EffectViewer({
     }, [onClose]);
 
     useEffect(() => {
+        /*
+         * ⚠ HAY EFECTOS QUE NO SE ACTIVAN CON UNA CLASE, SINO CON UN ESTADO.
+         *
+         * `v02-indeciso` vive bajo `[data-v02] .chromatic-failure`: sin ese
+         * atributo en el documento la regla no aplica y el efecto NO EXISTE.
+         * Fue el único de los veinticinco que no se reproducía, y desde fuera
+         * no había forma de saber por qué — la clase estaba bien puesta.
+         *
+         * Se quita al cerrar: dejarlo pegado metería la app entera en la piel
+         * de la v0.2 sin que nadie lo hubiera pedido.
+         */
+        if (!efecto.estado) return;
+
+        document.documentElement.setAttribute(efecto.estado, '');
+
+        return () => document.documentElement.removeAttribute(efecto.estado!);
+    }, [efecto.estado]);
+
+    useEffect(() => {
         if (!bucle) return;
 
         /*
@@ -175,6 +215,31 @@ export default function EffectViewer({
     }, [bucle]);
 
     const enLaPantalla = efecto.donde === 'pantalla';
+
+    /**
+     * Lee la duración real del nodo y, si toca, la acorta.
+     *
+     * Se hace en la referencia y no en un efecto con `setState`: el dato ya está
+     * en el DOM y duplicarlo en estado es justo lo que React rechaza.
+     */
+    const medirYAcelerar = (el: HTMLElement | null) => {
+        if (!el) return;
+
+        const base = getComputedStyle(el).animationDuration.split(', ')[0];
+        duracionRef.current = base;
+
+        const etiqueta = document.getElementById('duracion-efecto');
+        if (etiqueta) etiqueta.textContent = `ciclo de ${base}`;
+
+        if (!acelerar) return;
+
+        // Cada duración de la lista se divide, no sólo la primera: los efectos
+        // del cromo encadenan tres y acelerar una sola las desincroniza.
+        el.style.animationDuration = getComputedStyle(el)
+            .animationDuration.split(', ')
+            .map((d) => `${(parseFloat(d) || 0) / 8}s`)
+            .join(', ');
+    };
 
     return (
         <div
@@ -199,8 +264,9 @@ export default function EffectViewer({
                 empieza sola.
             */}
             <div
-                key={`probeta-${pase}-${enLaPantalla}`}
+                key={`probeta-${pase}-${acelerar}`}
                 className={enLaPantalla ? efecto.clases : undefined}
+                ref={enLaPantalla ? medirYAcelerar : undefined}
                 style={{ position: 'absolute', inset: 0 }}
             >
                 <Probeta />
@@ -213,7 +279,7 @@ export default function EffectViewer({
             */}
             {!enLaPantalla && (
                 <div
-                    key={`capa-${pase}`}
+                    key={`capa-${pase}-${acelerar}`}
                     style={{ position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none' }}
                 >
                     {/*
@@ -226,7 +292,7 @@ export default function EffectViewer({
                         El envoltorio da el contexto de posicionamiento; el CSS
                         del efecto decide dónde se pone y cuánto ocupa.
                     */}
-                    <div className={efecto.clases}>
+                    <div className={efecto.clases} ref={medirYAcelerar}>
                         <Relleno efecto={efecto} />
                     </div>
                 </div>
@@ -264,6 +330,7 @@ export default function EffectViewer({
                         <span className="comment">
                             {enLaPantalla ? 'deforma la pantalla' : 'capa por encima'}
                         </span>
+                        <span className="comment" id="duracion-efecto" />
                     </div>
                     <p style={{ margin: 0, fontSize: 'var(--text-sm)' }}>{efecto.que}</p>
                     <p className="comment" style={{ margin: 0 }}>
@@ -290,6 +357,15 @@ export default function EffectViewer({
                     onClick={() => setBucle((b) => !b)}
                 >
                     [BUCLE: {bucle ? 'ON' : 'OFF'}]
+                </button>
+                <button
+                    type="button"
+                    className="btn-terminal"
+                    aria-pressed={acelerar}
+                    onClick={() => setAcelerar((a) => !a)}
+                    title="Para los que sólo se asoman una vez cada muchos segundos"
+                >
+                    [×8: {acelerar ? 'ON' : 'OFF'}]
                 </button>
                 <button ref={cerrarRef} type="button" className="btn-terminal" onClick={onClose}>
                     [CERRAR · ESC]

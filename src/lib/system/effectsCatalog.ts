@@ -84,6 +84,18 @@ export interface VisualEffect {
      *    se parece en nada a lo que documenta.
      */
     relleno?: 'texto' | 'ventana';
+    /**
+     * El atributo que el DOCUMENTO tiene que llevar para que exista.
+     *
+     * ⚠ NO TODO SE ACTIVA CON UNA CLASE, y esto costó el único efecto que no se
+     * reproducía. `v02-indeciso` vive bajo `[data-v02] .chromatic-failure`: sin
+     * ese atributo en el `<html>` la regla no aplica y el efecto NO EXISTE, por
+     * muchas clases que se le pongan al elemento.
+     *
+     * Un test lo deriva del CSS: busca el selector que declara la animación y,
+     * si cuelga de un atributo, exige que la ficha lo diga.
+     */
+    estado?: string;
 }
 
 /**
@@ -265,9 +277,10 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     },
     {
         id: 'loose-slab-twitch',
-        donde: 'pantalla',
+        // `backdrop-filter`: filtra lo que hay DETRAS, asi que va encima.
+        donde: 'capa',
         nombre: 'Tic del pedazo',
-        que: 'Cada once segundos, la zona suelta se invierte un instante. Lo único que la delata.',
+        que: 'Cada once segundos la zona suelta se invierte un instante. Es lo ÚNICO que la delata.',
         cuando: 'Con la pared aún entera, antes de tocarla.',
         hoja: 'glitch',
         clases: 'loose-slab',
@@ -322,6 +335,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
     // ── v02.css · la versión vieja ──────────────────────────────────────────
     {
         id: 'v02-indeciso',
+        estado: 'data-v02',
         donde: 'pantalla',
         nombre: 'Indecisión de la v0.2',
         que: 'La avería cromática, pero peor hecha: la versión vieja ni siquiera falla bien.',

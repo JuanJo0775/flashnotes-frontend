@@ -10,6 +10,12 @@ import { useSound } from '@/hooks/useSound';
 import { useTheme, toggleTheme } from '@/hooks/useTheme';
 import { ART, ART_FACES, ART_TOTAL } from '@/lib/system/asciiArt';
 import EffectViewer from '@/components/system/EffectViewer';
+import ScreenViewer from '@/components/system/ScreenViewer';
+import {
+    SYSTEM_SCREENS,
+    SYSTEM_SCREENS_TOTAL,
+    type SystemScreen,
+} from '@/lib/system/screensCatalog';
 import { COLOR_TOKENS, FONT_TOKENS, TEXT_TOKENS } from '@/lib/system/identity';
 import MetaTag from '@/components/ui/MetaTag';
 import ProgressBar from '@/components/ui/ProgressBar';
@@ -124,6 +130,7 @@ export default function Banco() {
     const [capas, setCapas] = useState<readonly KeyLayer[]>(KEY_LAYERS);
     const [ultimo, setUltimo] = useState('—');
     const [mirando, setMirando] = useState<VisualEffect | null>(null);
+    const [pantalla, setPantalla] = useState<SystemScreen | null>(null);
 
     // Al salir del banco no tiene por qué quedar un contexto abierto.
     useEffect(() => () => teardownAudio(), []);
@@ -204,6 +211,9 @@ export default function Banco() {
                             {/* PIEZAS y DIBUJOS no son el mismo número: la
                                 catorce tiene dos caras y sólo te toca una. */}
                             {ART_TOTAL} piezas · {ART_TOTAL + ART_FACES.length} dibujos
+                        </span>
+                        <span className="diag-value tabular-nums">
+                            {SYSTEM_SCREENS_TOTAL} pantallas
                         </span>
                         <span className="diag-value tabular-nums">
                             {VISUAL_EFFECTS_TOTAL} efectos
@@ -394,6 +404,40 @@ export default function Banco() {
                             </figure>
                         ))}
                     </div>
+                </Seccion>
+
+                <hr className="rule-dashed" />
+
+                <Seccion
+                    titulo={`PANTALLAS · LAS ${SYSTEM_SCREENS_TOTAL}`}
+                    nota="los componentes de verdad, montados enteros y desactivados"
+                >
+                    {/*
+                        ⚠ NO SON MAQUETAS. Son los mismos componentes que usa la
+                        app, con sus tiempos y su texto. Van INERTES: lo que
+                        estas pantallas hacen —recargar, devolver al arranque,
+                        cerrar la pestaña— ocurre en sus `onDone`, o sea en quien
+                        las usa, así que neutralizarlos deja intacto el aspecto y
+                        no toca nada.
+                    */}
+                    {SYSTEM_SCREENS.map((p) => (
+                        <div
+                            key={p.id}
+                            className="file-row"
+                            style={{ gap: '0.75rem', alignItems: 'baseline' }}
+                        >
+                            <span className="file-row-name">{p.nombre}</span>
+                            <Guia />
+                            <span className="comment">{p.componente}</span>
+                            <button
+                                type="button"
+                                className="btn-terminal"
+                                onClick={() => setPantalla(p)}
+                            >
+                                [VER]
+                            </button>
+                        </div>
+                    ))}
                 </Seccion>
 
                 <hr className="rule-dashed" />
@@ -627,8 +671,9 @@ export default function Banco() {
                 </Seccion>
             </div>
 
-            {mirando && (
-                <EffectViewer efecto={mirando} onClose={() => setMirando(null)} />
+            {mirando && <EffectViewer efecto={mirando} onClose={() => setMirando(null)} />}
+            {pantalla && (
+                <ScreenViewer pantalla={pantalla} onClose={() => setPantalla(null)} />
             )}
         </main>
     );

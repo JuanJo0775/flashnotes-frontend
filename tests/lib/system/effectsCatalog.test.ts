@@ -116,7 +116,8 @@ describe('cada entrada sirve para algo', () => {
                 // plantilla normal `\s` se evalúa como `s` y el patrón deja de
                 // coincidir con nada. La primera versión pasaba en verde sin
                 // haber mirado un solo efecto.
-                String.raw`@keyframes\s+` + e.id + String.raw`\s*\{([\s\S]*?)[
+                String.raw`@keyframes\s+` + e.id + String.raw`\s*\{([\s\S]*?)[
+
 ]\}`
             ).exec(css)?.[1];
 
@@ -126,6 +127,61 @@ describe('cada entrada sirve para algo', () => {
             const propia = /backdrop-filter/.test(cuerpo);
 
             if (deforma && !propia) expect(e.donde).toBe('pantalla');
+        }
+    });
+
+    it('⚠ y el que usa `backdrop-filter` va SIEMPRE en una capa', () => {
+        /*
+         * ES LO CONTRARIO DE LO QUE PARECE, Y POR ESO SE EQUIVOCO.
+         *
+         * `backdrop-filter` no filtra el elemento: filtra LO QUE HAY DETRAS.
+         * Puesto sobre el contenedor del contenido, lo que filtra es el fondo
+         * de la pagina —o sea nada— mientras el contenido, que va DENTRO, se
+         * queda intacto. La animacion corre, no se ve nada, y parece que el
+         * efecto esta roto.
+         *
+         * Le paso al «tic del pedazo», que es de los que mas se notan en la app
+         * y en el banco no hacia absolutamente nada.
+         */
+        for (const e of VISUAL_EFFECTS) {
+            const css = readFileSync(HOJAS[e.hoja], 'utf8');
+            const cuerpo = new RegExp(
+                String.raw`@keyframes[ ]+` + e.id + String.raw`[ ]*\{([\s\S]*?)[
+]\}`
+            ).exec(css)?.[1];
+
+            if (cuerpo && cuerpo.includes('backdrop-filter')) expect(e.donde).toBe('capa');
+        }
+    });
+
+    it('⚠ y el que necesita un estado del documento lo declara', () => {
+        /*
+         * NO TODO SE ACTIVA CON UNA CLASE.
+         *
+         * `v02-indeciso` vive bajo `[data-v02] .chromatic-failure`: sin ese
+         * atributo en el documento la regla no aplica y el efecto no existe,
+         * por muchas clases que se le pongan al elemento. Fue el unico de los
+         * veinticinco que no se reproducia, y no habia forma de saberlo sin
+         * abrirlo.
+         *
+         * Se deriva del CSS y no de la ficha: se busca el selector que declara
+         * la animacion y, si cuelga de un atributo, se exige `estado`.
+         */
+        for (const e of VISUAL_EFFECTS) {
+            const css = readFileSync(HOJAS[e.hoja], 'utf8');
+            const declara = new RegExp(
+                // ⚠ Las fronteras de palabra van como `[^a-z-]` y no como ``:
+                // este patron ya se escribio DOS veces con un caracter de
+                // retroceso literal en su sitio, y un patron asi no coincide
+                // nunca — el test recorria los veinticinco sin comprobar uno.
+                String.raw`([^{}]+)\{[^{}]*animation:[^;]*[ ,]` + e.id + String.raw`[ ;,]`
+            ).exec(css)?.[1];
+
+            if (!declara) continue;
+
+            // Con digitos: el atributo es `data-v02`, y sin ellos no coincidia.
+            const bajoAtributo = /\[data-[a-z0-9-]+\]/.exec(declara.trim());
+            if (bajoAtributo) expect(e.estado).toBe(bajoAtributo[0].slice(1, -1));
         }
     });
 
