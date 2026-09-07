@@ -8,7 +8,8 @@ import { PEAK_DBFS } from '@/lib/system/audio/mix';
 import { play, type VoiceName } from '@/lib/system/audio/play';
 import { useSound } from '@/hooks/useSound';
 import { useTheme, toggleTheme } from '@/hooks/useTheme';
-import { ART, ART_TOTAL } from '@/lib/system/asciiArt';
+import { ART, ART_FACES, ART_TOTAL } from '@/lib/system/asciiArt';
+import EffectViewer from '@/components/system/EffectViewer';
 import { COLOR_TOKENS, FONT_TOKENS, TEXT_TOKENS } from '@/lib/system/identity';
 import MetaTag from '@/components/ui/MetaTag';
 import ProgressBar from '@/components/ui/ProgressBar';
@@ -59,32 +60,12 @@ const TITULO_HOJA: Record<EffectSheet, string> = {
 };
 
 /**
- * Lo que se pinta DEBAJO de cada muestra.
- *
- * ⚠ SIN ESTO, LA MITAD DE LOS EFECTOS PARECEN ROTOS. Los que trabajan con
- * `backdrop-filter` —el tic del pedazo, la caída de nivel— no pintan nada
- * propio: modifican lo que haya detrás. Sobre un fondo liso no se ve NADA, y
- * eso no se lee como «falta el fondo», se lee como «este efecto no funciona».
- *
- * Es texto de la app de verdad, no relleno: los efectos deforman una pantalla,
- * así que la muestra tiene que ser una pantalla.
- */
-const PANTALLA = [
-    'FLASH-NOTES v1.0',
-    '[TODO_BIEN] 12 ARCHIVOS',
-    'Sin_titulo.txt ....... 2 KB',
-    'notas_del_jueves.txt . 7 KB',
-    '01001100 01001111 0101',
-    '> _',
-];
-
-/**
  * El valor que un token tiene AHORA MISMO, leído del tema activo.
  *
- * ⚠ NO SE COPIA NINGÚN HEX. Un catálogo de color con los valores escritos a
- * mano empieza a mentir en cuanto alguien retoca uno, y encima no sabría
- * enseñar el tema oscuro: los valores viven en `globals.css` y sólo el
- * navegador sabe cuál gana.
+ * ⚠ NO SE COPIA NINGÚN HEX. Un catálogo de color con los valores escritos a mano
+ * empieza a mentir en cuanto alguien retoca uno, y encima no sabría enseñar el
+ * tema oscuro: los valores viven en `globals.css` y sólo el navegador sabe cuál
+ * gana.
  *
  * Se lee en la referencia y no en un efecto con `setState`: guardar en estado
  * algo que ya está en el DOM es duplicarlo, y React lo rechaza con razón. La
@@ -109,88 +90,6 @@ function Valor({ token }: { token: string }) {
 /** Un filete de puntos, el mismo que separa nombre de dato en las listas. */
 function Guia() {
     return <span className="file-row-leader" aria-hidden="true" />;
-}
-
-/**
- * Una muestra viva de un efecto.
- *
- * ⚠ DOS TRUCOS QUE HACEN FALTA Y NO SON OBVIOS.
- *
- * El primero: varios de estos efectos están montados sobre `position: fixed`
- * porque en la app ocupan la pantalla entera, así que dentro de un recuadro se
- * saldrían de él. La regla C4 dice que `filter` crea un bloque contenedor para
- * los `fixed` de dentro — el recuadro lleva un `filter` inocuo y los atrapa.
- *
- * El segundo: una animación que ya terminó no vuelve a empezar sola. Se remonta
- * el nodo cambiando su `key`, que es la forma de React de decir «esto es otro
- * elemento» sin tocar el DOM a mano.
- */
-function Muestra({ efecto }: { efecto: VisualEffect }) {
-    const [pase, setPase] = useState(0);
-
-    return (
-        <div
-            style={{
-                position: 'relative',
-                height: 132,
-                overflow: 'hidden',
-                background: 'var(--color-tertiary)',
-                border: '1px solid var(--color-line-soft)',
-                // El `filter` que atrapa los `fixed` de dentro (regla C4).
-                filter: 'saturate(1)',
-            }}
-        >
-            <pre
-                aria-hidden="true"
-                className="mono"
-                style={{
-                    position: 'absolute',
-                    inset: 0,
-                    margin: 0,
-                    padding: '0.5rem',
-                    fontSize: 10,
-                    lineHeight: 1.5,
-                    color: 'var(--color-soft)',
-                    whiteSpace: 'pre',
-                }}
-            >
-                {PANTALLA.join('\n')}
-            </pre>
-
-            <div
-                key={pase}
-                className={efecto.clases}
-                style={{
-                    position: 'absolute',
-                    inset: 0,
-                    // Los que decoran TEXTO —el cursor, los puntos, el fantasma—
-                    // no tienen nada que decorar en un elemento vacío. Se les
-                    // pone una palabra, y CENTRADA: pegada arriba a la izquierda
-                    // se montaba encima de la pantalla del fondo y las dos cosas
-                    // quedaban ilegibles.
-                    ...(efecto.necesitaTexto
-                        ? {
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: 'var(--text-lg)',
-                          }
-                        : null),
-                }}
-            >
-                {efecto.necesitaTexto ? 'SISTEMA' : null}
-            </div>
-
-            <button
-                type="button"
-                className="btn-terminal"
-                onClick={() => setPase((p) => p + 1)}
-                style={{ position: 'absolute', right: 6, bottom: 6, fontSize: 10 }}
-            >
-                [OTRA VEZ]
-            </button>
-        </div>
-    );
 }
 
 /** Un bloque del catálogo, con su regla y su respiro. */
@@ -224,6 +123,7 @@ export default function Banco() {
     const [temblor, setTemblor] = useState(6);
     const [capas, setCapas] = useState<readonly KeyLayer[]>(KEY_LAYERS);
     const [ultimo, setUltimo] = useState('—');
+    const [mirando, setMirando] = useState<VisualEffect | null>(null);
 
     // Al salir del banco no tiene por qué quedar un contexto abierto.
     useEffect(() => () => teardownAudio(), []);
@@ -300,7 +200,11 @@ export default function Banco() {
                         <span className="diag-value tabular-nums">
                             {COLOR_TOKENS.length} colores
                         </span>
-                        <span className="diag-value tabular-nums">{ART_TOTAL} dibujos</span>
+                        <span className="diag-value tabular-nums">
+                            {/* PIEZAS y DIBUJOS no son el mismo número: la
+                                catorce tiene dos caras y sólo te toca una. */}
+                            {ART_TOTAL} piezas · {ART_TOTAL + ART_FACES.length} dibujos
+                        </span>
                         <span className="diag-value tabular-nums">
                             {VISUAL_EFFECTS_TOTAL} efectos
                         </span>
@@ -441,8 +345,8 @@ export default function Banco() {
                 <hr className="rule-dashed" />
 
                 <Seccion
-                    titulo={`ARTE · LOS ${ART_TOTAL}`}
-                    nota="salen de asciiArt · un test los ata a ARTE.md carácter por carácter"
+                    titulo={`ARTE · ${ART_TOTAL} PIEZAS, ${ART_TOTAL + ART_FACES.length} DIBUJOS`}
+                    nota="la catorce tiene dos caras: el hueco es uno y lo decide el final"
                 >
                     <div
                         style={{
@@ -451,7 +355,24 @@ export default function Banco() {
                             gap: '1.25rem',
                         }}
                     >
-                        {ART.map((p) => (
+                        {[
+                            ...ART.map((p) => ({ id: p.id, art: p.art, pie: `se gana por ${p.source}` })),
+                            /*
+                             * ⚠ LA CARA TAPADA DE LA CATORCE, que no es una
+                             * pieza diecisiete. El hueco es uno y cuál te toca
+                             * depende del final: ayudarlo deja el ojo,
+                             * reportarlo deja el ojo vedado. Contarlas como dos
+                             * dejaría la colección imposible de completar.
+                             *
+                             * Faltaba acá, y era justo el dibujo del final que
+                             * menos gente ve.
+                             */
+                            ...ART_FACES.map((c) => ({
+                                id: `${c.of} · tapado`,
+                                art: c.art,
+                                pie: 'la otra cara del mismo hueco · el otro final',
+                            })),
+                        ].map((p) => (
                             <figure key={p.id} style={{ margin: 0 }}>
                                 <pre
                                     className="mono"
@@ -468,7 +389,7 @@ export default function Banco() {
                                     {p.art}
                                 </pre>
                                 <figcaption className="comment" style={{ marginTop: '0.35rem' }}>
-                                    {p.id} · se gana por {p.source}
+                                    {p.id} · {p.pie}
                                 </figcaption>
                             </figure>
                         ))}
@@ -479,66 +400,47 @@ export default function Banco() {
 
                 <Seccion
                     titulo={`EFECTOS · LOS ${VISUAL_EFFECTS_TOTAL}`}
-                    nota="uno por cada @keyframes del proyecto · un test lo ata en las dos direcciones"
+                    nota="uno por cada @keyframes · abrí cualquiera a pantalla completa"
                 >
+                    {/*
+                        ⚠ SIN MINIATURAS, Y ES LA DECISIÓN DE DISEÑO DE ESTA
+                        SECCIÓN. El primer intento fue una rejilla de 25 recuadros
+                        de 132 píxeles, y no servía: estos efectos están hechos
+                        para la pantalla entera —el barrido tarda nueve segundos
+                        en cruzarla, el sincronismo mueve la imagen catorce
+                        píxeles— así que en una caja la mitad son imperceptibles.
+                        Veinticinco cajas donde no pasa nada visible no es un
+                        catálogo: es ruido que además miente por omisión.
+
+                        Una lista dice lo que hay y el visor enseña lo que es.
+                    */}
                     {(Object.keys(TITULO_HOJA) as EffectSheet[]).map((hoja) => (
-                        <div
-                            key={hoja}
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '1rem',
-                                marginTop: '0.5rem',
-                            }}
-                        >
-                            <h3 className="pixel" style={{ fontSize: 'var(--text-lg)' }}>
+                        <div key={hoja} style={{ marginTop: '0.5rem' }}>
+                            <h3
+                                className="pixel"
+                                style={{ fontSize: 'var(--text-lg)', marginBottom: '0.5rem' }}
+                            >
                                 {TITULO_HOJA[hoja]}
                             </h3>
 
-                            <div
-                                style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(16rem, 1fr))',
-                                    gap: '1.5rem',
-                                }}
-                            >
-                                {effectsOf(hoja).map((efecto) => (
-                                    <article
-                                        key={efecto.id}
-                                        style={{
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '0.5rem',
-                                        }}
+                            {effectsOf(hoja).map((efecto) => (
+                                <div
+                                    key={efecto.id}
+                                    className="file-row"
+                                    style={{ gap: '0.75rem', alignItems: 'baseline' }}
+                                >
+                                    <span className="file-row-name">{efecto.nombre}</span>
+                                    <Guia />
+                                    <span className="comment">{efecto.id}</span>
+                                    <button
+                                        type="button"
+                                        className="btn-terminal"
+                                        onClick={() => setMirando(efecto)}
                                     >
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'baseline',
-                                                gap: '0.5rem',
-                                            }}
-                                        >
-                                            <strong className="pixel">{efecto.nombre}</strong>
-                                            <Guia />
-                                            <span className="comment">{efecto.id}</span>
-                                        </div>
-
-                                        <Muestra efecto={efecto} />
-
-                                        <p style={{ fontSize: 'var(--text-sm)', margin: 0 }}>
-                                            {efecto.que}
-                                        </p>
-                                        <p className="comment" style={{ margin: 0 }}>
-                                            {efecto.cuando}
-                                        </p>
-                                        {efecto.necesitaFondo && (
-                                            <p className="comment" style={{ margin: 0 }}>
-                                                trabaja sobre lo que haya debajo
-                                            </p>
-                                        )}
-                                    </article>
-                                ))}
-                            </div>
+                                        [VER]
+                                    </button>
+                                </div>
+                            ))}
                         </div>
                     ))}
                 </Seccion>
@@ -724,6 +626,10 @@ export default function Banco() {
                     ))}
                 </Seccion>
             </div>
+
+            {mirando && (
+                <EffectViewer efecto={mirando} onClose={() => setMirando(null)} />
+            )}
         </main>
     );
 }

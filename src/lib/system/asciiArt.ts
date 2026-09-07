@@ -1470,6 +1470,29 @@ const EYE_BARRED_CAPTION: Record<Lang, string> = {
 };
 
 /**
+ * Las CARAS alternativas: dibujos que comparten hueco con una pieza.
+ *
+ * ⚠ NO SON PIEZAS Y NO PUEDEN CONTARSE COMO TALES. El hueco es uno y cuál te
+ * toca depende del final: ayudarlo te deja el ojo, reportarlo te deja el ojo
+ * vedado. Si contaran como dos, la colección pasaría a diecisiete y NUNCA se
+ * podría completar, porque los dos finales se excluyen entre sí.
+ *
+ * Se exporta porque desde fuera del módulo esta cara era invisible: la página de
+ * identidad enseñaba dieciséis dibujos cuando existen diecisiete, y el que
+ * faltaba era justamente el del final alternativo — el que menos gente ve.
+ *
+ * Un test exige que las dos caras MIDAN lo mismo, celda por celda. `ARTE.md` ya
+ * avisaba de esa deriva y no había nada que la sujetara: las dos no se miran
+ * nunca juntas, así que una podría quedarse corta durante meses.
+ */
+export const ART_FACES: readonly {
+    /** El `id` de la pieza cuyo hueco comparte. */
+    of: string;
+    caption: Record<Lang, string>;
+    art: string;
+}[] = [{ of: EYE_ID, caption: EYE_BARRED_CAPTION, art: EYE_BARRED }];
+
+/**
  * El pie que toca ENSEÑAR de esta pieza.
  *
  * Los tres estados, en orden: tenerla no es haberla mirado, y haberla mirado no
