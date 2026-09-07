@@ -17,6 +17,7 @@
 import { readFileSync } from 'node:fs';
 import { GATE_MS, PEAK_DBFS, type SoundCategory } from '@/lib/system/audio/mix';
 import { CATEGORY_OF } from '@/lib/system/audio/voices';
+import { IDLE_MS } from '@/lib/system/audio/wire';
 
 const DOC = readFileSync('docs/SONIDO.md', 'utf8').replace(/\r/g, '');
 
@@ -81,13 +82,38 @@ describe('lo que el documento promete de sí mismo', () => {
         expect(DOC).toContain('tests/docs/sonido.test.ts');
     });
 
-    it('y no promete ambiente, que todavía no existe', () => {
+    it('⚠ el ambiente ya no está en «lo que falta», porque ya suena', () => {
         /*
-         * ⚠ El ambiente TIENE una fila en la tabla de volúmenes —está
-         * presupuestado— pero no hay ninguna voz que lo toque. El documento
-         * tiene que decirlo en «lo que falta», o promete algo que no suena.
+         * Esta comprobación cambió cuando el ambiente se construyó, y ese cambio
+         * ES el trabajo del test: mientras no existía, exigía que el documento
+         * lo listara como pendiente; ahora exige lo contrario. Un documento que
+         * sigue prometiendo algo que ya está hecho envejece igual de mal que uno
+         * que promete algo que no existe.
          */
-        expect(Object.keys(CATEGORY_OF)).not.toContain('ambience');
-        expect(DOC).toMatch(/## Lo que falta[\s\S]*\*\*El ambiente\.\*\*/);
+        const faltan = /## Lo que falta([\s\S]*)$/.exec(DOC)?.[1] ?? '';
+
+        expect(faltan).not.toContain('El ambiente');
+        expect(DOC).toContain('## El ambiente');
+    });
+
+    it('y dice el hueco de inactividad que el código aplica', () => {
+        // El número que decide si el zumbido cansa o no. Escrito a mano en la
+        // prosa, se queda viejo a la primera que alguien lo ajuste de oído.
+        //
+        // Se comparan sin separadores de millar: la prosa escribe «40 000» y el
+        // código dice 40000, y las dos formas son correctas donde están. Lo que
+        // no puede pasar es que digan números distintos.
+        const sinSeparadores = DOC.replace(/(\d)[\s ](\d)/g, '$1$2');
+
+        expect(sinSeparadores).toContain(`${IDLE_MS} ms`);
+    });
+
+    it('⚠ y no se olvida de que el silencio es CERO', () => {
+        /*
+         * Es la frase que impide que alguien «optimice» el derrumbe bajando el
+         * ambiente a un valor muy pequeño. Casi nada y nada no son lo mismo, y
+         * ahí está justamente el efecto.
+         */
+        expect(DOC).toContain('cero exacto');
     });
 });

@@ -29,6 +29,17 @@ import {
     subscribe as subscribeSystem,
 } from '@/hooks/useSystemState';
 import { play } from '@/lib/system/audio/play';
+import { startAmbience, stopAmbience } from '@/lib/system/audio/ambience';
+
+/**
+ * Cuánto aguanta el zumbido sin que pase nada.
+ *
+ * ⚠ ES LA MITAD QUE HACE QUE NO CANSE. Un ambiente que se queda para siempre es
+ * exactamente el lecho que este diseño descartó: agota en cinco minutos y
+ * enmascara todo lo demás. Cuarenta segundos es bastante más de lo que dura una
+ * pausa escribiendo, y bastante menos de lo que dura irse a leer otra cosa.
+ */
+export const IDLE_MS = 40_000;
 
 /**
  * Los hallazgos que suenan MAL.
@@ -65,6 +76,23 @@ function estaEscribiendo(target: EventTarget | null): boolean {
  */
 export function startSound(): () => void {
     /*
+     * EL ZUMBIDO, QUE ENTRA CON LO PRIMERO QUE HAGAS.
+     *
+     * No arranca al cargar: el navegador no deja sonar hasta que hay un gesto, y
+     * además un ambiente que aparece antes de que hagas nada se oye ENTRAR — y
+     * entonces deja de ser ambiente para ser un suceso. Entra tan despacio que
+     * no se nota, y para cuando reparás en él ya estaba.
+     */
+    let reloj: ReturnType<typeof setTimeout> | null = null;
+
+    const huboActividad = () => {
+        startAmbience();
+
+        if (reloj) clearTimeout(reloj);
+        reloj = setTimeout(stopAmbience, IDLE_MS);
+    };
+
+    /*
      * LAS TECLAS.
      *
      * En captura y sobre el documento: así no hace falta que ningún componente
@@ -82,6 +110,7 @@ export function startSound(): () => void {
         // mayúscula tiene que sonar UNA vez, la de la letra.
         if (e.key.length !== 1 && e.key !== 'Backspace' && e.key !== 'Enter') return;
 
+        huboActividad();
         play('key');
     };
 
@@ -100,6 +129,7 @@ export function startSound(): () => void {
         const ahora = getGlitch();
 
         if (ahora.active && !glitchAntes) {
+            huboActividad();
             play('glitchBurst', {
                 amplitudePx: ahora.amplitudePx,
                 durationMs: DURATION_MS[ahora.severity],
@@ -127,6 +157,7 @@ export function startSound(): () => void {
         for (const id of secretos) {
             if (secretosAntes.has(id)) continue;
 
+            huboActividad();
             play('confirm', { wrong: SUYOS.has(id) });
         }
 
@@ -160,6 +191,8 @@ export function startSound(): () => void {
     observador.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'] });
 
     return () => {
+        if (reloj) clearTimeout(reloj);
+        stopAmbience();
         document.removeEventListener('keydown', alTeclear, true);
         quitarGlitch();
         quitarSistema();

@@ -25,6 +25,8 @@ export interface ParamCall {
 export class FakeParam {
     value: number;
     readonly calls: ParamCall[] = [];
+    /** Lo que se le engancha para modularlo: los LFOs del ambiente. */
+    readonly modulators: FakeNode[] = [];
 
     constructor(value = 0) {
         this.value = value;
@@ -83,9 +85,32 @@ export class FakeNode {
     normalize = true;
     oversample = 'none';
 
+    /**
+     * El contexto al que pertenece, como en Web Audio de verdad.
+     *
+     * ⚠ Sin esto, cualquier código que haga `nodo.context.currentTime` —que es
+     * lo normal para programar algo sobre un nodo que ya se tiene a mano—
+     * reventaba dentro de un `try` y el fallo se tragaba en silencio: el
+     * ambiente no se apagaba y el test decía «no paró» sin decir por qué.
+     */
+    context: FakeAudioContext | null = null;
+
     constructor(readonly kind: string) {}
 
-    connect<T extends FakeNode>(destino: T): T {
+    /**
+     * Se puede conectar a un NODO o a un PARÁMETRO, como en Web Audio de verdad.
+     *
+     * ⚠ Lo segundo no es una rareza: es como se modula. El ambiente engancha un
+     * LFO lentísimo al `detune` de cada armónico para que el zumbido respire, y
+     * un falso que sólo aceptara nodos hacía que ese código —correcto— reventara
+     * en los tests con un error que no decía nada del problema real.
+     */
+    connect<T extends FakeNode | FakeParam>(destino: T): T {
+        if (destino instanceof FakeParam) {
+            destino.modulators.push(this);
+            return destino;
+        }
+
         this.outputs.push(destino);
         destino.inputs.push(this);
         return destino;
@@ -145,6 +170,7 @@ export class FakeAudioContext {
 
     private nuevo(kind: string): FakeNode {
         const n = new FakeNode(kind);
+        n.context = this;
         this.created.push(n);
         return n;
     }

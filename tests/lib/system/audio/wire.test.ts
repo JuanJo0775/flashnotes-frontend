@@ -15,7 +15,8 @@
  * pasaban todas las llamadas.
  */
 
-import { startSound } from '@/lib/system/audio/wire';
+import { IDLE_MS, startSound } from '@/lib/system/audio/wire';
+import { ambienceIsOn } from '@/lib/system/audio/ambience';
 import { teardownAudio } from '@/lib/system/audio/context';
 import { fireGlitch } from '@/hooks/useGlitch';
 import { markSecretFound, setEffectsEnabled } from '@/hooks/useSystemState';
@@ -46,6 +47,22 @@ function fuentes(desde: number): FakeNode[] {
 /** Cuántos nodos hay, o cero si aún no nació el contexto. */
 function marca(): number {
     return lastContext()?.created.length ?? 0;
+}
+
+/**
+ * Deja el ambiente ya encendido antes de medir.
+ *
+ * ⚠ HACE FALTA DESDE QUE EL ZUMBIDO ENTRA CON LA ACTIVIDAD. El ambiente son seis
+ * osciladores, y si arranca DENTRO de la ventana que se está midiendo, se cuela
+ * en la cuenta de notas y un confirm de dos notas parece de ocho. No es un fallo
+ * del sonido: es que la medición tiene que empezar con la sala ya encendida,
+ * como está siempre que alguien lleva un rato jugando.
+ */
+function conLaSalaYaEncendida() {
+    const area = document.createElement('textarea');
+    document.body.append(area);
+    teclear('a', area);
+    area.remove();
 }
 
 function teclear(key: string, target: HTMLElement) {
@@ -141,6 +158,8 @@ describe('los hallazgos', () => {
          * se comía el segundo y el test fallaba por un motivo que no era el
          * suyo. Dos hallazgos en el mismo milisegundo no pasan jugando.
          */
+        conLaSalaYaEncendida();
+
         const sube = async (id: string) => {
             const antes = marca();
             markSecretFound(id);
@@ -161,6 +180,8 @@ describe('los hallazgos', () => {
          * una pequeña traición, que vale más que una melodía número treinta y
          * cuatro.
          */
+        conLaSalaYaEncendida();
+
         const antes = marca();
         markSecretFound('entity-reported');
         const notas = fuentes(antes).map((n) => n.frequency.value);
@@ -178,6 +199,79 @@ describe('apagarlo lo apaga entero', () => {
         teclear('a', area);
 
         expect(contextCount()).toBe(0);
+        area.remove();
+    });
+});
+
+describe('el ambiente entra con la actividad y se va solo', () => {
+    it('escribir lo enciende', () => {
+        /*
+         * No se enciende al cargar: el navegador no deja sonar hasta que hay un
+         * gesto, y además un zumbido que aparece antes de que hagas nada se oye
+         * ENTRAR. Entra con la primera cosa que hagas, tan despacio que no se
+         * nota, y para cuando reparás en él ya estaba.
+         */
+        const area = document.createElement('textarea');
+        document.body.append(area);
+
+        expect(ambienceIsOn()).toBe(false);
+        teclear('a', area);
+
+        expect(ambienceIsOn()).toBe(true);
+        area.remove();
+    });
+
+    it('⚠ y se va tras un rato quieto, sin que nadie se lo pida', () => {
+        /*
+         * ES LA MITAD QUE HACE QUE NO CANSE. Un zumbido que se queda para
+         * siempre es exactamente el lecho que este diseño descartó: agota en
+         * cinco minutos y enmascara todo lo demás. Si te vas a leer otra cosa,
+         * la máquina se calla sola.
+         */
+        jest.useFakeTimers();
+
+        try {
+            const area = document.createElement('textarea');
+            document.body.append(area);
+            teclear('a', area);
+            expect(ambienceIsOn()).toBe(true);
+
+            jest.advanceTimersByTime(IDLE_MS + 100);
+
+            expect(ambienceIsOn()).toBe(false);
+            area.remove();
+        } finally {
+            jest.useRealTimers();
+        }
+    });
+
+    it('y seguir escribiendo lo mantiene', () => {
+        jest.useFakeTimers();
+
+        try {
+            const area = document.createElement('textarea');
+            document.body.append(area);
+            teclear('a', area);
+
+            jest.advanceTimersByTime(IDLE_MS - 500);
+            teclear('b', area);
+            jest.advanceTimersByTime(IDLE_MS - 500);
+
+            expect(ambienceIsOn()).toBe(true);
+            area.remove();
+        } finally {
+            jest.useRealTimers();
+        }
+    });
+
+    it('parar el suscriptor lo apaga también', () => {
+        const area = document.createElement('textarea');
+        document.body.append(area);
+        teclear('a', area);
+
+        parar();
+
+        expect(ambienceIsOn()).toBe(false);
         area.remove();
     });
 });

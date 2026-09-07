@@ -138,6 +138,37 @@ Dos decisiones de la compuerta que costaría caro descubrir a oído:
   otros 60 ms, mientras no pararas de escribir no volvería a sonar nada: la tecla
   sonaría sólo al dejar de teclear, siempre tarde y despegada del gesto.
 
+## El ambiente
+
+Un zumbido de chasis con tres armónicos, a −34 dBFS: diez decibelios por debajo
+de las teclas, que es la diferencia entre «hay algo» y «se oye».
+
+⚠ **No es un lecho.** Un zumbido de red más un ventilador más siseo, sonando sin
+parar, agota en cinco minutos y arruina lo demás por enmascaramiento: cuanto más
+fondo hay, menos sitio queda para lo que sí importa oír.
+
+⚠ **Y existe sobre todo para poder DESAPARECER.** Quitar de golpe algo que
+llevaba veinte minutos ahí es lo más fuerte que puede hacer este sistema y no
+cuesta ni un fichero. Sin nada de fondo, el silencio del derrumbe no cuesta nada
+y no vale nada. Ésa es la única razón por la que se queda.
+
+**Respira.** Tres armónicos, cada uno con un LFO lentísimo empujándole el tono, a
+ritmos que no son múltiplos entre ellos. Un bucle fijo se delata en treinta
+segundos: el oído aprende el patrón y a partir de ahí oye un fichero
+repitiéndose.
+
+**Entra con lo primero que hagas y se va solo.** Sube en 4 segundos —de golpe se
+oiría ENTRAR, y entonces dejaría de ser ambiente para ser un suceso— y se apaga
+tras **40 000 ms** sin actividad: bastante más de lo que dura una pausa
+escribiendo, bastante menos de lo que dura irse a leer otra cosa.
+
+Y sabe callarse de dos maneras distintas, que no son la misma:
+
+| | Qué hace | Para qué |
+| --- | --- | --- |
+| `duck` | Lo baja y lo devuelve | Cuando habla el ente: la sala se calla para escucharlo |
+| `silence` | Lo pone en **cero exacto** | El derrumbe. Un ambiente a −60 dB sigue estando ahí |
+
 ## De dónde sale cada sonido
 
 ⚠ **Un solo suscriptor, no cuarenta llamadas.** `SoundWire` es el único
@@ -205,8 +236,6 @@ compuerta. No existe fuera de desarrollo.
 
 ## Lo que falta
 
-- **El ambiente.** Un solo elemento tenue, que existe sobre todo para poder
-  desaparecer: el silencio del derrumbe sólo se siente si antes había algo.
 - **El final** (§26): el crujido que sube con cada golpe, la caída, el ojo, los
   200 ms de silencio absoluto y el reinicio.
 - **La entrega de arte cableada.** La voz existe (`drawer`) y todavía no cuelga
