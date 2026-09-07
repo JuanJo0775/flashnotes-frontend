@@ -415,6 +415,34 @@ describe('la maquina encendiendose y apagandose', () => {
         boton.remove();
     });
 
+    it('⚠ y lo pulsable que NO es un boton tambien suena', async () => {
+        /*
+         * MEDIDO JUGANDO Y NO SUPUESTO: diez clics al rotulo de la cabecera —el
+         * que provoca el colapso— no sonaron NI UNO.
+         *
+         * `.system-label` es un `<span>` con `onClick`, no un `<button>`, y el
+         * selector solo miraba botones y enlaces. Esta app tiene varias cosas
+         * pulsables que no son botones, y el sonido no puede depender de que
+         * alguien se acuerde de anotarlas una por una.
+         *
+         * La senal que SI vale es el cursor: si el diseno dice que algo se
+         * pulsa, se pulsa.
+         */
+        const span = document.createElement('span');
+        span.style.cursor = 'pointer';
+        document.body.append(span);
+
+        conLaSalaYaEncendida();
+        await esperar();
+        const antes = marca();
+
+        span.click();
+        await esperar();
+
+        expect(fuentes(antes).length).toBeGreaterThan(0);
+        span.remove();
+    });
+
     it('⚠ pero escribir en un area de texto NO cuenta como boton', async () => {
         /*
          * Un clic dentro del editor para poner el cursor no es apretar nada: si
@@ -447,6 +475,26 @@ describe('la maquina encendiendose y apagandose', () => {
         document.documentElement.removeAttribute('data-booting');
     });
 
+    it('⚠ y el sistema volviendo del colapso suena a encendido', async () => {
+        /*
+         * MEDIDO JUGANDO: el colapso sonaba —barrido e impacto— pero su
+         * reinicio no. Y es porque el colapso NO usa la pantalla de arranque:
+         * se rearranca el solo, con su propia cuenta atras, asi que
+         * `data-booting` no aparece nunca.
+         *
+         * Lo que si pasa es que `data-collapsing` SE VA. Eso es exactamente el
+         * momento en que la maquina vuelve, y es donde va el encendido.
+         */
+        document.documentElement.setAttribute('data-collapsing', '');
+        await new Promise((r) => setTimeout(r, 800));
+        const antes = marca();
+
+        document.documentElement.removeAttribute('data-collapsing');
+        await esperar();
+
+        expect(fuentes(antes).length).toBeGreaterThan(0);
+    });
+
     it('y apagarse tambien', async () => {
         conLaSalaYaEncendida();
         await esperar();
@@ -467,9 +515,11 @@ describe('la maquina encendiendose y apagandose', () => {
          */
         document.documentElement.setAttribute('data-booting', '');
         // ⚠ Se espera a que el arranque TERMINE de sonar antes de marcar: la
-        // busqueda de cabezal llega 380 ms despues del condensador, y midiendo
-        // antes se contaban sus golpes como si los hubiera causado el quitar.
-        await new Promise((r) => setTimeout(r, 700));
+        // busqueda de cabezal llega 620 ms despues del encendido y dura otro
+        // tanto, y midiendo antes se contaban sus cinco golpes como si los
+        // hubiera causado el quitar el atributo. El margen es generoso porque la
+        // suite corre lenta y con 700 ms fallaba de forma intermitente.
+        await new Promise((r) => setTimeout(r, 1_800));
         const antes = marca();
 
         document.documentElement.removeAttribute('data-booting');

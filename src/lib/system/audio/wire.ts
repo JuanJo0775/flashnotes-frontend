@@ -248,7 +248,27 @@ export function startSound(): () => void {
         const t = e.target;
         if (!(t instanceof HTMLElement)) return;
 
-        if (!t.closest('button, a, [role="button"]')) return;
+        /*
+         * ⚠ NO BASTA CON MIRAR SI ES UN BOTÓN, y esto se midió jugando: diez
+         * clics al rótulo de la cabecera —el que provoca el colapso— no sonaron
+         * NI UNO. `.system-label` es un `<span>` con `onClick`.
+         *
+         * Esta app tiene varias cosas pulsables que no son botones, y el sonido
+         * no puede depender de que alguien se acuerde de anotarlas una por una:
+         * la próxima que se añada volvería a quedarse muda en silencio.
+         *
+         * La señal que SÍ vale es el CURSOR. Si el diseño dice que algo se pulsa
+         * —y lo dice poniendo el cursor de mano— entonces se pulsa. Ningún
+         * elemento nuevo puede escaparse de eso sin verse raro primero.
+         */
+        const pulsable = t.closest('button, a, [role="button"], input, label, summary');
+        const conMano = getComputedStyle(t).cursor === 'pointer';
+
+        if (!pulsable && !conMano) return;
+
+        // Escribir no es pulsar: un clic para poner el cursor en el editor haría
+        // el mismo ruido que confirmar un borrado.
+        if (estaEscribiendo(t)) return;
 
         huboActividad();
         play('button');
@@ -316,6 +336,19 @@ export function startSound(): () => void {
                     play('sweep', { fromHz: 1_100, toHz: 60, ms: 900 });
                     setTimeout(() => play('thud'), 620);
                 }
+            }
+
+            /*
+             * ⚠ Y EL COLAPSO SUENA TAMBIÉN AL IRSE, que es cuando la máquina
+             * VUELVE. Medido jugando: el colapso sonaba —barrido e impacto— y
+             * su reinicio no, porque el colapso NO usa la pantalla de arranque:
+             * se rearranca solo con su propia cuenta atrás, así que
+             * `data-booting` no aparece nunca. Lo que sí pasa es que
+             * `data-collapsing` se va, y ése es el momento exacto del encendido.
+             */
+            if (!hay && presentes.has(attr) && attr === 'data-collapsing') {
+                huboActividad();
+                play('powerUp');
             }
 
             if (hay) presentes.add(attr);
