@@ -90,9 +90,20 @@ function fuenteDeRuido(g: AudioGraph, random: Random): AudioBufferSourceNode {
     return src;
 }
 
-/** El desplazamiento dentro del búfer, para no repetir la misma muestra. */
-function desde(random: Random): number {
-    return random() * (RUIDO_SEGUNDOS - 0.2);
+/**
+ * Arranca una fuente de ruido DESDE UN PUNTO AL AZAR del búfer.
+ *
+ * ⚠ EL DESPLAZAMIENTO NO ES OPCIONAL Y SE OLVIDA MUY FÁCIL. El búfer es uno
+ * solo y se reutiliza, que es lo correcto; pero si todos los disparos arrancan
+ * en la muestra cero, todos comparten la misma forma de onda inicial. El filtro
+ * cambia y el volumen cambia, y aun así se OYE la repetición: el ataque es
+ * idéntico, y el ataque es lo primero que llega al oído.
+ *
+ * Un `start(cuando)` a secas es exactamente ese fallo, y no se ve leyendo el
+ * código — sólo escuchando un buen rato. Por eso arrancar pasa por acá.
+ */
+function arrancar(src: AudioBufferSourceNode, cuando: number, random: Random) {
+    src.start(cuando, random() * (RUIDO_SEGUNDOS - 0.2));
 }
 
 /**
@@ -118,6 +129,18 @@ function filtro(g: AudioGraph, type: BiquadFilterType, hz: number, q: number): B
 }
 
 /**
+ * Las tres capas de la tecla, por nombre.
+ *
+ * ⚠ SE PUEDEN PEDIR SUELTAS, Y NO ES UNA COMODIDAD PARA LOS TESTS. Si la tecla
+ * suena mal, saberlo no sirve de nada: hay que saber CUÁL de las tres está mal,
+ * y mezcladas es imposible porque el chasquido tapa al cuerpo y el cuerpo tapa
+ * al fondo. El banco de pruebas las dispara sueltas para poder afinarlas.
+ */
+export const KEY_LAYERS = ['click', 'body', 'thud'] as const;
+
+export type KeyLayer = (typeof KEY_LAYERS)[number];
+
+/**
  * LA TECLA. El sonido que más veces va a sonar en la vida del producto.
  *
  * Tres capas, y cada una tiene un porqué físico:
@@ -130,43 +153,54 @@ function filtro(g: AudioGraph, type: BiquadFilterType, hz: number, q: number): B
  *      el pasabanda de la bocinita. Por eso las voces físicas van por `air`.
  *  3 · EL FONDO: el golpe de la tecla al llegar abajo. Grave, corto, sordo.
  */
-export function key(g: AudioGraph, random: Random = Math.random) {
+export function key(
+    g: AudioGraph,
+    random: Random = Math.random,
+    layers: readonly KeyLayer[] = KEY_LAYERS
+) {
     const t0 = g.ctx.currentTime;
+    const suena = (capa: KeyLayer) => layers.includes(capa);
 
     // 1 · El chasquido.
-    const chasquido = fuenteDeRuido(g, random);
-    const agudo = filtro(g, 'bandpass', vary(2_800, 0.08, random), 1.1);
-    const gChasquido = g.ctx.createGain();
-    percutir(gChasquido, t0, vary(0.5, 0.15, random), 0.0006, vary(0.008, 0.2, random));
-    chasquido.connect(agudo).connect(gChasquido);
-    gChasquido.connect(g.air);
-    gChasquido.connect(g.room);
-    chasquido.start(t0 + desde(random) * 0);
-    chasquido.stop(t0 + 0.012);
+    if (suena('click')) {
+        const chasquido = fuenteDeRuido(g, random);
+        const agudo = filtro(g, 'bandpass', vary(2_800, 0.08, random), 1.1);
+        const gChasquido = g.ctx.createGain();
+        percutir(gChasquido, t0, vary(0.5, 0.15, random), 0.0006, vary(0.008, 0.2, random));
+        chasquido.connect(agudo).connect(gChasquido);
+        gChasquido.connect(g.air);
+        gChasquido.connect(g.room);
+        arrancar(chasquido, t0, random);
+        chasquido.stop(t0 + 0.012);
+    }
 
     // 2 · El cuerpo, que es el que suena rico.
-    const cuerpo = fuenteDeRuido(g, random);
-    const resonancia = filtro(g, 'bandpass', vary(310, 0.05, random), 6.5);
-    const gCuerpo = g.ctx.createGain();
-    const largoCuerpo = vary(0.07, 0.12, random);
-    percutir(gCuerpo, t0, vary(0.42, 0.12, random), 0.001, largoCuerpo);
-    cuerpo.connect(resonancia).connect(gCuerpo);
-    gCuerpo.connect(g.air);
-    gCuerpo.connect(g.room);
-    cuerpo.start(t0);
-    cuerpo.stop(t0 + largoCuerpo + 0.01);
+    if (suena('body')) {
+        const cuerpo = fuenteDeRuido(g, random);
+        const resonancia = filtro(g, 'bandpass', vary(310, 0.05, random), 6.5);
+        const gCuerpo = g.ctx.createGain();
+        const largoCuerpo = vary(0.07, 0.12, random);
+        percutir(gCuerpo, t0, vary(0.42, 0.12, random), 0.001, largoCuerpo);
+        cuerpo.connect(resonancia).connect(gCuerpo);
+        gCuerpo.connect(g.air);
+        gCuerpo.connect(g.room);
+        arrancar(cuerpo, t0, random);
+        cuerpo.stop(t0 + largoCuerpo + 0.01);
+    }
 
     // 3 · El fondo.
-    const fondo = g.ctx.createOscillator();
-    fondo.type = 'sine';
-    fondo.frequency.value = vary(104, 0.07, random);
-    const gFondo = g.ctx.createGain();
-    const largoFondo = vary(0.05, 0.12, random);
-    percutir(gFondo, t0, vary(0.3, 0.15, random), 0.0015, largoFondo);
-    fondo.connect(gFondo);
-    gFondo.connect(g.air);
-    fondo.start(t0);
-    fondo.stop(t0 + largoFondo + 0.01);
+    if (suena('thud')) {
+        const fondo = g.ctx.createOscillator();
+        fondo.type = 'sine';
+        fondo.frequency.value = vary(104, 0.07, random);
+        const gFondo = g.ctx.createGain();
+        const largoFondo = vary(0.05, 0.12, random);
+        percutir(gFondo, t0, vary(0.3, 0.15, random), 0.0015, largoFondo);
+        fondo.connect(gFondo);
+        gFondo.connect(g.air);
+        fondo.start(t0);
+        fondo.stop(t0 + largoFondo + 0.01);
+    }
 }
 
 /**
@@ -188,7 +222,7 @@ export function tick(g: AudioGraph, random: Random = Math.random) {
     golpe.connect(f).connect(gGolpe);
     gGolpe.connect(g.air);
     gGolpe.connect(g.room);
-    golpe.start(t0);
+    arrancar(golpe, t0, random);
     golpe.stop(t0 + 0.018);
 
     const madera = fuenteDeRuido(g, random);
@@ -197,7 +231,7 @@ export function tick(g: AudioGraph, random: Random = Math.random) {
     percutir(gMadera, t0, vary(0.2, 0.15, random), 0.001, vary(0.016, 0.18, random));
     madera.connect(fm).connect(gMadera);
     gMadera.connect(g.air);
-    madera.start(t0);
+    arrancar(madera, t0, random);
     madera.stop(t0 + 0.018);
 }
 
@@ -256,7 +290,7 @@ export function relay(g: AudioGraph, random: Random = Math.random) {
         gain.connect(g.air);
         gain.connect(g.room);
 
-        src.start(t0 + offset);
+        arrancar(src, t0 + offset, random);
         src.stop(t0 + offset + 0.008);
     };
 
@@ -316,6 +350,6 @@ export function glitchBurst(
     gain.connect(g.speaker);
     gain.connect(g.room);
 
-    src.start(t0);
+    arrancar(src, t0, random);
     src.stop(t0 + largo + 0.01);
 }

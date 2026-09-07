@@ -90,6 +90,32 @@ export interface AudioGraph {
 
 let grafo: AudioGraph | null = null;
 
+/**
+ * Quién quiere enterarse de que el interruptor cambió.
+ *
+ * ⚠ POR QUÉ HACE FALTA UN ALMACÉN Y NO BASTA CON LEER EL VALOR.
+ *
+ * El sonido se apaga desde tres sitios —el panel de diagnóstico, `//sound` y el
+ * banco de pruebas— y lo pinta cualquiera que enseñe su estado. Sin aviso, el
+ * panel seguiría diciendo ON con el sonido ya apagado hasta que algo lo
+ * obligara a repintarse por otro motivo.
+ *
+ * Es el mismo patrón que `artHints`: un módulo con sus oyentes y sin DOM.
+ */
+const oyentes = new Set<() => void>();
+
+function avisar() {
+    oyentes.forEach((o) => o());
+}
+
+/** Se suscribe a los cambios del interruptor. Devuelve cómo darse de baja. */
+export function subscribeSound(oyente: () => void): () => void {
+    oyentes.add(oyente);
+    return () => {
+        oyentes.delete(oyente);
+    };
+}
+
 /** ¿Está encendido? Encendido por defecto, igual que los efectos. */
 export function isSoundOn(): boolean {
     // Quien pide menos movimiento no está pidiendo más ruido. Manda sobre la
@@ -116,6 +142,8 @@ export function setSoundOn(on: boolean) {
     }
 
     if (!on) teardownAudio();
+
+    avisar();
 }
 
 /**

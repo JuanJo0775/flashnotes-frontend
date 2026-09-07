@@ -95,8 +95,12 @@ export class FakeNode {
         this.disconnected = true;
     }
 
-    start(t = 0) {
+    /** Desde qué punto del búfer se leyó. Lo mira el test de la repetición. */
+    offset: number | null = null;
+
+    start(t = 0, offset?: number) {
         this.started = t;
+        if (offset !== undefined) this.offset = offset;
     }
 
     stop(t = 0) {

@@ -13,7 +13,7 @@
  * alguien «simplifique» esto a una fuente, la suite lo dice.
  */
 
-import { CATEGORY_OF, beep, glitchBurst, key, relay, tick } from '@/lib/system/audio/voices';
+import { CATEGORY_OF, KEY_LAYERS, beep, glitchBurst, key, relay, tick } from '@/lib/system/audio/voices';
 import { ensureAudio, teardownAudio } from '@/lib/system/audio/context';
 import { installFakeAudio, lastContext, reaches, type FakeNode } from './fakeAudio';
 
@@ -130,6 +130,32 @@ describe('la tecla, que es la que más va a sonar', () => {
         expect(f1).not.toEqual(f2);
     });
 
+    it('⚠ cada disparo lee un TROZO DISTINTO del ruido', () => {
+        /*
+         * El búfer es uno solo y se reutiliza —eso es lo correcto—, pero si
+         * todos los disparos arrancan en la muestra cero, todos los chasquidos
+         * comparten la misma forma de onda inicial. El filtro cambia, el
+         * volumen cambia, y aun así se OYE la repetición: el ataque es
+         * identico y el ataque es lo primero que llega al oido.
+         *
+         * Un `start(cuando)` sin desplazamiento es exactamente ese fallo, y es
+         * invisible salvo escuchando mucho rato.
+         */
+        const g = ensureAudio()!;
+
+        const puntos = new Set<number>();
+        for (let i = 0; i < 6; i += 1) {
+            const antes = lastContext()!.created.length;
+            key(g, azar(i + 40));
+            for (const f of fuentes(antes)) {
+                if (f.kind === 'bufferSource') puntos.add(f.offset!);
+            }
+        }
+
+        expect(puntos.size).toBeGreaterThan(1);
+        for (const p of puntos) expect(p).not.toBeNull();
+    });
+
     it('el ruido se genera UNA vez, no en cada tecla', () => {
         /*
          * Un búfer de ruido nuevo por pulsación sería reservar memoria y
@@ -148,6 +174,53 @@ describe('la tecla, que es la que más va a sonar', () => {
         for (let i = 1; i <= 20; i += 1) key(g, azar(i));
 
         expect(lastContext()!.buffersCreated).toBe(antes);
+    });
+});
+
+describe('las capas de la tecla, sueltas', () => {
+    /*
+     * ⚠ PARA QUÉ EXISTE ESTO, QUE NO ES PARA LOS TESTS.
+     *
+     * Si la tecla suena mal, saberlo no sirve de nada: hay que saber CUÁL de
+     * las tres capas está mal. Mezcladas es imposible — el chasquido tapa al
+     * cuerpo y el cuerpo tapa al fondo. El banco de pruebas las dispara sueltas
+     * y por eso la voz tiene que saber tocar sólo una.
+     */
+
+    it('declara sus tres capas por nombre', () => {
+        expect([...KEY_LAYERS]).toEqual(['click', 'body', 'thud']);
+    });
+
+    it('pedir una sola capa suena una sola fuente', () => {
+        const g = ensureAudio()!;
+        const antes = lastContext()!.created.length;
+
+        key(g, azar(1), ['body']);
+
+        expect(fuentes(antes)).toHaveLength(1);
+    });
+
+    it('y el cuerpo es el que lleva la resonancia grave', () => {
+        // La capa que separa un teclado mecanico de uno de membrana. Si su
+        // filtro se va a los agudos, deja de sonar a plastico y a placa.
+        const g = ensureAudio()!;
+        const antes = lastContext()!.created.length;
+
+        key(g, azar(1), ['body']);
+
+        const f = nuevos(antes).find((n) => n.kind === 'biquad')!;
+
+        expect(f.frequency.value).toBeGreaterThan(200);
+        expect(f.frequency.value).toBeLessThan(500);
+    });
+
+    it('sin pedir nada suenan las tres, que es lo normal', () => {
+        const g = ensureAudio()!;
+        const antes = lastContext()!.created.length;
+
+        key(g, azar(1));
+
+        expect(fuentes(antes)).toHaveLength(3);
     });
 });
 
