@@ -109,7 +109,7 @@ describe('el presupuesto del §8', () => {
          * Veinte es lo que compensa esa diferencia. No es un numero de gusto: es
          * la distancia tipica entre el pico y el valor medio de un golpe corto.
          */
-        expect(PEAK_DBFS.keys - PEAK_DBFS.ambience).toBeGreaterThanOrEqual(18);
+        expect(PEAK_DBFS.keys - PEAK_DBFS.ambience).toBeGreaterThanOrEqual(24);
     });
 
     it('y `gainFor` es el pico de la categoría ya convertido', () => {

@@ -13,7 +13,13 @@
  * ambiente puede estar tan bajo como haga falta, pero tiene que existir.
  */
 
-import { ambienceGain, silence, startAmbience, stopAmbience } from '@/lib/system/audio/ambience';
+import {
+    AMBIENCE_MIX,
+    ambienceGain,
+    silence,
+    startAmbience,
+    stopAmbience,
+} from '@/lib/system/audio/ambience';
 import { PEAK_DBFS, dbToGain } from '@/lib/system/audio/mix';
 import { ensureAudio, setSoundOn, teardownAudio } from '@/lib/system/audio/context';
 import { contextCount, installFakeAudio, lastContext, reaches } from './fakeAudio';
@@ -68,6 +74,23 @@ describe('cómo está hecho', () => {
         startAmbience();
 
         expect(reaches(g.air, 'destination')).toBe(true);
+    });
+
+    it('⚠ sus fuentes están NORMALIZADAS antes del presupuesto', () => {
+        /*
+         * EL SEGUNDO MOTIVO DE QUE EL FONDO SE COMIERA A LAS ACTIVIDADES.
+         *
+         * El zumbido son cuatro fuentes —tres armónicos y el aire— sumándose
+         * ANTES de aplicar su nivel. Sumaban 2,13, así que el ambiente salía a
+         * más del doble de lo que la tabla decía: −37 dBFS reales cuando el
+         * presupuesto ponía −44.
+         *
+         * Es el fallo clásico de mezclar: cada voz suena bien sola, y lo que
+         * llega a la salida es la suma. Normalizadas, el número de la tabla
+         * vuelve a significar lo que dice.
+         */
+        expect(AMBIENCE_MIX).toBeLessThanOrEqual(1);
+        expect(AMBIENCE_MIX).toBeGreaterThan(0.9);
     });
 
     it('es lo más callado de todo, y por mucho', () => {

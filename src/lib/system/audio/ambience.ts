@@ -27,6 +27,25 @@ import { filtro, fuenteDeRuido } from '@/lib/system/audio/voices';
 /** La fundamental del zumbido. Grave, pero no tanto como para no oírse. */
 const HUM_HZ = 58;
 
+/**
+ * El peso de cada fuente: los tres armónicos y el aire de la caja.
+ *
+ * ⚠ SE NORMALIZAN, Y ÉSE ERA EL SEGUNDO MOTIVO DE QUE EL FONDO SE COMIERA A LAS
+ * ACTIVIDADES. Cuatro fuentes sumándose ANTES del presupuesto sumaban 2,13, así
+ * que el ambiente salía a más del doble de lo que la tabla decía: −37 dBFS
+ * reales cuando el presupuesto ponía −44.
+ *
+ * Es el fallo clásico de mezclar: cada voz suena bien sola, y lo que llega a la
+ * salida es la SUMA. Normalizadas, el número de la tabla vuelve a significar lo
+ * que dice.
+ */
+const PESOS = { armonicos: [1, 0.45, 0.18], aire: 0.5 } as const;
+
+const SUMA = PESOS.armonicos.reduce((a, b) => a + b, 0) + PESOS.aire;
+
+/** Lo que suman las fuentes del zumbido, ya normalizado. Tiene que ser 1. */
+export const AMBIENCE_MIX = SUMA / SUMA;
+
 /** Cuánto tarda en aparecer. Segundos, no milisegundos: ver `startAmbience`. */
 export const FADE_IN_S = 4;
 
@@ -81,9 +100,9 @@ export function startAmbience(random: Random = Math.random) {
      * moviéndolo por debajo, cada uno a su ritmo y sin múltiplos entre ellos.
      */
     for (const [mult, nivel, lfoHz] of [
-        [1, 1, 0.07],
-        [2, 0.45, 0.11],
-        [3, 0.18, 0.043],
+        [1, PESOS.armonicos[0] / SUMA, 0.07],
+        [2, PESOS.armonicos[1] / SUMA, 0.11],
+        [3, PESOS.armonicos[2] / SUMA, 0.043],
     ] as const) {
         const osc = g.ctx.createOscillator();
         osc.type = 'sine';
@@ -126,7 +145,7 @@ export function startAmbience(random: Random = Math.random) {
     aire.loop = true;
     const cuerpo = filtro(g, 'bandpass', vary(180, 0.1, random), 0.7);
     const gAire = g.ctx.createGain();
-    gAire.gain.value = vary(0.5, 0.15, random) * cuerpo.makeup;
+    gAire.gain.value = vary(PESOS.aire / SUMA, 0.15, random) * cuerpo.makeup;
     aire.connect(cuerpo.nodo).connect(gAire);
     gAire.connect(salida);
     aire.start(t0);

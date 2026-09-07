@@ -125,7 +125,7 @@ rompe.
 
 | Familia | Pico |
 | --- | --- |
-| `ambience` | −44 dBFS |
+| `ambience` | −50 dBFS |
 | `keys` | −24 dBFS |
 | `confirm` | −18 dBFS |
 | `glitch` | −14 dBFS |
@@ -154,15 +154,20 @@ Dos decisiones de la compuerta que costaría caro descubrir a oído:
 
 ## El ambiente
 
-Un zumbido de chasis con tres armónicos y aire, a −44 dBFS: **veinte** decibelios
-por debajo de las teclas.
+Un zumbido de chasis con tres armónicos y aire, a −50 dBFS: **veintiséis**
+decibelios por debajo de las teclas.
 
-⚠ **Y veinte no es exageración: es lo que compensa ser continuo.** El presupuesto
-mide picos, y ahí lo continuo hace trampa sin querer — el pico de un zumbido ES
-su nivel medio, porque no para nunca, mientras que una tecla es un transitorio de
-ocho milisegundos cuyo nivel medio está veinte decibelios por debajo de su pico.
-A igual pico, lo continuo se oye muchísimo más fuerte. Estuvo en −34 y el fondo
-se comía todo lo que hacías.
+⚠ **Y no es exageración: es lo que compensa ser continuo.** El presupuesto mide
+picos, y ahí lo continuo hace trampa sin querer — el pico de un zumbido ES su
+nivel medio, porque no para nunca, mientras que una tecla es un transitorio de
+ocho milisegundos cuyo nivel medio está muy por debajo de su pico. A igual pico,
+lo continuo se oye muchísimo más fuerte.
+
+⚠ **Y sus cuatro fuentes se NORMALIZAN antes de aplicar ese número.** Sumaban
+2,13 entre ellas, así que el zumbido salía al doble de lo que la tabla decía:
+−37 dBFS reales con el presupuesto en −44. Es el fallo clásico de mezclar —cada
+voz suena bien sola y lo que llega a la salida es la suma— y hasta arreglarlo,
+bajar el número de la tabla sólo curaba la mitad.
 
 ⚠ **No es un lecho.** Un zumbido de red más un ventilador más siseo, sonando sin
 parar, agota en cinco minutos y arruina lo demás por enmascaramiento: cuanto más

@@ -52,14 +52,17 @@ export type SoundCategory =
  * de ocho milisegundos cuyo nivel medio está veinte decibelios por debajo de su
  * pico. A igual pico, lo continuo se oye muchísimo más fuerte.
  *
- * Estuvo en −34 —diez de separación, que sobre el papel parecían de sobra— y se
- * reportó jugando: «los de actividades se escuchan muy suave en comparación con
- * los de fondo». Veinte no es un número de gusto: es la distancia típica entre
- * el pico y el valor medio de un golpe corto, o sea justo lo que hay que
- * compensar.
+ * Estuvo en −34 —diez de separación— y luego en −44, y las DOS veces se reportó
+ * que el fondo se comía las actividades. Veintiséis no es un número de gusto: es
+ * la distancia típica entre el pico y el valor medio de un golpe corto, más el
+ * margen de que un zumbido continuo no descansa nunca.
+ *
+ * ⚠ Y esto SÓLO significa algo desde que las fuentes del ambiente se normalizan:
+ * antes sumaban 2,13 entre ellas, así que bajar el número de la tabla arreglaba
+ * la mitad del problema y la otra mitad seguía intacta.
  */
 export const PEAK_DBFS: Readonly<Record<SoundCategory, number>> = {
-    ambience: -44,
+    ambience: -50,
     keys: -24,
     confirm: -18,
     glitch: -14,
