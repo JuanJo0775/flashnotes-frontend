@@ -270,55 +270,54 @@ Son **16**, todas de **40 caracteres** de ancho.
 **Se gana:** `entity` · **id:** `eye`
 
 ```
-1110000011101101000010001100010011001010
-1001110101000111101111001001011010000100
-01100000101100              111101000011
-0001111001                     000001001
-0101001          00000             11011
-1001          000 00  010           1011
-11           000       000           110
-110           000     000             11
-01100            00100             00000
-01101111                         0100101
-100111000000                 00000100111
-0010110110111111101011111100101100001000
-0100101001010101010001110100110101100000
-1101111100111000110011000010110011010011
+                  .:;ll,.,.             
+           .cxK0NWMMMMMMMWN00;.         
+        :xONWN0xxxo:;::..ccoxXXXd.      
+      x0KXx;.                 .xKK;     
+    lx0d,                        .kO    
+    d;          cMMWWNo            l    
+    .          ,KWo,xWN.           ,    
+    cd,         dWWXWWO          :o,    
+     ,cc;.       ,;Ol.        ;;kl.     
+       .;00cc.           .;lkKol        
+          :oOXxxdl0lcOxO0Old,           
+              ..;:oloc;,                
+                                        
 ```
 
 ### Y su versión tapada
 
-⚠ **No es otra pieza: es la misma, con un tachón.** La catorce es UNA, y cuál te
+⚠ **No es otra pieza: es la misma, con una equis encima.** La catorce es UNA, y cuál te
 toca depende de lo que elegiste al final — ayudarlo te deja el ojo, reportarlo te
 deja el ojo VEDADO. Si fueran dos, la colección pasaría a diecisiete y nunca se
 podría completar.
 
-⚠ **Y el campo es el mismo dígito por dígito.** Va acá pegada a la otra por eso:
+⚠ **Y el dibujo de debajo es el mismo celda por celda.** Va acá pegada a la otra
+por eso:
 quien retoque una tiene que retocar la otra, o dejarán de leerse como el mismo
 dibujo. Vive en `EYE_BARRED`, dentro de `asciiArt.ts`, y no lleva `id:` propio
 justamente porque no es una pieza aparte.
 
-El tachón va **de canto a canto**. Metido dentro del vacío no se leía como algo
-puesto encima, sino como un agujero más dentro del agujero: una censura de verdad
-no respeta el margen del dibujo, cruza la página entera. Tres filas, no cinco, y
-así se salvan los dos arcos anchos del anillo. Se ve que había un ojo, se ve
-dónde estaba, y se ve que alguien lo tapó. Tapado no es borrado.
+Una **equis**, y no una barra. Una barra tapa, y tapar deja la duda de si debajo
+había algo. Una equis **anula**: dice que alguien lo vio, decidió que no, y lo
+marcó. Y deja ver — el aspa cruza el iris pero no lo borra, así que entre los dos
+trazos se siguen leyendo los párpados y trozos del iris. Se ve que había un ojo,
+se ve dónde estaba, y se ve que alguien lo anuló. Tachado no es borrado.
 
 ```
-1110000011101101000010001100010011001010
-1001110101000111101111001001011010000100
-01100000101100              111101000011
-0001111001                     000001001
-0101001          00000             11011
-########################################
-########################################
-########################################
-01100            00100             00000
-01101111                         0100101
-100111000000                 00000100111
-0010110110111111101011111100101100001000
-0100101001010101010001110100110101100000
-1101111100111000110011000010110011010011
+   X              .:;ll,.,.         X   
+   XXXX    .cxK0NWMMMMMMMWN00;.  XXXX   
+      XXXXONWN0xxxo:;::..ccoxXXXXX      
+      x0KXXXX              XXXXxKK;     
+    lx0d,   XXXX        XXXX     .kO    
+    d;         XXXXWWXXXX          l    
+    .          ,KWXXXXN.           ,    
+    cd,        XXXXXWXXXX        :o,    
+     ,cc;.  XXXX ,;Ol.  XXXX  ;;kl.     
+       .;XXXX.           .;XXXXl        
+      XXXX:oOXxxdl0lcOxO0Old, XXXX      
+   XXXX       ..;:oloc;,         XXXX   
+   X                                X   
 ```
 
 ## 15/16 · BIBLIOTECA · TODO LO QUE USTED VOLVIÓ A ESCRIBIR

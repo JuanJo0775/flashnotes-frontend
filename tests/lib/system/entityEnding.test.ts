@@ -79,8 +79,15 @@ describe('camino A · ayudarlo', () => {
 
         ending.helpedHim();
 
+        /*
+         * ⚠ SE COMPARA CONTRA EL DIBUJO, NO CONTRA UN CARÁCTER. Esto miraba que
+         * no hubiera almohadillas, que era la marca del tachón de entonces. La
+         * marca cambió a una equis — y la equis YA EXISTE en la rampa de tonos
+         * del propio dibujo, así que buscar el carácter dejó de distinguir
+         * nada. Lo que importa es cuál de las dos caras te tocó.
+         */
         const ojo = art.ART.find((p) => p.id === 'eye')!;
-        expect(art.artOf(ojo)).not.toContain('#');
+        expect(art.artOf(ojo)).toBe(ojo.art);
     });
 });
 
@@ -96,11 +103,10 @@ describe('camino B · reportarlo', () => {
         expect(art.readFound().has('eye')).toBe(true);
 
         const ojo = art.ART.find((p) => p.id === 'eye')!;
-        expect(art.artOf(ojo)).toContain('#');
+        expect(art.artOf(ojo)).not.toBe(ojo.art);
     });
 
     it('pero se sigue viendo que ahí había un ojo', async () => {
-        // Tapado, no borrado: se ve que había algo y que alguien lo tapó.
         const { ending, entity, art } = await load();
         entity.clearEntity();
         art.clearFound();
@@ -108,29 +114,29 @@ describe('camino B · reportarlo', () => {
         ending.reportedIt();
 
         const ojo = art.ART.find((p) => p.id === 'eye')!;
-        const lineas = art.artOf(ojo).split('\n');
+        const tachado = art.artOf(ojo);
 
         /*
-         * ⚠ SIN NÚMEROS DE FILA A MANO. Esto miraba «la fila 3» y «la fila 9», y
-         * en cuanto el dibujo se rehizo esos índices dejaron de señalar lo que
-         * decían señalar: uno de los dos cayó dentro del tachón y el test
-         * empezó a fallar por un motivo que no era el suyo. Lo que hay que
-         * comprobar no es qué filas se salvan, es que la SILUETA se salve por
-         * arriba y por abajo, esté donde esté.
+         * ⚠ TACHADO NO ES BORRADO, y eso es lo único que hay que probar acá.
+         *
+         * Sin números de fila escritos a mano ni carácter concreto: los dos se
+         * quedaron viejos en cuanto el dibujo se rehizo — uno señalaba una fila
+         * que acabó bajo el aspa, y el otro buscaba una almohadilla que ya no
+         * existe. Lo que importa es que la equis ANULA sin borrar: debajo sigue
+         * estando el mismo dibujo y se reconoce.
          */
-        const conHueco = lineas
-            .map((l, i) => (l.includes(' ') ? i : -1))
-            .filter((i) => i >= 0);
+        const limpio = [...ojo.art];
+        const marcado = [...tachado];
 
-        expect(conHueco.length).toBeGreaterThan(4);
+        expect(marcado).toHaveLength(limpio.length);
 
-        // La primera y la última no están tachadas: el tachón es una banda en
-        // el medio, y por eso se sigue leyendo la forma que tapa.
-        expect(lineas[conHueco[0]]).not.toContain('#');
-        expect(lineas[conHueco[conHueco.length - 1]]).not.toContain('#');
+        const iguales = marcado.filter((ch, i) => ch === limpio[i]).length;
+
+        expect(iguales / limpio.length).toBeGreaterThan(0.6);
+        expect(iguales / limpio.length).toBeLessThan(1);
 
         // Y el campo sigue entero: cuarenta columnas en todas.
-        expect(lineas.every((l) => l.length === 40)).toBe(true);
+        expect(tachado.split('\n').every((l) => l.length === 40)).toBe(true);
     });
 });
 

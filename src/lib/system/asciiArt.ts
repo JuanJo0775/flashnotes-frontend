@@ -961,74 +961,53 @@ export const ART: readonly ArtPiece[] = [
          * y lo que cuenta es que la máquina siguió ahí mientras tanto.
          */
         /*
-         * ⚠ HECHO DE UNOS Y CEROS, Y EL OJO APARECE POR AUSENCIA.
+         * ⚠ ESTÁ DIBUJADO CON UNA RAMPA DE TONOS, no con unos y ceros.
          *
-         * No está dibujado con líneas: es un campo de dígitos con un hueco
-         * dentro, y el hueco tiene forma de ojo. Es lo mismo que hace la máquina
-         * — no te mira con un ojo, te mira con lo que guarda de vos.
+         * Los caracteres van de vacío a macizo —` .,:;clodxkO0KXNWM`— y cada
+         * celda lleva el que pese lo que pesa la luz en ese punto. Es lo que
+         * hace la referencia del cliente, y es lo que le da modelado: un campo
+         * binario sólo sabe decir «hay» o «no hay», y con eso un ojo es una
+         * silueta. Con la rampa hay párpado, iris, pupila y brillo.
          *
-         * ⚠ LA LLUVIA VA DENSA, SIN ESPACIOS ENTRE DÍGITOS.
+         * ⚠ Y EL INTERIOR VA NEGRO. Esto es lo que más costó ver. Lo que se
+         * dibuja son los PÁRPADOS y el IRIS; la esclerótica es vacío. Rellenar
+         * el ojo entero —que es lo que parece que hay que hacer— da una mancha
+         * clara con forma de ojo, y una mancha no mira. En la referencia el
+         * hueco entre el iris y los párpados está tan negro como el fondo.
          *
-         * Una versión escribía `1 0 1 1` con un espacio de por medio, y con eso
-         * no hay nada que recortar: el campo ya estaba medio vacío, así que el
-         * hueco no se distinguía del fondo. Acá lo único que dibuja es el
-         * CONTRASTE entre lleno y vacío, y por eso el campo tiene que estar
-         * lleno del todo.
+         * ⚠ LA BANDA DEL PÁRPADO TIENE QUE MEDIR MÁS DE UNA FILA. La celda de
+         * esta pieza es casi el doble de alta que de ancha, así que un arco más
+         * fino que eso cae entre dos filas y desaparece a trozos: el párpado
+         * salía roto por las puntas sin que se entendiera por qué.
          *
-         * ⚠ Y EL IRIS ES UN ANILLO CON LA PUPILA HUECA.
+         * ⚠ Y LA RAMPA NO LLEVA COMILLA SIMPLE. La referencia la usa como tono
+         * claro, pero acá los dibujos viven en cadenas entrecomilladas: una
+         * comilla dentro parte la cadena. El hueco lo cubren el punto y la coma.
          *
-         * Dentro del hueco los dígitos VUELVEN, y en el centro se apagan otra
-         * vez. Ese segundo cambio de lleno a vacío es lo que hace que mire: sin
-         * él sólo hay una rendija.
-         *
-         * ⚠ Y DENTRO DE LA PUPILA HAY UN BRILLO. Es lo más pequeño del dibujo y
-         * lo que más trabaja: un anillo con nada dentro se lee como un símbolo
-         * —una diana, una lente— y en cuanto tiene una chispa arriba a la
-         * izquierda se lee como algo húmedo que te está mirando. No es adorno:
-         * es lo que dice que está vivo. Va separado del anillo por una columna a
-         * cada lado; pegado se funde con él y lo único que parece es que el
-         * anillo engordó de un costado.
-         *
-         * ⚠ Y EL CANTO SE DESHACE POR LOS FLANCOS, no se corta.
-         *
-         * La silueta acababa en una curva perfecta, y una curva perfecta en un
-         * campo de ruido se lee como un RECORTE: alguien pasó unas tijeras. En
-         * la referencia del cliente el ojo se disuelve — cerca del borde quedan
-         * dígitos sueltos, y el vacío gana terreno poco a poco.
-         *
-         * Sólo a los lados. Arriba y abajo la almendra se afila hasta una punta
-         * de pocas celdas, y tramarla ahí la parte en trozos en vez de
-         * suavizarla. A los lados hay sitio, y es donde la referencia disuelve.
-         *
-         * ⚠ Y EL CAMPO NO SE TOCA. Se añaden dígitos DENTRO del vacío; no se
-         * quitan del campo. Es la misma lección de más arriba dicha por el otro
-         * lado: lo único que dibuja es el contraste entre lleno y vacío, así que
-         * perforar el lleno borra el dibujo en vez de suavizarlo.
-         *
-         * ⚠ Y EL PÁRPADO NO ES SIMÉTRICO. La almendra se abre en cinco filas y
-         * se cierra en tres: el de arriba arquea y el de abajo es más plano, que
-         * es como son los de verdad. Con las dos mitades iguales el dibujo se
-         * lee como una LENTE —un óvalo partido por el medio— y no como un ojo.
+         * El fleco de puntos sueltos del contorno tampoco es decorativo: sin él
+         * la silueta acaba en una curva perfecta y se lee como un recorte con
+         * tijeras. El ruido pesa donde hay poca luz pero alguna — cero en el
+         * negro del todo y cero en lo macizo — así que deshace el canto sin
+         * ensuciar ni el fondo ni el centro.
          *
          * El patrón sale de una semilla fija, no de `Math.random`: una pieza de
          * la colección tiene que ser SIEMPRE la misma. Si cambiara en cada
          * dibujado no habría nada que coleccionar.
          */
         art: [
-            '1110000011101101000010001100010011001010',
-            '1001110101000111101111001001011010000100',
-            '01100000101100              111101000011',
-            '0001111001                     000001001',
-            '0101001          00000             11011',
-            '1001          000 00  010           1011',
-            '11           000       000           110',
-            '110           000     000             11',
-            '01100            00100             00000',
-            '01101111                         0100101',
-            '100111000000                 00000100111',
-            '0010110110111111101011111100101100001000',
-            '0100101001010101010001110100110101100000',
-            '1101111100111000110011000010110011010011',
+            '                  .:;ll,.,.             ',
+            '           .cxK0NWMMMMMMMWN00;.         ',
+            '        :xONWN0xxxo:;::..ccoxXXXd.      ',
+            '      x0KXx;.                 .xKK;     ',
+            '    lx0d,                        .kO    ',
+            '    d;          cMMWWNo            l    ',
+            '    .          ,KWo,xWN.           ,    ',
+            '    cd,         dWWXWWO          :o,    ',
+            '     ,cc;.       ,;Ol.        ;;kl.     ',
+            '       .;00cc.           .;lkKol        ',
+            '          :oOXxxdl0lcOxO0Old,           ',
+            '              ..;:oloc;,                ',
+            '                                        ',
         ].join('\n'),
     },
     {
@@ -1408,42 +1387,40 @@ export function artOf(piece: ArtPiece): string {
  * Con un hueco, los dos finales completan la colección — y queda marcada para
  * siempre por la decisión: dos personas que la tienen entera la tienen distinta.
  *
- * ⚠ ES EL MISMO CAMPO, DÍGITO POR DÍGITO. No es otro dibujo parecido: son las
- * mismas cuarenta columnas con un tachón encima. Si el campo cambiara, las dos
+ * ⚠ ES EL MISMO DIBUJO, CELDA POR CELDA, CON UNA EQUIS ENCIMA. No es otra
+ * pieza parecida: es ésta, tachada. Si el dibujo de debajo cambiara, las dos
  * versiones se leerían como dos piezas distintas — y son una.
  *
- * ⚠ Y EL TACHÓN VA DE CANTO A CANTO. Estuvo metido dentro del vacío —una barra
- * más corta que el ojo, con la almendra asomando a los dos lados de cada fila— y
- * así no se lee como algo puesto ENCIMA: se lee como un agujero más, dentro del
- * agujero. Una censura de verdad no respeta el margen del dibujo; cruza la
- * página entera, y por eso se sabe que la puso alguien después.
+ * Una equis y no una barra: una barra tapa, y tapar deja la duda de si debajo
+ * había algo. Una equis ANULA — dice que alguien lo vio, decidió que no, y lo
+ * marcó. Y deja ver: el aspa cruza el iris pero no lo borra, así que entre los
+ * dos trazos se siguen leyendo los párpados y trozos del iris. Se ve que había
+ * un ojo, se ve dónde estaba, y se ve que alguien lo anuló.
  *
- * Tres filas, no cinco. Con tres se salvan los dos arcos anchos del anillo —el
- * de encima de la barra y el de debajo— así que se ve que había un ojo, se ve
- * dónde estaba y se ve que alguien lo tapó. Tapado no es borrado, y ésa es la
- * diferencia entre este final y el otro.
+ * ⚠ EL TRAZO SE MIDE PERPENDICULAR, NO EN VERTICAL. El aspa va muy tendida
+ * —cuarenta columnas por trece filas— así que una tolerancia medida en vertical
+ * se convierte en una banda horizontal enorme: salía un lazo, no una equis.
  */
 const EYE_ID = 'eye';
 
 const EYE_BARRED = [
-    '1110000011101101000010001100010011001010',
-    '1001110101000111101111001001011010000100',
-    '01100000101100              111101000011',
-    '0001111001                     000001001',
-    '0101001          00000             11011',
-    '########################################',
-    '########################################',
-    '########################################',
-    '01100            00100             00000',
-    '01101111                         0100101',
-    '100111000000                 00000100111',
-    '0010110110111111101011111100101100001000',
-    '0100101001010101010001110100110101100000',
-    '1101111100111000110011000010110011010011',
+    '   X              .:;ll,.,.         X   ',
+    '   XXXX    .cxK0NWMMMMMMMWN00;.  XXXX   ',
+    '      XXXXONWN0xxxo:;::..ccoxXXXXX      ',
+    '      x0KXXXX              XXXXxKK;     ',
+    '    lx0d,   XXXX        XXXX     .kO    ',
+    '    d;         XXXXWWXXXX          l    ',
+    '    .          ,KWXXXXN.           ,    ',
+    '    cd,        XXXXXWXXXX        :o,    ',
+    '     ,cc;.  XXXX ,;Ol.  XXXX  ;;kl.     ',
+    '       .;XXXX.           .;XXXXl        ',
+    '      XXXX:oOXxxdl0lcOxO0Old, XXXX      ',
+    '   XXXX       ..;:oloc;,         XXXX   ',
+    '   X                                X   ',
 ].join('\n');
 
 /**
- * Y cómo se llama la pieza cuando llega tapada.
+ * Y cómo se llama la pieza cuando llega tachada.
  *
  * ⚠ NO ES EL MISMO PIE. La pieza es una y el hueco es uno, pero el final que te
  * toca decide sus dos caras: el dibujo lo elige `artOf` y el nombre lo elige
@@ -1453,7 +1430,7 @@ const EYE_BARRED = [
  * estoy viendo». En el final en que lo reportás el ente calla para siempre, así
  * que quien rotula la pieza es la máquina institucional — y ésa no tutea porque
  * no sabe quién sos (ver `lore.ts` y `greeting.ts`). El archivo lo nombra el que
- * lo tapó, y lo primero que hace es negar que hubiera algo.
+ * lo anuló, y lo primero que hace es negar que hubiera algo.
  */
 const EYE_BARRED_CAPTION: Record<Lang, string> = {
     es: 'OJO VEDADO · USTED NO VIO NADA',
