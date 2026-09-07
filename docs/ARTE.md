@@ -270,20 +270,20 @@ Son **16**, todas de **40 caracteres** de ancho.
 **Se gana:** `entity` · **id:** `eye`
 
 ```
-                  .........             
-       ....:;;c:;ccll;ocl;c,;,,:..      
-    .,,cloloxxddk00k000kxkxxoxoxl;c,.   
-   ,;cxxdOO00KXNXNNNNNNNNNNXK0O0Oxll,   
-   dkdO0KXNNWWWMMMWWWWWWWWWWWNXXXOOOo   
-   ox0XXKdloc,. :0NWWKl      .,;x0KOd   
-   Oc:  .,,;.  ;WMMcOMMl   ,:::.   .d   
-        .:;;:. cMM:,,WMO   ,,,,     d   
-   ;loo         dNMMMWd.         xdcl   
-   ,oolodO0k      ..,      OO0xkddol;   
-   .:ccoxxxkO0kkkkKkk0OO0Odkodxdc::,.   
-     ..:c,;o;dllxoxxxxxdlod;l:::...     
-        ...,,,:cc;:;,c:,:;:,...         
-                 ....                   
+                ...,,,,,,,..            
+         .,:;;cclclllloooooll;;,,       
+     .,;codxkOkOOOkkkOO00000Okdoc;,     
+    :coxOKNNMMMWWNNXNNNNWWWNXK0kxol:    
+    cdkKXWMMMMNKOkxxdddxxkO00K0Okxdl    
+    dxOOkoc:.    xWMM0,       .:cdxd    
+  :;o;.  .,,,  ;NWWdKMMx  .:::.   .cc;. 
+ .;c     .,,,  oXX,,,NMX   .,.      l;. 
+    ldk         ONNWWMW,         xdl    
+    ;cdxOOO       :l;       xdddolc:    
+     ,:clodxxkOO0KKKKK00kkddolc;::.     
+        ,:;;clooxxkkkxxdolc;;:,.        
+            .,,::::;:;::,,.             
+                                        
 ```
 
 ### Y su versión tapada
@@ -306,20 +306,20 @@ trazos se siguen leyendo los párpados y trozos del iris. Se ve que había un oj
 se ve dónde estaba, y se ve que alguien lo anuló. Tachado no es borrado.
 
 ```
-  X               .........          X  
-  XXXX ....:;;c:;ccll;ocl;c,;,,:. XXXX  
-     XXXX loxxddk00k000kxkxxox XXXX .   
-   ,;cx XXXX KXNXNNNNNNNNNN XXXX xll,   
-   dkdO0KX XXXX MMWWWWWW XXXX XXXOOOo   
-   ox0XXKdloc XXX  WW  XXX   .,;x0KOd   
-   Oc:  .,,;.    XXXXXX    ,:::.   .d   
-        .:;;:.   XXXXXX    ,,,,     d   
-   ;loo       XXX  MM  XXX       xdcl   
-   ,oolodO XXXX   ..,    XXXX xkddol;   
-   .:cc XXXX 0kkkkKkk0OO0Od XXXX ::,.   
-     XXXX ;o;dllxoxxxxxdlod;l: XXXX     
-  XXXX  ...,,,:cc;:;,c:,:;:,...   XXXX  
-  X              ....                X  
+  X             ...,,,,,,,..         X  
+  XXXX   .,:;;cclclllloooooll;;,, XXXX  
+     XXXX dxkOkOOOkkkOO00000Ok XXXX     
+    :co XXXX MMWWNNXNNNNWWW XXXX ol:    
+    cdkKXW XXXX Okxxdddx XXXX 0Okxdl    
+    dxOOkoc:. XXX  MM  XXX    .:cdxd    
+  :;o;.  .,,,    XXXXXX   .:::.   .cc;. 
+ .;c     .,,,    XXXXXX    .,.      l;. 
+    ldk       XXX  WW  XXX       xdl    
+    ;cdxOO XXXX   :l;    XXXX ddolc:    
+     ,: XXXX kOO0KKKKK00kkd XXXX :.     
+     XXXX ;;clooxxkkkxxdolc;;: XXXX     
+  XXXX      .,,::::;:;::,,.       XXXX  
+  X                                  X  
 ```
 
 ## 15/16 · BIBLIOTECA · TODO LO QUE USTED VOLVIÓ A ESCRIBIR

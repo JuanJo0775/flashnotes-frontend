@@ -969,11 +969,22 @@ export const ART: readonly ArtPiece[] = [
          * binario sólo sabe decir «hay» o «no hay», y con eso un ojo es una
          * silueta. Con la rampa hay párpado, iris, pupila y brillo.
          *
-         * ⚠ Y EL INTERIOR VA NEGRO. Esto es lo que más costó ver. Lo que se
-         * dibuja son los PÁRPADOS y el IRIS; la esclerótica es vacío. Rellenar
-         * el ojo entero —que es lo que parece que hay que hacer— da una mancha
-         * clara con forma de ojo, y una mancha no mira. En la referencia el
-         * hueco entre el iris y los párpados está tan negro como el fondo.
+         * ⚠ Y NO SON CONTORNOS: SON CUÑAS DE TONO. El párpado de arriba no es
+         * una raya maciza, es un bloque que va de claro en el canto superior a
+         * macizo en la línea de pestañas — cuatro o cinco pasos de la rampa. Lo
+         * mismo abajo, más corto. Dibujado como un arco fino el ojo se lee como
+         * un esquema; dibujado como cuña se lee como una superficie con luz.
+         *
+         * ⚠ Y EL INTERIOR VA NEGRO, salvo dos grumos. Lo que se dibuja son los
+         * párpados y el IRIS; la esclerótica es vacío — rellenar el ojo entero
+         * da una mancha clara con forma de ojo, y una mancha no mira. Pero
+         * negro liso tampoco: entre el iris y las puntas hay dos grumos de tono
+         * medio, los rincones del ojo. Sin ellos la pieza se lee como dos arcos
+         * y un borrón.
+         *
+         * ⚠ Y EL IRIS NO PUEDE TOCAR LA LÍNEA DE PESTAÑAS. Pegados, los dos
+         * macizos se funden en una sola mancha y el ojo deja de estar abierto.
+         * Hace falta una fila de aire entre ellos.
          *
          * ⚠ LA BANDA DEL PÁRPADO TIENE QUE MEDIR MÁS DE UNA FILA. La celda de
          * esta pieza es casi el doble de alta que de ancha, así que un arco más
@@ -984,31 +995,43 @@ export const ART: readonly ArtPiece[] = [
          * claro, pero acá los dibujos viven en cadenas entrecomilladas: una
          * comilla dentro parte la cadena. El hueco lo cubren el punto y la coma.
          *
-         * El fleco de puntos sueltos del contorno tampoco es decorativo: sin él
-         * la silueta acaba en una curva perfecta y se lee como un recorte con
-         * tijeras. El ruido pesa donde hay poca luz pero alguna — cero en el
-         * negro del todo y cero en lo macizo — así que deshace el canto sin
-         * ensuciar ni el fondo ni el centro.
+         * ⚠ Y NO LLEVA RUIDO POR CELDA. Éste fue el error que más veces se
+         * repitió, y el que hacía que el dibujo se viera «raro» sin que se
+         * supiera por qué: con una tirada al azar por celda, dos caracteres
+         * vecinos saltaban tres o cuatro pasos de la rampa y el resultado se
+         * leía sucio, como sal y pimienta encima de un dibujo. En la referencia
+         * los vecinos se llevan UN paso: son degradados.
+         *
+         * Lo único que se añade es un tramado ORDENADO de medio paso —el Bayer
+         * de siempre— que rompe las bandas sin ensuciar nada, y un vaivén de
+         * dos senos de frecuencia muy baja para que el tono no salga estéril.
+         * El vaivén va MULTIPLICANDO y no sumando: sumado levanta también los
+         * negros y el fondo deja de ser fondo.
+         *
+         * ⚠ Y HAY UN UMBRAL POR DEBAJO DEL CUAL TODO ES NEGRO. Sin él, el
+         * tramado y el vaivén empujaban valores casi nulos hasta el primer
+         * escalón de la rampa, y quedaban caracteres sueltos flotando en el
+         * fondo — el detalle que más se notaba y peor se veía.
          *
          * El patrón sale de una semilla fija, no de `Math.random`: una pieza de
          * la colección tiene que ser SIEMPRE la misma. Si cambiara en cada
          * dibujado no habría nada que coleccionar.
          */
         art: [
-            '                  .........             ',
-            '       ....:;;c:;ccll;ocl;c,;,,:..      ',
-            '    .,,cloloxxddk00k000kxkxxoxoxl;c,.   ',
-            '   ,;cxxdOO00KXNXNNNNNNNNNNXK0O0Oxll,   ',
-            '   dkdO0KXNNWWWMMMWWWWWWWWWWWNXXXOOOo   ',
-            '   ox0XXKdloc,. :0NWWKl      .,;x0KOd   ',
-            '   Oc:  .,,;.  ;WMMcOMMl   ,:::.   .d   ',
-            '        .:;;:. cMM:,,WMO   ,,,,     d   ',
-            '   ;loo         dNMMMWd.         xdcl   ',
-            '   ,oolodO0k      ..,      OO0xkddol;   ',
-            '   .:ccoxxxkO0kkkkKkk0OO0Odkodxdc::,.   ',
-            '     ..:c,;o;dllxoxxxxxdlod;l:::...     ',
-            '        ...,,,:cc;:;,c:,:;:,...         ',
-            '                 ....                   ',
+            '                ...,,,,,,,..            ',
+            '         .,:;;cclclllloooooll;;,,       ',
+            '     .,;codxkOkOOOkkkOO00000Okdoc;,     ',
+            '    :coxOKNNMMMWWNNXNNNNWWWNXK0kxol:    ',
+            '    cdkKXWMMMMNKOkxxdddxxkO00K0Okxdl    ',
+            '    dxOOkoc:.    xWMM0,       .:cdxd    ',
+            '  :;o;.  .,,,  ;NWWdKMMx  .:::.   .cc;. ',
+            ' .;c     .,,,  oXX,,,NMX   .,.      l;. ',
+            '    ldk         ONNWWMW,         xdl    ',
+            '    ;cdxOOO       :l;       xdddolc:    ',
+            '     ,:clodxxkOO0KKKKK00kkddolc;::.     ',
+            '        ,:;;clooxxkkkxxdolc;;:,.        ',
+            '            .,,::::;:;::,,.             ',
+            '                                        ',
         ].join('\n'),
     },
     {
@@ -1412,20 +1435,20 @@ export function artOf(piece: ArtPiece): string {
 const EYE_ID = 'eye';
 
 const EYE_BARRED = [
-    '  X               .........          X  ',
-    '  XXXX ....:;;c:;ccll;ocl;c,;,,:. XXXX  ',
-    '     XXXX loxxddk00k000kxkxxox XXXX .   ',
-    '   ,;cx XXXX KXNXNNNNNNNNNN XXXX xll,   ',
-    '   dkdO0KX XXXX MMWWWWWW XXXX XXXOOOo   ',
-    '   ox0XXKdloc XXX  WW  XXX   .,;x0KOd   ',
-    '   Oc:  .,,;.    XXXXXX    ,:::.   .d   ',
-    '        .:;;:.   XXXXXX    ,,,,     d   ',
-    '   ;loo       XXX  MM  XXX       xdcl   ',
-    '   ,oolodO XXXX   ..,    XXXX xkddol;   ',
-    '   .:cc XXXX 0kkkkKkk0OO0Od XXXX ::,.   ',
-    '     XXXX ;o;dllxoxxxxxdlod;l: XXXX     ',
-    '  XXXX  ...,,,:cc;:;,c:,:;:,...   XXXX  ',
-    '  X              ....                X  ',
+    '  X             ...,,,,,,,..         X  ',
+    '  XXXX   .,:;;cclclllloooooll;;,, XXXX  ',
+    '     XXXX dxkOkOOOkkkOO00000Ok XXXX     ',
+    '    :co XXXX MMWWNNXNNNNWWW XXXX ol:    ',
+    '    cdkKXW XXXX Okxxdddx XXXX 0Okxdl    ',
+    '    dxOOkoc:. XXX  MM  XXX    .:cdxd    ',
+    '  :;o;.  .,,,    XXXXXX   .:::.   .cc;. ',
+    ' .;c     .,,,    XXXXXX    .,.      l;. ',
+    '    ldk       XXX  WW  XXX       xdl    ',
+    '    ;cdxOO XXXX   :l;    XXXX ddolc:    ',
+    '     ,: XXXX kOO0KKKKK00kkd XXXX :.     ',
+    '     XXXX ;;clooxxkkkxxdolc;;: XXXX     ',
+    '  XXXX      .,,::::;:;::,,.       XXXX  ',
+    '  X                                  X  ',
 ].join('\n');
 
 /**
