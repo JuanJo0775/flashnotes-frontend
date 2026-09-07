@@ -223,8 +223,12 @@ dev:web`) en vez de `npm run dev`.
 
 ## Lo que sigue fuera, a propósito
 
-- La pieza de la **cinta** (`reserved-tape`) sigue sin cablear. Su hueco pasó
-  por tres dueños y se queda quieta hasta que su camino esté decidido.
+- La pieza de la **cinta** (`reserved-tape`) sigue sin cablear, y ahora es lo
+  ÚNICO que queda: cerrado el ojo, es el último camino sin decidir de las
+  dieciséis. Mientras siga así el **cuaderno firmado es inalcanzable** —exige
+  todas las demás— y la colección se queda en 14/16. Su pie dice «siguió
+  girando sola», así que lo que la gane tiene que ser algo que la máquina hizo
+  sin nadie delante.
 - El final de los golpes **no es alcanzable sin ratón**, y ahora tampoco encima
   del área de texto del editor. Las dos cosas están razonadas en la nota de
   accesibilidad al final de `LooseWall.tsx`: anunciar «botón» sobre algo cuyo

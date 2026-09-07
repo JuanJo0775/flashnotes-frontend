@@ -2431,17 +2431,22 @@ en `v02.ts` · `tests/lib/system/artNameGate.test.ts`
 
 ### Lo que falta, y por qué está así
 
-**El ojo espera al ente.** Es lo que todo lo ve, así que no puede ser el premio
-de irse a por un café — le corresponde a lo que hay detrás de `//hi`, que
-todavía no existe. **La cinta está reservada** para un camino que aún no se ha
-decidido; se dejó quieta a propósito porque ese hueco ya pasó por tres dueños
-—el ojo, la polilla, la cinta— y cada mudanza dejó un pie contando algo que ya
-no pasaba.
+**El ojo ya está cableado**, y era la deuda más vieja del proyecto. Lo cierra el
+final del ente (§26): ayudarlo te deja el ojo, reportarlo te deja el ojo vedado,
+y es el mismo hueco.
 
-Mientras el ojo no exista, **el cuaderno es inalcanzable**, porque exige tenerlas
-todas. Es deuda conocida y no un olvido, y lo fija un test que enumera los
-caminos sin cablear: sin él, borrar un `awardFrom` de un componente dejaría una
-pieza imposible de ganar **sin romper nada visible**.
+**Queda la cinta, y sólo la cinta.** Está reservada para un camino que aún no se
+ha decidido; se dejó quieta a propósito porque ese hueco ya pasó por tres dueños
+—el ojo, la polilla, la cinta— y cada mudanza dejó un pie contando algo que ya
+no pasaba. Su pie dice `CINTA · SIGUIÓ GIRANDO SOLA`, así que lo que la gane
+tiene que ser algo que la máquina hizo **sin vos delante**.
+
+⚠ **Y mientras la cinta no tenga camino, el cuaderno es inalcanzable**, porque
+exige todas las demás — con lo que la colección se queda en **14/16**: faltan la
+cinta, que no se puede ganar, y el cuaderno, que la espera. Es deuda conocida y
+no un olvido, y lo fija un test que enumera los caminos sin cablear: sin él,
+borrar un `awardFrom` de un componente dejaría una pieza imposible de ganar **sin
+romper nada visible**.
 
 **El fallo total da DOS piezas, y no la misma dos veces.** Caer ahí dentro le
 pasa a cualquiera: eso da la polilla, que es literalmente el bug —la primera
