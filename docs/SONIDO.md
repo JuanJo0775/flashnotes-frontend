@@ -206,7 +206,6 @@ Y sabe callarse de dos maneras distintas, que no son la misma:
 | | Qué hace | Para qué |
 | --- | --- | --- |
 | `duck` | Lo baja y lo devuelve | Cuando habla el ente: la sala se calla para escucharlo |
-| — | Respira al compás del barrido | La línea del CRT cruza cada 9 s, y el zumbido va con ella |
 | `silence` | Lo pone en **cero exacto** | El derrumbe. Un ambiente a −60 dB sigue estando ahí |
 
 ## El arranque, y el tono de las barras
@@ -238,6 +237,7 @@ hipótesis: `awardFrom` ya se llama desde nueve sitios distintos.
 | Avería de señal | el mismo almacén | no |
 | Botones y cualquier cosa con cursor de mano | `click` en el documento, en captura | no |
 | Las barras de ajuste | que `.boot-bars` aparezca en pantalla | no |
+| La carga tras un colapso | que `.collapse-reboot` aparezca | no |
 | Arranque, barrido, colapso, apagado | los atributos que la app ya pone en el documento | no |
 | El tema cambiando | el mismo atributo `data-theme` | no |
 
@@ -320,6 +320,11 @@ poco a poco, cortarlo en seco suena a mute—, un golpe del chasis, y el tubo
 descargándose con un crujido corto. Encender es lo mismo al revés y **en el orden
 contrario**: primero entra la corriente, después aparece el chillido y sube hasta
 su sitio. Si el chillido llegara primero, sonaría a que algo ya estaba encendido.
+
+⚠ **Y el fondo NO pulsa.** Hubo un latido lento sincronizado con la línea del
+CRT, que sobre el papel encajaba —lo que se ve también se oye— y escuchándolo
+molestaba. Un fondo que pulsa reclama atención, y un fondo que reclama atención
+deja de ser un fondo. Lo continuo tiene que ser plano.
 
 ## Lo que el navegador impone
 

@@ -502,6 +502,29 @@ describe('la maquina encendiendose y apagandose', () => {
         expect(barsToneIsOn()).toBe(false);
     });
 
+    it('⚠ la carga del colapso tambien suena', async () => {
+        /*
+         * MEDIDO JUGANDO: tras un colapso, la app NO enseña el arranque con
+         * barras — enseña su PROPIA pantalla de reinicio, con su cuenta atras. Y
+         * esa carga estaba muda, que es literalmente lo que se reporto: «el
+         * reinicio no tiene sonido».
+         *
+         * Es un cabezal buscando: la maquina esta leyendo para volver.
+         */
+        const carga = document.createElement('div');
+        carga.className = 'collapse-reboot';
+
+        conLaSalaYaEncendida();
+        await esperar();
+        const antes = marca();
+
+        document.body.append(carga);
+        await esperar();
+
+        expect(fuentes(antes).length).toBeGreaterThan(0);
+        carga.remove();
+    });
+
     it('el arranque suena cuando el documento dice que arranca', async () => {
         conLaSalaYaEncendida();
         await esperar();

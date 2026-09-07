@@ -400,9 +400,28 @@ export function startSound(): () => void {
      * paralelo se desincroniza el día que alguien ajuste una duración, y nadie
      * lo nota hasta que el tono se queda sonando sobre el logo.
      */
+    let cargando = false;
+
     const mirarBarras = () => {
         if (document.querySelector('.boot-bars')) startBarsTone();
         else stopBarsTone();
+
+        /*
+         * ⚠ Y LA CARGA DEL COLAPSO, que es otra pantalla distinta. Medido
+         * jugando: tras un colapso la app NO enseña el arranque con barras —
+         * enseña su PROPIA pantalla de reinicio, con su cuenta atrás. Estaba
+         * muda, y es justo lo que se reportó como «el reinicio no tiene sonido».
+         *
+         * Suena a cabezal: la máquina está leyendo para volver.
+         */
+        const hayCarga = !!document.querySelector('.collapse-reboot');
+
+        if (hayCarga && !cargando) {
+            huboActividad();
+            play('head');
+        }
+
+        cargando = hayCarga;
     };
 
     const observadorBarras = new MutationObserver(mirarBarras);
