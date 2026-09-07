@@ -275,3 +275,88 @@ describe('el ambiente entra con la actividad y se va solo', () => {
         area.remove();
     });
 });
+
+describe('⚠ mantener una tecla pulsada NO es teclear muchas veces', () => {
+    /*
+     * REPORTADO JUGANDO: «cuando le doy a borrar suena todo el tiempo aunque ya
+     * no esté borrando, y sigue sigue».
+     *
+     * Son dos fallos distintos con el mismo síntoma, y los dos son de modelo.
+     *
+     * ⚠ Y TODOS ESPERAN 70 ms ANTES DE MEDIR. La primera versión no lo hacía y
+     * los tres tests medían la COMPUERTA en vez del comportamiento: dos «pasaban»
+     * porque la compuerta se comía el disparo, no porque el arreglo funcionara.
+     */
+
+    /** Deja pasar la ventana de la compuerta, para medir lo que se quiere. */
+    const fueraDeLaVentana = () => new Promise((r) => setTimeout(r, 70));
+
+    it('la repetición automática del teclado no vuelve a golpear', async () => {
+        /*
+         * FALLO UNO. Mantener una tecla apretada hace que el navegador dispare
+         * `keydown` una y otra vez, y yo trataba cada uno como una pulsación
+         * nueva. Pero un teclado de verdad NO hace eso: el interruptor baja UNA
+         * vez y se queda abajo. No hay veinte chasquidos, hay uno.
+         *
+         * Se distingue por `repeat`, que el navegador ya marca.
+         */
+        const area = document.createElement('textarea');
+        area.value = 'hola';
+        document.body.append(area);
+
+        conLaSalaYaEncendida();
+        await fueraDeLaVentana();
+        const antes = marca();
+
+        for (let i = 0; i < 10; i += 1) {
+            area.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'a', bubbles: true, repeat: true })
+            );
+            await fueraDeLaVentana();
+        }
+
+        expect(fuentes(antes)).toHaveLength(0);
+        area.remove();
+    });
+
+    it('y borrar donde ya no queda nada tampoco suena', async () => {
+        /*
+         * FALLO DOS, y es el que el reporte nombra: «aunque ya no esté
+         * borrando». Con el cursor al principio y sin nada seleccionado, un
+         * borrado no borra NADA — la máquina no hizo nada, así que no tiene por
+         * qué sonar. El sonido acompaña a lo que la máquina hace, no a lo que
+         * vos intentás.
+         */
+        const area = document.createElement('textarea');
+        area.value = '';
+        document.body.append(area);
+        area.setSelectionRange(0, 0);
+
+        conLaSalaYaEncendida();
+        await fueraDeLaVentana();
+        const antes = marca();
+
+        area.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+
+        expect(fuentes(antes)).toHaveLength(0);
+        area.remove();
+    });
+
+    it('pero borrando algo de verdad sí suena', async () => {
+        // La otra mitad: sin esto, el arreglo podría ser «no suena nunca al
+        // borrar», que arregla el ruido rompiendo el sonido.
+        const area = document.createElement('textarea');
+        area.value = 'hola';
+        document.body.append(area);
+        area.setSelectionRange(4, 4);
+
+        conLaSalaYaEncendida();
+        await fueraDeLaVentana();
+        const antes = marca();
+
+        area.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+
+        expect(fuentes(antes).length).toBeGreaterThan(0);
+        area.remove();
+    });
+});

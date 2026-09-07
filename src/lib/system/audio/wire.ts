@@ -57,6 +57,26 @@ export const IDLE_MS = 40_000;
  */
 const SUYOS = new Set(['entity-awake', 'entity-proved', 'entity-refused', 'entity-gift']);
 
+/**
+ * ¿Este borrado va a borrar algo?
+ *
+ * ⚠ REPORTADO JUGANDO: «cuando le doy a borrar suena todo el tiempo aunque ya no
+ * esté borrando». Con el cursor al principio y sin nada seleccionado, un
+ * retroceso no borra NADA: la máquina no hizo nada, así que no tiene por qué
+ * sonar. El sonido acompaña a lo que la máquina HACE, no a lo que vos intentás.
+ */
+function borraAlgo(el: HTMLTextAreaElement | HTMLInputElement, key: string): boolean {
+    const { selectionStart: ini, selectionEnd: fin } = el;
+
+    // Sin cursor consultable —algunos tipos de `input` no lo dan— se asume que
+    // sí: callar de más es peor que sonar de más.
+    if (ini === null || fin === null) return true;
+
+    if (ini !== fin) return true;
+
+    return key === 'Backspace' ? ini > 0 : ini < el.value.length;
+}
+
 /** Qué cuenta como escribir. Pulsar Tab o Escape no es teclear. */
 function estaEscribiendo(target: EventTarget | null): boolean {
     if (!(target instanceof HTMLElement)) return false;
@@ -106,9 +126,30 @@ export function startSound(): () => void {
     const alTeclear = (e: KeyboardEvent) => {
         if (!estaEscribiendo(e.target)) return;
 
+        /*
+         * ⚠ LA REPETICIÓN AUTOMÁTICA NO VUELVE A GOLPEAR.
+         *
+         * Mantener una tecla apretada hace que el navegador dispare `keydown`
+         * una y otra vez, y tratarlos como pulsaciones nuevas era el «suena todo
+         * el tiempo y sigue sigue» que se reportó jugando. Un teclado de verdad
+         * no hace eso: el interruptor baja UNA vez y se queda abajo. No hay
+         * veinte chasquidos, hay uno.
+         */
+        if (e.repeat) return;
+
         // Los modificadores solos no golpean nada: pulsar Shift para una
         // mayúscula tiene que sonar UNA vez, la de la letra.
-        if (e.key.length !== 1 && e.key !== 'Backspace' && e.key !== 'Enter') return;
+        const borrado = e.key === 'Backspace' || e.key === 'Delete';
+        if (e.key.length !== 1 && !borrado && e.key !== 'Enter') return;
+
+        // Y un borrado que no borra nada tampoco.
+        if (
+            borrado &&
+            (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement) &&
+            !borraAlgo(e.target, e.key)
+        ) {
+            return;
+        }
 
         huboActividad();
         play('key');
