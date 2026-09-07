@@ -125,7 +125,7 @@ rompe.
 
 | Familia | Pico |
 | --- | --- |
-| `ambience` | −34 dBFS |
+| `ambience` | −44 dBFS |
 | `keys` | −24 dBFS |
 | `confirm` | −18 dBFS |
 | `glitch` | −14 dBFS |
@@ -154,8 +154,15 @@ Dos decisiones de la compuerta que costaría caro descubrir a oído:
 
 ## El ambiente
 
-Un zumbido de chasis con tres armónicos, a −34 dBFS: diez decibelios por debajo
-de las teclas, que es la diferencia entre «hay algo» y «se oye».
+Un zumbido de chasis con tres armónicos y aire, a −44 dBFS: **veinte** decibelios
+por debajo de las teclas.
+
+⚠ **Y veinte no es exageración: es lo que compensa ser continuo.** El presupuesto
+mide picos, y ahí lo continuo hace trampa sin querer — el pico de un zumbido ES
+su nivel medio, porque no para nunca, mientras que una tecla es un transitorio de
+ocho milisegundos cuyo nivel medio está veinte decibelios por debajo de su pico.
+A igual pico, lo continuo se oye muchísimo más fuerte. Estuvo en −34 y el fondo
+se comía todo lo que hacías.
 
 ⚠ **No es un lecho.** Un zumbido de red más un ventilador más siseo, sonando sin
 parar, agota en cinco minutos y arruina lo demás por enmascaramiento: cuanto más

@@ -45,12 +45,21 @@ export type SoundCategory =
  * una vez. Subir las teclas «para oírlas mejor» hasta alcanzar los confirms
  * deja una máquina que grita al escribir y susurra cuando algo se rompe.
  *
- * Los diez decibelios que separan el ambiente de las teclas tampoco son un
- * número redondo por casualidad: menos que eso y el zumbido empieza a
- * enmascarar lo demás, que es justo lo que arruina un lecho ambiente.
+ * ⚠ Y EL AMBIENTE NO ESTÁ «UN POCO» MÁS ABAJO: ESTÁ VEINTE DECIBELIOS ABAJO.
+ *
+ * Esta tabla mide PICOS, y ahí lo continuo hace trampa sin querer. El pico de un
+ * zumbido ES su nivel medio, porque no para nunca; una tecla es un transitorio
+ * de ocho milisegundos cuyo nivel medio está veinte decibelios por debajo de su
+ * pico. A igual pico, lo continuo se oye muchísimo más fuerte.
+ *
+ * Estuvo en −34 —diez de separación, que sobre el papel parecían de sobra— y se
+ * reportó jugando: «los de actividades se escuchan muy suave en comparación con
+ * los de fondo». Veinte no es un número de gusto: es la distancia típica entre
+ * el pico y el valor medio de un golpe corto, o sea justo lo que hay que
+ * compensar.
  */
 export const PEAK_DBFS: Readonly<Record<SoundCategory, number>> = {
-    ambience: -34,
+    ambience: -44,
     keys: -24,
     confirm: -18,
     glitch: -14,

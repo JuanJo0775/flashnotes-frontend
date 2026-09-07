@@ -91,10 +91,25 @@ describe('el presupuesto del §8', () => {
         expect(PEAK_DBFS.glitch).toBeLessThan(PEAK_DBFS.failure);
     });
 
-    it('el ambiente es el más callado de todos, y por mucho', () => {
-        // 10 dB por debajo de las teclas es la diferencia entre «hay algo» y
-        // «se oye». Si se acercan, el zumbido empieza a enmascarar el resto.
-        expect(PEAK_DBFS.keys - PEAK_DBFS.ambience).toBeGreaterThanOrEqual(10);
+    it('⚠ el ambiente va MUCHO mas abajo, porque es CONTINUO', () => {
+        /*
+         * REPORTADO JUGANDO: «los de actividades se escuchan muy suave en
+         * comparacion con los de fondo».
+         *
+         * Y era un error de modelo, no un gusto. Este presupuesto esta en PICOS,
+         * y ahi lo continuo hace trampa sin querer: el pico de un zumbido ES su
+         * nivel medio, porque no para nunca. Una tecla es un transitorio de ocho
+         * milisegundos cuyo nivel medio esta veinte decibelios por debajo de su
+         * pico.
+         *
+         * A IGUAL PICO, lo continuo se oye muchisimo mas fuerte. Diez decibelios
+         * de separacion parecian de sobra sobre el papel y en la practica dejaban
+         * el zumbido por encima de todo lo que hacias.
+         *
+         * Veinte es lo que compensa esa diferencia. No es un numero de gusto: es
+         * la distancia tipica entre el pico y el valor medio de un golpe corto.
+         */
+        expect(PEAK_DBFS.keys - PEAK_DBFS.ambience).toBeGreaterThanOrEqual(18);
     });
 
     it('y `gainFor` es el pico de la categoría ya convertido', () => {
