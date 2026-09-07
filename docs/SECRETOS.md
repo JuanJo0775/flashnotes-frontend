@@ -167,7 +167,7 @@ capa más profunda y sólo tienen sentido después de las demás.
 | §12 | [La línea de barrido se traba](#12--la-línea-de-barrido-se-traba) |
 | §13 | [Colapso del sistema](#13--colapso-del-sistema) |
 | §14 | [Fallo cromático](#14--fallo-cromático) |
-| §15 | [vsync-test · el pong escondido](#15--vsync-test-el-pong-escondido) |
+| §15 | [vsync-test · el pong escondido](#15--vsync-test--el-pong-escondido) |
 | §16 | [El saludo se agota](#16--el-saludo-se-agota) |
 | §17 | [El reloj se suelta](#17--el-reloj-se-suelta) |
 | §18 | [Las piezas que quedaron](#18--las-piezas-que-quedaron) |
@@ -179,7 +179,7 @@ capa más profunda y sólo tienen sentido después de las demás.
 | §24 | [La v0.2 · la versión de antes](#24--la-v02-la-versión-de-antes) |
 | §25 | [El monitor se enciende](#25--el-monitor-se-enciende) |
 | §26 | [El ente](#26--el-ente) |
-| — | [Los 28 secretos que cuenta el panel](#los-28-secretos-que-cuenta-el-panel) |
+| — | [Los 33 secretos que cuenta el panel](#los-33-secretos-que-cuenta-el-panel) |
 | — | [Accesibilidad, en una tabla](#accesibilidad-en-una-tabla) |
 | — | [Dónde vive cada cosa](#dónde-vive-cada-cosa) |
 | — | [Apéndice · las claves de `localStorage`](#apéndice--las-claves-de-localstorage) |
@@ -843,7 +843,7 @@ NOTAS CREADAS           12
 BYTES ESCRITOS          8.4kb
 INTEGRIDAD              100%
 TEMA                    CLARO
-SECRETOS                [███░░░░░░░░░░░] 6/28 · SE FIJA
+SECRETOS                [█░░░░░░░░░░░░░] 6/33 · SE FIJA
 PIEZAS                  [██░░░░░░░░░░░░] 2/16 · LINDO
 VSYNC-TEST              42  (7 partidas)
 VSYNC-TEST DEGRADADO    SIN DATOS
@@ -897,20 +897,27 @@ si no, el número subía con la avería y la barra se quedaba donde estaba.
 
 ### `SECRETOS` no es un dato: es una invitación
 
-Cuenta **sólo lo que provocaste vos** (§ [Los 28 secretos](#los-28-secretos-que-cuenta-el-panel)).
+Cuenta **sólo lo que provocaste vos** (§ [Los 33 secretos](#los-33-secretos-que-cuenta-el-panel)).
 Lo ambiental te pasa, no lo encontrás. El total sale de la longitud del registro,
 nunca de un número escrito a mano. Y no puede verse en `0/N`: para leer esa fila
 ya tuviste que encontrar el panel, así que lo primero que ves es `1/N`.
 
-`6/28` es un dato. **Una barra y un rango son una invitación:** se ve de un
+`6/33` es un dato. **Una barra y un rango son una invitación:** se ve de un
 vistazo que falta mucho, y el nombre del escalón siguiente da curiosidad sin
 decir de qué va.
 
 | | Escalón | Cuándo |
 | --- | --- | --- |
 | 0 | `DE PASO` | ninguno todavía |
-| 1–4 | `CURIOSO` · `SE FIJA` · `INSISTE` · `CONOCE LA CASA` | se reparten el tramo intermedio |
+| 1–4 | `SE FIJA` · `CURIOSO` · `INSISTE` · `CONOCE LA CASA` | se reparten el tramo intermedio, un cuarto cada uno |
 | 5 | `NO QUEDA NADA` | **todos**, no el noventa por ciento |
+
+> ⚠ **Van de menos a más, y ese orden importa.** `CURIOSO` estuvo antes que
+> `SE FIJA` y los dos estaban dados vuelta: fijarse es NOTAR que algo no encaja,
+> y la curiosidad viene DESPUÉS de notarlo — primero ves el detalle raro,
+> entonces te pica, y entonces insistís. Con el orden invertido la escalera
+> subía, bajaba y volvía a subir, y quien llevaba diez hallazgos se veía
+> rotulado con una actitud más floja que la de quien llevaba cinco.
 
 > ⚠ **Ningún rango nombra un secreto, y hay un test que lo prohíbe.** Si un
 > escalón se llamara «el de la versión vieja», el contador dejaría de dar
@@ -2991,7 +2998,7 @@ igual: dejar las dos mitades a medias sería peor que limpiar una.
 
 ## Y no cuenta como secreto
 
-`//reset` **no está en la lista de los 28**, y no es un olvido. Encontrarlo no es
+`//reset` **no está en la lista de los 33**, y no es un olvido. Encontrarlo no es
 un logro: es saber que hay un botón peligroso. Contarlo entre los hallazgos
 animaba a usarlo, que es exactamente lo contrario de lo que hace falta con el
 único comando que destruye algo tuyo. **La broma sí cuenta** — ésa sólo la ve
@@ -3839,7 +3846,7 @@ inflaría el denominador con cosas que nadie puede buscar.
 
 El total sale de la longitud de la lista y **nunca de un número escrito a mano**,
 porque va a cambiar. Un identificador viejo que ya no exista se filtra al leerlo,
-así que no puede dejar el contador en `29/28`.
+así que no puede dejar el contador en `34/33`.
 
 | # | `id` | Qué hay que hacer | Dónde se marca |
 | --- | --- | --- | --- |
@@ -3903,7 +3910,7 @@ Para inspeccionar o limpiar a mano. **Todas** las que escribe el juego:
 
 | Clave | Qué guarda | La borra `//reset` |
 | --- | --- | --- |
-| `flashnotes:secrets` | Los secretos hallados, como lista de `id` (§ los 28) | ✅ |
+| `flashnotes:secrets` | Los secretos hallados, como lista de `id` (§ los 33) | ✅ |
 | `flashnotes:cmds` | Los comandos escondidos ya usados (§19) | ✅ |
 | `flashnotes:helpHint` | Si la máquina ya te mandó a `//help` — es lo que arma el faro (§18 · 12) | ✅ |
 | `flashnotes:art` | Las piezas **ganadas** (§18) | ✅ |
