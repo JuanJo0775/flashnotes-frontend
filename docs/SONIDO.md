@@ -573,9 +573,25 @@ que terminó bien. Al principio estaría diciendo que salió bien antes de mirar
 
 ## Dónde escucharlo
 
-`/banco` tiene la sección de sonido: cada voz suelta, las capas de la tecla por
+`/banco` tiene dos secciones de sonido, y no dicen lo mismo.
+
+**SONIDO** es el banco de pruebas: cada voz suelta, las capas de la tecla por
 separado, la sala en un mando y un área para escribir rápido y comprobar la
-compuerta. No existe fuera de desarrollo.
+compuerta.
+
+**SONIDO · SUS SUCESOS** es el catálogo: qué dispara cada sonido. Arriba la mitad
+que se VE —una marca del árbol que la app ya pinta— y abajo la que no: teclas,
+almacenes y observadores de atributos. Cada fila se puede disparar, porque una
+tabla que sólo se lee obliga a creérsela y una que suena se comprueba sola.
+
+⚠ **Y no puede quedarse corta.** Hay un test que exige que toda voz declarada en
+`CATEGORY_OF` aparezca en una de las dos tablas —o en `INTERNAL_VOICES` con su
+motivo— y otro que exige que el banco las pinte todas. Una voz nueva sin suceso
+documentado no llega a pasar la suite. Lo pendiente se declara como pendiente en
+vez de omitirse: omitirlo lo haría parecer inexistente, y quien buscara por qué no
+suena no encontraría ni el hueco.
+
+Nada de esto existe fuera de desarrollo.
 
 ## Lo que falta
 

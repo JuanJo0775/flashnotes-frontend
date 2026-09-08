@@ -6,6 +6,8 @@ import { KEY_LAYERS, key as voiceKey, type KeyLayer } from '@/lib/system/audio/v
 import { ensureAudio, setSoundOn, teardownAudio } from '@/lib/system/audio/context';
 import { PEAK_DBFS } from '@/lib/system/audio/mix';
 import { play, type VoiceName } from '@/lib/system/audio/play';
+import { EVENT_SOUNDS, INTERNAL_VOICES } from '@/lib/system/audio/events';
+import { SCREEN_SOUNDS, fire } from '@/lib/system/audio/screens';
 import { useSound } from '@/hooks/useSound';
 import { useTheme, toggleTheme } from '@/hooks/useTheme';
 import { ART, ART_FACES, ART_TOTAL } from '@/lib/system/asciiArt';
@@ -51,6 +53,57 @@ import {
  * que las ata a su fuente: esta página no puede envejecer sin que la suite lo
  * diga, que es la única diferencia entre documentación y adorno.
  */
+
+/**
+ * Una fila del catálogo: el suceso, la voz que lo dice, y el botón para oírlo.
+ *
+ * ⚠ EL BOTÓN NO ES UN LUJO. Una tabla que sólo se lee obliga a creerse que la
+ * fila dice la verdad; una que se puede disparar la comprueba sola. Es la misma
+ * razón por la que esta página existe: dentro de la app cada sonido llega
+ * mezclado con otros diez y con la compuerta recortando.
+ */
+function Fila({
+    suceso,
+    voz,
+    donde,
+    pendiente,
+    onOir,
+}: {
+    suceso: string;
+    voz: string;
+    donde: string;
+    pendiente?: boolean;
+    onOir?: () => void;
+}) {
+    return (
+        <div
+            style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.75rem',
+                flexWrap: 'wrap',
+            }}
+        >
+            <button
+                type="button"
+                className="btn-terminal"
+                disabled={!onOir}
+                onClick={onOir}
+                style={{ minWidth: '7.5rem', opacity: onOir ? 1 : 0.45 }}
+            >
+                [{voz.toUpperCase()}]
+            </button>
+            <span style={{ flex: '1 1 16rem', minWidth: '12rem' }}>{suceso}</span>
+            <span className="comment">
+                {donde}
+                {/* Lo pendiente se declara en vez de omitirse: omitirlo lo haría
+                    parecer inexistente, y quien buscara por qué no suena no
+                    encontraría ni el hueco. */}
+                {pendiente ? ' · SIN ENCHUFAR' : ''}
+            </span>
+        </div>
+    );
+}
 
 /** Las voces que se disparan tal cual, sin argumentos. */
 const SUELTAS: { name: VoiceName; label: string; nota: string }[] = [
@@ -713,6 +766,66 @@ export default function Banco() {
                             <span className="diag-value tabular-nums">{db} dBFS</span>
                         </div>
                     ))}
+                </Seccion>
+
+                {/*
+                    ⚠ DE DÓNDE SALE CADA SONIDO, que es la mitad que faltaba.
+                    Arriba se pueden oír las voces sueltas; acá se ve QUÉ LAS
+                    DISPARA. Las dos listas salen del código —`SCREEN_SOUNDS` y
+                    `EVENT_SOUNDS`— y hay un test que exige que entre las dos no
+                    falte ninguna voz de las que declaran familia.
+                */}
+                <Seccion
+                    titulo={`SONIDO · SUS ${SCREEN_SOUNDS.length + EVENT_SOUNDS.length} SUCESOS`}
+                    nota="cada sonido con lo que lo dispara · y ninguna voz sin suceso"
+                >
+                    <p className="comment">
+                        lo que se VE · una marca que la app ya pinta, y el sonido la reconoce
+                    </p>
+
+                    {SCREEN_SOUNDS.map((p) => (
+                        <Fila
+                            key={p.mark}
+                            suceso={p.what}
+                            voz={p.shot?.voice ?? (p.tone ? 'tono' : '—')}
+                            donde={`.${p.mark}`}
+                            onOir={
+                                p.shot
+                                    ? () => disparar(() => fire(p.shot!), p.mark)
+                                    : undefined
+                            }
+                        />
+                    ))}
+
+                    <p className="comment">
+                        lo que NO se ve · teclas, almacenes y observadores de atributos
+                    </p>
+
+                    {EVENT_SOUNDS.map((e) => (
+                        <Fila
+                            key={e.voice}
+                            suceso={e.what}
+                            voz={e.voice}
+                            donde={e.where}
+                            pendiente={e.pending}
+                            onOir={
+                                // Las que llevan argumentos no se pueden disparar
+                                // a ciegas desde acá: tienen su propio mando más
+                                // arriba, con el temblor y los hercios a mano.
+                                e.voice === 'glitchBurst' ||
+                                e.voice === 'sweep' ||
+                                e.voice === 'beep' ||
+                                e.voice === 'confirm'
+                                    ? undefined
+                                    : () => disparar(() => play(e.voice as never), e.voice)
+                            }
+                        />
+                    ))}
+
+                    <p className="comment">
+                        y las internas · piezas de otras voces, nunca se piden solas:{' '}
+                        {INTERNAL_VOICES.join(', ')}
+                    </p>
                 </Seccion>
             </div>
 
