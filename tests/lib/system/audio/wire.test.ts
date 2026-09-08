@@ -16,7 +16,7 @@
  */
 
 import { IDLE_MS, startSound } from '@/lib/system/audio/wire';
-import { SEEK_JITTER, SEEK_MS, TONE_AFTER_MS } from '@/lib/system/audio/screens';
+import { SEEK_JITTER, SEEK_MS } from '@/lib/system/audio/screens';
 import { ambienceIsOn } from '@/lib/system/audio/ambience';
 import { barsToneIsOn } from '@/lib/system/audio/bars';
 import { teardownAudio } from '@/lib/system/audio/context';
@@ -545,16 +545,8 @@ describe('la maquina encendiendose y apagandose', () => {
         const barras = document.createElement('div');
         barras.className = 'boot-bars';
         document.body.append(barras);
-
-        /*
-         * ⚠ EL TONO NO ENTRA A LA VEZ QUE LA IMAGEN, Y ES A PROPOSITO. Ver
-         * `TONE_AFTER_MS`: el encendido y el tono caian en el mismo milisegundo
-         * y se pisaban. Primero despierta el aparato, y el tono entra detras.
-         */
         await esperar();
-        expect(barsToneIsOn()).toBe(false);
 
-        await new Promise((r) => setTimeout(r, TONE_AFTER_MS));
         expect(barsToneIsOn()).toBe(true);
 
         barras.remove();
@@ -563,22 +555,30 @@ describe('la maquina encendiendose y apagandose', () => {
         expect(barsToneIsOn()).toBe(false);
     });
 
-    it('⚠ y si la carta se va antes de que el tono entre, no entra', async () => {
+    it('⚠ y las barras NO traen nada mas encima del tono', async () => {
         /*
-         * Un arranque corto puede pasar de largo por las barras antes de que se
-         * cumpla la espera. Un tono que arrancara despues, ya sobre el rotulo,
-         * seria peor que no sonar: contaria que hay una carta de ajuste donde no
-         * la hay.
+         * REPORTADO DOS VECES: «se solapan dos sonidos, uno de las barras y otro
+         * como de inicio». El encendido estaba aca y se pisaba con el tono.
+         *
+         * El primer intento fue separarlos en el tiempo, y no era eso — el sitio
+         * estaba mal, y se señalo cual era el bueno: despues de la comprobacion
+         * de memoria. Unas barras de ajuste con su tono de 1 kHz y nada mas es
+         * exactamente lo que emitia una carta.
+         *
+         * Se mide por RUIDO: el tono es un oscilador y no fabrica ninguno, pero
+         * el chasquido del interruptor del encendido si.
          */
+        conLaSalaYaEncendida();
+        await esperar();
+        const antes = marca();
+
         const barras = document.createElement('div');
         barras.className = 'boot-bars';
         document.body.append(barras);
         await esperar();
 
+        expect(ruidos(antes)).toHaveLength(0);
         barras.remove();
-        await new Promise((r) => setTimeout(r, TONE_AFTER_MS + 200));
-
-        expect(barsToneIsOn()).toBe(false);
     });
 
     it('⚠ la comprobacion de memoria da el BIP DE POST', async () => {
@@ -632,30 +632,34 @@ describe('la maquina encendiendose y apagandose', () => {
         carga.remove();
     });
 
-    it('⚠ el tubo se ENCIENDE con las barras, no con la pantalla de arranque', async () => {
+    it('⚠ el sistema arranca cuando la comprobacion TERMINA', async () => {
         /*
-         * MEDIDO JUGANDO, y es el error de modelo que dejaba mudo el reinicio.
+         * EL SITIO LO SEÑALO QUIEN JUEGA, y con la linea exacta: «va despues de
+         * la parte de carga de MEMORIA CONVENCIONAL... INICIANDO FLASH-NOTES».
          *
-         * `data-booting` NO quiere decir «el tubo se encendio»: quiere decir «la
-         * pantalla de arranque esta puesta». Y esa pantalla EMPIEZA con el
-         * equipo apagandose — la primera fase del guion es el apagon. Colgar el
-         * encendido de ahi lo disparaba antes de que el tubo se apagara, o sea
-         * al reves de como pasa.
+         * Y encaja con lo que el sonido ES. No es el filamento calentando: es el
+         * chasquido del interruptor, el golpe de corriente y el flyback
+         * quedandose arriba — el aparato entrando en marcha. Eso no pasa cuando
+         * aparece la primera imagen de prueba, pasa cuando el sistema arranca de
+         * verdad, que es la ultima linea de esa lista.
          *
-         * El instante en que el tubo se enciende es el instante en que hay
-         * IMAGEN, y la primera imagen son las barras. Ahi va.
+         * La comprobacion es la ultima pantalla del guion, asi que QUITARSE es
+         * el instante en que la app aparece.
          */
+        const check = document.createElement('pre');
+        check.className = 'boot-check';
+
         conLaSalaYaEncendida();
         await esperar();
-        const antes = marca();
+        document.body.append(check);
+        await esperar();
 
-        const barras = document.createElement('div');
-        barras.className = 'boot-bars';
-        document.body.append(barras);
+        // Ya sono el bip. Lo que se mide es lo que pasa al IRSE.
+        const antes = marca();
+        check.remove();
         await esperar();
 
         expect(ruidos(antes).length).toBeGreaterThan(0);
-        barras.remove();
     });
 
     it('⚠ el tubo APAGANDOSE suena, y la marca vale para las tres pantallas', async () => {
@@ -723,7 +727,7 @@ describe('la maquina encendiendose y apagandose', () => {
         const barras = document.createElement('div');
         barras.className = 'collapse-bars';
         document.body.append(barras);
-        await new Promise((r) => setTimeout(r, TONE_AFTER_MS + 120));
+        await esperar();
 
         expect(barsToneIsOn()).toBe(true);
 
@@ -733,15 +737,15 @@ describe('la maquina encendiendose y apagandose', () => {
         expect(barsToneIsOn()).toBe(false);
     });
 
-    it('⚠ y el sistema volviendo del colapso suena a encendido', async () => {
+    it('⚠ el colapso al IRSE ya no enciende, porque lo hace el arranque', async () => {
         /*
-         * MEDIDO JUGANDO: el colapso sonaba —barrido e impacto— pero su
-         * reinicio no. Y es porque el colapso NO usa la pantalla de arranque:
-         * se rearranca el solo, con su propia cuenta atras, asi que
-         * `data-booting` no aparece nunca.
+         * ACA HUBO UN ENCENDIDO Y SE QUITO. La razon de entonces era que el
+         * colapso se rearranca solo, sin pasar por la pantalla de arranque — y
+         * era FALSA: su cuenta atras termina pidiendo el arranque desde las
+         * barras, asi que la cadena entera ocurre igual.
          *
-         * Lo que si pasa es que `data-collapsing` SE VA. Eso es exactamente el
-         * momento en que la maquina vuelve, y es donde va el encendido.
+         * Desde que el encendido vive al final de la comprobacion, dejarlo
+         * tambien aca lo hacia sonar DOS veces por colapso.
          */
         document.documentElement.setAttribute('data-collapsing', '');
         await new Promise((r) => setTimeout(r, 800));
@@ -750,7 +754,7 @@ describe('la maquina encendiendose y apagandose', () => {
         document.documentElement.removeAttribute('data-collapsing');
         await esperar();
 
-        expect(fuentes(antes).length).toBeGreaterThan(0);
+        expect(fuentes(antes)).toHaveLength(0);
     });
 
     it('⚠ y que las barras SE VAYAN no vuelve a encender nada', async () => {

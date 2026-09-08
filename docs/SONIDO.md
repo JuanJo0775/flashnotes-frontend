@@ -300,33 +300,44 @@ marca.
 | Marca | Qué suena |
 | --- | --- |
 | `.collapse-dying` | El tubo al que le cortan la corriente |
-| `.boot-bars` | La pantalla despertando, y su carta de ajuste detrás |
+| `.boot-bars` | La carta de ajuste, sola con su tono |
 | `.collapse-bars` | La carta de ajuste de un tubo que seguía encendido |
 | `.boot-logo` | Un disco leyendo para arrancar, bajo el rótulo del fabricante |
 | `.collapse-reboot` | La máquina leyendo para volver, y sigue leyendo mientras carga |
-| `.boot-check` | El bip de POST: memoria contada, todo bien |
+| `.boot-check` | El bip de POST al contar la memoria, y el sistema arrancando al final — cuando se va |
 
-### ⚠ Dos sonidos que empiezan a la vez se oyen como uno sucio
+### ⚠ Dos sonidos que se pisan casi nunca se arreglan separándolos
 
-Se reportó jugando: «cuando le doy a la tecla se solapan dos sonidos, uno de las
-barras y otro como de inicio». El encendido y el tono de 1 kHz caían en el mismo
-milisegundo.
+Se reportó jugando: «se solapan dos sonidos, uno de las barras y otro como de
+inicio». El encendido y el tono de 1 kHz caían en el mismo milisegundo.
 
-El encendido **no es sólo el filamento calentando**: es el aparato entero
-despertando —el chasquido del interruptor, el golpe de corriente y el flyback
-subiendo—, así que su sitio es el instante en que aparece la imagen, no una
-oscuridad previa. Lo que estaba mal era que el tono entrara a la vez.
+El primer intento fue **separarlos en el tiempo**: dejar el encendido en las
+barras y hacer entrar el tono 300 ms después. Y no era eso — se volvió a reportar.
+El sitio estaba mal, y quien juega señaló cuál era el bueno, con la línea exacta:
 
-Ahora entra **300 ms después** (`TONE_AFTER_MS`): primero despierta el aparato y
-después llega la señal, que es también el orden real — un monitor no emite su tono
-de referencia en el instante en que le dan tensión. Y se cancela si la carta se va
-antes de que llegue a entrar: un arranque corto puede pasar de largo, y un tono
-sonando ya sobre el rótulo contaría que hay una carta donde no la hay.
+> «va después de la parte de carga de MEMORIA CONVENCIONAL… INICIANDO FLASH-NOTES…»
 
-Por lo mismo el cabezal se mudó al **rótulo**, que es donde este documento decía
-que estaba y el código no: iba colgado 620 ms después del encendido, o sea encima
-de las barras. Así el arranque queda en cuatro momentos que no se pisan —
-despertar, señal, lectura y comprobación.
+Y encaja con lo que ese sonido **es**. No es el filamento calentando: es el
+chasquido del interruptor, el golpe de corriente y el flyback quedándose arriba —
+el aparato entero entrando en marcha. Eso no pasa cuando aparece la primera imagen
+de prueba, pasa cuando el sistema arranca de verdad, que es la última línea de esa
+lista.
+
+La comprobación es la última pantalla del guion, así que **quitarse** es el
+instante en que la app aparece. Por eso el encendido cuelga de que esa marca SE
+VAYA y no de ninguna pantalla nueva: hay momentos que no son la aparición de nada,
+son el final de algo.
+
+Las barras se quedan con su tono y nada más, que es exactamente lo que emitía una
+carta de ajuste. Y el cabezal se mudó al **rótulo**, que es donde este documento
+decía que estaba y el código no —iba colgado 620 ms después del encendido, o sea
+encima de las barras—. El arranque queda en cuatro momentos que no se pisan:
+**señal, lectura, comprobación y marcha**.
+
+⚠ Y por eso el colapso dejó de encender al irse. La razón de entonces era que se
+rearranca solo, sin pasar por la pantalla de arranque, y era **falsa**: su cuenta
+atrás termina pidiendo el arranque desde las barras. Con el encendido al final de
+la comprobación, dejarlo también ahí lo hacía sonar dos veces por colapso.
 
 ⚠ **Se escogieron marcas que YA existían**, no clases inventadas para esto.
 `.collapse-dying` la pintan las cuatro pantallas que apagan un tubo —la puerta, el

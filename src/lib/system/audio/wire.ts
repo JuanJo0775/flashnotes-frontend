@@ -378,17 +378,16 @@ export function startSound(): () => void {
             }
 
             /*
-             * ⚠ Y EL COLAPSO SUENA TAMBIÉN AL IRSE, que es cuando la máquina
-             * VUELVE. Medido jugando: el colapso sonaba —barrido e impacto— y
-             * su reinicio no, porque el colapso NO usa la pantalla de arranque:
-             * se rearranca solo con su propia cuenta atrás, así que
-             * `data-booting` no aparece nunca. Lo que sí pasa es que
-             * `data-collapsing` se va, y ése es el momento exacto del encendido.
+             * ⚠ ACÁ HUBO UN ENCENDIDO AL IRSE EL COLAPSO Y SE QUITÓ. La razón
+             * de entonces era que el colapso se rearranca solo, sin pasar por la
+             * pantalla de arranque — y era FALSA: su cuenta atrás termina
+             * pidiendo el arranque desde las barras, así que la cadena entera
+             * ocurre igual.
+             *
+             * Desde que el encendido vive al final de la comprobación, dejarlo
+             * acá lo hacía sonar DOS veces por colapso: una al volver y otra al
+             * arrancar de verdad.
              */
-            if (!hay && presentes.has(attr) && attr === 'data-collapsing') {
-                huboActividad();
-                play('powerUp');
-            }
 
             if (hay) presentes.add(attr);
             else presentes.delete(attr);
@@ -467,44 +466,6 @@ export function startSound(): () => void {
         otra();
     };
 
-    /*
-     * EL TONO DE LA CARTA, QUE ENTRA UN POCO DESPUÉS.
-     *
-     * ⚠ EL RETRASO ES LO QUE IMPIDE QUE DOS SONIDOS SE PISEN, y se reportó
-     * jugando: «se solapan dos sonidos, uno de las barras y otro como de inicio».
-     * El encendido y el tono caían en el mismo milisegundo, y dos cosas que
-     * empiezan a la vez el oído las lee como UNA cosa sucia. Ver `TONE_AFTER_MS`.
-     *
-     * Se cancela si la carta se va antes de que el tono llegue a entrar: un
-     * arranque corto puede pasar de largo, y un tono que suena sobre el rótulo
-     * sería peor que no sonar.
-     */
-    let tonoDe: string | null = null;
-    let tonoPendiente: ReturnType<typeof setTimeout> | null = null;
-
-    const cuidarElTono = (enPantalla: Set<string>) => {
-        const carta = SCREEN_SOUNDS.find((s) => s.tone && enPantalla.has(s.mark));
-
-        if (!carta) {
-            if (tonoPendiente) clearTimeout(tonoPendiente);
-            tonoPendiente = null;
-            tonoDe = null;
-            stopBarsTone();
-            return;
-        }
-
-        // Ya se está ocupando de ésta: ni se reprograma ni se reinicia.
-        if (tonoDe === carta.mark) return;
-
-        tonoDe = carta.mark;
-        if (tonoPendiente) clearTimeout(tonoPendiente);
-
-        tonoPendiente = setTimeout(() => {
-            tonoPendiente = null;
-            startBarsTone();
-        }, carta.tone!.afterMs);
-    };
-
     const mirarPantallas = () => {
         // UNA sola pasada por el documento y no una por marca: esto corre en cada
         // mutación del `body` entero, y el colapso reescribe su manta de estática
@@ -514,7 +475,9 @@ export function startSound(): () => void {
             for (const c of el.classList) enPantalla.add(c);
         }
 
-        cuidarElTono(enPantalla);
+        // El tono de la carta de ajuste, lo enseñe quien lo enseñe.
+        if (SCREEN_SOUNDS.some((s) => s.tone && enPantalla.has(s.mark))) startBarsTone();
+        else stopBarsTone();
 
         for (const s of SCREEN_SOUNDS) {
             const hay = enPantalla.has(s.mark);
@@ -528,6 +491,17 @@ export function startSound(): () => void {
                 if (segundo) luego(segundo.ms, () => fire(segundo));
 
                 repetir(s);
+            }
+
+            /*
+             * Y lo que suena al IRSE. Hay momentos que no son la aparición de
+             * nada sino el final de algo — el sistema arrancando pasa cuando la
+             * comprobación de memoria TERMINA — y sin esto habría que inventarles
+             * una pantalla para poder oírlos.
+             */
+            if (!hay && visto.has(s.mark) && s.onGone) {
+                huboActividad();
+                fire(s.onGone);
             }
 
             // Se apaga en cuanto la marca se va, o el cabezal seguiría buscando
@@ -551,7 +525,6 @@ export function startSound(): () => void {
         pendientes.clear();
         repitiendo.forEach(clearTimeout);
         repitiendo.clear();
-        if (tonoPendiente) clearTimeout(tonoPendiente);
         stopAmbience();
         document.removeEventListener('keydown', alTeclear, true);
         document.removeEventListener('click', alPulsar, true);

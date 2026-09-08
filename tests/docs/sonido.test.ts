@@ -147,4 +147,28 @@ describe('⚠ la tabla de pantallas y el documento dicen lo mismo', () => {
             expect(DOC).toContain(what);
         }
     );
+
+    it.each(
+        SCREEN_SOUNDS.filter((s) => s.onGone).map((s) => [s.mark, s.onGone!.voice])
+    )(
+        '⚠ y cuenta que «%s» suena tambien al IRSE',
+        (mark) => {
+            /*
+             * Es el detalle que mas facil se pierde de vista: hay un momento que
+             * no es la aparicion de nada, es el FINAL de algo. Un documento que
+             * solo hablara de apariciones dejaria ese sonido sin explicacion,
+             * y quien viniera a buscarlo no lo encontraria.
+             *
+             * ⚠ SE BUSCA EN LA FILA, NO EN EL DOCUMENTO. La primera version
+             * usaba un regex con `[^|]*` entre la marca y la frase, y `[^|]`
+             * TAMBIEN casa saltos de linea: el patron cruzaba media pagina y
+             * encontraba un «se va» de otra seccion. Pasaba en verde con la fila
+             * vaciada, que es justo lo que tenia que detectar. Se comprobo.
+             */
+            const fila = DOC.split('\n').find((l) => l.includes(`\`.${mark}\``));
+
+            expect(fila).toBeDefined();
+            expect(fila).toMatch(/se va/i);
+        }
+    );
 });

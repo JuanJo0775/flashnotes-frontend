@@ -58,27 +58,6 @@ export const SEEK_MS = 1_500;
 export const SEEK_JITTER = 0.35;
 
 /**
- * Cuánto tarda la carta de ajuste en traer su tono, desde que se ve.
- *
- * ⚠ NO ES UN RETRASO POR GUSTO: ES LO QUE IMPIDE QUE DOS SONIDOS SE PISEN.
- * Reportado jugando: «cuando le doy a la tecla se solapan dos sonidos, uno de
- * las barras y otro como de inicio».
- *
- * El encendido y el tono caían en el mismo milisegundo, y dos cosas que empiezan
- * a la vez el oído las lee como UNA cosa sucia, no como dos. Separadas se leen
- * como lo que son: primero despierta el aparato —el chasquido del interruptor,
- * el golpe de corriente, el flyback subiendo— y cuando eso se asienta entra la
- * señal. Es también el orden real: un monitor no emite su tono de referencia en
- * el instante en que le dan tensión.
- *
- * Trescientos milisegundos: bastante para que el golpe haya caído, poco para que
- * no parezca que la señal se perdió. ⚠ Y no puede crecer mucho más — el tramo de
- * barras del arranque más corto dura 500 ms, y un retraso mayor dejaría la carta
- * muda justo en el arranque que menos dura.
- */
-export const TONE_AFTER_MS = 300;
-
-/**
  * Una voz con lo que haya que pedirle.
  *
  * El mapeado sobre `VoiceName` da una unión donde cada nombre va con SUS
@@ -98,16 +77,13 @@ export interface ScreenSound {
     readonly what: string;
 
     /**
-     * El tono de referencia de 1 kHz, y cuánto tarda en entrar.
+     * El tono de referencia de 1 kHz.
      *
      * ⚠ No es una licencia: las cartas de ajuste iban SIEMPRE con él, porque era
      * la señal con la que se calibraba el nivel de audio de una emisión. Es lo
      * que convierte unos rectángulos de colores en algo que se RECONOCE.
-     *
-     * Lo de `afterMs` es lo que evita que se pise con el encendido: ver
-     * `TONE_AFTER_MS`.
      */
-    readonly tone?: { readonly afterMs: number };
+    readonly tone?: true;
 
     /** La voz en el instante en que la marca aparece. */
     readonly shot?: Shot;
@@ -117,6 +93,16 @@ export interface ScreenSound {
 
     /** Y si `shot` se repite mientras la marca siga puesta. */
     readonly repeat?: { readonly ms: number; readonly jitter: number };
+
+    /**
+     * Lo que suena cuando la marca SE VA.
+     *
+     * ⚠ Hay momentos que no son la aparición de nada, son el final de algo, y
+     * sin esto habría que inventarles una pantalla para poder oírlos. El sistema
+     * arrancando es exactamente eso: pasa cuando la comprobación de memoria
+     * termina y se quita, no cuando empieza.
+     */
+    readonly onGone?: Shot;
 }
 
 /**
@@ -136,24 +122,23 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
     },
     {
         mark: 'boot-bars',
-        what: 'La pantalla despertando, y su carta de ajuste detrás',
+        what: 'La carta de ajuste, sola con su tono',
         /*
-         * ⚠ EL ENCENDIDO VA ACÍ Y NO ANTES, y se discutió jugando. No suena
-         * sólo a filamentos calentando: es el aparato entero despertando —el
-         * chasquido del interruptor, el golpe de corriente y el flyback
-         * subiendo—, y eso pertenece al instante en que aparece la IMAGEN.
-         * Ponerlo en una oscuridad previa lo dejaba contando algo que todavía no
-         * se veía.
+         * ⚠ ACÁ NO SUENA EL ENCENDIDO, Y ESO SE CORRIGIÓ DOS VECES.
          *
-         * Lo que estaba mal era que el tono entrara a la vez: ahora entra detrás.
+         * Estaba acá y se pisaba con el tono: «se solapan dos sonidos, uno de
+         * las barras y otro como de inicio». El primer intento fue separarlos en
+         * el tiempo, y no era eso — el sitio estaba mal. Ver `boot-check`.
+         *
+         * Unas barras de ajuste con su tono de 1 kHz y nada más es exactamente
+         * lo que emitía una carta, y no necesita que le pongan nada encima.
          */
-        shot: { voice: 'powerUp' },
-        tone: { afterMs: TONE_AFTER_MS },
+        tone: true,
     },
     {
         mark: 'collapse-bars',
         what: 'La carta de ajuste de un tubo que seguía encendido',
-        tone: { afterMs: TONE_AFTER_MS },
+        tone: true,
     },
     {
         mark: 'boot-logo',
@@ -175,13 +160,30 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
     },
     {
         mark: 'boot-check',
-        what: 'El bip de POST: memoria contada, todo bien',
+        what: 'El bip de POST al contar la memoria, y el sistema arrancando al final',
         /*
          * REFERENCIA REAL DE LA INDUSTRIA: un PC que pasaba su autoprueba de
          * encendido daba UN pitido corto y agudo. Va en la comprobación y no
          * antes — el bip no anuncia que empieza, CERTIFICA que terminó bien.
          */
         shot: { voice: 'beep', args: { hz: 1_050, ms: 110 } },
+
+        /*
+         * ⚠ Y EL ARRANQUE VA AL FINAL DE ESTA PANTALLA. Se señaló jugando, con
+         * el sitio exacto: «va después de la parte de carga de MEMORIA
+         * CONVENCIONAL... INICIANDO FLASH-NOTES...».
+         *
+         * Y encaja con lo que el sonido ES. No es el filamento calentando: es el
+         * chasquido del interruptor, el golpe de corriente y el flyback
+         * quedándose arriba — el aparato entero entrando en marcha. Eso no pasa
+         * cuando aparece la primera imagen de prueba, pasa cuando el sistema
+         * arranca de verdad, que es la última línea de esta lista.
+         *
+         * Esta pantalla es la última del guion, así que quitarse es exactamente
+         * el instante en que la app aparece. Por eso cuelga de que SE VAYA y no
+         * de ninguna marca nueva.
+         */
+        onGone: { voice: 'powerUp' },
     },
 ];
 
