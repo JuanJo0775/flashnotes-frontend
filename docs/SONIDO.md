@@ -8,7 +8,7 @@
 > Las tablas de esta página están **atadas al código por `tests/docs/sonido.test.ts`**.
 > Si alguien cambia un nivel y no lo cambia acá, la suite lo dice.
 
-## ⚠ Cinco cosas que se aprendieron fallando
+## ⚠ Seis cosas que se aprendieron fallando
 
 Van primero porque las cuatro costaron una vuelta entera y ninguna se ve leyendo
 el código.
@@ -84,6 +84,24 @@ a la que no pertenecía. Es el mismo fallo que en la app se oye como un ruido si
 causa. Ahora todo lo que se aplaza se apunta, y el desenchufe se lo lleva por
 delante — porque `parar()` **promete** desenchufar el sonido, y una promesa a
 medias es peor que no prometer nada.
+
+### 6 · Un contexto dormido no tira el sonido: lo GUARDA
+
+Todo `AudioContext` nace suspendido hasta que hay un gesto del usuario. Lo que no
+se ve leyendo es que un contexto suspendido **no descarta** lo que se le programa:
+congela su reloj y lo acumula. Se midió en el navegador con un tono a 0,2 de
+amplitud programado con el contexto dormido — al despertarlo **ocho segundos
+después sonó entero, a su amplitud completa**.
+
+O sea que todo lo que la máquina intenta decir antes del primer gesto se amontona
+y estalla junto en el instante en que alguien toca una tecla. Es exactamente el
+«pitido feo al empezar» que se reportó jugando.
+
+La regla que sale de ahí: **un golpe que no se puede oír ahora no es un golpe que
+haya que oír después**. `play` no programa nada con el contexto parado. El
+ambiente es la excepción y no pasa por ahí a propósito: es continuo, no un
+instante, así que oírlo aparecer tarde es lo correcto — sigue ahí cuando llega el
+permiso.
 
 ## Los caminos, en orden
 
@@ -249,10 +267,7 @@ hipótesis: `awardFrom` ya se llama desde nueve sitios distintos.
 | Hallazgos | el almacén del sistema, comparando conjuntos | no |
 | Avería de señal | el mismo almacén | no |
 | Botones y cualquier cosa con cursor de mano | `click` en el documento, en captura | no |
-| Las barras de ajuste | que `.boot-bars` o `.collapse-bars` aparezcan en pantalla | no |
-| El tubo encendiéndose | que `.boot-bars` aparezca | no |
-| El tubo apagándose | que `.collapse-dying` aparezca | no |
-| La carga tras un colapso | que `.collapse-reboot` aparezca | no |
+| El tubo encendiéndose, apagándose y la carga | la tabla `screens.ts`, por marcas que la app ya pinta | no |
 | Barrido y colapso | los atributos que la app ya pone en el documento | no |
 | El tema cambiando | el mismo atributo `data-theme` | no |
 
@@ -270,13 +285,36 @@ doble de velocidad.
 ## La máquina encendiéndose y apagándose
 
 Un atributo del documento dice en qué **pantalla** estás; una clase del árbol dice
-qué está pasando **en** ella. Los dos sirven, y confundirlos fue el fallo:
+qué está pasando **en** ella. Los dos sirven, y confundirlos fue el fallo.
 
-| De dónde | Qué suena |
+⚠ **La asociación es un dato, no código.** Vive en `screens.ts` y el suscriptor
+sólo la recorre. Antes cada momento estaba cableado a mano —cinco bloques casi
+iguales— y cada pantalla nueva obligaba a acordarse de ir a tocarlos: el mismo
+camino por el que `awardFrom` acabó llamado desde nueve sitios.
+
+Ahora **la pantalla no pide sonar**: pinta la marca que ya pintaba y el sonido la
+reconoce. Una pantalla nueva que pinte `.collapse-dying` suena a tubo apagándose
+sin tocar una línea de sonido, porque lo que se comparte no es una llamada, es la
+marca.
+
+| Marca | Qué suena |
 | --- | --- |
-| `.boot-bars` aparece | El tubo prendiéndose, y 620 ms después el cabezal buscando |
-| `.collapse-dying` aparece | El tubo al que le cortan la corriente |
-| `.collapse-reboot` aparece | El cabezal, y sigue buscando cada 1 500 ms mientras carga |
+| `.collapse-dying` | El tubo al que le cortan la corriente |
+| `.boot-bars` | El tubo prendiéndose, con su carta de ajuste |
+| `.collapse-bars` | La carta de ajuste de un tubo que seguía encendido |
+| `.collapse-reboot` | La máquina leyendo para volver, y sigue leyendo mientras carga |
+| `.boot-check` | El bip de POST: memoria contada, todo bien |
+
+⚠ **Se escogieron marcas que YA existían**, no clases inventadas para esto.
+`.collapse-dying` la pintan las cuatro pantallas que apagan un tubo —la puerta, el
+arranque, el colapso y el barrido— porque las cuatro cierran la imagen a un punto.
+Que ya estuviera compartida es la prueba de que el momento es el mismo; inventar
+una clase nueva habría sido decidir por mi cuenta que no lo era.
+
+Y aparte, dos atributos que sí son un suceso entero por sí mismos:
+
+| Atributo | Qué suena |
+| --- | --- |
 | `data-wiping`, `data-collapsing` | El barrido largo, y un impacto lejano detrás |
 | `data-theme` | Un relé por cada cambio. Es lo que hace el parpadeo del tema roto |
 
@@ -392,6 +430,28 @@ primer gesto de encender la máquina.
 Aparece **sólo antes del primer arranque** —los reinicios ya vienen después de un
 gesto— y **sólo si hay sonido que desbloquear**: con el sonido apagado sería un
 paso de más entre alguien y sus notas, que es lo que prohíbe la regla A2.
+
+### ⚠ Y el apagón va DELANTE
+
+Recargar es apagar y encender, en ese orden. La puerta era lo primero y la máquina
+se apagaba **después** de que pulsaras para encenderla — al revés de como pasa. Se
+reportó así: «cuando le damos refrescar debe salir la animación de apagado, antes
+de la pantalla de darle a una tecla».
+
+Ahora el tubo se cierra a un punto, la pantalla queda muerta pidiendo una tecla, y
+al pulsarla el guion sigue **desde las barras** — porque el apagón ya lo enseñó la
+puerta y no hay que apagar otra vez la máquina que acabas de encender.
+
+Quien se adelanta y pulsa durante el apagón **no lo corta y tampoco pierde el
+gesto**: se apunta y se abre en cuanto el tubo termina de cerrarse. Cortarlo
+dejaría a medias justo lo que se pidió ver; ignorarlo obligaría a pulsar dos veces
+sin decir por qué.
+
+⚠ **En la primera carga de la vida ese apagón se ve pero no se oye**, y no hay
+código que lo arregle: todavía no hubo gesto, así que el navegador no deja sonar —
+y desde la lección 6, lo que no se puede oír ya no se guarda para soltarlo de
+golpe después. En las visitas siguientes Chrome suele levantar la restricción por
+sí solo, y entonces sí se oye.
 
 ## La cadena del arranque, con la referencia de la industria
 

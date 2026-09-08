@@ -273,6 +273,56 @@ export function ensureAudio(): AudioGraph | null {
     return grafo;
 }
 
+/**
+ * Lo máximo que se espera a que el navegador conceda el permiso.
+ *
+ * Un `resume()` concedido tarda unos pocos milisegundos; ciento veinte es de
+ * sobra. Lo que este número acota no es el caso bueno, es el malo: el permiso
+ * que no llega nunca.
+ */
+export const RESUME_LIMIT_MS = 120;
+
+/**
+ * Despierta el audio y ESPERA a que esté despierto de verdad.
+ *
+ * ⚠ HACE FALTA PORQUE `resume()` NO ES INSTANTÁNEO, y sin esperarlo el arranque
+ * se come su propio sonido. Desde que un golpe no se programa con el contexto
+ * dormido —ver `play`—, lo que suene en los primeros milisegundos después del
+ * gesto se perdería: el estado todavía dice «suspended» aunque el permiso ya
+ * esté concedido.
+ *
+ * Lo llama la puerta del arranque antes de dar paso: cuando la máquina empieza a
+ * encenderse, la corriente ya tiene que estar puesta.
+ */
+export async function resumeAudio(): Promise<void> {
+    const g = ensureAudio();
+    if (!g) return;
+
+    if (g.ctx.state === 'running') return;
+
+    /*
+     * ⚠ CON UN LÍMITE, Y NO ES CELO: `resume()` PUEDE NO RESOLVERSE NUNCA.
+     *
+     * Sobre un contexto que el navegador tiene bloqueado, la promesa se queda
+     * pendiente hasta que llegue un gesto que lo desbloquee — y puede no llegar.
+     * Quien espera esta función es la puerta del arranque, así que sin límite un
+     * permiso que no llega deja a alguien delante de una pantalla negra, sin
+     * forma de llegar a sus notas y sin nada que explique por qué.
+     *
+     * La regla A2 no admite eso: NADA bloquea escribir. Como mucho se pierde el
+     * primer sonido, que es infinitamente mejor que perder el cuaderno.
+     */
+    try {
+        await Promise.race([
+            g.ctx.resume?.(),
+            new Promise((listo) => setTimeout(listo, RESUME_LIMIT_MS)),
+        ]);
+    } catch {
+        // El navegador dijo que no. No hay nada que hacer, y no es un error:
+        // pasa siempre que todavía no hubo un gesto de verdad.
+    }
+}
+
 /** Cierra el contexto y suelta el grafo. Deja el sistema en cero nodos. */
 export function teardownAudio() {
     if (!grafo) return;

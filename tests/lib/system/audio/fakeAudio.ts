@@ -159,6 +159,16 @@ export class FakeAudioContext {
     readonly sampleRate = 44_100;
     currentTime = 0;
     state: 'suspended' | 'running' | 'closed' = 'suspended';
+
+    /**
+     * ⚠ EL NAVEGADOR DICIENDO QUE NO, que es lo que al falso le faltaba.
+     *
+     * Un `resume()` sin gesto del usuario NO despierta el contexto: se queda
+     * dormido y el sonido no sale. El falso lo concedia siempre, asi que el caso
+     * que de verdad ocurre en el navegador —el unico que importa aca— no se
+     * podia escribir.
+     */
+    blocked = false;
     readonly destination = new FakeNode('destination');
 
     /** Todos los nodos creados, en orden. La cuenta que importa. */
@@ -219,6 +229,7 @@ export class FakeAudioContext {
     }
 
     async resume() {
+        if (this.blocked) return;
         this.state = 'running';
     }
 

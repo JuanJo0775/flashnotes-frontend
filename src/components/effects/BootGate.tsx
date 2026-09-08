@@ -2,12 +2,12 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { BOOT_VENDOR } from '@/lib/system/boot';
-import { isSoundOn } from '@/lib/system/audio/context';
+import { BOOT_OFF_MS, BOOT_VENDOR, type BootPhase } from '@/lib/system/boot';
+import { isSoundOn, resumeAudio } from '@/lib/system/audio/context';
 import { useT } from '@/i18n';
 
 /**
- * «PULSE UNA TECLA PARA CONTINUAR», antes de que arranque nada.
+ * RECARGAR ES APAGAR Y ENCENDER. Primero se apaga; después pide la tecla.
  *
  * ⚠ ESTO EXISTE POR UNA LEY DEL NAVEGADOR, NO POR ESTÉTICA — y la estética sale
  * gratis, que es lo bonito del asunto.
@@ -20,14 +20,24 @@ import { useT } from '@/i18n';
  *
  * La única salida honesta es que el producto PIDA el gesto. Y da la casualidad
  * de que las máquinas de esa época hacían exactamente eso, así que la limitación
- * entra en la ficción sin forzar nada: lo que era un impedimento técnico pasa a
- * ser el primer gesto de encender la máquina.
+ * entra en la ficción sin forzar nada.
+ *
+ * ⚠ Y EL APAGÓN VA DELANTE, QUE ES LO QUE CORRIGE EL ORDEN. Antes la puerta era
+ * lo primero y la máquina se apagaba DESPUÉS de que pulsaras para encenderla,
+ * que es al revés de como pasa. Recargar es apagar y volver a encender: el tubo
+ * se cierra a un punto, la pantalla queda muerta pidiendo una tecla, y al
+ * pulsarla arrancan las barras.
+ *
+ * ⚠ EL APAGÓN NO PINTA UNA CLASE NUEVA: pinta `.collapse-dying`, la misma que ya
+ * pintan el arranque, el colapso y el barrido. Por eso suena sin que este
+ * archivo sepa nada de sonido — la tabla de `screens.ts` la reconoce. Lo que se
+ * comparte no es una llamada, es la marca.
  *
  * ⚠ SÓLO APARECE SI HAY SONIDO QUE DESBLOQUEAR. Con el sonido apagado no serviría
  * de nada y sería un paso más entre alguien y sus notas, que es justo lo que
- * prohíbe la regla A2.
+ * prohíbe la regla A2 — y el arranque de siempre ya trae su propio apagón.
  */
-export default function BootGate({ onReady }: { onReady: () => void }) {
+export default function BootGate({ onReady }: { onReady: (desde: BootPhase) => void }) {
     const t = useT();
 
     /*
@@ -45,20 +55,44 @@ export default function BootGate({ onReady }: { onReady: () => void }) {
         }
     });
 
+    /** `off` es el tubo cerrándose; `tecla`, la pantalla muerta que espera. */
+    const [acto, setActo] = useState<'off' | 'tecla'>('off');
+
     // Aporrear una pantalla que dice «pulse una tecla» es lo normal. Si cada
     // tecla avisara, el arranque se relanzaría encima de sí mismo.
     const abierta = useRef(false);
 
+    /*
+     * Quien se adelanta durante el apagón NO lo interrumpe.
+     *
+     * ⚠ Y tampoco pierde su gesto. Cortar el apagón dejaría a medias justo lo
+     * que se pidió ver; ignorar la tecla obligaría a pulsar dos veces. Se apunta
+     * y se abre en cuanto el tubo termina de cerrarse.
+     */
+    const adelantado = useRef(false);
+
     const abrir = useCallback(() => {
         if (abierta.current) return;
-
         abierta.current = true;
-        onReady();
+
+        /*
+         * ⚠ SE ESPERA A QUE EL AUDIO ESTÉ DESPIERTO DE VERDAD. `resume()` no es
+         * instantáneo, y desde que un golpe no se programa con el contexto
+         * dormido, arrancar en el mismo instante que el gesto perdería el
+         * encendido. Cuando la máquina empieza a prenderse, la corriente ya
+         * tiene que estar puesta.
+         */
+        void resumeAudio().then(() => onReady('bars'));
     }, [onReady]);
 
     useEffect(() => {
         if (!hacefalta) {
-            abrir();
+            /*
+             * Sin sonido no hay puerta, y entonces el arranque hace su propio
+             * apagón: se le pide desde `off` para que la recarga se vea igual
+             * que con sonido. Lo único que cambia es que no se oye.
+             */
+            onReady('off');
             return;
         }
 
@@ -68,16 +102,58 @@ export default function BootGate({ onReady }: { onReady: () => void }) {
          * otra parte. Y el clic igual — quien llega con el ratón hace clic donde
          * mira, no necesariamente encima del texto.
          */
-        document.addEventListener('keydown', abrir);
-        document.addEventListener('click', abrir);
+        const pulsar = () => {
+            if (acto === 'off') adelantado.current = true;
+            else abrir();
+        };
+
+        document.addEventListener('keydown', pulsar);
+        document.addEventListener('click', pulsar);
 
         return () => {
-            document.removeEventListener('keydown', abrir);
-            document.removeEventListener('click', abrir);
+            document.removeEventListener('keydown', pulsar);
+            document.removeEventListener('click', pulsar);
         };
-    }, [hacefalta, abrir]);
+    }, [hacefalta, acto, abrir, onReady]);
+
+    /* El tubo tarda lo que tarda en cerrarse, y después la pantalla muerta. */
+    useEffect(() => {
+        if (!hacefalta || acto !== 'off') return;
+
+        const id = setTimeout(() => {
+            if (adelantado.current) abrir();
+            else setActo('tecla');
+        }, BOOT_OFF_MS);
+
+        return () => clearTimeout(id);
+    }, [hacefalta, acto, abrir]);
+
+    /*
+     * CON EL TUBO APAGADO NO HAY BARRIDO.
+     *
+     * El barrido es el refresco del tubo, y un tubo apagado no refresca nada.
+     * Dejar la línea cruzando mientras la imagen se cierra a un punto contaría
+     * que la pantalla sigue encendida justo cuando se está apagando. Es lo mismo
+     * que hace el arranque de verdad.
+     */
+    useEffect(() => {
+        if (!hacefalta) return;
+
+        const raiz = document.documentElement;
+        raiz.setAttribute('data-tube-off', '');
+
+        return () => raiz.removeAttribute('data-tube-off');
+    }, [hacefalta]);
 
     if (!hacefalta) return null;
+
+    if (acto === 'off') {
+        return (
+            <div className="boot-screen" aria-hidden="true">
+                <div className="collapse-dying" />
+            </div>
+        );
+    }
 
     return (
         <div className="boot-screen">

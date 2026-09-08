@@ -1127,4 +1127,9 @@ body > *:not(.boot-screen):not(.wipe-screen):not(.scanline-effect) {
     font-size: var(--text-xl);
     letter-spacing: 0.08em;
     cursor: pointer;
+    /* ⚠ EL AIRE ES PARA EL ANILLO DE FOCO, no es decoración. El botón recibe
+       el foco al aparecer, así que el contorno se pinta SIEMPRE — y sin relleno
+       iba pegado a las letras, cortando la primera y la última. Se reportó así:
+       «le falta margen a los lados en ese cuadro». */
+    padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 4);
 }

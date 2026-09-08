@@ -15,7 +15,8 @@
  * pasaban todas las llamadas.
  */
 
-import { IDLE_MS, SEEK_JITTER, SEEK_MS, startSound } from '@/lib/system/audio/wire';
+import { IDLE_MS, startSound } from '@/lib/system/audio/wire';
+import { SEEK_JITTER, SEEK_MS } from '@/lib/system/audio/screens';
 import { ambienceIsOn } from '@/lib/system/audio/ambience';
 import { barsToneIsOn } from '@/lib/system/audio/bars';
 import { teardownAudio } from '@/lib/system/audio/context';

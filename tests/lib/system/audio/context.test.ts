@@ -19,9 +19,11 @@
 import { BAND_HIGH_HZ, BAND_LOW_HZ } from '@/lib/system/audio/speaker';
 import { key } from '@/lib/system/audio/voices';
 import {
+    RESUME_LIMIT_MS,
     SOUND_STORAGE_KEY,
     ensureAudio,
     isSoundOn,
+    resumeAudio,
     setSoundOn,
     teardownAudio,
 } from '@/lib/system/audio/context';
@@ -298,5 +300,38 @@ describe('el ruido cacheado y el ciclo de vida del contexto', () => {
         key(segundo, Math.random);
 
         expect(lastContext()!.buffersCreated).toBe(soloLaSala + 1);
+    });
+});
+
+describe('⚠ despertar el audio no puede colgar la app', () => {
+    it('con el navegador bloqueando, se rinde y sigue', async () => {
+        /*
+         * `resume()` sobre un contexto que el navegador tiene bloqueado se queda
+         * PENDIENTE hasta que llegue un gesto que lo desbloquee — y puede no
+         * llegar nunca.
+         *
+         * Quien espera esta funcion es la puerta del arranque. Sin limite, un
+         * permiso que no llega deja a alguien delante de una pantalla negra, sin
+         * forma de llegar a sus notas y sin nada que explique por que. La regla
+         * A2 no admite eso: NADA bloquea escribir. Como mucho se pierde el
+         * primer sonido, que es infinitamente mejor que perder el cuaderno.
+         */
+        const quitar = installFakeAudio();
+
+        try {
+            ensureAudio();
+            const ctx = lastContext()!;
+
+            // El navegador callado: ni concede ni rechaza.
+            ctx.state = 'suspended';
+            ctx.resume = () => new Promise<void>(() => {});
+
+            const t0 = Date.now();
+            await resumeAudio();
+
+            expect(Date.now() - t0).toBeLessThan(RESUME_LIMIT_MS * 6);
+        } finally {
+            quitar();
+        }
     });
 });

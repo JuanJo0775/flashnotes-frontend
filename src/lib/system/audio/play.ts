@@ -141,6 +141,28 @@ export function play<N extends VoiceName>(
     const g = ensureAudio();
     if (!g) return false;
 
+    /*
+     * ⚠ CON EL AUDIO DORMIDO NO SE PROGRAMA NADA, Y ESTO SE MIDIO.
+     *
+     * Todo `AudioContext` nace suspendido hasta que hay un gesto del usuario.
+     * Lo que no se ve leyendo es que un contexto suspendido NO TIRA lo que se le
+     * programa: congela su reloj y lo guarda. Se comprobo en el navegador con un
+     * tono a 0,2 de amplitud programado con el contexto dormido — al despertarlo
+     * OCHO SEGUNDOS despues sono entero, a su amplitud completa.
+     *
+     * O sea que todo lo que la maquina intenta decir antes del primer gesto se
+     * amontona y estalla junto en el instante en que alguien toca una tecla. Es
+     * exactamente el «pitido feo al empezar» que se reporto jugando, y con el
+     * apagado delante de la puerta seria peor todavia.
+     *
+     * Un golpe que no se puede oir AHORA no es un golpe que haya que oir DESPUES.
+     *
+     * ⚠ El ambiente es la excepcion y no pasa por aca a proposito: es continuo,
+     * no un instante, asi que oirlo aparecer tarde es lo correcto — sigue ahi
+     * cuando llega el permiso.
+     */
+    if (g.ctx.state !== 'running') return false;
+
     const cat = CATEGORY_OF[name];
     if (!allow(cat, now)) return false;
 

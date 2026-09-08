@@ -700,8 +700,22 @@ export default function Home() {
                 —barras, rótulo, comprobación— transcurría mudo. Pedir la tecla
                 es la única salida, y encaja: las máquinas de esa época hacían
                 exactamente eso.
+
+                Recargar es APAGAR Y ENCENDER, en ese orden: la puerta enseña
+                primero el tubo cerrándose y después pide la tecla, y por eso al
+                pulsarla el guión sigue desde las barras.
             */}
-            {esperandoGesto && <BootGate onReady={() => setEsperandoGesto(false)} />}
+            {esperandoGesto && (
+                <BootGate
+                    onReady={(desde) => {
+                        // La puerta dice desde dónde sigue el arranque: si ella ya
+                        // enseñó el apagón, el guión empieza en las barras y no
+                        // vuelve a apagar la máquina que acabas de encender.
+                        setBooting(desde);
+                        setEsperandoGesto(false);
+                    }}
+                />
+            )}
 
             {!esperandoGesto && booting !== null && (
                 <BootScreen from={booting} onDone={() => setBooting(null)} />

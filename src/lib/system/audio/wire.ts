@@ -32,6 +32,12 @@ import { play } from '@/lib/system/audio/play';
 import { startAmbience, stopAmbience } from '@/lib/system/audio/ambience';
 import { startBarsTone, stopBarsTone } from '@/lib/system/audio/bars';
 import { vary } from '@/lib/system/audio/jitter';
+import {
+    SCREEN_SELECTOR,
+    SCREEN_SOUNDS,
+    type ScreenSound,
+    fire,
+} from '@/lib/system/audio/screens';
 
 /**
  * Cuánto aguanta el zumbido sin que pase nada.
@@ -42,36 +48,6 @@ import { vary } from '@/lib/system/audio/jitter';
  * pausa escribiendo, y bastante menos de lo que dura irse a leer otra cosa.
  */
 export const IDLE_MS = 40_000;
-
-/**
- * Cada cuánto vuelve a buscar el cabezal mientras el reinicio carga.
- *
- * ⚠ NO ES DECORACIÓN, TAPA EL SILENCIO MÁS LARGO DEL PRODUCTO. La barra de
- * reinicio del colapso dura ENTRE DIEZ Y CUARENTA SEGUNDOS, y más cuanto más
- * hayas insistido. Sonaba UNA vez al aparecer y después se quedaba muda todo ese
- * rato, que además es el tramo más tenso que hay: fue lo que se reportó como
- * «el sonido sólo lo escuché una vez, luego ya no sale».
- *
- * Y había una segunda mitad peor: el zumbido de fondo se apaga tras `IDLE_MS`
- * sin actividad, así que en un reinicio largo la máquina se quedaba muerta del
- * todo justo mientras trabajaba. El cabezal arregla las dos cosas con el mismo
- * gesto, porque cada golpe cuenta como actividad.
- *
- * Segundo y medio es el ritmo de un disco de verdad buscando: bastante lento
- * para que cada golpe se oiga suelto, bastante seguido para que no parezca que
- * la máquina se rindió.
- */
-export const SEEK_MS = 1_500;
-
-/**
- * Cuánto se mueve cada búsqueda alrededor de `SEEK_MS`.
- *
- * A compás exacto suena a metrónomo, y un disco buscando nunca encuentra dos
- * veces a la misma distancia. Se exporta porque quien mida esto tiene que saber
- * cuál es el hueco MÁXIMO entre dos golpes: un test que espere `SEEK_MS` a secas
- * falla una de cada tantas sin que nada esté roto, que es la peor clase de test.
- */
-export const SEEK_JITTER = 0.35;
 
 /**
  * Los hallazgos que suenan MAL.
@@ -447,149 +423,98 @@ export function startSound(): () => void {
      * lo nota hasta que el tono se queda sonando sobre el logo.
      */
     /*
-     * ⚠ LO QUE SE VE ES LO QUE MANDA, y por eso todo lo grande está acá abajo.
+     * ⚠ LO QUE SE VE ES LO QUE MANDA, y la lista vive en `screens.ts`.
      *
      * Un atributo del documento dice en qué PANTALLA estás; una clase del árbol
      * dice qué está pasando EN ella. El encendido y el apagado del tubo son
      * fases de una pantalla, no pantallas, y colgarlos del atributo era lo que
      * los dejaba mudos o cambiados de orden.
      *
-     * Y hay un premio inesperado: `.collapse-dying` ya la comparten LAS TRES
-     * pantallas que apagan un tubo —el arranque, el colapso y el barrido—
-     * porque las tres pintan el mismo cierre a un punto. Una marca que ya se
-     * comparte no se puede quedar a medias como se quedaba el atributo.
+     * Acá abajo no hay ninguna decisión: se recorre la tabla. Lo que decide qué
+     * suena y cuándo es un DATO, y por eso una pantalla nueva que pinte una marca
+     * conocida suena bien sin que nadie venga a tocar esto.
      */
-    /**
-     * Las cinco marcas, en UNA sola consulta.
-     *
-     * ⚠ NO SON CINCO `querySelector`, Y ESO IMPORTA MAS DE LO QUE PARECE. Esto
-     * corre en cada mutacion del `body` entero, y el colapso reescribe su manta
-     * de estatica DOCE VECES POR SEGUNDO con miles de caracteres. Una consulta
-     * por marca serian sesenta recorridos del documento por segundo en el momento
-     * en que la maquina ya va justa, y el encargo era claro: el sonido no puede
-     * hacer pesado el sistema.
-     */
-    const MARCAS = [
-        'boot-bars',
-        'collapse-bars',
-        'collapse-dying',
-        'collapse-reboot',
-        'boot-check',
-    ] as const;
-
-    const SELECTOR = MARCAS.map((c) => `.${c}`).join(', ');
-
-    let enPantalla = new Set<string>();
     const visto = new Set<string>();
+    const repitiendo = new Map<string, ReturnType<typeof setTimeout>>();
 
-    /** Dispara `fn` la vez que la marca APARECE, y rearma cuando se va. */
-    const alAparecer = (clase: string, fn: () => void) => {
-        const hay = enPantalla.has(clase);
+    const pararRepeticion = (mark: string) => {
+        const id = repitiendo.get(mark);
+        if (id === undefined) return;
 
-        if (hay && !visto.has(clase)) {
-            huboActividad();
-            fn();
-        }
-
-        if (hay) visto.add(clase);
-        else visto.delete(clase);
+        clearTimeout(id);
+        repitiendo.delete(mark);
     };
 
     /*
-     * EL CABEZAL DEL REINICIO, que no es un golpe sino un RATO.
+     * El golpe que vuelve mientras la marca siga puesta.
      *
-     * La barra del colapso tarda entre diez y cuarenta segundos. Ver `SEEK_MS`:
-     * un solo golpe dejaba muda la espera más larga y más tensa que hay, y de
-     * paso dejaba morir el zumbido de fondo por inactividad.
+     * Con jitter: a compás exacto suena a metrónomo, y un disco buscando nunca
+     * encuentra dos veces a la misma distancia.
      */
-    let buscando: ReturnType<typeof setTimeout> | null = null;
+    const repetir = (s: ScreenSound) => {
+        if (!s.repeat || !s.shot) return;
 
-    const pararCabezal = () => {
-        if (buscando) clearTimeout(buscando);
-        buscando = null;
+        const otra = () => {
+            const id = setTimeout(() => {
+                huboActividad();
+                fire(s.shot!);
+                otra();
+            }, vary(s.repeat!.ms, s.repeat!.jitter));
+
+            repitiendo.set(s.mark, id);
+        };
+
+        otra();
     };
 
-    const seguirBuscando = () => {
-        // Con jitter: un golpe cada 1 500 ms clavados suena a metrónomo, y un
-        // disco buscando nunca encuentra dos veces a la misma distancia.
-        buscando = setTimeout(() => {
-            huboActividad();
-            play('head');
-            seguirBuscando();
-        }, vary(SEEK_MS, SEEK_JITTER));
-    };
-
-    const mirarBarras = () => {
-        enPantalla = new Set<string>();
-        for (const el of document.querySelectorAll(SELECTOR)) {
+    const mirarPantallas = () => {
+        // UNA sola pasada por el documento y no una por marca: esto corre en cada
+        // mutación del `body` entero, y el colapso reescribe su manta de estática
+        // DOCE VECES POR SEGUNDO. El encargo era que el sonido no pese.
+        const enPantalla = new Set<string>();
+        for (const el of document.querySelectorAll(SCREEN_SELECTOR)) {
             for (const c of el.classList) enPantalla.add(c);
         }
 
-        /*
-         * ⚠ LAS DOS CLASES DE BARRAS. Son la misma carta de ajuste y llevan
-         * nombre distinto por cómo creció el código, no por ser otra cosa: el
-         * tono de 1 kHz es de la CARTA, no de la pantalla que la enseña.
-         */
-        if (enPantalla.has('boot-bars') || enPantalla.has('collapse-bars')) startBarsTone();
+        // El tono de la carta de ajuste, lo enseñe quien lo enseñe.
+        if (SCREEN_SOUNDS.some((s) => s.tone && enPantalla.has(s.mark))) startBarsTone();
         else stopBarsTone();
 
-        /*
-         * EL TUBO ENCENDIÉNDOSE. El instante exacto es aquel en el que hay
-         * IMAGEN, y la primera imagen del arranque son sus barras.
-         *
-         * Sólo las del arranque: las del colapso salen de un tubo que YA estaba
-         * encendido —es la señal la que se cayó, no el equipo— y sonar a
-         * encendido ahí contaría algo que no pasó.
-         */
-        alAparecer('boot-bars', () => {
-            play('powerUp');
-            // Y después algo buscando: la máquina leyendo para arrancar.
-            luego(620, () => play('head'));
-        });
+        for (const s of SCREEN_SOUNDS) {
+            const hay = enPantalla.has(s.mark);
 
-        // EL TUBO APAGÁNDOSE. NO es un barrido: ver `powerDown`, que fue lo que
-        // se reportó como poco natural cuando lo era.
-        alAparecer('collapse-dying', () => play('powerDown'));
+            if (hay && !visto.has(s.mark)) {
+                huboActividad();
 
-        /*
-         * ⚠ Y LA CARGA DEL COLAPSO, que es otra pantalla distinta. Medido
-         * jugando: tras un colapso la app NO enseña el arranque con barras —
-         * enseña su PROPIA pantalla de reinicio, con su cuenta atrás. Estaba
-         * muda, y es justo lo que se reportó como «el reinicio no tiene sonido».
-         */
-        const hayCarga = enPantalla.has('collapse-reboot');
+                if (s.shot) fire(s.shot);
 
-        alAparecer('collapse-reboot', () => {
-            play('head');
-            seguirBuscando();
-        });
+                const segundo = s.then;
+                if (segundo) luego(segundo.ms, () => fire(segundo));
 
-        // Se apaga en cuanto la carga se va, o el cabezal seguiría buscando para
-        // siempre por debajo del sistema ya recuperado.
-        if (!hayCarga) pararCabezal();
+                repetir(s);
+            }
 
-        /*
-         * EL BIP DE POST, y es referencia real de la industria: un PC que pasaba
-         * su autoprueba de encendido daba UN pitido corto y agudo. Es la señal de
-         * «memoria contada, todo bien», y la reconoce cualquiera que haya oído
-         * arrancar un ordenador de los noventa.
-         *
-         * ⚠ Va en la comprobación y no antes: el bip no anuncia que empieza,
-         * CERTIFICA que terminó bien. Al principio estaría diciendo que salió
-         * bien antes de haberlo mirado.
-         */
-        alAparecer('boot-check', () => play('beep', { hz: 1_050, ms: 110 }));
+            // Se apaga en cuanto la marca se va, o el cabezal seguiría buscando
+            // para siempre por debajo del sistema ya recuperado.
+            if (hay) {
+                visto.add(s.mark);
+            } else {
+                pararRepeticion(s.mark);
+                visto.delete(s.mark);
+            }
+        }
     };
 
-    const observadorBarras = new MutationObserver(mirarBarras);
-    observadorBarras.observe(document.body, { childList: true, subtree: true });
-    mirarBarras();
+    const observadorPantallas = new MutationObserver(mirarPantallas);
+    observadorPantallas.observe(document.body, { childList: true, subtree: true });
+    mirarPantallas();
 
     return () => {
         if (reloj) clearTimeout(reloj);
         pendientes.forEach(clearTimeout);
         pendientes.clear();
-        pararCabezal();
+        repitiendo.forEach(clearTimeout);
+        repitiendo.clear();
         stopAmbience();
         document.removeEventListener('keydown', alTeclear, true);
         document.removeEventListener('click', alPulsar, true);
@@ -597,7 +522,7 @@ export function startSound(): () => void {
         quitarSistema();
         observador.disconnect();
         observadorRaiz.disconnect();
-        observadorBarras.disconnect();
+        observadorPantallas.disconnect();
         stopBarsTone();
     };
 }

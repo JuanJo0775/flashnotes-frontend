@@ -17,7 +17,8 @@
 import { readFileSync } from 'node:fs';
 import { GATE_MS, PEAK_DBFS, type SoundCategory } from '@/lib/system/audio/mix';
 import { CATEGORY_OF } from '@/lib/system/audio/voices';
-import { IDLE_MS, SEEK_MS } from '@/lib/system/audio/wire';
+import { IDLE_MS } from '@/lib/system/audio/wire';
+import { SCREEN_SOUNDS, SEEK_MS } from '@/lib/system/audio/screens';
 
 const DOC = readFileSync('docs/SONIDO.md', 'utf8').replace(/\r/g, '');
 
@@ -129,4 +130,21 @@ describe('lo que el documento promete de sí mismo', () => {
          */
         expect(DOC).toContain('cero exacto');
     });
+});
+
+describe('⚠ la tabla de pantallas y el documento dicen lo mismo', () => {
+    /*
+     * Es la tercera copia de la misma verdad —la tabla, el codigo que la
+     * recorre y la prosa— y las copias se separan en silencio. Aca duele
+     * especialmente: una marca que el documento no nombre es una pantalla que
+     * suena sin que nadie sepa por que, y una que nombre de mas es una promesa
+     * que ya no existe.
+     */
+    it.each(SCREEN_SOUNDS.map((s) => [s.mark, s.what]))(
+        'el documento cuenta «%s»',
+        (mark, what) => {
+            expect(DOC).toContain(`\`.${mark}\``);
+            expect(DOC).toContain(what);
+        }
+    );
 });
