@@ -572,6 +572,19 @@ export function markSecretFound(id: string) {
  * no daban ninguna señal, así que un curioso que tocaba el logo dos veces y
  * paraba no se enteraba de que ahí había algo.
  */
+/**
+ * Cuántos clics seguidos lleva el rótulo de la cabecera.
+ *
+ * ⚠ SE EXPONE PARA QUE EL SONIDO NO TENGA QUE CONTARLOS ÉL. El contador ya vive
+ * acá, con su ventana de olvido de cuatro segundos y su reinicio; un segundo
+ * contador en el cableado del sonido se desincronizaría el día que alguien
+ * ajustara esa ventana, y nadie lo notaría hasta que el aviso sonara cuando no
+ * toca. Compartir, no copiar.
+ */
+export function logoClicks(): number {
+    return clickCount;
+}
+
 export function registerLogoClick(): LogoClickOutcome {
     clickCount += 1;
 

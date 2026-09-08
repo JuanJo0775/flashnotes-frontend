@@ -26,6 +26,7 @@ import { DURATION_MS, getGlitch, subscribe as subscribeGlitch } from '@/hooks/us
 import {
     foundSecrets,
     getSystemState,
+    logoClicks,
     subscribe as subscribeSystem,
 } from '@/hooks/useSystemState';
 import { play } from '@/lib/system/audio/play';
@@ -33,6 +34,7 @@ import { startAmbience, stopAmbience } from '@/lib/system/audio/ambience';
 import { startBarsTone, stopBarsTone } from '@/lib/system/audio/bars';
 import { vary } from '@/lib/system/audio/jitter';
 import {
+    NOT_RUNNING_MARKS,
     SCREEN_SELECTOR,
     SCREEN_SOUNDS,
     type ScreenSound,
@@ -48,6 +50,20 @@ import {
  * pausa escribiendo, y bastante menos de lo que dura irse a leer otra cosa.
  */
 export const IDLE_MS = 40_000;
+
+/**
+ * A partir de qué clic en el rótulo de la cabecera la máquina se queja.
+ *
+ * ⚠ EL PRIMERO SIGUE SIENDO MUDO, Y ESO NO ES UN DETALLE. El rótulo es un
+ * secreto escondido: no se anuncia, no tiene cursor de mano y no suena como un
+ * botón, porque sonar sería señalarlo. Un clic suelto tiene que poder pasar por
+ * accidente.
+ *
+ * El segundo ya no es un accidente, y ahí empieza a contestar. Es lo que convierte
+ * la escalada en algo que se OYE venir antes de verse: el aviso, el parpadeo de
+ * versión al tercero, la avería del quinto al octavo y el colapso al noveno.
+ */
+export const LABEL_BEEP_AT = 2;
 
 /**
  * Los hallazgos que suenan MAL.
@@ -127,6 +143,17 @@ export function startSound(): () => void {
     let reloj: ReturnType<typeof setTimeout> | null = null;
 
     /*
+     * ⚠ Y NO ZUMBA MIENTRAS LA MÁQUINA ARRANCA. Ver `NOT_RUNNING_MARKS`: el
+     * fondo es el ruido de un aparato ENCENDIDO, y un equipo que todavía está
+     * arrancando no lo tiene. Se midió que su entrada de cuatro segundos caía
+     * justo encima de las barras y se comía el tono de 1 kHz.
+     *
+     * Se arranca mirando el documento porque `startSound` corre antes del primer
+     * repaso de pantallas, y en una recarga la de arranque YA está puesta.
+     */
+    let enMarcha = !document.querySelector(NOT_RUNNING_MARKS.map((m) => `.${m}`).join(', '));
+
+    /*
      * ⚠ TODO LO QUE SE APLAZA SE APUNTA, Y NO ES CELO: `parar()` PROMETE
      * DESENCHUFAR EL SONIDO.
      *
@@ -152,7 +179,8 @@ export function startSound(): () => void {
     };
 
     const huboActividad = () => {
-        startAmbience();
+        if (enMarcha) startAmbience();
+        else stopAmbience();
 
         if (reloj) clearTimeout(reloj);
         reloj = setTimeout(stopAmbience, IDLE_MS);
@@ -296,6 +324,31 @@ export function startSound(): () => void {
     const alPulsar = (e: MouseEvent) => {
         const t = e.target;
         if (!(t instanceof HTMLElement)) return;
+
+        /*
+         * EL RÓTULO DE LA CABECERA, que es su propio caso y no un botón.
+         *
+         * No suena como pulsador —ver `LABEL_BEEP_AT`: es un secreto, y sonar lo
+         * señalaría— pero desde el segundo clic la máquina contesta.
+         */
+        if (t.closest('.system-label')) {
+            /*
+             * ⚠ EN UNA MICROTAREA. Esta escucha va en CAPTURA, y el contador lo
+             * sube el propio rótulo cuando le llega el clic — o sea DESPUÉS.
+             * Leerlo acá daría siempre uno menos y el aviso llegaría tarde. Una
+             * microtarea corre cuando el reparto del evento terminó entero.
+             */
+            queueMicrotask(() => {
+                if (logoClicks() < LABEL_BEEP_AT) return;
+
+                huboActividad();
+                // Corto y agudo: no es una alarma, es la máquina notando que la
+                // están tocando.
+                play('beep', { hz: 1_480, ms: 45 });
+            });
+
+            return;
+        }
 
         /*
          * ⚠ NO BASTA CON MIRAR SI ES UN BOTÓN, y esto se midió jugando: diez
@@ -474,6 +527,16 @@ export function startSound(): () => void {
         for (const el of document.querySelectorAll(SCREEN_SELECTOR)) {
             for (const c of el.classList) enPantalla.add(c);
         }
+
+        /*
+         * ¿Está la máquina en marcha? Mientras se vea una pantalla de arranque o
+         * un colapso, no — y entonces la sala calla. Se mira ANTES que las voces
+         * para que el zumbido entre con la app y no encima de ella.
+         */
+        const antesEnMarcha = enMarcha;
+        enMarcha = !NOT_RUNNING_MARKS.some((m) => enPantalla.has(m));
+
+        if (enMarcha !== antesEnMarcha) huboActividad();
 
         // El tono de la carta de ajuste, lo enseñe quien lo enseñe.
         if (SCREEN_SOUNDS.some((s) => s.tone && enPantalla.has(s.mark))) startBarsTone();

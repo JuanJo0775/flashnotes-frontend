@@ -306,6 +306,20 @@ marca.
 | `.collapse-reboot` | La máquina leyendo para volver, y sigue leyendo mientras carga |
 | `.boot-check` | El bip de POST al contar la memoria, y el sistema arrancando al final — cuando se va |
 
+### ⚠ Y una máquina que todavía no arrancó no tiene ruido de sala
+
+El zumbido de fondo son tres senos a **58, 116 y 175 Hz** y su entrada dura cuatro
+segundos. Como el navegador no deja sonar hasta el primer gesto, esos cuatro
+segundos empezaban **exactamente** al pulsar la tecla — o sea que el grave subía
+justo encima de las barras y se comía el tono de 1 kHz. Se reportó tal cual: «hay
+dos sonidos, el grave tapa el otro, que es el verdadero de las barras de colores».
+
+No se arregla bajándole el volumen. El fondo es el ruido de que hay un aparato
+**encendido** —un transformador, un ventilador, un tubo— y un equipo que todavía
+está arrancando no lo tiene. Mientras se vea una pantalla de arranque o un
+colapso, la sala calla; y así el zumbido **entra con la app**, que es cuando
+significa algo.
+
 ### ⚠ Dos sonidos que se pisan casi nunca se arreglan separándolos
 
 Se reportó jugando: «se solapan dos sonidos, uno de las barras y otro como de
@@ -394,6 +408,22 @@ justo mientras trabajaba**. Un cabezal que vuelve a buscar cada 1 500 ms arregla
 las dos cosas con el mismo gesto, porque cada golpe cuenta como actividad. Con
 jitter: a compás sonaría a metrónomo, y un disco buscando nunca encuentra dos
 veces a la misma distancia.
+
+### ⚠ El rótulo de la cabecera es su propio caso
+
+No suena como pulsador, y eso **no es un olvido**: es un secreto escondido, no se
+anuncia, no lleva cursor de mano, y sonar al tocarlo sería señalarlo. Un clic
+suelto tiene que poder pasar por accidente.
+
+El segundo ya no es un accidente. Desde ahí la máquina contesta con un pitido
+corto y agudo por la bocinita — no una alarma, la máquina notando que la están
+tocando. Es lo que convierte la escalada en algo que se **oye** venir antes de
+verse: el aviso, el parpadeo de versión al tercero, la avería del quinto al
+octavo, el colapso al noveno.
+
+El contador no se lleva acá: se lee del almacén, que ya lo tiene con su ventana de
+olvido. Un segundo contador se desincronizaría el día que alguien ajustara esa
+ventana, y nadie lo notaría hasta que el aviso sonara cuando no toca.
 
 ⚠ **Y un botón NO es una tecla.** Son dos objetos distintos: una tecla tiene
 cuerpo de plástico y de placa, un botón es un chasquido más seco y más corto. Si

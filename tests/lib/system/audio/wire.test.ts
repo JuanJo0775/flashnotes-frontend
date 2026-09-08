@@ -15,13 +15,17 @@
  * pasaban todas las llamadas.
  */
 
-import { IDLE_MS, startSound } from '@/lib/system/audio/wire';
+import { IDLE_MS, LABEL_BEEP_AT, startSound } from '@/lib/system/audio/wire';
 import { SEEK_JITTER, SEEK_MS } from '@/lib/system/audio/screens';
 import { ambienceIsOn } from '@/lib/system/audio/ambience';
 import { barsToneIsOn } from '@/lib/system/audio/bars';
 import { teardownAudio } from '@/lib/system/audio/context';
 import { fireGlitch } from '@/hooks/useGlitch';
-import { markSecretFound, setEffectsEnabled } from '@/hooks/useSystemState';
+import {
+    markSecretFound,
+    registerLogoClick,
+    setEffectsEnabled,
+} from '@/hooks/useSystemState';
 import { installFakeAudio, lastContext, type FakeNode } from './fakeAudio';
 
 let quitarFalso: () => void;
@@ -342,6 +346,144 @@ describe('el ambiente entra con la actividad y se va solo', () => {
         area.remove();
     });
 });
+
+describe('el rotulo de la cabecera, que es su propio caso', () => {
+    /*
+     * El rotulo es un SECRETO ESCONDIDO: no se anuncia, no tiene cursor de mano
+     * y no suena como boton, porque sonar seria señalarlo. Un clic suelto tiene
+     * que poder pasar por accidente.
+     *
+     * El segundo ya no es un accidente. Pedido jugando: «cuando le damos al
+     * cromo debe haber un pequeño pitido despues del segundo click».
+     */
+    function rotuloQueCuenta() {
+        const el = document.createElement('span');
+        el.className = 'system-label';
+        // Lo que hace el componente de verdad al recibir el clic.
+        el.addEventListener('click', () => registerLogoClick());
+        document.body.append(el);
+        return el;
+    }
+
+    it('⚠ el primer clic es MUDO, o el secreto se delata solo', async () => {
+        const rotulo = rotuloQueCuenta();
+
+        conLaSalaYaEncendida();
+        await esperarBreve();
+        const antes = marca();
+
+        rotulo.click();
+        await esperarBreve();
+
+        expect(fuentes(antes)).toHaveLength(0);
+    });
+
+    it('y del segundo en adelante la maquina contesta', async () => {
+        const rotulo = rotuloQueCuenta();
+
+        conLaSalaYaEncendida();
+        await esperarBreve();
+
+        for (let i = 1; i < LABEL_BEEP_AT; i += 1) rotulo.click();
+        await esperarBreve();
+        const antes = marca();
+
+        rotulo.click();
+        await esperarBreve();
+
+        const osciladores = fuentes(antes).filter((n) => n.kind === 'oscillator');
+
+        expect(osciladores.length).toBeGreaterThan(0);
+        // La bocinita: es la maquina la que acusa el toque, no un objeto de la
+        // habitacion.
+        expect(osciladores[0].type).toBe('square');
+    });
+
+    it('⚠ y no suena ademas como boton, que serian dos cosas a la vez', async () => {
+        /*
+         * El rotulo no es un pulsador. Si sonara como boton Y con el aviso,
+         * serian dos sonidos en el mismo instante — justo lo que se reporto en
+         * el arranque y hubo que deshacer.
+         */
+        const rotulo = rotuloQueCuenta();
+
+        conLaSalaYaEncendida();
+        await esperarBreve();
+        for (let i = 1; i < LABEL_BEEP_AT; i += 1) rotulo.click();
+        await esperarBreve();
+        const antes = marca();
+
+        rotulo.click();
+        await esperarBreve();
+
+        // El boton lleva ruido de banda; el bip es un oscilador y nada mas.
+        expect(ruidos(antes)).toHaveLength(0);
+    });
+});
+
+describe('⚠ una maquina que todavia no arranco no tiene ruido de sala', () => {
+    /*
+     * MEDIDO EN EL NAVEGADOR, y explica un informe que parecia de mezcla: «hay
+     * dos sonidos, el grave tapa el otro, que es el verdadero de las barras de
+     * colores».
+     *
+     * El zumbido son tres senos a 58, 116 y 175 Hz y su entrada dura cuatro
+     * segundos. Como el navegador no deja sonar hasta el primer gesto, esos
+     * cuatro segundos empezaban EXACTAMENTE al pulsar la tecla — o sea que el
+     * grave subia justo encima de las barras.
+     *
+     * No se arregla bajandole el volumen: se arregla porque un equipo que
+     * todavia esta arrancando no tiene ruido de aparato encendido. Callarlo ahi
+     * es lo que pasa de verdad, y de paso hace que el zumbido ENTRE con la app,
+     * que es cuando significa algo.
+     */
+    it('con la pantalla de arranque puesta, el fondo calla', async () => {
+        parar();
+
+        const pantalla = document.createElement('div');
+        pantalla.className = 'boot-screen';
+        document.body.append(pantalla);
+
+        parar = startSound();
+        await esperarBreve();
+
+        expect(ambienceIsOn()).toBe(false);
+    });
+
+    it('y en cuanto la maquina arranca de verdad, entra', async () => {
+        parar();
+
+        const pantalla = document.createElement('div');
+        pantalla.className = 'boot-screen';
+        document.body.append(pantalla);
+
+        parar = startSound();
+        await esperarBreve();
+        expect(ambienceIsOn()).toBe(false);
+
+        pantalla.remove();
+        await esperarBreve();
+
+        expect(ambienceIsOn()).toBe(true);
+    });
+
+    it('⚠ y el colapso tambien calla la sala', async () => {
+        // Un equipo que se acaba de caer no zumba: por eso el colapso da tanto
+        // miedo, y por eso el zumbido volviendo es la señal de que volvio.
+        parar();
+
+        const capa = document.createElement('div');
+        capa.className = 'collapse-layer';
+        document.body.append(capa);
+
+        parar = startSound();
+        await esperarBreve();
+
+        expect(ambienceIsOn()).toBe(false);
+    });
+});
+
+const esperarBreve = () => new Promise((r) => setTimeout(r, 80));
 
 describe('⚠ mantener una tecla pulsada NO es teclear muchas veces', () => {
     /*

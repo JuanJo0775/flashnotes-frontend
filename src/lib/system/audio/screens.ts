@@ -187,8 +187,32 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
     },
 ];
 
+/**
+ * Mientras alguna de éstas se ve, LA MÁQUINA NO ESTÁ EN MARCHA.
+ *
+ * ⚠ Y POR ESO NO HAY RUIDO DE SALA. El zumbido de fondo es el ruido de que hay
+ * un aparato ENCENDIDO: un transformador, un ventilador, un tubo. Un equipo que
+ * todavía está arrancando no lo tiene todavía.
+ *
+ * Se midió en el navegador y no es teoría: el zumbido son tres senos a 58, 116 y
+ * 175 Hz, y su entrada dura cuatro segundos. Como el navegador no deja sonar
+ * hasta el primer gesto, esos cuatro segundos empezaban EXACTAMENTE al pulsar la
+ * tecla — o sea que el grave subía justo encima de las barras y se comía el tono
+ * de 1 kHz. Se reportó tal cual: «hay dos sonidos, el grave tapa el otro, que es
+ * el verdadero de las barras de colores».
+ *
+ * Callar el fondo mientras la máquina arranca no es sólo lo que suena bien: es lo
+ * que pasa. Y hace que el zumbido ENTRE con la app, que es cuando significa algo.
+ */
+export const NOT_RUNNING_MARKS = ['boot-screen', 'collapse-layer'] as const;
+
 /** El selector que encuentra todas las marcas de una sola pasada. */
-export const SCREEN_SELECTOR = SCREEN_SOUNDS.map((s) => `.${s.mark}`).join(', ');
+export const SCREEN_SELECTOR = [
+    ...SCREEN_SOUNDS.map((s) => s.mark),
+    ...NOT_RUNNING_MARKS,
+]
+    .map((c) => `.${c}`)
+    .join(', ');
 
 /**
  * Dispara una fila de la tabla.
