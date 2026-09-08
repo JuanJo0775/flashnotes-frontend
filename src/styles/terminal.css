@@ -999,17 +999,60 @@
     font-family: var(--font-mono);
 }
 
-/* ⚠ ACÁ HUBO UN ENCENDIDO DEL TUBO Y SE QUITÓ.
+/* EL ENCENDIDO DEL TUBO. El inverso EXACTO del apagón, y por eso funciona.
 
-   Era una línea que nacía en el centro y se abría hacia arriba y abajo, pintada
-   con la TINTA del tema — o sea, del color contrario al fondo. Se veía como una
-   pantalla ajena abriéndose encima, no como un monitor encendiéndose.
+   ⚠ ACÁ HUBO OTRO ENCENDIDO ANTES Y SE QUITÓ, con razón: era una línea que nacía
+   en el centro y se abría hacia arriba y abajo. Se veía como una pantalla ajena
+   abriéndose ENCIMA, no como un monitor encendiéndose — un segundo lenguaje para
+   decir algo que la casa ya sabía decir.
 
-   El apagón de un tubo ya existe y está bien: `collapse-dying`, el del fallo
-   crítico, después de la estática y las franjas. Ése es el gesto de la casa, y se
-   usa donde toca — en el borrado. Inventar su inverso para el arranque era un
-   segundo lenguaje para decir algo que no hacía falta decir: lo que abre el
-   arranque son las barras de color, y con eso basta. */
+   La diferencia está en de dónde sale la forma. `collapse-dying` no es «una
+   línea»: es la IMAGEN ENTERA aplastándose a una línea y la línea cerrándose a
+   un punto. Recorrer esos mismos tres estados al revés —punto, línea, imagen— no
+   inventa nada: es la misma figura leyendo hacia el otro lado, que es literalmente
+   lo que hace un tubo al recibir tensión.
+
+   ⚠ Y TERMINA DESVANECIÉNDOSE, que es lo que lo salva. Un inverso literal
+   acabaría en un rectángulo opaco tapando la pantalla; al irse, la capa REVELA lo
+   que hay detrás en vez de cubrirlo. Tapar era el error de la versión vieja. */
+@keyframes tube-on {
+    0% {
+        transform: scaleY(0.02) scaleX(0);
+        opacity: 0;
+    }
+    /* El punto se abre en línea: es lo primero que hace un tubo. */
+    28% {
+        transform: scaleY(0.02) scaleX(1);
+        opacity: 1;
+    }
+    /* Y la línea se abre en imagen. */
+    60% {
+        transform: scaleY(1) scaleX(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scaleY(1) scaleX(1);
+        opacity: 0;
+    }
+}
+
+.tube-on {
+    position: absolute;
+    inset: 0;
+    background: var(--color-ink);
+    transform-origin: center;
+    animation: tube-on 700ms linear forwards;
+}
+
+/* ⚠ Y CON MOVIMIENTO REDUCIDO NO SE MUEVE NADA. La regla A3 manda sobre la
+   estética: el tramo dura lo mismo —el sonido y el guion no cambian— pero la capa
+   se queda quieta y transparente en vez de barrer la pantalla. */
+@media (prefers-reduced-motion: reduce) {
+    .tube-on {
+        animation: none;
+        opacity: 0;
+    }
+}
 
 /* Y LA APP ENTRA DESVANECIÉNDOSE, no de golpe. Aparecer de una después de un
    arranque de monitor rompe justo lo que el arranque acaba de construir: lo que

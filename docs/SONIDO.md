@@ -300,11 +300,12 @@ marca.
 | Marca | Qué suena |
 | --- | --- |
 | `.collapse-dying` | El tubo al que le cortan la corriente |
+| `.tube-on` | La corriente volviendo: el tubo abriéndose de un punto a la imagen |
 | `.boot-bars` | La carta de ajuste, sola con su tono |
 | `.collapse-bars` | La carta de ajuste de un tubo que seguía encendido |
 | `.boot-logo` | Un disco leyendo para arrancar, bajo el rótulo del fabricante |
 | `.collapse-reboot` | La máquina leyendo para volver, y sigue leyendo mientras carga |
-| `.boot-check` | El bip de POST al contar la memoria, y el sistema arrancando al final — cuando se va |
+| `.boot-check` | El bip de POST: memoria contada, todo bien |
 
 ### ⚠ Y una máquina que todavía no arrancó no tiene ruido de sala
 
@@ -505,38 +506,54 @@ Aparece **sólo antes del primer arranque** —los reinicios ya vienen después 
 gesto— y **sólo si hay sonido que desbloquear**: con el sonido apagado sería un
 paso de más entre alguien y sus notas, que es lo que prohíbe la regla A2.
 
-### ⚠ El ciclo va DESPUÉS de la tecla, y esto se corrigió dos veces
+### El ciclo de una recarga
 
-Primero el apagón iba delante, porque recargar es apagar y encender y ése es el
-orden de los hechos. Pero **delante de la tecla no hay permiso para sonar**, y se
-reportó exactamente eso:
-
-> «la de apagar cuando se reinicia no suena, pero cuando se reinicia luego de
-> darle al cromo esa sí suena la pantalla de apagar»
-
-La misma pantalla, el mismo sonido en la tabla, y uno llegaba mudo — porque uno
-cae antes del primer gesto y el otro después. Un apagado que se **ve** pero no se
-**oye** es peor que uno que llega un segundo tarde, así que la imagen se movió a
-donde el sonido puede acompañarla.
-
-La lectura sigue en pie: la pantalla está muerta, pulsás, y la máquina hace su
-ciclo entero.
+Recargar es apagar y encender, y ése es el orden de los hechos:
 
 | | Qué se ve | Qué se oye |
 | --- | --- | --- |
-| 1 | `PULSE UNA TECLA` sobre la pantalla muerta | nada — todavía no hay permiso |
-| 2 | El tubo se cierra a un punto | el apagado |
-| 3 | Negro | el zumbido de la máquina entrando |
+| 1 | El tubo se cierra a un punto | **nada — todavía no hay permiso** |
+| 2 | `PULSE UNA TECLA` sobre la pantalla muerta | nada |
+| 3 | El tubo se abre: punto, línea, imagen | el encendido, y el zumbido entrando |
 | 4 | Barras | el tono de 1 kHz |
 | 5 | Rótulo | un disco leyendo |
 | 6 | Comprobación | el bip de POST |
-| 7 | La app | el sistema en marcha |
+| 7 | La app | — |
 
-⚠ **El paso 3 no es relleno.** Es el hueco donde el zumbido cabe: se pidió oírlo
-—«ese grave me gusta, que suene al entrar»— y a la vez que no se solapara con las
-barras. Sin el hueco sólo podía entrar encima de ellas, porque el navegador no
-deja sonar hasta el primer gesto y a partir de ahí todo pasa a la vez. Y no es una
-licencia: un equipo que acaba de recibir corriente zumba antes de tener imagen.
+⚠ **El paso 1 se ve pero no se oye, y no hay código que lo arregle.** Pasa antes
+del primer gesto, y ningún navegador deja sonar antes de eso. Se reportó dos veces
+—«la de apagar cuando se reinicia no suena, pero cuando se reinicia luego de darle
+al cromo esa sí»— y las dos veces es la misma causa: la misma pantalla y la misma
+fila de la tabla, pero una cae antes del permiso y la otra después.
+
+Se probó moverlo detrás de la tecla para que sonara, y era **peor**: rompe el
+orden de los hechos, que es lo único que esa pantalla tiene que contar. Un apagado
+mudo sigue leyéndose como un apagado; un apagado que ocurre después de encender no
+se lee como nada.
+
+### ⚠ El paso 3, que es donde se resolvió lo demás
+
+Es una animación nueva y es el **inverso exacto** del apagón: un punto que se abre
+en línea y la línea en imagen, que es lo que hace un tubo al recibir tensión.
+
+⚠ Hubo otro encendido antes y se quitó con razón: era una línea que nacía en el
+centro y se abría, y se veía como una pantalla ajena abriéndose **encima**. La
+diferencia está en de dónde sale la forma. `collapse-dying` no es «una línea»: es
+la imagen entera aplastándose a una línea y la línea cerrándose a un punto.
+Recorrer esos mismos tres estados al revés no inventa un idioma nuevo — es el
+mismo leído hacia el otro lado. Y termina **desvaneciéndose**, así que revela lo
+que hay detrás en vez de cubrirlo; tapar era el error de la versión vieja.
+
+Ese tramo resuelve dos cosas que antes no tenían sitio:
+
+- **El encendido tiene por fin imagen que lo acompañe.** Anduvo en las barras
+  —donde se pisaba con el tono de la carta— y después al final de la comprobación,
+  que sonaba bien pero no tenía nada que mirar mientras.
+- **El zumbido cabe.** Se pidió oírlo —«ese grave me gusta, que suene al entrar»— y
+  a la vez que no se solapara con las barras. Sin este hueco sólo podía entrar
+  encima de ellas, porque el navegador no deja sonar hasta el primer gesto y a
+  partir de ahí todo pasa a la vez. Y no es una licencia: un equipo que acaba de
+  recibir corriente zumba antes de tener imagen.
 
 Ahí el zumbido entra en **1 segundo** y no en cuatro (`WAKE_FADE_S`). Los cuatro
 existen para que el fondo no se oiga entrar a mitad de una sesión; al encender es

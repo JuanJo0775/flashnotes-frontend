@@ -98,9 +98,14 @@ export interface ScreenSound {
      * Lo que suena cuando la marca SE VA.
      *
      * ⚠ Hay momentos que no son la aparición de nada, son el final de algo, y
-     * sin esto habría que inventarles una pantalla para poder oírlos. El sistema
-     * arrancando es exactamente eso: pasa cuando la comprobación de memoria
-     * termina y se quita, no cuando empieza.
+     * sin esto habría que inventarles una pantalla para poder oírlos.
+     *
+     * ⚠ HOY NO LO USA NADIE, Y SE QUEDA A PROPÓSITO. Lo estrenó el encendido,
+     * colgado del final de la comprobación de memoria — y funcionaba, pero era
+     * un sonido sin nada que mirar. En cuanto el encendido tuvo su propia imagen
+     * (`tube-on`) se mudó ahí. La forma de expresar «al irse» sigue siendo
+     * necesaria el día que un final vuelva a merecer voz, y quitarla obligaría a
+     * redescubrir que hace falta.
      */
     readonly onGone?: Shot;
 }
@@ -121,6 +126,24 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
         shot: { voice: 'powerDown' },
     },
     {
+        mark: 'tube-on',
+        what: 'La corriente volviendo: el tubo abriéndose de un punto a la imagen',
+        /*
+         * ⚠ EL PAR DEL APAGÓN, Y POR FIN CON IMAGEN QUE LO ACOMPAÑE.
+         *
+         * Este sonido anduvo de sitio en sitio porque no tenía ninguno propio:
+         * estuvo en las barras —donde se pisaba con el tono de la carta— y
+         * después al final de la comprobación, que sonaba bien pero no tenía
+         * nada que mirar mientras.
+         *
+         * Ahora la pantalla hace el gesto inverso del apagón —un punto que se
+         * abre en línea y la línea en imagen, que es lo que hace un tubo al
+         * recibir tensión— y el sonido va encima de eso. Imagen y sonido
+         * contando la misma cosa, que es cuando las dos dejan de sobrar.
+         */
+        shot: { voice: 'powerUp' },
+    },
+    {
         mark: 'boot-bars',
         what: 'La carta de ajuste, sola con su tono',
         /*
@@ -128,7 +151,7 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
          *
          * Estaba acá y se pisaba con el tono: «se solapan dos sonidos, uno de
          * las barras y otro como de inicio». El primer intento fue separarlos en
-         * el tiempo, y no era eso — el sitio estaba mal. Ver `boot-check`.
+         * el tiempo, y no era eso — el sitio estaba mal. Ver `tube-on`.
          *
          * Unas barras de ajuste con su tono de 1 kHz y nada más es exactamente
          * lo que emitía una carta, y no necesita que le pongan nada encima.
@@ -160,30 +183,13 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
     },
     {
         mark: 'boot-check',
-        what: 'El bip de POST al contar la memoria, y el sistema arrancando al final',
+        what: 'El bip de POST: memoria contada, todo bien',
         /*
          * REFERENCIA REAL DE LA INDUSTRIA: un PC que pasaba su autoprueba de
          * encendido daba UN pitido corto y agudo. Va en la comprobación y no
          * antes — el bip no anuncia que empieza, CERTIFICA que terminó bien.
          */
         shot: { voice: 'beep', args: { hz: 1_050, ms: 110 } },
-
-        /*
-         * ⚠ Y EL ARRANQUE VA AL FINAL DE ESTA PANTALLA. Se señaló jugando, con
-         * el sitio exacto: «va después de la parte de carga de MEMORIA
-         * CONVENCIONAL... INICIANDO FLASH-NOTES...».
-         *
-         * Y encaja con lo que el sonido ES. No es el filamento calentando: es el
-         * chasquido del interruptor, el golpe de corriente y el flyback
-         * quedándose arriba — el aparato entero entrando en marcha. Eso no pasa
-         * cuando aparece la primera imagen de prueba, pasa cuando el sistema
-         * arranca de verdad, que es la última línea de esta lista.
-         *
-         * Esta pantalla es la última del guion, así que quitarse es exactamente
-         * el instante en que la app aparece. Por eso cuelga de que SE VAYA y no
-         * de ninguna marca nueva.
-         */
-        onGone: { voice: 'powerUp' },
     },
 ];
 

@@ -22,28 +22,24 @@ import { useT } from '@/i18n';
  * de que las máquinas de esa época hacían exactamente eso, así que la limitación
  * entra en la ficción sin forzar nada.
  *
- * ⚠ EL APAGÓN VA DESPUÉS DE LA TECLA, Y ESTO SE CORRIGIÓ DOS VECES.
+ * ⚠ EL APAGÓN VA DELANTE. Recargar es apagar y encender, y ése es el orden de los
+ * hechos: el tubo se cierra a un punto, la pantalla queda muerta pidiendo una
+ * tecla, y al pulsarla vuelve la corriente.
  *
- * Primero iba delante, porque recargar es apagar y encender y ése es el orden de
- * los hechos. Pero delante de la tecla NO HAY PERMISO PARA SONAR, y se reportó
- * exactamente eso: «la de apagar cuando se reinicia no suena, pero cuando se
- * reinicia luego de darle al cromo esa sí suena». La misma pantalla, el mismo
- * sonido en la tabla, y uno llegaba mudo.
+ * ⚠ Y AHÍ HAY UNA RENUNCIA CONSCIENTE. Ese apagón SE VE PERO NO SE OYE en la
+ * primera carga, y no hay código que lo arregle: pasa antes del primer gesto, y
+ * ningún navegador deja sonar antes de eso. Se probó lo contrario —mover la
+ * imagen detrás de la tecla para que sonara— y era peor: rompe el orden de los
+ * hechos, que es lo único que esta pantalla tiene que contar.
  *
- * Un apagado que se VE pero no se OYE es peor que uno que llega un segundo tarde,
- * así que la imagen se mueve a donde el sonido puede acompañarla. Y la lectura
- * sigue en pie: la pantalla está muerta, pulsás, y la máquina hace su ciclo
- * entero — se corta, zumba a oscuras, y vuelve.
+ * Lo que SÍ se puede es que la VUELTA se oiga entera, y de eso se encarga el acto
+ * `on`.
  *
- * ⚠ EL APAGÓN NO PINTA UNA CLASE NUEVA: pinta `.collapse-dying`, la misma que ya
- * pintan el arranque, el colapso y el barrido. Por eso suena sin que este
- * archivo sepa nada de sonido — la tabla de `screens.ts` la reconoce. Lo que se
- * comparte no es una llamada, es la marca.
- *
- * ⚠ Y DESPUÉS HAY UN COMPÁS OSCURO, que tampoco es relleno. Es donde el zumbido
- * de la máquina tiene sitio para entrar: se pidió oírlo —«ese grave me gusta, que
- * suene al entrar»— y a la vez que no se solapara con las barras. Sin el hueco
- * sólo podía entrar encima de ellas. Ver `BOOT_WAKE_MS`.
+ * ⚠ NINGUNO DE LOS DOS PINTA UNA CLASE INVENTADA PARA EL SONIDO. El apagón pinta
+ * `.collapse-dying`, la misma que ya pintan el arranque, el colapso y el barrido.
+ * El encendido pinta `.tube-on`, que es esa misma figura al revés. Por eso los
+ * dos suenan sin que este archivo sepa nada de sonido — la tabla de `screens.ts`
+ * los reconoce. Lo que se comparte no es una llamada, es la marca.
  *
  * ⚠ SÓLO APARECE SI HAY SONIDO QUE DESBLOQUEAR. Con el sonido apagado no serviría
  * de nada y sería un paso más entre alguien y sus notas, que es justo lo que
@@ -68,14 +64,23 @@ export default function BootGate({ onReady }: { onReady: (desde: BootPhase) => v
     });
 
     /**
-     * `tecla` es la pantalla muerta que espera; `off`, el tubo cerrándose;
-     * `wake`, el compás oscuro en el que la máquina zumba sin imagen todavía.
+     * `off` es el tubo cerrándose; `tecla`, la pantalla muerta que espera;
+     * `on`, la corriente volviendo — la misma figura del apagón al revés.
      */
-    const [acto, setActo] = useState<'tecla' | 'off' | 'wake'>('tecla');
+    const [acto, setActo] = useState<'off' | 'tecla' | 'on'>('off');
 
     // Aporrear una pantalla que dice «pulse una tecla» es lo normal. Si cada
     // tecla avisara, el arranque se relanzaría encima de sí mismo.
     const abierta = useRef(false);
+
+    /*
+     * Quien se adelanta durante el apagón NO lo interrumpe.
+     *
+     * ⚠ Y tampoco pierde su gesto. Cortar el apagón dejaría a medias justo lo
+     * que hay que ver; ignorar la tecla obligaría a pulsar dos veces sin decir
+     * por qué. Se apunta y se abre en cuanto el tubo termina de cerrarse.
+     */
+    const adelantado = useRef(false);
 
     const abrir = useCallback(() => {
         if (abierta.current) return;
@@ -84,11 +89,11 @@ export default function BootGate({ onReady }: { onReady: (desde: BootPhase) => v
         /*
          * ⚠ SE ESPERA A QUE EL AUDIO ESTÉ DESPIERTO DE VERDAD ANTES DE SEGUIR.
          * `resume()` no es instantáneo, y desde que un golpe no se programa con
-         * el contexto dormido, empezar en el mismo instante que el gesto
-         * perdería el apagado. Cuando la máquina se mueve, la corriente ya tiene
-         * que estar puesta.
+         * el contexto dormido, encender en el mismo instante que el gesto
+         * perdería justo el encendido. Cuando el tubo se abre, la corriente ya
+         * tiene que estar puesta.
          */
-        void resumeAudio().then(() => setActo('off'));
+        void resumeAudio().then(() => setActo('on'));
     }, []);
 
     useEffect(() => {
@@ -108,36 +113,45 @@ export default function BootGate({ onReady }: { onReady: (desde: BootPhase) => v
          * otra parte. Y el clic igual — quien llega con el ratón hace clic donde
          * mira, no necesariamente encima del texto.
          */
-        document.addEventListener('keydown', abrir);
-        document.addEventListener('click', abrir);
+        const pulsar = () => {
+            if (acto === 'off') adelantado.current = true;
+            else abrir();
+        };
+
+        document.addEventListener('keydown', pulsar);
+        document.addEventListener('click', pulsar);
 
         return () => {
-            document.removeEventListener('keydown', abrir);
-            document.removeEventListener('click', abrir);
+            document.removeEventListener('keydown', pulsar);
+            document.removeEventListener('click', pulsar);
         };
-    }, [hacefalta, abrir, onReady]);
+    }, [hacefalta, acto, abrir, onReady]);
 
     /*
-     * EL CICLO, una vez pulsada la tecla: el tubo se cierra, la máquina zumba a
-     * oscuras, y recién entonces empieza a haber imagen.
+     * LOS DOS TRAMOS QUE TARDAN LO SUYO.
      *
-     * Cada tramo dura lo suyo y NO se solapan, que es lo que se pidió: el
-     * apagado tiene su instante, el zumbido el suyo, y las barras llegan con la
-     * sala ya puesta en vez de con el fondo subíéndoles encima.
+     * El tubo se cierra, y después espera. Y cuando vuelve la corriente el tubo
+     * se abre — y ahí también hay que esperar: es el hueco donde el encendido y
+     * el zumbido de la máquina entran SOLOS, antes de que haya carta de ajuste.
+     * Sin él sólo podían sonar encima de ella, que es lo que se reportó.
      */
     useEffect(() => {
         if (!hacefalta) return;
 
         if (acto === 'off') {
-            const id = setTimeout(() => setActo('wake'), BOOT_OFF_MS);
+            const id = setTimeout(() => {
+                if (adelantado.current) abrir();
+                else setActo('tecla');
+            }, BOOT_OFF_MS);
+
             return () => clearTimeout(id);
         }
 
-        if (acto === 'wake') {
+        if (acto === 'on') {
             const id = setTimeout(() => onReady('bars'), BOOT_WAKE_MS);
             return () => clearTimeout(id);
         }
-    }, [hacefalta, acto, onReady]);
+    }, [hacefalta, acto, abrir, onReady]);
 
     /*
      * CON EL TUBO APAGADO NO HAY BARRIDO.
@@ -158,12 +172,12 @@ export default function BootGate({ onReady }: { onReady: (desde: BootPhase) => v
 
     if (!hacefalta) return null;
 
-    // El tubo cerrándose sobre lo que hubiera, y después el negro en el que la
-    // máquina zumba. Las dos tapan igual; lo que cambia es lo que suena.
-    if (acto === 'off' || acto === 'wake') {
+    // El tubo cerrándose sobre lo que hubiera, y el tubo abriéndose cuando vuelve
+    // la corriente. La misma figura en los dos sentidos.
+    if (acto !== 'tecla') {
         return (
             <div className="boot-screen" aria-hidden="true">
-                {acto === 'off' && <div className="collapse-dying" />}
+                <div className={acto === 'off' ? 'collapse-dying' : 'tube-on'} />
             </div>
         );
     }

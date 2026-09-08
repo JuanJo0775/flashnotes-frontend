@@ -148,9 +148,14 @@ describe('⚠ la tabla de pantallas y el documento dicen lo mismo', () => {
         }
     );
 
-    it.each(
-        SCREEN_SOUNDS.filter((s) => s.onGone).map((s) => [s.mark, s.onGone!.voice])
-    )(
+    /*
+     * ⚠ HOY NO HAY NINGUNA, y el `describe.each` de cero casos revienta en vez de
+     * saltarse. Se deja armado porque la forma «al irse» sigue existiendo en la
+     * tabla: el dia que un final vuelva a merecer voz, este test ya la exige.
+     */
+    const alIrse = SCREEN_SOUNDS.filter((s) => s.onGone);
+
+    (alIrse.length ? it.each(alIrse.map((s) => [s.mark, s.onGone!.voice])) : it.skip.each([['-', '-']]))(
         '⚠ y cuenta que «%s» suena tambien al IRSE',
         (mark) => {
             /*

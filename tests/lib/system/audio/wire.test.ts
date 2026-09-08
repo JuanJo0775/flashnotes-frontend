@@ -796,19 +796,38 @@ describe('la maquina encendiendose y apagandose', () => {
         carga.remove();
     });
 
-    it('⚠ el sistema arranca cuando la comprobacion TERMINA', async () => {
+    it('⚠ el tubo ABRIENDOSE es lo que suena a encendido', async () => {
         /*
-         * EL SITIO LO SEÑALO QUIEN JUEGA, y con la linea exacta: «va despues de
-         * la parte de carga de MEMORIA CONVENCIONAL... INICIANDO FLASH-NOTES».
+         * ESTE SONIDO ANDUVO DE SITIO EN SITIO PORQUE NO TENIA NINGUNO PROPIO.
          *
-         * Y encaja con lo que el sonido ES. No es el filamento calentando: es el
-         * chasquido del interruptor, el golpe de corriente y el flyback
-         * quedandose arriba — el aparato entrando en marcha. Eso no pasa cuando
-         * aparece la primera imagen de prueba, pasa cuando el sistema arranca de
-         * verdad, que es la ultima linea de esa lista.
+         * Estuvo en las barras, donde se pisaba con el tono de la carta: «se
+         * solapan dos sonidos, uno de las barras y otro como de inicio». Despues
+         * al final de la comprobacion de memoria, que sonaba bien pero no tenia
+         * nada que mirar mientras.
          *
-         * La comprobacion es la ultima pantalla del guion, asi que QUITARSE es
-         * el instante en que la app aparece.
+         * Ahora la pantalla hace el gesto inverso del apagon —un punto que se
+         * abre en linea y la linea en imagen— y el sonido va encima de eso.
+         * Imagen y sonido contando la misma cosa.
+         */
+        const tubo = document.createElement('div');
+        tubo.className = 'tube-on';
+
+        conLaSalaYaEncendida();
+        await esperar();
+        const antes = marca();
+
+        document.body.append(tubo);
+        await esperar();
+
+        expect(ruidos(antes).length).toBeGreaterThan(0);
+        tubo.remove();
+    });
+
+    it('⚠ y la comprobacion ya NO enciende al irse, que serian dos', async () => {
+        /*
+         * El encendido vivio un rato colgado del final de esta pantalla. Desde
+         * que tiene imagen propia, dejarlo tambien aca lo haria sonar dos veces
+         * por arranque, con segundos de diferencia.
          */
         const check = document.createElement('pre');
         check.className = 'boot-check';
@@ -818,12 +837,11 @@ describe('la maquina encendiendose y apagandose', () => {
         document.body.append(check);
         await esperar();
 
-        // Ya sono el bip. Lo que se mide es lo que pasa al IRSE.
         const antes = marca();
         check.remove();
         await esperar();
 
-        expect(ruidos(antes).length).toBeGreaterThan(0);
+        expect(fuentes(antes)).toHaveLength(0);
     });
 
     it('⚠ el tubo APAGANDOSE suena, y la marca vale para las tres pantallas', async () => {
