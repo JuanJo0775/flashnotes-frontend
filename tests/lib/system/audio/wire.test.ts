@@ -16,7 +16,7 @@
  */
 
 import { IDLE_MS, startSound } from '@/lib/system/audio/wire';
-import { SEEK_JITTER, SEEK_MS } from '@/lib/system/audio/screens';
+import { SEEK_JITTER, SEEK_MS, TONE_AFTER_MS } from '@/lib/system/audio/screens';
 import { ambienceIsOn } from '@/lib/system/audio/ambience';
 import { barsToneIsOn } from '@/lib/system/audio/bars';
 import { teardownAudio } from '@/lib/system/audio/context';
@@ -37,6 +37,16 @@ afterEach(() => {
     parar();
     teardownAudio();
     quitarFalso();
+
+    /*
+     * ⚠ SE VACIA EL CUERPO, Y NO ES HIGIENE DE MAS. Cada test quita lo que
+     * puso, pero si el `expect` falla ANTES de esa linea el elemento se queda —
+     * y como el sonido cuelga de marcas del DOM, un `.boot-bars` olvidado hace
+     * que todos los tests siguientes arranquen con la marca ya presente y sin
+     * flanco de subida. Se vio: un fallo de verdad se convirtio en seis, y cinco
+     * apuntaban a sitios donde no habia nada roto.
+     */
+    document.body.replaceChildren();
 });
 
 /** Las fuentes de sonido creadas desde una marca: lo que suena de verdad. */
@@ -535,12 +545,38 @@ describe('la maquina encendiendose y apagandose', () => {
         const barras = document.createElement('div');
         barras.className = 'boot-bars';
         document.body.append(barras);
-        await esperar();
 
+        /*
+         * ⚠ EL TONO NO ENTRA A LA VEZ QUE LA IMAGEN, Y ES A PROPOSITO. Ver
+         * `TONE_AFTER_MS`: el encendido y el tono caian en el mismo milisegundo
+         * y se pisaban. Primero despierta el aparato, y el tono entra detras.
+         */
+        await esperar();
+        expect(barsToneIsOn()).toBe(false);
+
+        await new Promise((r) => setTimeout(r, TONE_AFTER_MS));
         expect(barsToneIsOn()).toBe(true);
 
         barras.remove();
         await esperar();
+
+        expect(barsToneIsOn()).toBe(false);
+    });
+
+    it('⚠ y si la carta se va antes de que el tono entre, no entra', async () => {
+        /*
+         * Un arranque corto puede pasar de largo por las barras antes de que se
+         * cumpla la espera. Un tono que arrancara despues, ya sobre el rotulo,
+         * seria peor que no sonar: contaria que hay una carta de ajuste donde no
+         * la hay.
+         */
+        const barras = document.createElement('div');
+        barras.className = 'boot-bars';
+        document.body.append(barras);
+        await esperar();
+
+        barras.remove();
+        await new Promise((r) => setTimeout(r, TONE_AFTER_MS + 200));
 
         expect(barsToneIsOn()).toBe(false);
     });
@@ -687,7 +723,7 @@ describe('la maquina encendiendose y apagandose', () => {
         const barras = document.createElement('div');
         barras.className = 'collapse-bars';
         document.body.append(barras);
-        await esperar();
+        await new Promise((r) => setTimeout(r, TONE_AFTER_MS + 120));
 
         expect(barsToneIsOn()).toBe(true);
 

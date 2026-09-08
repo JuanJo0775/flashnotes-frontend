@@ -1064,7 +1064,13 @@ body > *:not(.boot-screen):not(.wipe-screen):not(.scanline-effect) {
     flex: 1;
 }
 
-.boot-logo {
+/* ⚠ DOS NOMBRES PARA LA MISMA COLUMNA, Y NO ES REDUNDANCIA. `.boot-logo` es
+   el rótulo del fabricante, y el sonido lo usa como marca: ahí suena el disco
+   leyendo. La puerta apila igual pero NO enseña ningún rótulo, así que
+   quedarse con la clase del logo la haría sonar a algo que no está pasando.
+   Se comparte el estilo, que es lo único que tenían en común. */
+.boot-logo,
+.boot-gate-stack {
     text-align: center;
     display: flex;
     flex-direction: column;

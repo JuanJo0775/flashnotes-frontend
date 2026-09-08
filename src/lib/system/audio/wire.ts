@@ -467,6 +467,44 @@ export function startSound(): () => void {
         otra();
     };
 
+    /*
+     * EL TONO DE LA CARTA, QUE ENTRA UN POCO DESPUÉS.
+     *
+     * ⚠ EL RETRASO ES LO QUE IMPIDE QUE DOS SONIDOS SE PISEN, y se reportó
+     * jugando: «se solapan dos sonidos, uno de las barras y otro como de inicio».
+     * El encendido y el tono caían en el mismo milisegundo, y dos cosas que
+     * empiezan a la vez el oído las lee como UNA cosa sucia. Ver `TONE_AFTER_MS`.
+     *
+     * Se cancela si la carta se va antes de que el tono llegue a entrar: un
+     * arranque corto puede pasar de largo, y un tono que suena sobre el rótulo
+     * sería peor que no sonar.
+     */
+    let tonoDe: string | null = null;
+    let tonoPendiente: ReturnType<typeof setTimeout> | null = null;
+
+    const cuidarElTono = (enPantalla: Set<string>) => {
+        const carta = SCREEN_SOUNDS.find((s) => s.tone && enPantalla.has(s.mark));
+
+        if (!carta) {
+            if (tonoPendiente) clearTimeout(tonoPendiente);
+            tonoPendiente = null;
+            tonoDe = null;
+            stopBarsTone();
+            return;
+        }
+
+        // Ya se está ocupando de ésta: ni se reprograma ni se reinicia.
+        if (tonoDe === carta.mark) return;
+
+        tonoDe = carta.mark;
+        if (tonoPendiente) clearTimeout(tonoPendiente);
+
+        tonoPendiente = setTimeout(() => {
+            tonoPendiente = null;
+            startBarsTone();
+        }, carta.tone!.afterMs);
+    };
+
     const mirarPantallas = () => {
         // UNA sola pasada por el documento y no una por marca: esto corre en cada
         // mutación del `body` entero, y el colapso reescribe su manta de estática
@@ -476,9 +514,7 @@ export function startSound(): () => void {
             for (const c of el.classList) enPantalla.add(c);
         }
 
-        // El tono de la carta de ajuste, lo enseñe quien lo enseñe.
-        if (SCREEN_SOUNDS.some((s) => s.tone && enPantalla.has(s.mark))) startBarsTone();
-        else stopBarsTone();
+        cuidarElTono(enPantalla);
 
         for (const s of SCREEN_SOUNDS) {
             const hay = enPantalla.has(s.mark);
@@ -515,6 +551,7 @@ export function startSound(): () => void {
         pendientes.clear();
         repitiendo.forEach(clearTimeout);
         repitiendo.clear();
+        if (tonoPendiente) clearTimeout(tonoPendiente);
         stopAmbience();
         document.removeEventListener('keydown', alTeclear, true);
         document.removeEventListener('click', alPulsar, true);

@@ -300,16 +300,44 @@ marca.
 | Marca | Qué suena |
 | --- | --- |
 | `.collapse-dying` | El tubo al que le cortan la corriente |
-| `.boot-bars` | El tubo prendiéndose, con su carta de ajuste |
+| `.boot-bars` | La pantalla despertando, y su carta de ajuste detrás |
 | `.collapse-bars` | La carta de ajuste de un tubo que seguía encendido |
+| `.boot-logo` | Un disco leyendo para arrancar, bajo el rótulo del fabricante |
 | `.collapse-reboot` | La máquina leyendo para volver, y sigue leyendo mientras carga |
 | `.boot-check` | El bip de POST: memoria contada, todo bien |
+
+### ⚠ Dos sonidos que empiezan a la vez se oyen como uno sucio
+
+Se reportó jugando: «cuando le doy a la tecla se solapan dos sonidos, uno de las
+barras y otro como de inicio». El encendido y el tono de 1 kHz caían en el mismo
+milisegundo.
+
+El encendido **no es sólo el filamento calentando**: es el aparato entero
+despertando —el chasquido del interruptor, el golpe de corriente y el flyback
+subiendo—, así que su sitio es el instante en que aparece la imagen, no una
+oscuridad previa. Lo que estaba mal era que el tono entrara a la vez.
+
+Ahora entra **300 ms después** (`TONE_AFTER_MS`): primero despierta el aparato y
+después llega la señal, que es también el orden real — un monitor no emite su tono
+de referencia en el instante en que le dan tensión. Y se cancela si la carta se va
+antes de que llegue a entrar: un arranque corto puede pasar de largo, y un tono
+sonando ya sobre el rótulo contaría que hay una carta donde no la hay.
+
+Por lo mismo el cabezal se mudó al **rótulo**, que es donde este documento decía
+que estaba y el código no: iba colgado 620 ms después del encendido, o sea encima
+de las barras. Así el arranque queda en cuatro momentos que no se pisan —
+despertar, señal, lectura y comprobación.
 
 ⚠ **Se escogieron marcas que YA existían**, no clases inventadas para esto.
 `.collapse-dying` la pintan las cuatro pantallas que apagan un tubo —la puerta, el
 arranque, el colapso y el barrido— porque las cuatro cierran la imagen a un punto.
 Que ya estuviera compartida es la prueba de que el momento es el mismo; inventar
 una clase nueva habría sido decidir por mi cuenta que no lo era.
+
+⚠ Y por eso mismo la puerta **dejó de usar `.boot-logo`**: apilaba igual, pero no
+enseña ningún rótulo del fabricante, y desde que esa marca significa «hay un disco
+leyendo» quedarse con ella la habría hecho sonar a algo que no estaba pasando. Se
+comparte el estilo, que es lo único que tenían en común.
 
 Y aparte, dos atributos que sí son un suceso entero por sí mismos:
 

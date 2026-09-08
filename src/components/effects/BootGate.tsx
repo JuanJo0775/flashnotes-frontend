@@ -158,13 +158,16 @@ export default function BootGate({ onReady }: { onReady: (desde: BootPhase) => v
     return (
         <div className="boot-screen">
             {/*
-                ⚠ LA MISMA COLUMNA QUE USA EL ARRANQUE DE VERDAD. La primera
-                versión ponía el botón en `position: absolute` y el pie como
-                hermano centrado, así que se pintaban UNO ENCIMA DEL OTRO. La
-                pantalla de arranque es una fila centrada: lo que se apila va
-                dentro de una columna, no suelto.
+                ⚠ LA MISMA COLUMNA QUE USA EL ARRANQUE, PERO NO SU CLASE. La
+                primera versión ponía el botón en `position: absolute` y el pie
+                como hermano centrado, así que se pintaban UNO ENCIMA DEL OTRO: la
+                pantalla de arranque es una fila centrada, y lo que se apila va
+                dentro de una columna.
+                La columna se comparte por CSS y el nombre no, porque `.boot-logo`
+                es además la MARCA del rótulo del fabricante — ahí suena el disco
+                leyendo, y esta pantalla no enseña ningún rótulo.
             */}
-            <div className="boot-logo">
+            <div className="boot-gate-stack">
                 {/*
                     Un botón de verdad y no un `div` con `onClick`: esta pantalla
                     es lo único que hay entre alguien y su cuaderno, así que tiene

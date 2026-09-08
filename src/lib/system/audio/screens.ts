@@ -58,6 +58,27 @@ export const SEEK_MS = 1_500;
 export const SEEK_JITTER = 0.35;
 
 /**
+ * Cuánto tarda la carta de ajuste en traer su tono, desde que se ve.
+ *
+ * ⚠ NO ES UN RETRASO POR GUSTO: ES LO QUE IMPIDE QUE DOS SONIDOS SE PISEN.
+ * Reportado jugando: «cuando le doy a la tecla se solapan dos sonidos, uno de
+ * las barras y otro como de inicio».
+ *
+ * El encendido y el tono caían en el mismo milisegundo, y dos cosas que empiezan
+ * a la vez el oído las lee como UNA cosa sucia, no como dos. Separadas se leen
+ * como lo que son: primero despierta el aparato —el chasquido del interruptor,
+ * el golpe de corriente, el flyback subiendo— y cuando eso se asienta entra la
+ * señal. Es también el orden real: un monitor no emite su tono de referencia en
+ * el instante en que le dan tensión.
+ *
+ * Trescientos milisegundos: bastante para que el golpe haya caído, poco para que
+ * no parezca que la señal se perdió. ⚠ Y no puede crecer mucho más — el tramo de
+ * barras del arranque más corto dura 500 ms, y un retraso mayor dejaría la carta
+ * muda justo en el arranque que menos dura.
+ */
+export const TONE_AFTER_MS = 300;
+
+/**
  * Una voz con lo que haya que pedirle.
  *
  * El mapeado sobre `VoiceName` da una unión donde cada nombre va con SUS
@@ -77,13 +98,16 @@ export interface ScreenSound {
     readonly what: string;
 
     /**
-     * El tono de referencia de 1 kHz.
+     * El tono de referencia de 1 kHz, y cuánto tarda en entrar.
      *
      * ⚠ No es una licencia: las cartas de ajuste iban SIEMPRE con él, porque era
      * la señal con la que se calibraba el nivel de audio de una emisión. Es lo
      * que convierte unos rectángulos de colores en algo que se RECONOCE.
+     *
+     * Lo de `afterMs` es lo que evita que se pise con el encendido: ver
+     * `TONE_AFTER_MS`.
      */
-    readonly tone?: true;
+    readonly tone?: { readonly afterMs: number };
 
     /** La voz en el instante en que la marca aparece. */
     readonly shot?: Shot;
@@ -112,16 +136,36 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
     },
     {
         mark: 'boot-bars',
-        what: 'El tubo prendiéndose, con su carta de ajuste',
-        tone: true,
+        what: 'La pantalla despertando, y su carta de ajuste detrás',
+        /*
+         * ⚠ EL ENCENDIDO VA ACÍ Y NO ANTES, y se discutió jugando. No suena
+         * sólo a filamentos calentando: es el aparato entero despertando —el
+         * chasquido del interruptor, el golpe de corriente y el flyback
+         * subiendo—, y eso pertenece al instante en que aparece la IMAGEN.
+         * Ponerlo en una oscuridad previa lo dejaba contando algo que todavía no
+         * se veía.
+         *
+         * Lo que estaba mal era que el tono entrara a la vez: ahora entra detrás.
+         */
         shot: { voice: 'powerUp' },
-        // Y después algo buscando: la máquina leyendo para arrancar.
-        then: { voice: 'head', ms: 620 },
+        tone: { afterMs: TONE_AFTER_MS },
     },
     {
         mark: 'collapse-bars',
         what: 'La carta de ajuste de un tubo que seguía encendido',
-        tone: true,
+        tone: { afterMs: TONE_AFTER_MS },
+    },
+    {
+        mark: 'boot-logo',
+        what: 'Un disco leyendo para arrancar, bajo el rótulo del fabricante',
+        /*
+         * ⚠ EL CABEZAL VIVE EN EL RÓTULO, que es lo que el documento contó
+         * siempre y el código no hacía: iba colgado 620 ms después del encendido,
+         * o sea encima de las barras. Acá tiene su propio tramo y el arranque
+         * queda en cuatro momentos que no se pisan: despertar, señal, lectura y
+         * comprobación.
+         */
+        shot: { voice: 'head' },
     },
     {
         mark: 'collapse-reboot',
