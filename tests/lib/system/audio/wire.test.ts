@@ -421,28 +421,30 @@ describe('el rotulo de la cabecera, que es su propio caso', () => {
     });
 });
 
-describe('⚠ una maquina que todavia no arranco no tiene ruido de sala', () => {
+describe('⚠ sin corriente no hay ruido de sala', () => {
     /*
      * MEDIDO EN EL NAVEGADOR, y explica un informe que parecia de mezcla: «hay
      * dos sonidos, el grave tapa el otro, que es el verdadero de las barras de
      * colores».
      *
-     * El zumbido son tres senos a 58, 116 y 175 Hz y su entrada dura cuatro
-     * segundos. Como el navegador no deja sonar hasta el primer gesto, esos
-     * cuatro segundos empezaban EXACTAMENTE al pulsar la tecla — o sea que el
-     * grave subia justo encima de las barras.
+     * El zumbido son tres senos a 58, 116 y 175 Hz. Como el navegador no deja
+     * sonar hasta el primer gesto, su entrada empezaba EXACTAMENTE al pulsar la
+     * tecla — o sea que el grave subia justo encima de las barras.
      *
-     * No se arregla bajandole el volumen: se arregla porque un equipo que
-     * todavia esta arrancando no tiene ruido de aparato encendido. Callarlo ahi
-     * es lo que pasa de verdad, y de paso hace que el zumbido ENTRE con la app,
-     * que es cuando significa algo.
+     * ⚠ EL PRIMER ARREGLO FUE DEMASIADO: callaba la sala durante TODO el
+     * arranque, y se pidio lo contrario — «ese grave me gusta, que suene al
+     * entrar». Lo que hay que evitar no es que el zumbido exista mientras la
+     * maquina arranca, es que su SUBIDA caiga encima de la carta de ajuste. De
+     * eso se encarga el compas oscuro de la puerta.
+     *
+     * Callan la sala solo las dos cosas donde de verdad no hay corriente.
      */
-    it('con la pantalla de arranque puesta, el fondo calla', async () => {
+    it('el tubo al que le cortan la corriente calla el fondo', async () => {
         parar();
 
-        const pantalla = document.createElement('div');
-        pantalla.className = 'boot-screen';
-        document.body.append(pantalla);
+        const muriendo = document.createElement('div');
+        muriendo.className = 'collapse-dying';
+        document.body.append(muriendo);
 
         parar = startSound();
         await esperarBreve();
@@ -450,18 +452,18 @@ describe('⚠ una maquina que todavia no arranco no tiene ruido de sala', () => 
         expect(ambienceIsOn()).toBe(false);
     });
 
-    it('y en cuanto la maquina arranca de verdad, entra', async () => {
+    it('y en cuanto vuelve la corriente, el zumbido entra', async () => {
         parar();
 
-        const pantalla = document.createElement('div');
-        pantalla.className = 'boot-screen';
-        document.body.append(pantalla);
+        const muriendo = document.createElement('div');
+        muriendo.className = 'collapse-dying';
+        document.body.append(muriendo);
 
         parar = startSound();
         await esperarBreve();
         expect(ambienceIsOn()).toBe(false);
 
-        pantalla.remove();
+        muriendo.remove();
         await esperarBreve();
 
         expect(ambienceIsOn()).toBe(true);
@@ -480,6 +482,26 @@ describe('⚠ una maquina que todavia no arranco no tiene ruido de sala', () => 
         await esperarBreve();
 
         expect(ambienceIsOn()).toBe(false);
+    });
+
+    it('⚠ pero las barras de ajuste NO, que es lo que se corrigio', async () => {
+        /*
+         * Estuvo `boot-screen` en la lista y callaba el fondo durante todo el
+         * arranque. El zumbido tiene que estar ahi: para cuando llegan las
+         * barras ya entro en el compas oscuro, asi que es un suelo quieto en vez
+         * de algo que sube.
+         */
+        parar();
+
+        const barras = document.createElement('div');
+        barras.className = 'boot-bars';
+        document.body.append(barras);
+
+        parar = startSound();
+        await esperarBreve();
+
+        expect(ambienceIsOn()).toBe(true);
+        barras.remove();
     });
 });
 

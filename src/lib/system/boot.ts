@@ -49,6 +49,21 @@ export type BootPhase = 'off' | 'bars' | 'logo' | 'check' | 'done';
 export const BOOT_OFF_MS = 420;
 
 /**
+ * El compás oscuro en el que la máquina se despierta, antes de que haya imagen.
+ *
+ * ⚠ EXISTE PARA QUE EL ZUMBIDO TENGA SU SITIO. Se pidió jugando: «ese grave me
+ * gusta, que suene al entrar, y no quiero que se solape con las barras de
+ * colores». Sin este hueco el zumbido sólo puede entrar encima de la carta de
+ * ajuste, porque el navegador no deja sonar hasta el primer gesto y a partir de
+ * ahí todo pasa a la vez.
+ *
+ * Y no es un relleno: un equipo que acaba de recibir corriente zumba antes de
+ * tener imagen. Lo que se oye acá es el aparato existiendo, con la pantalla
+ * todavía negra.
+ */
+export const BOOT_WAKE_MS = 1_200;
+
+/**
  * Cómo se reparte el tiempo entre los tramos.
  *
  * El encendido del tubo es fijo y corto: es un gesto físico, no una espera, y

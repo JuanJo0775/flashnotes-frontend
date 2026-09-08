@@ -30,7 +30,7 @@ import {
     subscribe as subscribeSystem,
 } from '@/hooks/useSystemState';
 import { play } from '@/lib/system/audio/play';
-import { startAmbience, stopAmbience } from '@/lib/system/audio/ambience';
+import { WAKE_FADE_S, startAmbience, stopAmbience } from '@/lib/system/audio/ambience';
 import { startBarsTone, stopBarsTone } from '@/lib/system/audio/bars';
 import { vary } from '@/lib/system/audio/jitter';
 import {
@@ -178,8 +178,8 @@ export function startSound(): () => void {
         pendientes.add(id);
     };
 
-    const huboActividad = () => {
-        if (enMarcha) startAmbience();
+    const huboActividad = (fadeS?: number) => {
+        if (enMarcha) startAmbience(Math.random, fadeS);
         else stopAmbience();
 
         if (reloj) clearTimeout(reloj);
@@ -536,7 +536,14 @@ export function startSound(): () => void {
         const antesEnMarcha = enMarcha;
         enMarcha = !NOT_RUNNING_MARKS.some((m) => enPantalla.has(m));
 
-        if (enMarcha !== antesEnMarcha) huboActividad();
+        /*
+         * ⚠ AL VOLVER LA CORRIENTE, EL ZUMBIDO ENTRA DEPRISA. Los cuatro
+         * segundos de siempre existen para que el fondo no se oiga entrar a
+         * mitad de una sesión; acá es al revés — el aparato acaba de recibir
+         * corriente y eso SE OYE. Y además tiene que caber en el compás oscuro
+         * del arranque, o volvería a subir encima de las barras.
+         */
+        if (enMarcha !== antesEnMarcha) huboActividad(enMarcha ? WAKE_FADE_S : undefined);
 
         // El tono de la carta de ajuste, lo enseñe quien lo enseñe.
         if (SCREEN_SOUNDS.some((s) => s.tone && enPantalla.has(s.mark))) startBarsTone();

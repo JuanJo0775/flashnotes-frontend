@@ -49,6 +49,20 @@ export const AMBIENCE_MIX = SUMA / SUMA;
 /** Cuánto tarda en aparecer. Segundos, no milisegundos: ver `startAmbience`. */
 export const FADE_IN_S = 4;
 
+/**
+ * Lo que tarda en entrar cuando la máquina ACABA de despertarse.
+ *
+ * ⚠ ES CORTO A PROPÓSITO, Y NO CONTRADICE LO DE ARRIBA. Los cuatro segundos
+ * existen para que el fondo no se oiga ENTRAR a mitad de una sesión, que es
+ * cuando entrar lo convertiría en un suceso. Al encender la máquina es al revés:
+ * ahí el zumbido apareciendo ES el suceso —el aparato recibiendo corriente— y se
+ * pidió oírlo.
+ *
+ * Además tiene que caber en el compás oscuro del arranque: si siguiera subiendo
+ * cuando llegan las barras, volvería a taparlas, que es justo lo que se corrigió.
+ */
+export const WAKE_FADE_S = 1;
+
 /** Y cuánto en irse cuando se le manda parar. */
 const FADE_OUT_S = 2.5;
 
@@ -70,7 +84,7 @@ export function ambienceGain(): number {
  * llamar a esto, y dos ambientes a la vez suenan al doble Y desafinan entre
  * ellos — que es peor que el doble, porque suena a avería sin serlo.
  */
-export function startAmbience(random: Random = Math.random) {
+export function startAmbience(random: Random = Math.random, fadeS: number = FADE_IN_S) {
     if (vivo) return;
 
     const g = ensureAudio();
@@ -85,7 +99,7 @@ export function startAmbience(random: Random = Math.random) {
      * oye ENTRAR, y entonces deja de ser ambiente para ser un suceso. Lo que
      * tiene que pasar es que en algún momento te des cuenta de que ya estaba.
      */
-    salida.gain.linearRampToValueAtTime(ambienceGain(), t0 + FADE_IN_S);
+    salida.gain.linearRampToValueAtTime(ambienceGain(), t0 + fadeS);
     salida.connect(g.air);
     salida.connect(g.room);
 

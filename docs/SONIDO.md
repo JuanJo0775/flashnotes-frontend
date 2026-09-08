@@ -314,11 +314,16 @@ segundos empezaban **exactamente** al pulsar la tecla — o sea que el grave sub
 justo encima de las barras y se comía el tono de 1 kHz. Se reportó tal cual: «hay
 dos sonidos, el grave tapa el otro, que es el verdadero de las barras de colores».
 
-No se arregla bajándole el volumen. El fondo es el ruido de que hay un aparato
-**encendido** —un transformador, un ventilador, un tubo— y un equipo que todavía
-está arrancando no lo tiene. Mientras se vea una pantalla de arranque o un
-colapso, la sala calla; y así el zumbido **entra con la app**, que es cuando
-significa algo.
+No se arregla bajándole el volumen, y tampoco callándolo durante todo el arranque:
+eso se probó y era demasiado, porque lo que se pidió fue justo lo contrario — «ese
+grave me gusta, que suene al entrar». Lo que hay que evitar no es que el zumbido
+exista mientras la máquina arranca, es que **su subida** caiga encima de la carta
+de ajuste.
+
+De eso se encarga el compás oscuro de la puerta: el zumbido entra ahí, con la
+pantalla todavía negra, y para cuando llegan las barras ya es un suelo quieto en
+vez de algo que sube. Callan la sala sólo las dos cosas donde de verdad no hay
+corriente: el tubo al que se la cortan y el sistema derrumbado.
 
 ### ⚠ Dos sonidos que se pisan casi nunca se arreglan separándolos
 
@@ -500,27 +505,42 @@ Aparece **sólo antes del primer arranque** —los reinicios ya vienen después 
 gesto— y **sólo si hay sonido que desbloquear**: con el sonido apagado sería un
 paso de más entre alguien y sus notas, que es lo que prohíbe la regla A2.
 
-### ⚠ Y el apagón va DELANTE
+### ⚠ El ciclo va DESPUÉS de la tecla, y esto se corrigió dos veces
 
-Recargar es apagar y encender, en ese orden. La puerta era lo primero y la máquina
-se apagaba **después** de que pulsaras para encenderla — al revés de como pasa. Se
-reportó así: «cuando le damos refrescar debe salir la animación de apagado, antes
-de la pantalla de darle a una tecla».
+Primero el apagón iba delante, porque recargar es apagar y encender y ése es el
+orden de los hechos. Pero **delante de la tecla no hay permiso para sonar**, y se
+reportó exactamente eso:
 
-Ahora el tubo se cierra a un punto, la pantalla queda muerta pidiendo una tecla, y
-al pulsarla el guion sigue **desde las barras** — porque el apagón ya lo enseñó la
-puerta y no hay que apagar otra vez la máquina que acabas de encender.
+> «la de apagar cuando se reinicia no suena, pero cuando se reinicia luego de
+> darle al cromo esa sí suena la pantalla de apagar»
 
-Quien se adelanta y pulsa durante el apagón **no lo corta y tampoco pierde el
-gesto**: se apunta y se abre en cuanto el tubo termina de cerrarse. Cortarlo
-dejaría a medias justo lo que se pidió ver; ignorarlo obligaría a pulsar dos veces
-sin decir por qué.
+La misma pantalla, el mismo sonido en la tabla, y uno llegaba mudo — porque uno
+cae antes del primer gesto y el otro después. Un apagado que se **ve** pero no se
+**oye** es peor que uno que llega un segundo tarde, así que la imagen se movió a
+donde el sonido puede acompañarla.
 
-⚠ **En la primera carga de la vida ese apagón se ve pero no se oye**, y no hay
-código que lo arregle: todavía no hubo gesto, así que el navegador no deja sonar —
-y desde la lección 6, lo que no se puede oír ya no se guarda para soltarlo de
-golpe después. En las visitas siguientes Chrome suele levantar la restricción por
-sí solo, y entonces sí se oye.
+La lectura sigue en pie: la pantalla está muerta, pulsás, y la máquina hace su
+ciclo entero.
+
+| | Qué se ve | Qué se oye |
+| --- | --- | --- |
+| 1 | `PULSE UNA TECLA` sobre la pantalla muerta | nada — todavía no hay permiso |
+| 2 | El tubo se cierra a un punto | el apagado |
+| 3 | Negro | el zumbido de la máquina entrando |
+| 4 | Barras | el tono de 1 kHz |
+| 5 | Rótulo | un disco leyendo |
+| 6 | Comprobación | el bip de POST |
+| 7 | La app | el sistema en marcha |
+
+⚠ **El paso 3 no es relleno.** Es el hueco donde el zumbido cabe: se pidió oírlo
+—«ese grave me gusta, que suene al entrar»— y a la vez que no se solapara con las
+barras. Sin el hueco sólo podía entrar encima de ellas, porque el navegador no
+deja sonar hasta el primer gesto y a partir de ahí todo pasa a la vez. Y no es una
+licencia: un equipo que acaba de recibir corriente zumba antes de tener imagen.
+
+Ahí el zumbido entra en **1 segundo** y no en cuatro (`WAKE_FADE_S`). Los cuatro
+existen para que el fondo no se oiga entrar a mitad de una sesión; al encender es
+al revés — el zumbido apareciendo **es** el suceso.
 
 ## La cadena del arranque, con la referencia de la industria
 

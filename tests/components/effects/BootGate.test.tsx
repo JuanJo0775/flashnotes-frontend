@@ -1,7 +1,7 @@
 // tests/components/effects/BootGate.test.tsx
 
 /**
- * LA PUERTA DEL ARRANQUE: primero se apaga, después «PULSE UNA TECLA».
+ * LA PUERTA DEL ARRANQUE: «PULSE UNA TECLA», y luego el ciclo entero.
  *
  * ⚠ POR QUÉ EXISTE, QUE NO ES POR ESTÉTICA.
  *
@@ -15,125 +15,134 @@
  * de que las máquinas de esa época hacían exactamente eso, así que lo que
  * empezó siendo una limitación del navegador entra en la ficción sin forzarla.
  *
- * ⚠ Y EL ORDEN IMPORTA, que es lo que se corrigió. La puerta era lo primero y la
- * máquina se apagaba DESPUÉS de que pulsaras para encenderla — al revés de como
- * pasa. Recargar es apagar y volver a encender: el tubo se cierra, la pantalla
- * queda muerta pidiendo una tecla, y al pulsarla arrancan las barras.
+ * ⚠ Y EL ORDEN SE CORRIGIÓ DOS VECES. Primero el apagón iba delante, porque
+ * recargar es apagar y encender y ése es el orden de los hechos. Pero delante de
+ * la tecla NO HAY PERMISO PARA SONAR, y se reportó exactamente eso: «la de apagar
+ * cuando se reinicia no suena, pero cuando se reinicia luego de darle al cromo
+ * esa sí».
+ *
+ * Un apagado que se VE pero no se OYE es peor que uno que llega un segundo tarde,
+ * así que la imagen se movió a donde el sonido puede acompañarla. La pantalla
+ * está muerta, pulsás, y la máquina hace su ciclo entero: se corta, zumba a
+ * oscuras, y vuelve.
  */
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import BootGate from '@/components/effects/BootGate';
-import { BOOT_OFF_MS } from '@/lib/system/boot';
+import { BOOT_OFF_MS, BOOT_WAKE_MS } from '@/lib/system/boot';
 import { SOUND_STORAGE_KEY } from '@/lib/system/audio/context';
 
 beforeEach(() => {
     localStorage.clear();
 });
 
-/** Lo que tarda el tubo en cerrarse, con margen para una suite cargada. */
-const TRAS_EL_APAGON = BOOT_OFF_MS + 300;
+/** El ciclo entero tras la tecla, con margen para una suite cargada. */
+const TRAS_EL_CICLO = BOOT_OFF_MS + BOOT_WAKE_MS + 600;
 
 describe('cuando hay sonido que desbloquear', () => {
-    it('⚠ lo PRIMERO es el tubo apagándose, no la tecla', () => {
+    it('⚠ lo PRIMERO es la tecla, porque antes no se puede oir nada', () => {
         /*
-         * REPORTADO: «cuando le damos refrescar debe salir la animación de
-         * apagado, ANTES de la pantalla de darle a una tecla».
+         * ⚠ ESTE ORDEN SE CORRIGIO DOS VECES, Y LA SEGUNDA GANO EL SONIDO.
          *
-         * Y tiene razón de sobra: recargar es apagar y encender. Pedir la tecla
-         * primero contaba que la máquina se apagaba después de que la
-         * encendieras.
+         * El apagon iba delante, porque recargar es apagar y encender y ese es
+         * el orden de los hechos. Pero delante de la tecla NO HAY PERMISO PARA
+         * SONAR, y se reporto exactamente eso: «la de apagar cuando se reinicia
+         * no suena, pero cuando se reinicia luego de darle al cromo esa si».
+         *
+         * Un apagado que se VE pero no se OYE es peor que uno que llega un
+         * segundo tarde, asi que la imagen se mueve a donde el sonido puede
+         * acompanarla.
          */
         render(<BootGate onReady={() => {}} />);
 
-        expect(document.querySelector('.collapse-dying')).toBeInTheDocument();
-        expect(screen.queryByRole('button')).not.toBeInTheDocument();
+        expect(screen.getByRole('button')).toBeInTheDocument();
+        expect(document.querySelector('.collapse-dying')).not.toBeInTheDocument();
     });
 
-    it('⚠ y pinta la marca COMPARTIDA, que es lo que la hace sonar', () => {
+    it('⚠ y al pulsar, el tubo se cierra CON su marca compartida', async () => {
         /*
          * `.collapse-dying` ya la pintan el arranque, el colapso y el barrido:
          * las tres cierran la imagen a un punto. La tabla de `screens.ts` la
-         * reconoce, así que este componente suena sin saber nada de sonido.
+         * reconoce, asi que este componente suena sin saber nada de sonido.
          *
          * Si alguien le pusiera una clase propia «porque es otra pantalla», se
-         * quedaría muda sin que nada fallara.
+         * quedaria muda sin que nada fallara.
          */
         render(<BootGate onReady={() => {}} />);
 
-        expect(document.querySelector('.collapse-dying')).toBeInTheDocument();
+        fireEvent.keyDown(document, { key: 'a' });
+
+        await waitFor(() =>
+            expect(document.querySelector('.collapse-dying')).toBeInTheDocument()
+        );
     });
 
-    it('y cuando el tubo termina de cerrarse, pide la tecla', async () => {
-        render(<BootGate onReady={() => {}} />);
+    it('⚠ y despues un compas OSCURO, donde el zumbido cabe sin tapar nada', async () => {
+        /*
+         * Se pidio oir el grave —«ese grave me gusta, que suene al entrar»— y a
+         * la vez que no se solapara con las barras de colores. Sin este hueco
+         * solo podia entrar encima de ellas, porque el navegador no deja sonar
+         * hasta el primer gesto y a partir de ahi todo pasa a la vez.
+         *
+         * Se mide que el apagon YA TERMINO y que todavia no se avisa: eso es el
+         * hueco.
+         */
+        const abierta = jest.fn();
+        render(<BootGate onReady={abierta} />);
 
-        await waitFor(() => expect(screen.getByRole('button')).toBeInTheDocument(), {
-            timeout: TRAS_EL_APAGON,
+        fireEvent.keyDown(document, { key: 'a' });
+
+        await waitFor(
+            () => expect(document.querySelector('.collapse-dying')).not.toBeInTheDocument(),
+            { timeout: BOOT_OFF_MS + 500 }
+        );
+
+        expect(document.querySelector('.boot-screen')).toBeInTheDocument();
+        expect(abierta).not.toHaveBeenCalled();
+    });
+
+    it('⚠ y el arranque sigue DESDE LAS BARRAS', async () => {
+        /*
+         * Si siguiera desde el apagon, la maquina se apagaria otra vez justo
+         * despues de que la encendieras — el apagon ya lo enseño esta pantalla.
+         */
+        const abierta = jest.fn();
+        render(<BootGate onReady={abierta} />);
+
+        fireEvent.keyDown(document, { key: 'a' });
+
+        await waitFor(() => expect(abierta).toHaveBeenCalledWith('bars'), {
+            timeout: TRAS_EL_CICLO,
         });
     });
 
-    it('⚠ una tecla la abre, y el arranque sigue DESDE LAS BARRAS', async () => {
-        /*
-         * Si siguiera desde el apagón, la máquina se apagaría otra vez justo
-         * después de que la encendieras — el apagón ya lo enseñó esta pantalla.
-         */
+    it('y un clic tambien, porque no todo el mundo llega por teclado', async () => {
         const abierta = jest.fn();
         render(<BootGate onReady={abierta} />);
 
-        await waitFor(() => screen.getByRole('button'), { timeout: TRAS_EL_APAGON });
-        fireEvent.keyDown(document, { key: 'a' });
-
-        await waitFor(() => expect(abierta).toHaveBeenCalledWith('bars'));
-    });
-
-    it('y un clic también, porque no todo el mundo llega por teclado', async () => {
-        const abierta = jest.fn();
-        render(<BootGate onReady={abierta} />);
-
-        await waitFor(() => screen.getByRole('button'), { timeout: TRAS_EL_APAGON });
         fireEvent.click(screen.getByRole('button'));
 
-        await waitFor(() => expect(abierta).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(abierta).toHaveBeenCalledTimes(1), {
+            timeout: TRAS_EL_CICLO,
+        });
     });
 
-    it('⚠ pero sólo avisa UNA vez, aunque se aporree', async () => {
+    it('⚠ pero solo avisa UNA vez, aunque se aporree', async () => {
         /*
          * Quien encuentra una pantalla que dice «pulse una tecla» pulsa varias.
-         * Si cada una avisara, el arranque se relanzaría encima de sí mismo y
-         * sonaría en capas.
+         * Si cada una avisara, el arranque se relanzaria encima de si mismo y
+         * sonaria en capas.
          */
         const abierta = jest.fn();
         render(<BootGate onReady={abierta} />);
-
-        await waitFor(() => screen.getByRole('button'), { timeout: TRAS_EL_APAGON });
 
         fireEvent.keyDown(document, { key: 'a' });
         fireEvent.keyDown(document, { key: 'b' });
         fireEvent.click(screen.getByRole('button'));
 
-        await waitFor(() => expect(abierta).toHaveBeenCalledTimes(1));
-    });
-
-    it('⚠ adelantarse durante el apagón no lo corta, y tampoco se pierde', async () => {
-        /*
-         * Las dos mitades importan. Cortar el apagón dejaría a medias justo lo
-         * que se pidió ver; ignorar la tecla obligaría a pulsar dos veces sin
-         * decir por qué. Se apunta el gesto y se abre al terminar.
-         */
-        const abierta = jest.fn();
-        render(<BootGate onReady={abierta} />);
-
-        fireEvent.keyDown(document, { key: 'a' });
-
-        // Todavía no: el tubo sigue cerrándose.
-        expect(abierta).not.toHaveBeenCalled();
-        expect(document.querySelector('.collapse-dying')).toBeInTheDocument();
-
-        await waitFor(() => expect(abierta).toHaveBeenCalledWith('bars'), {
-            timeout: TRAS_EL_APAGON,
+        await waitFor(() => expect(abierta).toHaveBeenCalledTimes(1), {
+            timeout: TRAS_EL_CICLO,
         });
-
-        // Y sin pasar por la pantalla de la tecla: ya la pulsaste.
-        expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
 
     it('tapa lo que haya debajo: es lo primero que se ve', () => {
@@ -144,9 +153,9 @@ describe('cuando hay sonido que desbloquear', () => {
 
     it('⚠ y apaga el barrido, porque un tubo apagado no refresca', () => {
         /*
-         * El barrido es el refresco del tubo. Dejar la línea cruzando mientras
-         * la imagen se cierra a un punto contaría que la pantalla sigue
-         * encendida justo cuando se está apagando.
+         * El barrido es el refresco del tubo. Dejar la linea cruzando mientras
+         * la imagen se cierra a un punto contaria que la pantalla sigue
+         * encendida justo cuando se esta apagando.
          */
         render(<BootGate onReady={() => {}} />);
 
