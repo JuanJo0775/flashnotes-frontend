@@ -15,7 +15,7 @@
  * pasaban todas las llamadas.
  */
 
-import { IDLE_MS, startSound } from '@/lib/system/audio/wire';
+import { IDLE_MS, SEEK_JITTER, SEEK_MS, startSound } from '@/lib/system/audio/wire';
 import { ambienceIsOn } from '@/lib/system/audio/ambience';
 import { barsToneIsOn } from '@/lib/system/audio/bars';
 import { teardownAudio } from '@/lib/system/audio/context';
@@ -43,6 +43,20 @@ function fuentes(desde: number): FakeNode[] {
     return lastContext()!
         .created.slice(desde)
         .filter((n) => n.kind === 'bufferSource' || n.kind === 'oscillator');
+}
+
+/**
+ * Sólo las fuentes de RUIDO creadas desde una marca.
+ *
+ * ⚠ HACE FALTA PARA NO MEDIR EL TONO POR ERROR. Encender y apagar el tubo pasan
+ * en el mismo instante que aparecen y se van las barras, y las barras traen su
+ * tono de 1 kHz — que es un oscilador. Contando fuentes a secas, un test del
+ * encendido pasa en verde con el encendido borrado, porque el tono solo ya
+ * cuenta. El chasquido del interruptor y la descarga del fósforo son ruido, y el
+ * tono no puede fabricar ni uno.
+ */
+function ruidos(desde: number): FakeNode[] {
+    return fuentes(desde).filter((n) => n.kind === 'bufferSource');
 }
 
 /** Cuántos nodos hay, o cero si aún no nació el contexto. */
@@ -198,6 +212,34 @@ describe('los hallazgos', () => {
 });
 
 describe('apagarlo lo apaga entero', () => {
+    it('⚠ y se lleva por delante lo que estaba APLAZADO', async () => {
+        /*
+         * VARIAS VOCES SON DE DOS TIEMPOS: el encendido y su cabezal 620 ms
+         * despues, el barrido y su impacto. El segundo tiempo vivia en un
+         * `setTimeout` suelto que nadie cancelaba, asi que apagar el sonido
+         * dejaba el golpe en el aire y sonaba despues de haberlo apagado.
+         *
+         * Se cazó aca: un golpe aparecia en la medicion de OTRO test, que es
+         * exactamente el mismo fallo visto desde dentro.
+         */
+        const barras = document.createElement('div');
+        barras.className = 'boot-bars';
+
+        conLaSalaYaEncendida();
+        await new Promise((r) => setTimeout(r, 80));
+        document.body.append(barras);
+        await new Promise((r) => setTimeout(r, 80));
+
+        // El encendido ya sono; el cabezal todavia no. Se apaga justo en medio.
+        parar();
+        const antes = marca();
+
+        await new Promise((r) => setTimeout(r, 900));
+
+        expect(fuentes(antes)).toHaveLength(0);
+        barras.remove();
+    });
+
     it('parar el suscriptor deja de sonar', () => {
         parar();
 
@@ -553,16 +595,105 @@ describe('la maquina encendiendose y apagandose', () => {
         carga.remove();
     });
 
-    it('el arranque suena cuando el documento dice que arranca', async () => {
+    it('⚠ el tubo se ENCIENDE con las barras, no con la pantalla de arranque', async () => {
+        /*
+         * MEDIDO JUGANDO, y es el error de modelo que dejaba mudo el reinicio.
+         *
+         * `data-booting` NO quiere decir «el tubo se encendio»: quiere decir «la
+         * pantalla de arranque esta puesta». Y esa pantalla EMPIEZA con el
+         * equipo apagandose — la primera fase del guion es el apagon. Colgar el
+         * encendido de ahi lo disparaba antes de que el tubo se apagara, o sea
+         * al reves de como pasa.
+         *
+         * El instante en que el tubo se enciende es el instante en que hay
+         * IMAGEN, y la primera imagen son las barras. Ahi va.
+         */
+        conLaSalaYaEncendida();
+        await esperar();
+        const antes = marca();
+
+        const barras = document.createElement('div');
+        barras.className = 'boot-bars';
+        document.body.append(barras);
+        await esperar();
+
+        expect(ruidos(antes).length).toBeGreaterThan(0);
+        barras.remove();
+    });
+
+    it('⚠ el tubo APAGANDOSE suena, y la marca vale para las tres pantallas', async () => {
+        /*
+         * REPORTADO: «el de apagar cuando reiniciamos no sale».
+         *
+         * Estaba colgado de `data-tube-off`, que SOLO lo pone la pantalla de
+         * arranque cuando su guion pasa por la fase de apagon. Y el reinicio del
+         * colapso arranca el guion desde las barras, asi que esa fase no existe:
+         * el atributo no aparecia nunca y el apagado no sonaba jamas.
+         *
+         * ⚠ La marca buena es `.collapse-dying`, y la gracia es que ya la
+         * comparten LAS TRES pantallas que apagan un tubo —el arranque, el
+         * colapso y el barrido— porque las tres pintan el mismo cierre a un
+         * punto. Una marca visual que ya se comparte no se puede quedar a medias
+         * como se quedaba el atributo.
+         */
+        conLaSalaYaEncendida();
+        await esperar();
+        const antes = marca();
+
+        const muriendo = document.createElement('div');
+        muriendo.className = 'collapse-dying';
+        document.body.append(muriendo);
+        await esperar();
+
+        expect(ruidos(antes).length).toBeGreaterThan(0);
+        muriendo.remove();
+    });
+
+    it('⚠ y el arranque llegando NO se come el apagado', async () => {
+        /*
+         * LA TRAMPA QUE HABIA QUE CERRAR, y es de mezcla, no de cableado.
+         *
+         * El encendido y el apagado son la MISMA familia, asi que comparten la
+         * compuerta de 60 ms. Cuando el arranque y el apagon del tubo caian en
+         * el mismo instante —que es justo lo que pasa al recargar— el encendido
+         * entraba primero y la compuerta se tragaba el apagado entero.
+         *
+         * Por eso la pantalla de arranque no puede sonar por si misma: lo que
+         * suena son sus FASES, y nunca hay dos a la vez.
+         */
         conLaSalaYaEncendida();
         await esperar();
         const antes = marca();
 
         document.documentElement.setAttribute('data-booting', '');
+        const muriendo = document.createElement('div');
+        muriendo.className = 'collapse-dying';
+        document.body.append(muriendo);
         await esperar();
 
-        expect(fuentes(antes).length).toBeGreaterThan(0);
+        expect(ruidos(antes).length).toBeGreaterThan(0);
+
+        muriendo.remove();
         document.documentElement.removeAttribute('data-booting');
+    });
+
+    it('⚠ las barras del colapso traen el tono igual que las del arranque', async () => {
+        /*
+         * Son la misma carta de ajuste y llevan otro nombre de clase por como
+         * crecio el codigo, no por ser otra cosa. El tono de 1 kHz es de la
+         * carta, no de la pantalla que la enseña.
+         */
+        const barras = document.createElement('div');
+        barras.className = 'collapse-bars';
+        document.body.append(barras);
+        await esperar();
+
+        expect(barsToneIsOn()).toBe(true);
+
+        barras.remove();
+        await esperar();
+
+        expect(barsToneIsOn()).toBe(false);
     });
 
     it('⚠ y el sistema volviendo del colapso suena a encendido', async () => {
@@ -585,35 +716,85 @@ describe('la maquina encendiendose y apagandose', () => {
         expect(fuentes(antes).length).toBeGreaterThan(0);
     });
 
-    it('y apagarse tambien', async () => {
-        conLaSalaYaEncendida();
-        await esperar();
-        const antes = marca();
-
-        document.documentElement.setAttribute('data-tube-off', '');
-        await esperar();
-
-        expect(fuentes(antes).length).toBeGreaterThan(0);
-        document.documentElement.removeAttribute('data-tube-off');
-    });
-
-    it('⚠ y QUITAR el atributo no vuelve a sonar', async () => {
+    it('⚠ y que las barras SE VAYAN no vuelve a encender nada', async () => {
         /*
          * Un observador ingenuo dispara con cualquier cambio, asi que el
-         * arranque sonaria dos veces: al empezar y al terminar. Solo cuenta la
-         * aparicion.
+         * encendido sonaria dos veces: al aparecer la imagen y al quitarse. Solo
+         * cuenta la aparicion.
          */
-        document.documentElement.setAttribute('data-booting', '');
-        // ⚠ Se espera a que el arranque TERMINE de sonar antes de marcar: la
-        // busqueda de cabezal llega 620 ms despues del encendido y dura otro
-        // tanto, y midiendo antes se contaban sus cinco golpes como si los
-        // hubiera causado el quitar el atributo. El margen es generoso porque la
-        // suite corre lenta y con 700 ms fallaba de forma intermitente.
+        const barras = document.createElement('div');
+        barras.className = 'boot-bars';
+        document.body.append(barras);
+
+        /*
+         * ⚠ Se espera a que el encendido TERMINE de sonar antes de marcar: la
+         * busqueda de cabezal llega 620 ms despues y dura otro tanto, y midiendo
+         * antes se contaban sus golpes como si los hubiera causado el quitar las
+         * barras. El margen es generoso porque la suite corre lenta.
+         */
         await new Promise((r) => setTimeout(r, 1_800));
         const antes = marca();
 
-        document.documentElement.removeAttribute('data-booting');
+        barras.remove();
         await esperar();
+
+        expect(fuentes(antes)).toHaveLength(0);
+    });
+
+    it('⚠ la carga del reinicio sigue sonando, no da UN golpe y calla', async () => {
+        /*
+         * REPORTADO: «el sonido solo lo escuche una vez luego ya no sale».
+         *
+         * La barra de reinicio del colapso dura ENTRE DIEZ Y CUARENTA SEGUNDOS,
+         * y mas cuanto mas hayas insistido. Sonaba una vez al aparecer y despues
+         * se quedaba muda todo ese rato — que es, con diferencia, el tramo mas
+         * largo de silencio de todo el producto, y encima el mas tenso.
+         *
+         * ⚠ Y no era solo el hueco: el zumbido de fondo se apaga tras
+         * `IDLE_MS` sin actividad, o sea que a los cuarenta segundos de barra la
+         * maquina se quedaba MUERTA del todo justo mientras trabajaba.
+         *
+         * Un cabezal que busca cada tanto arregla las dos cosas con el mismo
+         * gesto, y es lo que hacia una maquina de verdad leyendo para volver.
+         */
+        const carga = document.createElement('div');
+        carga.className = 'collapse-reboot';
+
+        conLaSalaYaEncendida();
+        await esperar();
+        document.body.append(carga);
+        await esperar();
+
+        // Ya sono el primer golpe. Se marca DESPUES, y lo que se mide es si
+        // vuelve a sonar sin que nadie toque nada.
+        const antes = marca();
+        // ⚠ El hueco MAXIMO, no el nominal: el cabezal lleva jitter, y esperar
+        // `SEEK_MS` a secas falla una de cada tantas sin que nada este roto.
+        await new Promise((r) => setTimeout(r, SEEK_MS * (1 + SEEK_JITTER) + 400));
+
+        expect(fuentes(antes).length).toBeGreaterThan(0);
+        carga.remove();
+    });
+
+    it('y en cuanto la carga se va, el cabezal para', async () => {
+        /*
+         * Sin esto el reinicio dejaria un cabezal buscando para siempre por
+         * debajo del sistema ya recuperado: el fallo clasico del temporizador
+         * que se arma y no se desarma.
+         */
+        const carga = document.createElement('div');
+        carga.className = 'collapse-reboot';
+
+        conLaSalaYaEncendida();
+        await esperar();
+        document.body.append(carga);
+        await esperar();
+
+        carga.remove();
+        await esperar();
+        const antes = marca();
+
+        await new Promise((r) => setTimeout(r, SEEK_MS * (1 + SEEK_JITTER) + 400));
 
         expect(fuentes(antes)).toHaveLength(0);
     });

@@ -8,7 +8,7 @@
 > Las tablas de esta página están **atadas al código por `tests/docs/sonido.test.ts`**.
 > Si alguien cambia un nivel y no lo cambia acá, la suite lo dice.
 
-## ⚠ Cuatro cosas que se aprendieron fallando
+## ⚠ Cinco cosas que se aprendieron fallando
 
 Van primero porque las cuatro costaron una vuelta entera y ninguna se ve leyendo
 el código.
@@ -71,6 +71,19 @@ la misma forma de onda inicial — el filtro cambia, el volumen cambia, y **se o
 igual**, porque el ataque es idéntico y el ataque es lo primero que llega.
 
 Arrancar pasa por una función que no deja olvidarse del desplazamiento.
+
+### 5 · Una voz de dos tiempos sobrevive a su propio apagado
+
+Varias voces tienen un segundo golpe aplazado: el encendido y su cabezal 620 ms
+después, el barrido y su impacto. Ese segundo tiempo vivía en un `setTimeout`
+suelto que nadie cancelaba, así que **apagar el sonido dejaba el golpe en el
+aire** y sonaba después de haberlo apagado.
+
+Se cazó en los tests, y ahí se vio lo que era: un golpe aparecía en una medición
+a la que no pertenecía. Es el mismo fallo que en la app se oye como un ruido sin
+causa. Ahora todo lo que se aplaza se apunta, y el desenchufe se lo lleva por
+delante — porque `parar()` **promete** desenchufar el sonido, y una promesa a
+medias es peor que no prometer nada.
 
 ## Los caminos, en orden
 
@@ -236,9 +249,11 @@ hipótesis: `awardFrom` ya se llama desde nueve sitios distintos.
 | Hallazgos | el almacén del sistema, comparando conjuntos | no |
 | Avería de señal | el mismo almacén | no |
 | Botones y cualquier cosa con cursor de mano | `click` en el documento, en captura | no |
-| Las barras de ajuste | que `.boot-bars` aparezca en pantalla | no |
+| Las barras de ajuste | que `.boot-bars` o `.collapse-bars` aparezcan en pantalla | no |
+| El tubo encendiéndose | que `.boot-bars` aparezca | no |
+| El tubo apagándose | que `.collapse-dying` aparezca | no |
 | La carga tras un colapso | que `.collapse-reboot` aparezca | no |
-| Arranque, barrido, colapso, apagado | los atributos que la app ya pone en el documento | no |
+| Barrido y colapso | los atributos que la app ya pone en el documento | no |
 | El tema cambiando | el mismo atributo `data-theme` | no |
 
 ⚠ **Borrar suena mientras borra, y calla al terminar.** Mantener el retroceso
@@ -254,19 +269,54 @@ doble de velocidad.
 
 ## La máquina encendiéndose y apagándose
 
-Todo esto cuelga de **atributos que la app ya pone en el documento** porque los
-necesita para el CSS —el arranque apaga a sus hermanos, el barrido desvanece la
-app entera—, así que enterarse no le pide nada a nadie:
+Un atributo del documento dice en qué **pantalla** estás; una clase del árbol dice
+qué está pasando **en** ella. Los dos sirven, y confundirlos fue el fallo:
 
-| Atributo | Qué suena |
+| De dónde | Qué suena |
 | --- | --- |
-| `data-booting` | El tubo prendiéndose, y 620 ms después el cabezal buscando |
-| `data-tube-off` | El tubo al que le cortan la corriente |
+| `.boot-bars` aparece | El tubo prendiéndose, y 620 ms después el cabezal buscando |
+| `.collapse-dying` aparece | El tubo al que le cortan la corriente |
+| `.collapse-reboot` aparece | El cabezal, y sigue buscando cada 1 500 ms mientras carga |
 | `data-wiping`, `data-collapsing` | El barrido largo, y un impacto lejano detrás |
 | `data-theme` | Un relé por cada cambio. Es lo que hace el parpadeo del tema roto |
 
 ⚠ **Sólo cuenta la aparición.** Un observador ingenuo dispara con cualquier
 cambio, y entonces el arranque sonaría dos veces: al empezar y al acabar.
+
+### ⚠ El apagado no sonaba, y era un error de modelo
+
+Se reportó así: «el de apagar cuando reiniciamos no sale». Estaba colgado de dos
+atributos, y los dos eran la cosa equivocada.
+
+`data-booting` **no** quiere decir «el tubo se encendió»: quiere decir «la
+pantalla de arranque está puesta». Y esa pantalla **empieza con el equipo
+apagándose** — la primera fase de su guion es el apagón. Colgar el encendido de
+ahí lo disparaba antes del apagado, o sea al revés de como pasa; y como encender y
+apagar son la misma familia, la compuerta de 60 ms se tragaba entero el apagado
+que venía detrás.
+
+`data-tube-off` era peor: sólo lo pone la pantalla de arranque cuando su guion
+pasa por la fase de apagón, y **el reinicio del colapso arranca el guion desde las
+barras**. Esa fase no existe ahí, así que el atributo no aparecía nunca.
+
+Lo que suena no es la pantalla, son sus **fases**, y una fase se ve. `.collapse-dying`
+ya la comparten las tres pantallas que apagan un tubo —el arranque, el colapso y el
+barrido— porque las tres pintan el mismo cierre a un punto. Una marca que ya se
+comparte no se puede quedar a medias como se quedaba el atributo.
+
+### ⚠ Y el reinicio se quedaba mudo medio minuto
+
+La otra mitad del mismo informe: «el sonido sólo lo escuché una vez, luego ya no
+sale». La barra de reinicio del colapso dura **entre diez y cuarenta segundos**, y
+más cuanto más hayas insistido. Sonaba una vez al aparecer y después nada — el
+tramo de silencio más largo del producto, y el más tenso.
+
+Y había una segunda mitad peor: el zumbido de fondo se apaga tras 40 000 ms sin
+actividad, así que en un reinicio largo la máquina se quedaba **muerta del todo
+justo mientras trabajaba**. Un cabezal que vuelve a buscar cada 1 500 ms arregla
+las dos cosas con el mismo gesto, porque cada golpe cuenta como actividad. Con
+jitter: a compás sonaría a metrónomo, y un disco buscando nunca encuentra dos
+veces a la misma distancia.
 
 ⚠ **Y un botón NO es una tecla.** Son dos objetos distintos: una tecla tiene
 cuerpo de plástico y de placa, un botón es un chasquido más seco y más corto. Si

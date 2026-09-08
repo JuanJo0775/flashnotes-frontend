@@ -17,7 +17,7 @@
 import { readFileSync } from 'node:fs';
 import { GATE_MS, PEAK_DBFS, type SoundCategory } from '@/lib/system/audio/mix';
 import { CATEGORY_OF } from '@/lib/system/audio/voices';
-import { IDLE_MS } from '@/lib/system/audio/wire';
+import { IDLE_MS, SEEK_MS } from '@/lib/system/audio/wire';
 
 const DOC = readFileSync('docs/SONIDO.md', 'utf8').replace(/\r/g, '');
 
@@ -106,6 +106,19 @@ describe('lo que el documento promete de sí mismo', () => {
         const sinSeparadores = DOC.replace(/(\d)[\s ](\d)/g, '$1$2');
 
         expect(sinSeparadores).toContain(`${IDLE_MS} ms`);
+    });
+
+    it('⚠ y el ritmo del cabezal, que es lo que TAPA ese hueco', () => {
+        /*
+         * Los dos numeros solo se entienden juntos: la barra de reinicio puede
+         * durar mas que `IDLE_MS`, asi que sin un sonido que la acompane la
+         * maquina se quedaria muerta justo mientras trabaja. Que el documento
+         * lleve los dos atados evita que alguien suba uno sin mirar el otro.
+         */
+        const sinSeparadores = DOC.replace(/(\d)[\s ](\d)/g, '$1$2');
+
+        expect(sinSeparadores).toContain(`${SEEK_MS} ms`);
+        expect(SEEK_MS).toBeLessThan(IDLE_MS);
     });
 
     it('⚠ y no se olvida de que el silencio es CERO', () => {

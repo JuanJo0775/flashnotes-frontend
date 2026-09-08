@@ -62,11 +62,19 @@ export default function BootGate({ onReady }: { onReady: () => void }) {
             return;
         }
 
-        // En el documento y no en el botón: cualquier tecla vale, y el foco
-        // podría estar en otra parte.
+        /*
+         * En el documento y no sólo en el botón: la pantalla dice «cualquier
+         * tecla», así que cualquier tecla tiene que valer aunque el foco esté en
+         * otra parte. Y el clic igual — quien llega con el ratón hace clic donde
+         * mira, no necesariamente encima del texto.
+         */
         document.addEventListener('keydown', abrir);
+        document.addEventListener('click', abrir);
 
-        return () => document.removeEventListener('keydown', abrir);
+        return () => {
+            document.removeEventListener('keydown', abrir);
+            document.removeEventListener('click', abrir);
+        };
     }, [hacefalta, abrir]);
 
     if (!hacefalta) return null;
@@ -74,23 +82,32 @@ export default function BootGate({ onReady }: { onReady: () => void }) {
     return (
         <div className="boot-screen">
             {/*
-                Un botón de verdad y no un `div` con `onClick`: esta pantalla es
-                lo único que hay entre alguien y su cuaderno, así que tiene que
-                poder activarse con el teclado, anunciarse a un lector de
-                pantalla y recibir el foco. La estética no cambia nada de eso.
+                ⚠ LA MISMA COLUMNA QUE USA EL ARRANQUE DE VERDAD. La primera
+                versión ponía el botón en `position: absolute` y el pie como
+                hermano centrado, así que se pintaban UNO ENCIMA DEL OTRO. La
+                pantalla de arranque es una fila centrada: lo que se apila va
+                dentro de una columna, no suelto.
             */}
-            <button
-                type="button"
-                autoFocus
-                onClick={abrir}
-                className="boot-gate"
-                aria-label={t('boot.pressKey')}
-            >
-                <span className="pixel">{t('boot.pressKey')}</span>
-                <span className="cursor-block" aria-hidden="true" />
-            </button>
+            <div className="boot-logo">
+                {/*
+                    Un botón de verdad y no un `div` con `onClick`: esta pantalla
+                    es lo único que hay entre alguien y su cuaderno, así que tiene
+                    que poder activarse con el teclado, anunciarse a un lector de
+                    pantalla y recibir el foco.
+                */}
+                <button
+                    type="button"
+                    autoFocus
+                    onClick={abrir}
+                    className="boot-gate"
+                    aria-label={t('boot.pressKey')}
+                >
+                    <span className="pixel">{t('boot.pressKey')}</span>
+                    <span className="cursor-block" aria-hidden="true" />
+                </button>
 
-            <p className="boot-vendor">{BOOT_VENDOR}</p>
+                <p className="boot-vendor">{BOOT_VENDOR}</p>
+            </div>
         </div>
     );
 }

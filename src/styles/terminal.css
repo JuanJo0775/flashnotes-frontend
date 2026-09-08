@@ -1117,13 +1117,10 @@ body > *:not(.boot-screen):not(.wipe-screen):not(.scanline-effect) {
    entra en la ficción, porque las máquinas de la época pedían exactamente eso.
    Ver `BootGate`. */
 .boot-gate {
-    position: absolute;
-    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: calc(var(--spacing) * 2);
-    width: 100%;
     background: none;
     border: 0;
     color: var(--color-ink);
