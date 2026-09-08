@@ -54,6 +54,15 @@ export interface SystemScreen {
 
 export const SYSTEM_SCREENS: readonly SystemScreen[] = [
     {
+        id: 'gate',
+        componente: 'BootGate',
+        nombre: 'Pulse una tecla',
+        que: 'La puerta del arranque: la máquina espera un gesto antes de encenderse.',
+        cuando: 'Lo primero de todo, y sólo la primera vez de cada visita.',
+        como: 'directo',
+        inerte: 'dejaría pasar al arranque',
+    },
+    {
         id: 'boot',
         componente: 'BootScreen',
         nombre: 'Arranque',

@@ -12,6 +12,7 @@ import { notesApi } from '@/lib/api/notes.api';
 import TrashView from '@/components/notes/TrashView';
 import WipeScreen from '@/components/effects/WipeScreen';
 import BootScreen from '@/components/effects/BootScreen';
+import BootGate from '@/components/effects/BootGate';
 import type { BootPhase } from '@/lib/system/boot';
 import V02TrashView from '@/components/notes/V02TrashView';
 import DiagnosticPanel from '@/components/system/DiagnosticPanel';
@@ -139,6 +140,14 @@ export default function Home() {
      * Quien ya hizo parte del recorrido pide otro tramo — ver `bootScript`.
      */
     const [booting, setBooting] = useState<BootPhase | null>('off');
+    /**
+     * Si todavía se espera el primer gesto.
+     *
+     * ⚠ SÓLO ANTES DEL PRIMER ARRANQUE. Los reinicios —`//reset`, el colapso—
+     * ya vienen DESPUÉS de un gesto, así que ahí el audio está desbloqueado y
+     * volver a pedir una tecla sería un peaje sin motivo.
+     */
+    const [esperandoGesto, setEsperandoGesto] = useState(true);
 
     // Lo mínimo que los comandos y el panel necesitan saber de las notas: nombre
     // y tamaño. No se les pasa el contenido — lo que escribís no se lee.
@@ -685,7 +694,16 @@ export default function Home() {
             {/* El bloqueo lo lee él del almacenamiento: pasárselo desde acá no
                 servía, porque en el primer render del cliente todavía dice que
                 no lo hay (REGLAS · C2). */}
-            {booting !== null && (
+            {/*
+                LA PUERTA, y después el arranque. Ver `BootGate`: el navegador no
+                deja sonar hasta que hay un gesto, así que el arranque entero
+                —barras, rótulo, comprobación— transcurría mudo. Pedir la tecla
+                es la única salida, y encaja: las máquinas de esa época hacían
+                exactamente eso.
+            */}
+            {esperandoGesto && <BootGate onReady={() => setEsperandoGesto(false)} />}
+
+            {!esperandoGesto && booting !== null && (
                 <BootScreen from={booting} onDone={() => setBooting(null)} />
             )}
 

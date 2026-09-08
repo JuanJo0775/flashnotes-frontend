@@ -401,6 +401,7 @@ export function startSound(): () => void {
      * lo nota hasta que el tono se queda sonando sobre el logo.
      */
     let cargando = false;
+    let comprobando = false;
 
     const mirarBarras = () => {
         if (document.querySelector('.boot-bars')) startBarsTone();
@@ -422,6 +423,25 @@ export function startSound(): () => void {
         }
 
         cargando = hayCarga;
+
+        /*
+         * EL BIP DE POST, y es referencia real de la industria: un PC que pasaba
+         * su autoprueba de encendido daba UN pitido corto y agudo. Es la señal de
+         * «memoria contada, todo bien», y la reconoce cualquiera que haya oído
+         * arrancar un ordenador de los noventa.
+         *
+         * ⚠ Va en la comprobación y no antes: el bip no anuncia que empieza,
+         * CERTIFICA que terminó bien. Al principio estaría diciendo que salió
+         * bien antes de haberlo mirado.
+         */
+        const hayCheck = !!document.querySelector('.boot-check');
+
+        if (hayCheck && !comprobando) {
+            huboActividad();
+            play('beep', { hz: 1_050, ms: 110 });
+        }
+
+        comprobando = hayCheck;
     };
 
     const observadorBarras = new MutationObserver(mirarBarras);

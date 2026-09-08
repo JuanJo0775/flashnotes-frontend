@@ -1111,3 +1111,23 @@ body > *:not(.boot-screen):not(.wipe-screen):not(.scanline-effect) {
 .wipe-bars > span {
     flex: 1;
 }
+
+/* La puerta del arranque: «pulse una tecla».
+   Existe por una ley del navegador —el audio no arranca sin un gesto— y de paso
+   entra en la ficción, porque las máquinas de la época pedían exactamente eso.
+   Ver `BootGate`. */
+.boot-gate {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--spacing) * 2);
+    width: 100%;
+    background: none;
+    border: 0;
+    color: var(--color-ink);
+    font-size: var(--text-xl);
+    letter-spacing: 0.08em;
+    cursor: pointer;
+}

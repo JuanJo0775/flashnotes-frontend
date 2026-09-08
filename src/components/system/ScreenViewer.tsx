@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import BootScreen from '@/components/effects/BootScreen';
+import BootGate from '@/components/effects/BootGate';
 import WipeScreen from '@/components/effects/WipeScreen';
 import SystemCollapse from '@/components/effects/SystemCollapse';
 import SystemLockout from '@/components/effects/SystemLockout';
@@ -64,6 +65,9 @@ const COLAPSO_SUAVE = { rebootMs: 4_000, intensity: 1, lockout: false };
 
 function Contenido({ pantalla, reiniciar }: { pantalla: SystemScreen; reiniciar: () => void }) {
     switch (pantalla.id) {
+        case 'gate':
+            // Inerte: acá no deja pasar a ningún sitio, sólo se enseña.
+            return <BootGate onReady={INERTE} />;
         case 'boot':
             return <BootScreen onDone={reiniciar} />;
         case 'wipe':

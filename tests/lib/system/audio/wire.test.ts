@@ -502,6 +502,34 @@ describe('la maquina encendiendose y apagandose', () => {
         expect(barsToneIsOn()).toBe(false);
     });
 
+    it('⚠ la comprobacion de memoria da el BIP DE POST', async () => {
+        /*
+         * REFERENCIA REAL DE LA INDUSTRIA, no una invencion: un PC que pasaba su
+         * autoprueba de encendido daba UN pitido corto. Uno solo, y agudo. Es la
+         * senal de «memoria contada, todo bien» y la reconoce cualquiera que
+         * haya oido arrancar un ordenador de los noventa.
+         *
+         * Va en la fase de comprobacion y no antes: el bip no anuncia que
+         * empieza, certifica que TERMINO bien. Ponerlo al principio seria decir
+         * que salio bien antes de mirarlo.
+         */
+        const check = document.createElement('pre');
+        check.className = 'boot-check';
+
+        conLaSalaYaEncendida();
+        await esperar();
+        const antes = marca();
+
+        document.body.append(check);
+        await esperar();
+
+        const osciladores = fuentes(antes).filter((n) => n.kind === 'oscillator');
+
+        expect(osciladores.length).toBeGreaterThan(0);
+        expect(osciladores[0].type).toBe('square');
+        check.remove();
+    });
+
     it('⚠ la carga del colapso tambien suena', async () => {
         /*
          * MEDIDO JUGANDO: tras un colapso, la app NO enseña el arranque con

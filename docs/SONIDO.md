@@ -326,17 +326,34 @@ CRT, que sobre el papel encajaba —lo que se ve también se oye— y escuchánd
 molestaba. Un fondo que pulsa reclama atención, y un fondo que reclama atención
 deja de ser un fondo. Lo continuo tiene que ser plano.
 
-## Lo que el navegador impone
+## ⚠ «PULSE UNA TECLA», y por qué existe
 
-Todo `AudioContext` nace suspendido hasta que hay un gesto. En la **primera
-visita de la vida** no hay forma de sonar, y el arranque es mudo. No es un
-obstáculo: la máquina está muda hasta que la tocás.
+Todo `AudioContext` nace suspendido y **ningún navegador lo deja arrancar hasta
+que hay un gesto del usuario**. Es una política contra la publicidad con sonido y
+no tiene vuelta: cualquier cosa programada antes queda muda. Por eso el arranque
+entero —barras, rótulo, comprobación— transcurría en silencio, y no había forma
+de arreglarlo desde el código del sonido.
 
-⚠ **Pero se intenta igual, y no es inútil.** Chrome levanta esa restricción en
-sitios con los que ya has interactuado bastante, así que en las visitas
-siguientes el arranque SÍ puede sonar — y no intentarlo era garantizar que no
-sonara nunca. Si el navegador lo bloquea no pasa nada: el contexto queda dormido
-y el primer gesto lo despierta, porque `ensureAudio` reintenta en cada llamada.
+La única salida honesta es que el producto **pida** el gesto. Y da la casualidad
+de que las máquinas de esa época hacían exactamente eso, así que la limitación
+entra en la ficción sin forzarla: lo que era un impedimento técnico pasa a ser el
+primer gesto de encender la máquina.
+
+Aparece **sólo antes del primer arranque** —los reinicios ya vienen después de un
+gesto— y **sólo si hay sonido que desbloquear**: con el sonido apagado sería un
+paso de más entre alguien y sus notas, que es lo que prohíbe la regla A2.
+
+## La cadena del arranque, con la referencia de la industria
+
+| Fase | Qué suena | De dónde sale |
+| --- | --- | --- |
+| Encendido | Golpe de corriente y el flyback subiendo | Un CRT al que le dan tensión |
+| **Barras** | El tono de **1 kHz** | La carta de ajuste de televisión, calibrando nivel |
+| **Rótulo** | La búsqueda de cabezal | Un disco leyendo para arrancar |
+| **Comprobación** | **El bip de POST** | Un PC que pasa su autoprueba da UN pitido corto |
+
+⚠ **El bip va en la comprobación y no antes.** No anuncia que empieza: CERTIFICA
+que terminó bien. Al principio estaría diciendo que salió bien antes de mirarlo.
 
 ## Dónde escucharlo
 

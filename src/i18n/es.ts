@@ -192,6 +192,7 @@ export const es = {
     'diag.coreMeter': 'Temperatura del núcleo: {temp} de {max} grados',
     'diag.effects': '[EFECTOS: {state}]',
     'diag.sound': '[SONIDO: {state}]',
+    'boot.pressKey': 'PULSE UNA TECLA PARA CONTINUAR',
     'diag.close': '[✗] Cerrar',
 
     // vsync-test (el pong escondido, ver docs/SECRETOS.md)
