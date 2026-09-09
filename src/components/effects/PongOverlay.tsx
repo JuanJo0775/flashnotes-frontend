@@ -474,7 +474,23 @@ export default function PongOverlay({
                         limpia, y una pantalla limpia y quieta parece apagada. El
                         grano cuenta que el tubo sigue encendido esperandote.
                     */}
-                    {pausa && !game.over && <div className="wall-grain" aria-hidden="true" />}
+                    {pausa && !game.over && (
+                        /*
+                            ⚠ Y VA DENTRO DE UN RECORTE. El grano de la casa se
+                            pinta con 20% de sobra por los cuatro lados para que
+                            al saltar no descubra un canto, y la mesa del pong no
+                            recorta nada: el rectángulo se salía por arriba y por
+                            los lados y se le veía dar saltos por encima del
+                            marcador —«se ve feo y temblando»—.
+
+                            Recortado a la mesa se queda lo que se pedía: el
+                            grano hirviendo, quieto en su sitio, removiéndose
+                            dentro del campo.
+                        */
+                        <div className="pong-grain" aria-hidden="true">
+                            <div className="wall-grain" />
+                        </div>
+                    )}
 
                     {/*
                      * Decorativo para quien escucha: un lector de pantalla

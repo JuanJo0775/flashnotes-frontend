@@ -554,6 +554,20 @@ describe('PongOverlay · los dos efectos prestados', () => {
         expect(capa('loose-slab')).not.toBeNull();
     });
 
+    test('⚠ y el grano va recortado a la mesa, que por eso se veía temblar', () => {
+        /*
+         * `.wall-grain` se pinta con 20% de sobra por los cuatro lados para que
+         * al saltar no descubra un canto. La mesa no recortaba nada, así que el
+         * rectángulo asomaba y daba saltos por encima del marcador —«se ve feo y
+         * temblando»—. El recorte es lo que lo deja quieto en su sitio SIN
+         * quitarle el movimiento, que es lo que se pidió.
+         */
+        render(<PongOverlay open onClose={jest.fn()} />);
+        fireEvent.keyDown(window, { key: 'Escape' });
+
+        expect(capa('wall-grain')!.parentElement).toHaveClass('pong-grain');
+    });
+
     test('el grano hirviendo sale con el juego parado, y se va al seguir', () => {
         // «Y cuando está en pausa quiero el grano hirviendo». Con la pelota
         // quieta la pantalla se queda demasiado limpia, y una pantalla limpia y

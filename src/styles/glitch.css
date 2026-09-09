@@ -1213,6 +1213,25 @@
     border-bottom: 1px solid var(--color-ink);
 }
 
+/*
+ * EL RECORTE DEL GRANO PRESTADO.
+ *
+ * ⚠ EXISTE POR UN DESBORDE, no por gusto. `.wall-grain` se pinta con `inset:
+ * -20%` a propósito: así, cuando el ruido salta, no descubre ningún canto. En el
+ * agujero de la pared eso no se nota porque el hueco recorta; la mesa del pong
+ * no recortaba nada, y el rectángulo asomaba por arriba y por los lados dando
+ * saltos por encima del marcador. Se reportó jugando: «se ve feo y temblando».
+ *
+ * El arreglo es el recorte y no quitarle el movimiento: lo que se pidió es el
+ * grano HIRVIENDO, y un grano quieto es una textura.
+ */
+.pong-grain {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
 .pong-court {
     margin: 0;
     font: inherit;
