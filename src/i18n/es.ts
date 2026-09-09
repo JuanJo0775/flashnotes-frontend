@@ -157,6 +157,8 @@ export const es = {
     'status.saving': '[GUARDANDO',
     'status.saved': '[GUARDADO]',
     'status.notSaved': '[NO_GUARDADO]',
+    'power.label': '[REINICIAR]',
+    'power.hint': 'MANTENER PULSADO PARA APAGAR Y ENCENDER',
     'status.files': 'ARCHIVOS: {n}',
     'status.noteSize': '[NOTA {used}/{max}]',
     'status.noteUsage': 'Espacio usado en la nota abierta',

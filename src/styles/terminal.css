@@ -999,6 +999,48 @@
     font-family: var(--font-mono);
 }
 
+/* EL BOTÓN DE ENCENDIDO, en el panel frontal: junto al piloto de estado.
+
+   ⚠ ES UN `nav-tab`, COMO LOS MANDOS DE ARRIBA, y acá sólo va lo que ese estilo
+   no puede saber. Tuvo una caja propia con su borde y su relleno, y se reportó
+   al verlo: un control que se comporta como los demás y se pinta distinto
+   obliga a aprenderlo dos veces.
+
+   ⚠ HAY QUE MANTENERLO PULSADO, y el relleno es lo que lo cuenta. Un toque
+   suelto costaría el ciclo entero —ocho segundos, sin cancelar— y está al
+   alcance de cualquier roce. Ninguna máquina se reinicia de un roce. */
+.power-button {
+    position: relative;
+    /* Ni se encoge ni se estira: la barra reparte el resto, y un botón que
+       cambia de ancho movería el piloto de estado de sitio. */
+    flex: none;
+}
+
+/* LA CUENTA: una segunda copia del rótulo, encima y con los colores del
+   «activo» —los mismos con los que esta app dice que algo está seleccionado—,
+   que SUBE desde abajo mientras sostenés y BAJA al soltar.
+
+   ⚠ EL RECORTE LO PONE EL COMPONENTE, EN LÍNEA, Y NO HAY TRANSICIÓN AQUÍ.
+   Estuvo hecho con `transition: clip-path` y NO CORRÍA: se midió en el
+   navegador —con el movimiento reducido apagado y en un elemento aislado— y el
+   valor se quedaba clavado en el inicial, así que el botón se sostenía y no se
+   veía nada. Se reportó tal cual.
+
+   A pasos no puede fallar, y encima es más de la casa: un terminal llena de a
+   bloques, no con suavizado. Y el dibujo sale del MISMO contador que dispara el
+   reinicio, así que no pueden desincronizarse — antes eran dos números, uno acá
+   y otro en TypeScript, y hacía falta un test para atarlos. */
+.power-fill {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-inverse);
+    color: var(--color-ink);
+    pointer-events: none;
+}
+
 /* EL ENCENDIDO DEL TUBO. El inverso EXACTO del apagón, y por eso funciona.
 
    ⚠ ACÁ HUBO OTRO ENCENDIDO ANTES Y SE QUITÓ, con razón: era una línea que nacía

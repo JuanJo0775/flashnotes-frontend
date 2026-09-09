@@ -137,6 +137,8 @@ export const en: Dictionary = {
     'status.saving': '[SAVING',
     'status.saved': '[SAVED]',
     'status.notSaved': '[NOT_SAVED]',
+    'power.label': '[RESTART]',
+    'power.hint': 'HOLD DOWN TO TURN IT OFF AND ON',
     'status.files': 'FILES: {n}',
     'status.noteSize': '[NOTE {used}/{max}]',
     'status.noteUsage': 'Space used in the open note',

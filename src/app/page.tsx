@@ -149,6 +149,23 @@ export default function Home() {
      */
     const [esperandoGesto, setEsperandoGesto] = useState(true);
 
+    /*
+     * APAGAR Y ENCENDER, sin perder nada. Lo piden DOS sitios: el comando
+     * `//reboot` y el botón del panel de abajo.
+     *
+     * ⚠ ES UNA SOLA FUNCIÓN Y NO DOS IGUALES, y se pidió explícitamente que el
+     * botón hiciera «exactamente lo mismo» que el comando. Dos cierres idénticos
+     * cumplen eso el primer día y se separan el día que alguien ajuste uno: no
+     * habría error, sólo dos reinicios que ya no son el mismo.
+     *
+     * ⚠ DESDE EL APAGÓN, y no desde las barras: es lo único que hace el ciclo
+     * ENTERO —apagado, encendido, barras, rótulo, comprobación— y el único sitio
+     * donde se puede OÍR. Una recarga del navegador tiene el mismo dibujo y
+     * llega muda, porque destruye el documento y el nuevo nace sin permiso para
+     * sonar.
+     */
+    const reiniciar = useCallback(() => setBooting('off'), []);
+
     // Lo mínimo que los comandos y el panel necesitan saber de las notas: nombre
     // y tamaño. No se les pasa el contenido — lo que escribís no se lee.
     const noteSummaries = useMemo(
@@ -568,13 +585,7 @@ export default function Home() {
                                 notes={noteSummaries}
                                 onOpenDiagnostics={() => setShowDiagnostics(true)}
                                 onCollapse={() => setCollapse(registerCollapse())}
-                                /*
-                                 * ⚠ DESDE EL APAGÓN, y no desde las barras: es
-                                 * lo único que hace el ciclo ENTERO, y el único
-                                 * sitio donde se puede oír. Una recarga del
-                                 * navegador tiene el mismo dibujo y llega muda.
-                                 */
-                                onReboot={() => setBooting('off')}
+                                onReboot={reiniciar}
                                 onPlayPong={() => setPlayingPong(true)}
                                 onKillPage={() => setDead(true)}
                                 onWipe={alBorrar}
@@ -615,6 +626,7 @@ export default function Home() {
 
                 {enCaja(
                     <StatusBar
+                    onReboot={reiniciar}
                     notesCount={totalVisible}
                     isLoading={isLoading}
                     error={error ?? historyError}

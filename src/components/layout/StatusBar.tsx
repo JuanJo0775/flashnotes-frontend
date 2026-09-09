@@ -3,6 +3,7 @@
 
 import { useEffect } from 'react';
 import ProgressBar from '@/components/ui/ProgressBar';
+import PowerButton from '@/components/layout/PowerButton';
 import { useNetworkStatus, clearLastOutage } from '@/hooks/useNetworkStatus';
 import { formatDuration } from '@/lib/utils/formatters';
 import { useSystemFragment } from '@/hooks/useSystemFragment';
@@ -14,6 +15,13 @@ import type { Message } from '@/i18n';
 import type { SaveState } from '@/types/note.types';
 
 interface StatusBarProps {
+    /**
+     * `//reboot` desde la barra: apagar y encender, sin perder nada.
+     *
+     * Opcional porque esta barra se pinta también en sitios donde no hay
+     * máquina que reiniciar — el visor de pantallas del banco, por ejemplo.
+     */
+    onReboot?: () => void;
     notesCount: number;
     isLoading: boolean;
     /** Sin traducir: se resuelve acá, para que siga al idioma. */
@@ -56,6 +64,7 @@ export default function StatusBar({
     saveState,
     openNoteLength,
     onOpenDiagnostics,
+    onReboot,
 }: StatusBarProps) {
     const { isOnline, backendReachable, isChecking, lastOutageMs } = useNetworkStatus();
     const fragment = useSystemFragment();
@@ -175,19 +184,41 @@ export default function StatusBar({
             : Math.min(100, Math.round((openNoteLength / LIMITS.CONTENT_MAX) * 100));
 
     return (
-        <footer className="status-bar" role="status" aria-live="polite">
+        <footer className="status-bar">
             {/* El atajo del panel va SOLO en el hueco del estado del sistema, no
                 en toda la barra: antes, un Alt+clic sobre [GUARDADO] o sobre el
                 mensaje de error también lo abría, y el secreto tiene que estar
                 donde dice que está.
                 [SYSTEM_OK] se queda como texto plano —sin role ni tabindex—
-                porque esta barra es una región viva: un objetivo enfocable aquí
-                dentro es incómodo con lector de pantalla, y el panel ya tiene su
-                vía accesible por teclado con el comando //diag.
+                porque vive DENTRO de la región que se anuncia sola, y un objetivo
+                enfocable ahí es incómodo con lector de pantalla. El panel ya tiene
+                su vía accesible por teclado con el comando //diag.
+
+                El botón de encendido sí es un botón de verdad porque está FUERA
+                de esa región: ver más abajo.
 
                 Es Alt+clic y no Ctrl+clic a propósito: en macOS Ctrl+clic ES el
                 clic secundario y abre el menú contextual. */}
             <div className="flex items-center gap-4 min-w-0">
+                {/*
+                    EL BOTÓN DE ENCENDIDO, junto al piloto de estado: es el panel
+                    frontal de la máquina, con su luz y su interruptor.
+
+                    ⚠ VA FUERA DE LA REGIÓN VIVA, Y POR ESO SE MOVIÓ ELLA. Antes
+                    `role="status" aria-live="polite"` envolvía la barra ENTERA,
+                    y un objetivo enfocable dentro de una región que se anuncia
+                    sola es incómodo: el lector interrumpe encima del botón cada
+                    vez que algo cambia.
+
+                    Estrecharla a lo que de verdad se anuncia no es un rodeo para
+                    meter el botón: es lo correcto, y arregla algo que ya estaba
+                    mal. Con la barra entera viva, el TAMAÑO DE LA NOTA —que
+                    cambia en cada tecla— también se anunciaba. Una voz que
+                    interrumpe con cada letra no es encantadora, es hostil.
+                */}
+                {onReboot && <PowerButton onReboot={onReboot} />}
+
+                <div className="flex items-center gap-4 min-w-0" role="status" aria-live="polite">
                 {/* El hueco reserva el ancho del fragmento más largo, en `ch`.
                     En monoespaciada 1ch es el avance exacto de un carácter, así
                     que se cuenta en vez de medirse — el mismo principio que
@@ -222,6 +253,7 @@ export default function StatusBar({
                         {t(error.key, error.vars)}
                     </span>
                 )}
+                </div>
             </div>
 
             <div className="flex items-center gap-4 shrink-0">
