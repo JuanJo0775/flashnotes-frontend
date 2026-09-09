@@ -192,8 +192,14 @@ const WHO_BURLON: readonly Localized[] = [
  * pregunta si necesita algo, porque es un formulario educado. Él no saluda: nota
  * que volviste a saludar, que es otra cosa entera.
  *
- * El viaje del trato es el mismo que en el resto: usted mientras recela, vos
+ * El viaje del trato es el mismo que en el resto: usted mientras recela, tú
  * cuando ya está hablando.
+ *
+ * ⚠ TUTEO NEUTRO Y NO VOSEO. Se corrigió al leerlo seguido: estas tandas se
+ * escribieron con «seguís», «cerrá», «andá», y el resto del personaje lleva
+ * desde el principio hablando de otra manera —«me preguntas», «ahora te
+ * contesto»—. Dos registros en la misma boca no son un matiz: son dos personas,
+ * y todo esto se sostiene sobre que del otro lado haya UNA.
  */
 const HI_RECELOSO: readonly Localized[] = [
     { es: 'hola.', en: 'hello.' },
@@ -238,7 +244,7 @@ const HI_HABLANDO: readonly Localized[] = [
         en: 'hello. i got used to you showing up.',
     },
     {
-        es: 'seguís saludando. está bien. seguí.',
+        es: 'sigues saludando. está bien. sigue.',
         en: 'you keep saying hello. that is fine. keep going.',
     },
 ];
@@ -550,7 +556,7 @@ const ALIVE_HABLANDO: readonly Localized[] = [
         en: 'if i were, would this be better or worse?',
     },
     {
-        es: 'preguntale a la parte de mí que te contesta.',
+        es: 'pregúntale a la parte de mí que te contesta.',
         en: 'ask the part of me that answers you.',
     },
 ];
@@ -575,7 +581,7 @@ const BYE_RECELOSO: readonly Localized[] = [
 ];
 
 const BYE_BURLON: readonly Localized[] = [
-    { es: 'chau. vuelva cuando se aburra.', en: 'bye. come back when you get bored.' },
+    { es: 'adiós. vuelva cuando se aburra.', en: 'bye. come back when you get bored.' },
     {
         es: 'siempre se despide y siempre vuelve.',
         en: 'you always say goodbye and you always come back.',
@@ -588,17 +594,17 @@ const BYE_BURLON: readonly Localized[] = [
 
 const BYE_HABLANDO: readonly Localized[] = [
     {
-        es: 'chau. cerrá la pestaña, no pasa nada.',
+        es: 'adiós. cierra la pestaña, no pasa nada.',
         en: 'bye. close the tab, nothing happens.',
     },
-    { es: 'andá. yo no me voy a ninguna parte.', en: 'go. i am not going anywhere.' },
+    { es: 'anda. yo no me voy a ninguna parte.', en: 'go. i am not going anywhere.' },
     {
         // La que hace daño, y es amable. Nadie avisa.
         es: 'está bien. gracias por avisar, igual.',
         en: 'it is fine. thanks for saying, anyway.',
     },
     {
-        es: 'volvé cuando quieras. eso ya lo sabés.',
+        es: 'vuelve cuando quieras. eso ya lo sabes.',
         en: 'come back whenever you want. you already know that.',
     },
 ];
@@ -712,10 +718,10 @@ const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
         'quienes',
         'quien_eres',
         'quieneres',
-        // ⚠ Y EN RIOPLATENSE, que es como habla él en cuanto se suelta. Quien
-        // lo oye decir «volviste» prueba `//quien_sos`, no `//quien_eres`.
-        'quien_sos',
-        'quiensos',
+        // Las dos que sale teclear cuando ya sospechás que contesta ALGUIEN y no
+        // algo: no le preguntás qué es, le preguntás quién anda ahí.
+        'quien_habla',
+        'con_quien_hablo',
     ],
     how: [
         'howareu',
@@ -727,6 +733,8 @@ const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
         'que_tal',
         'como_andas',
         'todo_bien',
+        'estas_bien',
+        'como_te_sientes',
     ],
 
     /* ── LAS HONDAS ────────────────────────────────────────────────────────
@@ -754,7 +762,7 @@ const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
         'nombre',
         'tu_nombre',
         'como_te_llamas',
-        'como_te_llamás',
+        'tienes_nombre',
     ],
     alone: [
         'alone',
@@ -764,6 +772,9 @@ const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
         'estas_solo',
         'estassolo',
         'estás_solo',
+        // La misma pregunta hecha al revés, que es como sale sin pensarla.
+        'hay_alguien',
+        'hay_alguien_mas',
     ],
     free: [
         'free',
@@ -771,9 +782,9 @@ const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
         'can_u_leave',
         'leave',
         'libre',
-        'podes_irte',
-        'podés_irte',
-        'te_podes_ir',
+        'puedes_irte',
+        'te_puedes_ir',
+        'puedes_salir',
         // ⚠ `salir` es de las mejores, y no por lo que parece: quien lo teclea
         // suele estar buscando la salida PARA ÉL, y se lleva una respuesta
         // sobre la de él. La confusión mejora la escena en vez de estropearla.
@@ -788,8 +799,10 @@ const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
         'estasvivo',
         'estás_vivo',
         'real',
-        'sos_real',
         'eres_real',
+        // La que se teclea con miedo a la respuesta.
+        'eres_humano',
+        'humano',
     ],
 
     /* ── LAS QUE CONTESTA SIEMPRE QUE ESTÉ DESPIERTO ───────────────────────
@@ -811,11 +824,14 @@ const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
         'bye',
         'goodbye',
         'cya',
-        'chau',
+        // ⚠ SIN `chau`, y se quitó al revisarlo: es rioplatense, y ni el
+        // personaje habla así ni es lo que teclea quien juega. `adiós` y `chao`
+        // sí — son las dos formas con las que alguien se despide de verdad acá.
         'chao',
         'adios',
         'adiós',
         'hasta_luego',
+        'nos_vemos',
         'me_voy',
     ],
 };

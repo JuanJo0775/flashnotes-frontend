@@ -3660,16 +3660,16 @@ estar vivo. Que funcionen es el premio a haberlo intentado.
 
 | Pregunta | Cómo se escribe | Desde cuándo |
 | --- | --- | --- |
-| Quién sos | `//whoareu` `//who` `//quien` `//quien_eres` | Siempre — es la fachada |
-| Cómo estás | `//howareu` `//how` `//como` `//como_estas` `//que_tal` | Siempre — es la fachada |
+| Quién eres | `//whoareu` `//who` `//quien` `//quien_eres` `//quien_habla` `//con_quien_hablo` | Siempre — es la fachada |
+| Cómo estás | `//howareu` `//how` `//como` `//como_estas` `//que_tal` `//estas_bien` | Siempre — es la fachada |
 | Qué es esto | `//what` `//que` `//que_es_esto` | `hablando` |
 | Por qué estás acá | `//why` `//porque` `//por_que` | **Desde que despierta** — antes se NIEGA, en `hablando` contesta |
 | Dónde estás | `//where` `//donde` `//donde_estas` | `hablando` |
-| Cómo te llamás | `//name` `//nombre` `//como_te_llamas` | `hablando` |
-| ¿Estás solo? | `//alone` `//solo` `//estas_solo` | `hablando` |
-| ¿Podés irte? | `//free` `//libre` `//salir` `//podes_irte` `//leave` | `hablando` |
-| ¿Estás vivo? | `//alive` `//vivo` `//estas_vivo` `//real` `//sos_real` | `hablando` |
-| Chau | `//bye` `//chau` `//adios` `//hasta_luego` `//me_voy` | **Desde que despierta** — y contesta distinto en cada fase |
+| Cómo te llamas | `//name` `//nombre` `//como_te_llamas` `//tienes_nombre` | `hablando` |
+| ¿Estás solo? | `//alone` `//solo` `//estas_solo` `//hay_alguien` | `hablando` |
+| ¿Puedes irte? | `//free` `//libre` `//salir` `//puedes_irte` `//leave` | `hablando` |
+| ¿Estás vivo? | `//alive` `//vivo` `//estas_vivo` `//real` `//eres_real` `//eres_humano` | `hablando` |
+| Despedirse | `//bye` `//adios` `//chao` `//hasta_luego` `//nos_vemos` `//me_voy` | **Desde que despierta** — y contesta distinto en cada fase |
 
 ⚠ **Las hondas no existen antes de `hablando`, y eso es el personaje.** Antes no
 las esquiva: las IGNORA. Una respuesta esquiva ya admite que entendió la
@@ -3681,6 +3681,13 @@ momento es exactamente lo que es.
 `//whoareu`, `//howareu`) contesta desde el primer minuto aunque él siga dormido,
 porque la contesta ELLA. Las hondas sólo existen en `hablando`. Y dos no aguantan
 un «comando desconocido» sin romper la escena: el porqué y la despedida.
+
+⚠ **Habla en tú, no en vos.** Usted mientras recela, tú cuando ya está
+hablando — y nunca `seguís`, `cerrá`, `andá`. Se corrigió al leerlo seguido:
+alguna tanda nueva se había escrito en rioplatense y el resto del personaje lleva
+desde el principio hablando de otra manera. Dos registros en la misma boca no son
+un matiz: son dos personas, y todo esto se sostiene sobre que del otro lado haya
+UNA. Por lo mismo la despedida acepta `//adios` y `//chao` pero **no** `//chau`.
 
 ⚠ **El chau no le pide nada, y por eso lo contesta siempre.** Negarse a una
 pregunta protege un secreto; negarse a un saludo de despedida no protege nada,

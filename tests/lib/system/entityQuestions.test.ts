@@ -54,17 +54,26 @@ describe('se escriben como uno las escribiría', () => {
         // Las dos nuevas, y en las formas en que se le hablaría de verdad.
         expect(entityQuestionOf('alive')).toBe('alive');
         expect(entityQuestionOf('estas_vivo')).toBe('alive');
-        expect(entityQuestionOf('sos_real')).toBe('alive');
+        expect(entityQuestionOf('eres_real')).toBe('alive');
 
         expect(entityQuestionOf('bye')).toBe('bye');
-        expect(entityQuestionOf('chau')).toBe('bye');
         expect(entityQuestionOf('adios')).toBe('bye');
+        expect(entityQuestionOf('chao')).toBe('bye');
         expect(entityQuestionOf('me_voy')).toBe('bye');
 
-        // ⚠ Y EN RIOPLATENSE, que es como habla él en cuanto se suelta: quien
-        // lo oye decir «volviste» prueba `//quien_sos`, no `//quien_eres`.
-        expect(entityQuestionOf('quien_sos')).toBe('who');
-        expect(entityQuestionOf('podés_irte')).toBe('free');
+        /*
+         * ⚠ Y `chau` NO, que es lo que se corrigió: es rioplatense, y ni el
+         * personaje habla así ni es lo que teclea quien juega. El repertorio
+         * está escrito a mano justamente para poder decidir esto una por una.
+         */
+        expect(entityQuestionOf('chau')).toBeNull();
+
+        // Las preguntas hechas como salen sin pensarlas.
+        expect(entityQuestionOf('quien_habla')).toBe('who');
+        expect(entityQuestionOf('hay_alguien')).toBe('alone');
+        expect(entityQuestionOf('tienes_nombre')).toBe('name');
+        expect(entityQuestionOf('puedes_irte')).toBe('free');
+        expect(entityQuestionOf('eres_humano')).toBe('alive');
 
         expect(entityQuestionOf('nombre')).toBe('name');
         expect(entityQuestionOf('como_te_llamas')).toBe('name');
