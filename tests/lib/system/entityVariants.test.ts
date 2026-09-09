@@ -11,14 +11,25 @@
 import { entityQuestionOf, UNDERSCORE_HINT } from '@/lib/system/entityVoice';
 
 describe('reconoce variantes de la misma pregunta', () => {
-    it('las de «quién sos»', () => {
-        for (const v of ['whoareu', 'who', 'quien', 'quien_eres', 'quienes']) {
+    /*
+     * ⚠ SON CUATRO POR PREGUNTA: dos en inglés y dos en español. La cuenta la
+     * vigila `entityQuestions.test.ts`, que falla con la quinta — este fichero
+     * mira que las que hay lleguen. Las dos cosas hacen falta: que sean pocas y
+     * que las pocas funcionen.
+     *
+     * ⚠ ESTA LISTA SE RECORTÓ, y el recorte ES el arreglo. Tenía `quienes`,
+     * `como` y `comoestas`, de una época en la que cada forma razonable se iba
+     * sumando. Cada una parecía inofensiva; juntas hacían una máquina que te
+     * entiende casi siempre, que es exactamente lo que él no es.
+     */
+    it('las de «quién eres»', () => {
+        for (const v of ['whoareu', 'who', 'quien', 'quien_eres']) {
             expect(entityQuestionOf(v)).toBe('who');
         }
     });
 
     it('las de «cómo estás»', () => {
-        for (const v of ['howareu', 'how', 'como', 'como_estas', 'comoestas']) {
+        for (const v of ['howareu', 'how', 'como_estas', 'que_tal']) {
             expect(entityQuestionOf(v)).toBe('how');
         }
     });

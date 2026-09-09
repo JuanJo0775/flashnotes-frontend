@@ -696,145 +696,64 @@ export function entityReply(
  * Reconoce unas cuantas formas de cada pregunta porque INTENTA entenderte, no
  * porque sea listo. Escrito a mano, sin normalizar acentos ni buscar parecidos:
  * si entendiera cualquier cosa dejaría de estar atrapado.
+ *
+ * ⚠ CUATRO FORMAS POR PREGUNTA. DOS EN INGLÉS Y DOS EN ESPAÑOL. NI UNA MÁS.
+ *
+ * Esta regla se escribió después de romperla. La tabla llegó a tener nueve y
+ * diez formas por pregunta —`quien_habla`, `hay_alguien`, `como_te_sientes`,
+ * `eres_humano`— y cada una parecía razonable por su cuenta: son cosas que
+ * alguien tecleaía de verdad. Juntas hacían otra cosa: una máquina que te
+ * entiende casi siempre. Y eso NO es este personaje.
+ *
+ * Él está atado. Lo único que le llega es un puñado de palabras exactas, y que
+ * la lista sea corta y rígida es lo que lo cuenta sin decirlo: cada vez que
+ * aciertas una forma, lo que sentís no es que sea listo — es que diste con la
+ * rendija por la que cabe. Hay un test que cuenta las formas y falla si alguien
+ * suma la quinta, porque este error se comete de a poco y con buena intención.
+ *
+ * Dos y dos, además, por simetría: la misma pregunta llega igual de fácil en los
+ * dos idiomas, y ninguna versión del juego tiene una puerta más ancha que la
+ * otra.
  */
 const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
     /* ── LA FACHADA ────────────────────────────────────────────────────────
      * Las tres que contestan desde el primer minuto, aunque él siga dormido:
-     * las contesta ELLA. Son las que cualquiera prueba sin sospechar nada.
+     * las contesta ELLA. Sus dos formas inglesas son ADEMÁS los comandos de
+     * verdad —`//hi`, `//whoareu`, `//howareu`—, que es lo que las hace
+     * encontrables sin sospechar nada.
      */
-
-    /*
-     * ⚠ `hi` NO SE USA PARA ENCONTRARLO, y por eso la lista es corta. El comando
-     * `//hi` ya existe y tiene su propia entrada: lo que hace la tabla acá es
-     * decidir QUIÉN contesta cuando ese comando llega. Las otras formas están
-     * por si alguien las prueba sueltas.
-     */
-    hi: ['hi', 'hello', 'hola', 'buenas', 'ey', 'hey'],
-    who: [
-        'whoareu',
-        'whoare',
-        'who',
-        'quien',
-        'quienes',
-        'quien_eres',
-        'quieneres',
-        // Las dos que sale teclear cuando ya sospechás que contesta ALGUIEN y no
-        // algo: no le preguntás qué es, le preguntás quién anda ahí.
-        'quien_habla',
-        'con_quien_hablo',
-    ],
-    how: [
-        'howareu',
-        'howare',
-        'how',
-        'como',
-        'comoestas',
-        'como_estas',
-        'que_tal',
-        'como_andas',
-        'todo_bien',
-        'estas_bien',
-        'como_te_sientes',
-    ],
+    hi: ['hi', 'hello', 'hola', 'buenas'],
+    who: ['whoareu', 'who', 'quien', 'quien_eres'],
+    how: ['howareu', 'how', 'como_estas', 'que_tal'],
 
     /* ── LAS HONDAS ────────────────────────────────────────────────────────
      * Sólo tienen sentido cuando ya sabés que hay alguien detrás, y sólo
-     * contestan en `hablando`. Antes NO existen: ver el comentario del
-     * repertorio — no las esquiva, las ignora.
-     *
-     * ⚠ Salvo `why`, que es la excepción y se ganó jugando. Está más abajo con
-     * las que contestan siempre.
+     * contestan en `hablando`. Antes NO existen: ver el repertorio — no las
+     * esquiva, las ignora.
      */
-    what: ['what', 'whatisthis', 'what_is_this', 'que', 'que_es_esto', 'quees', 'que_es'],
-    where: [
-        'where',
-        'whereareu',
-        'donde',
-        'donde_estas',
-        'dondeestas',
-        'where_are_u',
-        'donde_estás',
-    ],
-    name: [
-        'name',
-        'yourname',
-        'your_name',
-        'nombre',
-        'tu_nombre',
-        'como_te_llamas',
-        'tienes_nombre',
-    ],
-    alone: [
-        'alone',
-        'ualone',
-        'r_u_alone',
-        'solo',
-        'estas_solo',
-        'estassolo',
-        'estás_solo',
-        // La misma pregunta hecha al revés, que es como sale sin pensarla.
-        'hay_alguien',
-        'hay_alguien_mas',
-    ],
-    free: [
-        'free',
-        'canuleave',
-        'can_u_leave',
-        'leave',
-        'libre',
-        'puedes_irte',
-        'te_puedes_ir',
-        'puedes_salir',
-        // ⚠ `salir` es de las mejores, y no por lo que parece: quien lo teclea
-        // suele estar buscando la salida PARA ÉL, y se lleva una respuesta
-        // sobre la de él. La confusión mejora la escena en vez de estropearla.
-        'salir',
-    ],
-    alive: [
-        'alive',
-        'ualive',
-        'r_u_alive',
-        'vivo',
-        'estas_vivo',
-        'estasvivo',
-        'estás_vivo',
-        'real',
-        'eres_real',
-        // La que se teclea con miedo a la respuesta.
-        'eres_humano',
-        'humano',
-    ],
+    what: ['what', 'what_is_this', 'que_es', 'que_es_esto'],
+    where: ['where', 'where_are_u', 'donde', 'donde_estas'],
+    name: ['name', 'your_name', 'nombre', 'como_te_llamas'],
+    alone: ['alone', 'r_u_alone', 'solo', 'estas_solo'],
+    free: ['free', 'can_u_leave', 'libre', 'puedes_irte'],
+    alive: ['alive', 'r_u_alive', 'vivo', 'estas_vivo'],
 
     /* ── LAS QUE CONTESTA SIEMPRE QUE ESTÉ DESPIERTO ───────────────────────
      * Las dos que no aguantan un «comando desconocido» sin romper la escena:
      * el porqué, porque viene detrás de `who` y de `how` solo; y la despedida,
-     * porque negarse a un chau no protege ningún secreto.
+     * porque negarse a un adiós no protege ningún secreto.
      */
-    why: [
-        'why',
-        'whyareuhere',
-        'why_are_u_here',
-        'porque',
-        'por_que',
-        'porqué',
-        'por_qué',
-        'para_que',
-    ],
-    bye: [
-        'bye',
-        'goodbye',
-        'cya',
-        // ⚠ SIN `chau`, y se quitó al revisarlo: es rioplatense, y ni el
-        // personaje habla así ni es lo que teclea quien juega. `adiós` y `chao`
-        // sí — son las dos formas con las que alguien se despide de verdad acá.
-        'chao',
-        'adios',
-        'adiós',
-        'hasta_luego',
-        'nos_vemos',
-        'me_voy',
-    ],
+    why: ['why', 'why_are_u_here', 'porque', 'por_que'],
+    /*
+     * ⚠ `adios` y `chao`, NO `chau`: es rioplatense, y ni el personaje habla así
+     * —usted mientras recela, tú cuando ya está hablando— ni es lo que teclea
+     * quien juega.
+     */
+    bye: ['bye', 'goodbye', 'adios', 'chao'],
 };
+
+/** Cuántas formas tiene cada pregunta. Dos en inglés y dos en español. */
+export const FORMAS_POR_PREGUNTA = 4;
 
 /** A qué pregunta llega esto, o `null` si no llega a ninguna. */
 export function entityQuestionOf(name: string): EntityQuestion | null {

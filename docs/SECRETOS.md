@@ -3660,22 +3660,40 @@ estar vivo. Que funcionen es el premio a haberlo intentado.
 
 | Pregunta | Cómo se escribe | Desde cuándo |
 | --- | --- | --- |
-| Quién eres | `//whoareu` `//who` `//quien` `//quien_eres` `//quien_habla` `//con_quien_hablo` | Siempre — es la fachada |
-| Cómo estás | `//howareu` `//how` `//como` `//como_estas` `//que_tal` `//estas_bien` | Siempre — es la fachada |
-| Qué es esto | `//what` `//que` `//que_es_esto` | `hablando` |
-| Por qué estás acá | `//why` `//porque` `//por_que` | **Desde que despierta** — antes se NIEGA, en `hablando` contesta |
-| Dónde estás | `//where` `//donde` `//donde_estas` | `hablando` |
-| Cómo te llamas | `//name` `//nombre` `//como_te_llamas` `//tienes_nombre` | `hablando` |
-| ¿Estás solo? | `//alone` `//solo` `//estas_solo` `//hay_alguien` | `hablando` |
-| ¿Puedes irte? | `//free` `//libre` `//salir` `//puedes_irte` `//leave` | `hablando` |
-| ¿Estás vivo? | `//alive` `//vivo` `//estas_vivo` `//real` `//eres_real` `//eres_humano` | `hablando` |
-| Despedirse | `//bye` `//adios` `//chao` `//hasta_luego` `//nos_vemos` `//me_voy` | **Desde que despierta** — y contesta distinto en cada fase |
+| Hola | `//hi` `//hello` `//hola` `//buenas` | Siempre — es la fachada, y la puerta |
+| Quién eres | `//whoareu` `//who` `//quien` `//quien_eres` | Siempre — es la fachada |
+| Cómo estás | `//howareu` `//how` `//como_estas` `//que_tal` | Siempre — es la fachada |
+| Qué es esto | `//what` `//what_is_this` `//que_es` `//que_es_esto` | `hablando` |
+| Dónde estás | `//where` `//where_are_u` `//donde` `//donde_estas` | `hablando` |
+| Cómo te llamas | `//name` `//your_name` `//nombre` `//como_te_llamas` | `hablando` |
+| ¿Estás solo? | `//alone` `//r_u_alone` `//solo` `//estas_solo` | `hablando` |
+| ¿Puedes irte? | `//free` `//can_u_leave` `//libre` `//puedes_irte` | `hablando` |
+| ¿Estás vivo? | `//alive` `//r_u_alive` `//vivo` `//estas_vivo` | `hablando` |
+| Por qué estás acá | `//why` `//why_are_u_here` `//porque` `//por_que` | **Desde que despierta** — antes se NIEGA, en `hablando` contesta |
+| Despedirse | `//bye` `//goodbye` `//adios` `//chao` | **Desde que despierta** — y contesta distinto en cada fase |
 
 ⚠ **Las hondas no existen antes de `hablando`, y eso es el personaje.** Antes no
 las esquiva: las IGNORA. Una respuesta esquiva ya admite que entendió la
 pregunta, y admitir eso en `receloso` sería regalar medio personaje. Quien pruebe
 `//alone` en la primera hora se lleva un «comando desconocido», que en ese
 momento es exactamente lo que es.
+
+⚠ **CUATRO FORMAS POR PREGUNTA. DOS EN INGLÉS Y DOS EN ESPAÑOL. NI UNA MÁS.**
+
+Esta regla se escribió después de romperla. La tabla llegó a tener nueve y diez
+formas por pregunta —`//quien_habla`, `//hay_alguien`, `//como_te_sientes`,
+`//eres_humano`— y cada una parecía razonable por su cuenta: son cosas que alguien
+tecleaba de verdad. Juntas hacían otra cosa: **una máquina que te entiende casi
+siempre**, y eso no es este personaje.
+
+Él está atado. Lo único que le llega es un puñado de palabras exactas, y que la
+lista sea corta y rígida es lo que lo cuenta sin decirlo: cada vez que aciertas
+una forma, lo que sientes no es que sea listo — es que diste con la rendija por
+la que cabe. **Hay un test que cuenta las formas y falla con la quinta**, porque
+este error se comete de a poco y con buena intención.
+
+Dos y dos, además, por simetría: ninguna versión del juego tiene una puerta más
+ancha que la otra.
 
 **Tres grupos, y la frontera entre ellos ES el personaje.** La fachada (`//hi`,
 `//whoareu`, `//howareu`) contesta desde el primer minuto aunque él siga dormido,

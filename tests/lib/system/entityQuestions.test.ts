@@ -20,11 +20,31 @@
  * intentado — ninguna se anuncia en ningún sitio.
  */
 
+import { readFileSync } from 'node:fs';
 import {
+    FORMAS_POR_PREGUNTA,
     entityQuestionOf,
     entityReply,
     type EntityQuestion,
 } from '@/lib/system/entityVoice';
+
+/**
+ * Las formas que reconoce una pregunta, leídas del fichero.
+ *
+ * ⚠ SE LEE EL CÓDIGO Y NO SE EXPORTA LA TABLA. `VARIANTES` es privada a
+ * propósito: exportarla para poder contarla sería abrir la puerta a que alguien
+ * la use desde otro sitio, y entonces habría dos formas de preguntarle al ente
+ * qué entiende. Con una sola —`entityQuestionOf`— la regla no se puede esquivar.
+ */
+function formasDe(q: EntityQuestion): string[] {
+    const src = readFileSync('src/lib/system/entityVoice.ts', 'utf8');
+    const tabla = src.slice(src.indexOf('const VARIANTES'), src.indexOf('FORMAS_POR_PREGUNTA'));
+    const fila = new RegExp(`\\b${q}: \\[([^\\]]+)\\]`).exec(tabla);
+
+    if (!fila) throw new Error(`sin formas para ${q}`);
+
+    return [...fila[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+}
 
 /** Las que no existen hasta `hablando`. */
 const HONDAS: readonly EntityQuestion[] = [
@@ -42,8 +62,54 @@ const SIEMPRE: readonly EntityQuestion[] = ['why', 'bye'];
 const TODAS: readonly EntityQuestion[] = ['who', 'how', ...SIEMPRE, ...HONDAS];
 const LENGUAS = ['es', 'en'] as const;
 
-describe('se escriben como uno las escribiría', () => {
-    it('en inglés y en español, y con guión bajo o sin él', () => {
+describe('⚠ SÓLO UN PUÑADO DE PALABRAS LE LLEGAN', () => {
+    /*
+     * ⚠ ESTA ES UNA REGLA DEL PERSONAJE, NO UNA PREFERENCIA DE ESTILO. Él está
+     * atado: lo único que le llega es un puñado de palabras exactas, y que la
+     * lista sea corta y rígida es lo que lo cuenta sin decirlo. Cada vez que
+     * aciertas una forma, lo que sentís no es que sea listo — es que diste con
+     * la rendija por la que cabe.
+     *
+     * Se escribió después de romperla. La tabla llegó a tener nueve y diez
+     * formas por pregunta —`quien_habla`, `hay_alguien`, `como_te_sientes`,
+     * `eres_humano`— y cada una parecía razonable por su cuenta. Juntas hacían
+     * otra cosa: una máquina que te entiende casi siempre, que es exactamente lo
+     * que él no es.
+     *
+     * Por eso se cuenta. Este error se comete de a poco y con buena intención.
+     */
+    it('cuatro formas por pregunta, ni una más', () => {
+        for (const q of TODAS) {
+            expect(formasDe(q)).toHaveLength(FORMAS_POR_PREGUNTA);
+        }
+    });
+
+    it('⚠ y dos en cada idioma, para que ninguna puerta sea más ancha', () => {
+        /*
+         * No se puede comprobar el idioma de una palabra, así que se comprueba
+         * lo que sí es verificable y decide lo mismo: la mitad de las formas de
+         * cada pregunta son las que un test de la casa reconoce como españolas
+         * —acentos, `ñ`, o palabras de la lista— y la otra mitad no.
+         *
+         * Alcanza para lo que protege: que nadie meta cuatro formas inglesas y
+         * deje el español con una.
+         */
+        const ESPAÑOLAS = new Set([
+            'hola', 'buenas', 'quien', 'quien_eres', 'como_estas', 'que_tal',
+            'que_es', 'que_es_esto', 'donde', 'donde_estas', 'nombre',
+            'como_te_llamas', 'solo', 'estas_solo', 'libre', 'puedes_irte',
+            'vivo', 'estas_vivo', 'porque', 'por_que', 'adios', 'chao',
+        ]);
+
+        for (const q of TODAS) {
+            const formas = formasDe(q);
+            const enEspañol = formas.filter((f) => ESPAÑOLAS.has(f));
+
+            expect(enEspañol).toHaveLength(FORMAS_POR_PREGUNTA / 2);
+        }
+    });
+
+    it('se escriben como uno las escribiría, en los dos idiomas', () => {
         expect(entityQuestionOf('why')).toBe('why');
         expect(entityQuestionOf('porque')).toBe('why');
         expect(entityQuestionOf('por_que')).toBe('why');
@@ -51,48 +117,36 @@ describe('se escriben como uno las escribiría', () => {
         expect(entityQuestionOf('where')).toBe('where');
         expect(entityQuestionOf('donde_estas')).toBe('where');
 
-        // Las dos nuevas, y en las formas en que se le hablaría de verdad.
         expect(entityQuestionOf('alive')).toBe('alive');
         expect(entityQuestionOf('estas_vivo')).toBe('alive');
-        expect(entityQuestionOf('eres_real')).toBe('alive');
 
         expect(entityQuestionOf('bye')).toBe('bye');
         expect(entityQuestionOf('adios')).toBe('bye');
         expect(entityQuestionOf('chao')).toBe('bye');
-        expect(entityQuestionOf('me_voy')).toBe('bye');
-
-        /*
-         * ⚠ Y `chau` NO, que es lo que se corrigió: es rioplatense, y ni el
-         * personaje habla así ni es lo que teclea quien juega. El repertorio
-         * está escrito a mano justamente para poder decidir esto una por una.
-         */
-        expect(entityQuestionOf('chau')).toBeNull();
-
-        // Las preguntas hechas como salen sin pensarlas.
-        expect(entityQuestionOf('quien_habla')).toBe('who');
-        expect(entityQuestionOf('hay_alguien')).toBe('alone');
-        expect(entityQuestionOf('tienes_nombre')).toBe('name');
-        expect(entityQuestionOf('puedes_irte')).toBe('free');
-        expect(entityQuestionOf('eres_humano')).toBe('alive');
-
-        expect(entityQuestionOf('nombre')).toBe('name');
-        expect(entityQuestionOf('como_te_llamas')).toBe('name');
-
-        expect(entityQuestionOf('solo')).toBe('alone');
-        expect(entityQuestionOf('libre')).toBe('free');
-        expect(entityQuestionOf('que_es_esto')).toBe('what');
     });
 
-    it('y el repertorio sigue siendo CERRADO', () => {
-        // Si entendiera cualquier cosa dejaría de estar atrapado.
+    it('⚠ y lo que se le parece NO le llega', () => {
         /*
-         * ⚠ `hola` YA NO SIRVE DE EJEMPLO, y el cambio es correcto: desde que
-         * el saludo es una de sus preguntas, `hola` es la forma castellana de
-         * `hi` — igual que `quien` lo es de `who` y `donde` de `where`. Lo que
-         * este test vigila es que el repertorio sea CERRADO, no que una palabra
-         * concreta quede fuera para siempre.
+         * Éstas son formas que alguien tecleaía de verdad, y precisamente por
+         * eso están fuera: si todas entraran, entendería casi siempre. `chau`
+         * además es rioplatense, y él no habla así.
+         *
+         * ⚠ Lo que este test vigila es que el repertorio sea CERRADO, no que una
+         * palabra concreta quede fuera para siempre. Si algún día una entra,
+         * otra tiene que salir — son cuatro por pregunta.
          */
-        for (const v of ['gracias', 'ayuda', 'cuando', 'cuanto', '']) {
+        for (const v of [
+            'chau',
+            'quien_habla',
+            'hay_alguien',
+            'tienes_nombre',
+            'eres_humano',
+            'como_te_sientes',
+            'todo_bien',
+            'gracias',
+            'ayuda',
+            '',
+        ]) {
             expect(entityQuestionOf(v)).toBeNull();
         }
     });
@@ -213,8 +267,23 @@ describe('hay repertorio de verdad, no una frase por pregunta', () => {
 });
 
 describe('todo lo suyo suena igual', () => {
-    it('minúsculas, dos idiomas sin calcar, y voseo', () => {
+    it('minúsculas, dos idiomas sin calcar, y tuteo NEUTRO', () => {
         const USTED = /\busted(es)?\b|\bsigue\s|\bpuede\s|\bsabe\s/;
+
+        /*
+         * ⚠ NI USTED NI VOS: tú. Y las dos mitades de la regla hacen falta.
+         *
+         * El usted es el trato de `receloso`, y verlo en `hablando` significa
+         * que una tanda se quedó en la fase anterior. El voseo es otra cosa, y
+         * apareció de verdad: al escribir el saludo, la despedida y el «¿estás
+         * vivo?» se colaron «seguís», «cerrá», «andá», «volvé» — y el resto del
+         * personaje llevaba desde el principio hablando en tú neutro.
+         *
+         * Dos registros en la misma boca no son un matiz: son dos personas, y
+         * todo esto se sostiene sobre que del otro lado haya UNA.
+         */
+        const VOSEO =
+            /\b(sos|tenés|podés|querés|sabés|hacés|decís|seguís|vos|andá|mirá|dejá|pensá|volvé|cerrá|tomá|poné|contá|escribí|vení|fijate|acordate)\b/;
 
         for (const q of TODAS) {
             for (let i = 0; i < 5; i += 1) {
@@ -225,6 +294,7 @@ describe('todo lo suyo suena igual', () => {
                 expect(es).toBe(es.toLowerCase());
                 expect(en).toBe(en.toLowerCase());
                 expect(es).not.toMatch(USTED);
+                expect(es).not.toMatch(VOSEO);
 
                 /*
                  * ⚠ LAS MUY CORTAS PUEDEN COINCIDIR, y no es una calca.
