@@ -149,6 +149,28 @@ export default function SystemCollapse({
     // Con movimiento reducido no hay barra que mirar, así que las líneas salen
     // enteras desde el principio.
     const [progress, setProgress] = useState(reducedMotion ? 1 : 0);
+
+    /*
+     * ⚠ `onDone` VA POR REF, Y ESTO ARREGLA UN FALLO REPORTADO JUGANDO: «la
+     * barra que sube de reiniciar se queda pegada».
+     *
+     * Estaba en las dependencias del efecto de la barra, y el padre le pasa una
+     * función NUEVA en cada render — la página repinta sola, con el reloj de la
+     * barra de estado. Cada repintado desarmaba el intervalo y volvía a poner
+     * `inicio = Date.now()`: la barra empezaba de cero una y otra vez y no
+     * llegaba nunca al final.
+     *
+     * Con el bloqueo no se notaba, porque ahí la barra SE TIENE que trabar. Por
+     * eso el informe decía exactamente eso: «es bueno cuando están en el error
+     * pero no cuando se reinicia».
+     *
+     * Es el mismo fallo que `BootPrompt` ya tenía documentado, con las mismas
+     * palabras. La segunda vez que aparece deja de ser mala suerte.
+     */
+    const onDoneRef = useRef(onDone);
+    useEffect(() => {
+        onDoneRef.current = onDone;
+    }, [onDone]);
     const noiseRef = useRef<HTMLPreElement>(null);
 
     const lineas = level.lockout ? failingLines() : rebootLines(notesCount);
@@ -225,12 +247,14 @@ export default function SystemCollapse({
                 // La ventana de la escalada empieza a correr ACÁ, cuando el
                 // sistema volvió — no cuando se rompió.
                 registerRecovery();
-                onDone();
+                onDoneRef.current();
             }
         }, 100);
 
         return () => clearInterval(id);
-    }, [phase, reducedMotion, level.rebootMs, level.lockout, onDone]);
+        // ⚠ `onDone` NO va acá: ver el ref de arriba. Entra por referencia
+        // justamente para que un padre que repinta no reinicie la barra.
+    }, [phase, reducedMotion, level.rebootMs, level.lockout]);
 
     /**
      * La pantalla de carga que también falla.

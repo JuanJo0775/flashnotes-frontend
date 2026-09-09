@@ -132,6 +132,7 @@ del altavoz de la máquina, se oye con la oreja.
 | `confirm` | `confirm` | bocinita | Dos notas. Una familia, no treinta y tres melodías |
 | `glitchBurst` | `glitch` | bocinita | El fallo, cortado en escalones |
 | `tear` | `glitch` | aire | Algo pegado que cede a tirones. Madera y yeso, no electrónica |
+| `chatter` | `ambience` | bocinita | Ráfagas de datos a alturas que no forman escala |
 | `button` | `keys` | aire | El pulsador de la interfaz. NO es la misma voz que una tecla |
 | `head` | `keys` | aire | La búsqueda de cabezal: varios golpes, y no a compás |
 | `capacitor` | `glitch` | aire | La corriente entrando. Un golpe, sin tono |
@@ -308,6 +309,7 @@ marca.
 | `.collapse-reboot` | La máquina leyendo para volver, y sigue leyendo mientras carga |
 | `.boot-check` | El bip de POST: memoria contada, todo bien |
 | `.loose-slab--cae` | El pedazo de pared cayendo, y lo que llega al suelo detrás |
+| `.wall-rain` | El ojo mirando por el agujero: la sala se da vuelta y los datos chacharean |
 
 ⚠ **El tic del teletipo va por LÍNEA, nunca por carácter.** Las respuestas se
 teclean letra a letra —dieciocho milisegundos cada una— y un tic por carácter
@@ -643,9 +645,9 @@ Cuatro de sus cinco tramos ya suenan, y ninguno se pisa con el siguiente:
 | --- | --- | --- |
 | 1 | Cada golpe despega la pared | **El crujido de desgarro**, y cruje más cuanto más cede |
 | 2 | El pedazo cae | Un barrido descendente, y el impacto **detrás** |
-| 3 | El ojo mira por el agujero | *(todavía nada)* |
+| 3 | El ojo mira por el agujero | **La sala se da vuelta**, y los datos chacharean |
 | 4 | Todo falla | **Silencio absoluto, 200 ms**, y después los relés del tema |
-| 5 | Reinicia | *(no puede sonar: es una recarga de verdad)* |
+| 5 | Reinicia | El ciclo entero, porque reinicia **por dentro** |
 
 ⚠ **El crujido no es un glitch, y eso se corrigió.** Ahí sonaba `glitchBurst`, que
 es el ruido de la **señal** rompiéndose: eléctrico, escalonado, de banda ancha. Lo
@@ -658,6 +660,27 @@ rodeos: lo que reacciona no puede ser una muestra. Y sólo suelta el trozo final
 cuando el golpe es fuerte — en los primeros la pared aguanta, y crujir sin soltar
 nada es exactamente lo que hace algo que todavía no cede.
 
+⚠ **La sala dada vuelta no es subir el volumen.** Subir la salida subiría también
+el siseo de la caja, y entonces no habría inversión: habría más de lo mismo. Lo
+que cambia es el **peso** — el zumbido sube y el aire se enmudece, así que deja de
+oírse una habitación con una máquina dentro y pasa a oírse la máquina sola, de
+cerca. Es el sonido de estar mirando algo que te mira. Va y vuelve despacio: un
+ambiente que se da vuelta de golpe es un suceso, y esto no es un suceso, es un
+sitio distinto.
+
+Y el chachareo son **datos, no música**: ráfagas cortísimas de tonos altos a
+alturas que no forman ninguna escala. En cuanto dos de esos tonos guardan una
+relación reconocible el oído los lee como una melodía, y una melodía ahí contaría
+que alguien la escribió — cuando lo que se está viendo es una máquina volcando lo
+que tiene dentro.
+
+⚠ **Y el reinicio del final ya no es una recarga.** Terminaba en un
+`location.reload()`, y lo que nace después no tiene permiso para sonar: el final
+del juego acababa en un arranque **mudo**, que es el peor sitio posible para
+quedarse sin sonido. Ahora reinicia por dentro, como `//reboot`, así que el ciclo
+entero se oye como se ve. La recarga queda de respaldo por si nadie pasó el
+reinicio: mejor volver muda que no volver.
+
 ⚠ **Y el silencio es de verdad.** No basta con callar el zumbido: justo ahí empieza
 el parpadeo de tema, que dispara relés, y un silencio con clics dentro no es un
 silencio. Se corta en `mix.ts`, en el único embudo por el que pasan todas las
@@ -666,12 +689,6 @@ barato y más fuerte del documento entero», y no cuesta ni un fichero.
 
 ## Lo que falta
 
-- **El ojo** (§26 · 3): el ambiente tendría que INVERTIRSE mientras el ojo mira
-  —el zumbido sube, todo lo demás se enmudece— y la lluvia binaria traer chachareo
-  de datos. Es la única parte del final que falta.
-- **El reinicio del final** (§26 · 5): no puede sonar. El derrumbe termina en un
-  `location.reload()` de verdad, y lo que hay después nace sin permiso — la misma
-  ley que deja mudo el apagón de una recarga.
 - **El condensador.** La voz existe (`capacitor`) y todavía no tiene momento: un
   condensador soltándose dentro de la caja pide un suceso que hoy no ocurre.
 - **Las muestras.** Cero por ahora, y ésa era la idea: sintético primero, y una

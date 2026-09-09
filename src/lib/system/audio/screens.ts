@@ -95,6 +95,16 @@ export interface ScreenSound {
     readonly repeat?: { readonly ms: number; readonly jitter: number };
 
     /**
+     * Mientras la marca se vea, EL AMBIENTE SE DA VUELTA.
+     *
+     * ⚠ Es el §26 · 3, y no es subir el volumen: el zumbido sube y el aire de la
+     * caja se enmudece. Deja de oírse una habitación con una máquina dentro y
+     * pasa a oírse la máquina sola, de cerca — el sonido de estar mirando algo
+     * que te mira.
+     */
+    readonly inverts?: true;
+
+    /**
      * Lo que suena cuando la marca SE VA.
      *
      * ⚠ Hay momentos que no son la aparición de nada, son el final de algo, y
@@ -192,6 +202,19 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
          */
         shot: { voice: 'sweep', args: { fromHz: 900, toHz: 70, ms: 700 } },
         then: { voice: 'thud', ms: 520 },
+    },
+    {
+        mark: 'wall-rain',
+        what: 'El ojo mirando por el agujero: la sala se da vuelta y los datos chacharean',
+        /*
+         * ⚠ LOS DOS A LA VEZ SON LA IDEA. La inversión sola sería un zumbido que
+         * crece —inquietante, pero mudo—; el chachareo solo sería ruido sobre el
+         * mismo cuarto de siempre. Juntos, el sitio CAMBIA: la habitación se
+         * cierra alrededor de la máquina y lo que se oye salir de ella son datos.
+         */
+        inverts: true,
+        shot: { voice: 'chatter' },
+        repeat: { ms: 900, jitter: 0.45 },
     },
     {
         mark: 'boot-check',

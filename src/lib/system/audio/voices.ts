@@ -83,6 +83,12 @@ export const CATEGORY_OF = {
      * atención que un tirón de imagen. Lo que suena, en cambio, es madera.
      */
     tear: 'glitch',
+    /*
+     * El chachareo es de la familia del AMBIENTE: mientras el ojo mira no es un
+     * suceso, es lo que hay. Ponerlo más arriba lo convertiría en el
+     * protagonista, y el protagonista ahí es el zumbido.
+     */
+    chatter: 'ambience',
 } as const satisfies Record<string, SoundCategory>;
 
 /**
@@ -573,6 +579,45 @@ export function tear(
     gSuelta.connect(g.room);
     arrancar(suelta, cuando, random);
     suelta.stop(cuando + 0.05);
+}
+
+/**
+ * EL CHACHAREO DE DATOS. La lluvia binaria, oída.
+ *
+ * ⚠ SON DATOS, NO MÚSICA. Un modem, un télex, una cinta leyéndose: ráfagas
+ * cortísimas de tonos ALTOS a alturas que no forman ninguna escala. En cuanto dos
+ * de esos tonos guardan una relación reconocible el oído los lee como una melodía,
+ * y una melodía ahí contaría que alguien la escribió — cuando lo que se está
+ * viendo es una máquina volcando lo que tiene dentro.
+ *
+ * Sale por la bocinita: es SEÑAL, no un objeto de la habitación.
+ */
+export function chatter(g: AudioGraph, random: Random = Math.random) {
+    const t0 = g.ctx.currentTime;
+    const rafagas = varyInt(6, 0.35, random);
+
+    for (let i = 0; i < rafagas; i += 1) {
+        const osc = g.ctx.createOscillator();
+        osc.type = 'square';
+
+        /*
+         * Alturas al azar en dos octavas altas. ⚠ SIN CUANTIZAR a ninguna
+         * escala: lo que se busca es que NO suene a nota.
+         */
+        osc.frequency.value = 1_400 + random() * 2_600;
+
+        const gain = g.ctx.createGain();
+        const cuando = t0 + (i / rafagas) * vary(0.22, 0.2, random) + random() * 0.01;
+        const largo = vary(0.012, 0.5, random);
+
+        percutir(gain, cuando, vary(0.16, 0.3, random), 0.001, largo);
+
+        osc.connect(gain);
+        gain.connect(g.speaker);
+        gain.connect(g.room);
+        osc.start(cuando);
+        osc.stop(cuando + largo + 0.01);
+    }
 }
 
 /**

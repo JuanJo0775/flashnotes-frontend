@@ -172,8 +172,18 @@ describe('⚠ el boton y //reboot son EXACTAMENTE lo mismo', () => {
         // Un unico sitio que decide desde donde arranca.
         expect(page.match(/setBooting\('off'\)/g)).toHaveLength(1);
 
-        // Y las dos puertas —la barra y el editor— reciben esa misma.
-        expect(page.match(/onReboot=\{reiniciar\}/g)).toHaveLength(2);
+        /*
+         * Y TODAS las puertas reciben esa misma. Se cuentan las dos formas y se
+         * comparan entre si, en vez de contra un numero a mano: ya son tres —la
+         * barra de estado, el editor y el final del §26— y un numero escrito
+         * aca se queda viejo con la cuarta. Lo que importa no es cuantas hay,
+         * es que ninguna traiga la suya.
+         */
+        const puertas = page.match(/onReboot=\{/g) ?? [];
+        const mismas = page.match(/onReboot=\{reiniciar\}/g) ?? [];
+
+        expect(puertas.length).toBeGreaterThan(1);
+        expect(mismas).toHaveLength(puertas.length);
     });
 });
 

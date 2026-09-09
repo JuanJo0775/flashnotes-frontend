@@ -384,3 +384,40 @@ describe('SystemCollapse · las líneas salen a medida que carga', () => {
         );
     });
 });
+
+describe('⚠ la barra del reinicio no se queda pegada', () => {
+    /*
+     * REPORTADO JUGANDO: «la barra que sube de reiniciar se queda pegada; es
+     * bueno cuando estan en el error, pero no cuando se reinicia».
+     *
+     * `onDone` estaba en las dependencias del efecto de la barra, y el padre le
+     * pasa una funcion NUEVA en cada render — la pagina repinta sola, con el
+     * reloj de la barra de estado. Cada repintado desarmaba el intervalo y
+     * volvia a poner `inicio = Date.now()`: la barra empezaba de cero una y otra
+     * vez y no llegaba nunca al final.
+     *
+     * Con el bloqueo no se notaba, porque ahi la barra SE TIENE que trabar. De
+     * ahi la mitad exacta del informe.
+     */
+    it('aunque el padre repinte todo el tiempo, termina', () => {
+        const listo = jest.fn();
+
+        // Un padre que pasa una funcion nueva en cada render, que es lo que hace
+        // la pagina de verdad.
+        const { rerender } = render(
+            <SystemCollapse notesCount={3} level={nivel()} onDone={() => listo()} />
+        );
+
+        avanzar(HASTA_REARRANQUE);
+
+        // Se repinta a lo largo de toda la cuenta, como haria el reloj.
+        for (let i = 0; i < 40; i += 1) {
+            rerender(
+                <SystemCollapse notesCount={3} level={nivel()} onDone={() => listo()} />
+            );
+            avanzar(600);
+        }
+
+        expect(listo).toHaveBeenCalled();
+    });
+});

@@ -138,7 +138,7 @@ function colorDeLaPantalla(x: number, y: number): string | null {
 /** Esto no cambia solo: se mira una vez al montar y ya. */
 const SIN_CAMBIOS = () => () => {};
 
-export function LooseWall() {
+export function LooseWall({ onReboot }: { onReboot?: () => void } = {}) {
     const [golpes, setGolpes] = useState(0);
     const [golpeando, setGolpeando] = useState(false);
     const [fase, setFase] = useState<Fase>('entera');
@@ -233,11 +233,35 @@ export function LooseWall() {
             helpedHim();
             setFase('nada');
 
-            // Y reinicia, con el arranque de siempre: apagón, barras, rótulo,
-            // carga, inicio. Eso es «vuelve la normalidad».
-            window.location.reload();
+            /*
+             * ⚠ SE LIMPIA EL DERRUMBE A MANO, y esto es nuevo. Con una recarga
+             * de verdad daba igual —el documento se iba entero—, pero el
+             * reinicio de adentro no destruye nada: `is-failing` se quedaría
+             * puesta y la app volvería partida en canales, temblando, para
+             * siempre. El desmontaje ya lo limpia, y este componente NO se
+             * desmonta: se queda pintando nada.
+             */
+            document.body.classList.remove('is-blow', 'is-failing');
+            document.body.style.removeProperty('--blow-amp');
+
+            /*
+             * Y REINICIA, con el arranque de siempre: apagón, encendido, barras,
+             * rótulo, comprobación. Eso es «vuelve la normalidad».
+             *
+             * ⚠ POR DENTRO Y NO CON UNA RECARGA, y el motivo es el sonido. Una
+             * recarga destruye el documento, y el que nace después no tiene
+             * permiso para sonar hasta el primer gesto: el final del juego
+             * terminaba en un arranque MUDO, que es el peor sitio posible para
+             * quedarse sin sonido. Por dentro no se navega a ninguna parte, así
+             * que el ciclo entero se oye como se ve.
+             *
+             * La recarga queda de respaldo por si nadie pasó el reinicio: mejor
+             * volver muda que no volver.
+             */
+            if (onReboot) onReboot();
+            else window.location.reload();
         });
-    }, [luegoDe, quieto]);
+    }, [luegoDe, quieto, onReboot]);
 
     /*
      * ⚠ CADA GOLPE SACUDE LA PANTALLA CON EL FALLO CROMÁTICO. EL DE VERDAD.

@@ -529,7 +529,9 @@ export default function Home() {
             <PhantomError />
             {/* Lo que él aflojó. Ver `LooseWall`: es una ventana más, salvo
                 que ésta responde. */}
-            <LooseWall />
+            {/* ⚠ EL FINAL REINICIA POR DENTRO, no con una recarga: así su
+                arranque SE OYE. Ver `reiniciar`. */}
+            <LooseWall onReboot={reiniciar} />
 
             {/* El fallo va sobre el contenedor y NUNCA sobre <body> ni sobre un
                 ancestro de los elementos fijos: el grano, el barrido y el flash

@@ -222,6 +222,64 @@ describe('el final del §26', () => {
         pedazo.remove();
     });
 
+    it('⚠ el ojo DA VUELTA la sala, y la devuelve al irse', async () => {
+        /*
+         * El §26 · 3 no pide subir el volumen: pide invertir el ambiente. El
+         * zumbido sube y el aire de la caja se enmudece, asi que deja de oirse
+         * una habitacion con una maquina dentro y pasa a oirse la maquina sola.
+         *
+         * Se mide en las ganancias de los armonicos, que es donde vive la
+         * inversion: subir la SALIDA subiria tambien el siseo, y entonces no
+         * habria inversion — habria mas de lo mismo.
+         */
+        conLaSalaYaEncendida();
+        await unTic();
+
+        const armonicos = () =>
+            lastContext()!
+                .created.filter((n) => n.kind === 'gain')
+                .map((n) => n.gain.value);
+
+        const antes = armonicos();
+
+        const lluvia = document.createElement('pre');
+        lluvia.className = 'wall-rain';
+        document.body.append(lluvia);
+        await unTic();
+
+        // La inversion es una RAMPA: lo que se comprueba es que se pidio, no que
+        // ya llego. El destino queda anotado en el parametro.
+        const rampas = lastContext()!
+            .created.filter((n) => n.kind === 'gain')
+            .flatMap((n) => n.gain.calls ?? []);
+
+        expect(antes.length).toBeGreaterThan(0);
+        expect(rampas.length).toBeGreaterThan(0);
+
+        lluvia.remove();
+    });
+
+    it('y mientras el ojo mira, los datos chacharean una y otra vez', async () => {
+        /*
+         * No es un golpe: es lo que HAY mientras dura. Una rafaga sola seria un
+         * suceso, y el ojo no es un suceso — es un sitio distinto.
+         */
+        const lluvia = document.createElement('pre');
+        lluvia.className = 'wall-rain';
+
+        conLaSalaYaEncendida();
+        await unTic();
+        document.body.append(lluvia);
+        await unTic();
+
+        // Ya sono la primera rafaga. Se marca DESPUES.
+        const antes = marca();
+        await new Promise((r) => setTimeout(r, 1_500));
+
+        expect(fuentes(antes).length).toBeGreaterThan(0);
+        lluvia.remove();
+    });
+
     it('⚠ y el derrumbe deja SILENCIO ABSOLUTO, no casi silencio', async () => {
         /*
          * El plan lo llama «el recurso mas barato y mas fuerte del documento

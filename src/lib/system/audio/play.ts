@@ -34,6 +34,7 @@ import {
     key,
     relay,
     sweep,
+    chatter,
     tear,
     thud,
     tick,
@@ -56,6 +57,7 @@ export interface VoiceArgs {
     beep: { hz: number; ms: number };
     glitchBurst: { amplitudePx: number; durationMs: number };
     tear: { amplitudePx: number };
+    chatter: undefined;
 }
 
 export type VoiceName = keyof VoiceArgs;
@@ -83,6 +85,7 @@ const VOICES = {
     sweep,
     glitchBurst,
     tear,
+    chatter,
 } as const;
 
 /**

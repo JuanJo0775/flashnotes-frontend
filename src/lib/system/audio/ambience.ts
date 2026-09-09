@@ -70,7 +70,28 @@ const FADE_OUT_S = 2.5;
 let vivo: {
     salida: GainNode;
     fuentes: (OscillatorNode | AudioBufferSourceNode)[];
+    /**
+     * Las piezas por separado, para poder DARLAS VUELTA.
+     *
+     * ⚠ El §26 pide que, mientras el ojo mira, el ambiente se invierta: el
+     * zumbido sube y el aire de la caja se enmudece. Con una sola ganancia de
+     * salida eso no se puede decir — subir la salida sube también el siseo, y
+     * entonces no hay inversión, hay volumen.
+     */
+    armonicos: { nodo: GainNode; base: number }[];
+    aire: { nodo: GainNode; base: number };
 } | null = null;
+
+/**
+ * Cuánto sube el zumbido cuando el ambiente se da vuelta.
+ *
+ * No es un volumen: es un CAMBIO DE PESO. Lo que se oye deja de ser una
+ * habitación con una máquina y pasa a ser la máquina sola, de cerca.
+ */
+const INVERT_BOOST = 3.5;
+
+/** Lo que tarda en darse vuelta, y en volver. Lento: no es un suceso. */
+const INVERT_S = 1.4;
 
 /** El volumen del ambiente, ya convertido. */
 export function ambienceGain(): number {
@@ -104,6 +125,7 @@ export function startAmbience(random: Random = Math.random, fadeS: number = FADE
     salida.connect(g.room);
 
     const fuentes: (OscillatorNode | AudioBufferSourceNode)[] = [];
+    const armonicos: { nodo: GainNode; base: number }[] = [];
 
     /*
      * DOS ARMÓNICOS Y SUS DERIVAS.
@@ -124,6 +146,7 @@ export function startAmbience(random: Random = Math.random, fadeS: number = FADE
 
         const nivelGain = g.ctx.createGain();
         nivelGain.gain.value = nivel;
+        armonicos.push({ nodo: nivelGain, base: nivel });
 
         // La deriva: un oscilador lentísimo empujando el tono del armónico.
         const lfo = g.ctx.createOscillator();
@@ -166,7 +189,8 @@ export function startAmbience(random: Random = Math.random, fadeS: number = FADE
     aire.loop = true;
     const cuerpo = filtro(g, 'lowpass', vary(150, 0.08, random), 0.9);
     const gAire = g.ctx.createGain();
-    gAire.gain.value = vary(PESOS.aire / SUMA, 0.15, random);
+    const nivelAire = vary(PESOS.aire / SUMA, 0.15, random);
+    gAire.gain.value = nivelAire;
     aire.connect(cuerpo.nodo).connect(gAire);
     gAire.connect(salida);
     aire.start(t0);
@@ -185,7 +209,7 @@ export function startAmbience(random: Random = Math.random, fadeS: number = FADE
      * reclama atención ya no es un fondo. Lo continuo tiene que ser plano.
      */
 
-    vivo = { salida, fuentes };
+    vivo = { salida, fuentes, armonicos, aire: { nodo: gAire, base: nivelAire } };
 }
 
 /** Lo apaga y suelta sus nodos. */
@@ -241,6 +265,37 @@ export function silence(ms: number) {
  * barato y más fuerte que tiene este sistema, y no cuesta ni un fichero — pero
  * NO es el silencio del derrumbe: ahí no queda nada, y acá queda un hilo.
  */
+/**
+ * DA VUELTA EL AMBIENTE: el zumbido sube, el aire se enmudece.
+ *
+ * ⚠ ES EL §26 · 3, Y NO ES SUBIR EL VOLUMEN. Subir la salida subiría también el
+ * siseo de la caja, y entonces no habría inversión: habría más de lo mismo. Lo
+ * que cambia es el PESO — deja de oírse una habitación con una máquina dentro y
+ * pasa a oírse la máquina sola, de cerca. Es el sonido de estar mirando algo que
+ * te mira.
+ *
+ * Va y vuelve despacio: un ambiente que se da vuelta de golpe es un suceso, y
+ * esto no es un suceso — es un sitio distinto.
+ */
+export function invertAmbience(on: boolean) {
+    if (!vivo) return;
+
+    const { armonicos, aire } = vivo;
+    const t0 = aire.nodo.context.currentTime;
+
+    for (const { nodo, base } of armonicos) {
+        nodo.gain.cancelScheduledValues(t0);
+        nodo.gain.setValueAtTime(nodo.gain.value, t0);
+        nodo.gain.linearRampToValueAtTime(on ? base * INVERT_BOOST : base, t0 + INVERT_S);
+    }
+
+    aire.nodo.gain.cancelScheduledValues(t0);
+    aire.nodo.gain.setValueAtTime(aire.nodo.gain.value, t0);
+    // A cero exacto no: el aire volviendo desde la nada se oye ENTRAR, y el
+    // regreso tiene que pasar desapercibido.
+    aire.nodo.gain.linearRampToValueAtTime(on ? aire.base * 0.06 : aire.base, t0 + INVERT_S);
+}
+
 export function duck(ms: number, cuanto = 0.15) {
     if (!vivo) return;
 

@@ -31,7 +31,7 @@ import {
 } from '@/hooks/useSystemState';
 import { play } from '@/lib/system/audio/play';
 import { muteFor } from '@/lib/system/audio/mix';
-import { silence } from '@/lib/system/audio/ambience';
+import { invertAmbience, silence } from '@/lib/system/audio/ambience';
 import { readFound as piezasGanadas } from '@/lib/system/asciiArt';
 import { subscribeHints } from '@/lib/system/artHints';
 import { WAKE_FADE_S, startAmbience, stopAmbience } from '@/lib/system/audio/ambience';
@@ -675,6 +675,17 @@ export function startSound(): () => void {
          * del arranque, o volvería a subir encima de las barras.
          */
         if (enMarcha !== antesEnMarcha) huboActividad(enMarcha ? WAKE_FADE_S : undefined);
+
+        /*
+         * LA SALA DADA VUELTA, mientras el ojo mira. Ver `inverts`: el zumbido
+         * sube y el aire de la caja se enmudece.
+         *
+         * Se manda el estado ENTERO en cada repaso y no sólo en los flancos: la
+         * inversión es una rampa hacia un destino, así que repetir el mismo
+         * destino no cuesta nada y evita quedarse dado vuelta si el flanco de
+         * bajada se pierde entre dos mutaciones.
+         */
+        invertAmbience(SCREEN_SOUNDS.some((s) => s.inverts && enPantalla.has(s.mark)));
 
         // El tono de la carta de ajuste, lo enseñe quien lo enseñe.
         if (SCREEN_SOUNDS.some((s) => s.tone && enPantalla.has(s.mark))) startBarsTone();
