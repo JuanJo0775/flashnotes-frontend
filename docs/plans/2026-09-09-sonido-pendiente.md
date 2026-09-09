@@ -75,9 +75,12 @@ máquinas.
 
 ### Lo que ya cambió además del arranque
 
-- ~~**El fallo total.**~~ Ahí NO se resuelve: la máquina intenta volver, se traba
-  y escribe `SIN RUTINA DE RECUPERACIÓN`. Sale con el interruptor o con
-  `//reboot`, y la pantalla lo dice. Ver SECRETOS §24.8 bis.
+- ~~**El fallo total.**~~ Ahí NO se resuelve, y es terminal **a la primera**: sin
+  escalada y sin pantalla de bloqueo. La máquina intenta volver, se traba y
+  escribe `SIN RUTINA DE RECUPERACIÓN`; detrás sigue la basura y las barras de
+  arrastre. Abre **una consola** donde hay que escribir `reboot`, y si nadie
+  escribe, el temporizador de guarda corta a los cinco minutos —los mismos del
+  bloqueo—. Ver SECRETOS §24.8 bis y §24.8 ter.
 - ~~**La pantalla de carga del rearranque.**~~ Usa la barra de 40 columnas de esa
   versión en vez de los bloques `▮▯` de la 1.0.
 - ~~**La avería de señal.**~~ Además de no decidirse, pierde el sincronismo

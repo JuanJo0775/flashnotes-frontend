@@ -18,10 +18,11 @@
  * una máquina detenida: se lee como que la app se colgó (REGLAS · A4).
  */
 
-import { render, act } from '@testing-library/react';
+import { render, act, screen, fireEvent } from '@testing-library/react';
 import SystemCollapse from '@/components/effects/SystemCollapse';
 import { forgetV02Cache } from '@/lib/system/v02';
-import { levelFor } from '@/lib/system/collapseEscalation';
+import { levelFor, LOCKOUT_MS } from '@/lib/system/collapseEscalation';
+import { registerCollapse, getSystemState } from '@/hooks/useSystemState';
 
 beforeEach(() => {
     jest.useFakeTimers();
@@ -175,5 +176,207 @@ describe('la v0.2 se detiene', () => {
 
         expect(document.querySelector('.collapse-halted')).not.toBeNull();
         expect(listo).not.toHaveBeenCalled();
+    });
+});
+
+describe('⚠ la consola de emergencia', () => {
+    /*
+     * Se pidió jugando: «abre una mini consola y ahí tienes que poner reboot
+     * para salir; si no, se queda en esa pantalla de fallo durante 5 minutos».
+     *
+     * Es el equivalente del puzzle del bloqueo de la 1.0, y es UNA palabra
+     * escrita en la pantalla: aquella máquina decidió echarte y quiere ver si
+     * merecés volver; ésta no decidió nada —se paró—, así que no hay nada que
+     * merecer. Hay que darle la orden a mano.
+     */
+    const escribir = (texto: string) => {
+        const campo = screen.getByLabelText(/escriba reboot/i);
+        fireEvent.change(campo, { target: { value: texto } });
+        fireEvent.submit(campo.closest('form')!);
+    };
+
+    it('aparece cuando la máquina se detiene, y no antes', () => {
+        enV02();
+        render(<SystemCollapse notesCount={3} level={primero()} onDone={() => {}} />);
+
+        expect(screen.queryByLabelText(/escriba reboot/i)).toBeNull();
+
+        correr();
+        expect(screen.getByLabelText(/escriba reboot/i)).toBeInTheDocument();
+    });
+
+    it('⚠ «reboot» apaga y enciende de verdad', () => {
+        // No es `onDone`: aquél dice «el sistema se recuperó», y acá no hay
+        // ninguna recuperación que anunciar.
+        const listo = jest.fn();
+        const interruptor = jest.fn();
+        enV02();
+
+        render(
+            <SystemCollapse
+                notesCount={3}
+                level={primero()}
+                onDone={listo}
+                onManualReboot={interruptor}
+            />
+        );
+        correr();
+        escribir('reboot');
+
+        expect(interruptor).toHaveBeenCalledTimes(1);
+        expect(listo).not.toHaveBeenCalled();
+    });
+
+    it('y con las barras del prefijo también, que es como se aprendió', () => {
+        // Quien lleva media partida tecleando `//reboot` va a escribirlo con
+        // ellas, y castigar eso sería castigar haber aprendido la casa.
+        const interruptor = jest.fn();
+        enV02();
+
+        render(
+            <SystemCollapse
+                notesCount={3}
+                level={primero()}
+                onDone={() => {}}
+                onManualReboot={interruptor}
+            />
+        );
+        correr();
+        escribir('//reboot');
+
+        expect(interruptor).toHaveBeenCalled();
+    });
+
+    it('⚠ y cualquier otra cosa CONTESTA, en vez de quedarse muda', () => {
+        /*
+         * Sin réplica, teclear algo y no ver nada se lee como que el teclado
+         * tampoco funciona — y entonces la pantalla pasa de detenida a rota.
+         */
+        const interruptor = jest.fn();
+        enV02();
+
+        render(
+            <SystemCollapse
+                notesCount={3}
+                level={primero()}
+                onDone={() => {}}
+                onManualReboot={interruptor}
+            />
+        );
+        correr();
+        escribir('ayuda');
+
+        expect(interruptor).not.toHaveBeenCalled();
+        expect(document.body.textContent).toContain('ORDEN NO RECONOCIDA');
+    });
+
+    it('⚠ y si nadie escribe, la guarda corta a los cinco minutos', () => {
+        /*
+         * Los mismos cinco minutos del bloqueo, contados por la otra máquina.
+         * Y lo que la levanta NO es que el sistema se recupere —esa rutina es la
+         * que no existe acá— sino el temporizador de guarda, que es una pieza
+         * del aparato: cuando nadie contesta, corta la corriente y la da otra
+         * vez.
+         */
+        const interruptor = jest.fn();
+        enV02();
+
+        render(
+            <SystemCollapse
+                notesCount={3}
+                level={primero()}
+                onDone={() => {}}
+                onManualReboot={interruptor}
+            />
+        );
+        correr();
+        expect(interruptor).not.toHaveBeenCalled();
+
+        act(() => {
+            jest.advanceTimersByTime(LOCKOUT_MS + 1_000);
+        });
+
+        expect(interruptor).toHaveBeenCalledTimes(1);
+    });
+
+    it('⚠ y la guarda NO se rearma porque la página repinte', () => {
+        /*
+         * El fallo de esta casa que ya apareció cuatro veces: el padre pasa una
+         * función nueva en cada render y la página repinta sola una vez por
+         * segundo. Con la función en las dependencias, el temporizador volvía a
+         * empezar en cada repintado y no vencía nunca.
+         */
+        const interruptor = jest.fn();
+        enV02();
+
+        const { rerender } = render(
+            <SystemCollapse
+                notesCount={3}
+                level={primero()}
+                onDone={() => {}}
+                onManualReboot={() => interruptor()}
+            />
+        );
+        correr();
+
+        for (let i = 0; i < 8; i += 1) {
+            act(() => {
+                jest.advanceTimersByTime(40_000);
+            });
+            rerender(
+                <SystemCollapse
+                    notesCount={3}
+                    level={primero()}
+                    onDone={() => {}}
+                    onManualReboot={() => interruptor()}
+                />
+            );
+        }
+
+        expect(interruptor).toHaveBeenCalled();
+    });
+});
+
+describe('⚠ y ahí no está la pantalla de fallo total de la 1.0', () => {
+    /*
+     * Se pidió: «ahí es fallo total a la primera, y ahí no está la pantalla de
+     * fallo total que en la 1.0».
+     *
+     * La escalada —seis colapsos, la ventana, el bloqueo con su puzzle— es una
+     * máquina que aprende de lo que le hacés. Esta versión no aprende nada: se
+     * rompe entera al primer golpe. Y no te echa, porque echarte es una decisión
+     * y ésta no decide: se para.
+     */
+    it('el primer colapso ya es el terminal', () => {
+        enV02();
+
+        const nivel = registerCollapse();
+
+        expect(nivel.lockout).toBe(false);
+        expect(nivel.intensity).toBe(3);
+    });
+
+    it('y no deja el sistema bloqueado', () => {
+        enV02();
+
+        registerCollapse();
+
+        expect(getSystemState().lockedOut).toBe(false);
+    });
+
+    it('⚠ ni siquiera con la señal ya rota, que en la 1.0 va directo al bloqueo', () => {
+        enV02();
+
+        // Diez colapsos seguidos: en la 1.0, seis bastan.
+        for (let i = 0; i < 10; i += 1) registerCollapse();
+
+        expect(getSystemState().lockedOut).toBe(false);
+    });
+
+    it('y la 1.0 sigue echándote igual', () => {
+        // El mismo bucle sin la versión vieja puesta.
+        for (let i = 0; i < 8; i += 1) registerCollapse();
+
+        expect(getSystemState().lockedOut).toBe(true);
     });
 });

@@ -767,6 +767,43 @@
    como que la app se colgó. Con la barra se lee como que está trabajando. Usa
    los mismos bloques ▮▯ que el medidor de la barra de estado: es la app
    contándote algo con sus propios caracteres. */
+/*
+ * LA CONSOLA DE EMERGENCIA de la v0.2 detenida.
+ *
+ * ⚠ NO SE PARECE AL EDITOR NI A UN CAMPO DE FORMULARIO: es un renglón con un
+ * `>` delante y un cursor. Lo que queda cuando ya no hay sistema no tiene cajas
+ * ni bordes — es la máquina en su nivel más bajo, escuchando una orden.
+ */
+.collapse-console {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5ch;
+    margin-top: 0.75rem;
+    font: inherit;
+}
+
+.collapse-console-input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    /* El cursor del sistema, que es el único adorno que se permite acá. */
+    caret-color: currentColor;
+    outline: none;
+    text-transform: lowercase;
+}
+
+/* ⚠ El foco NO se dibuja con un anillo: se dibuja con el subrayado del propio
+   renglón, que es como se veía un campo en una consola de esa época. Quitar la
+   marca de foco sin poner otra sería dejar a alguien sin saber dónde escribe. */
+.collapse-console-input:focus-visible {
+    border-bottom: 1px solid currentColor;
+}
+
 /* ⚠ DOS NOMBRES PARA LA MISMA COLUMNA, Y NO ES REDUNDANCIA. `.collapse-reboot`
    es la máquina leyendo para volver, y el sonido la usa como marca: ahí el disco
    busca, y sigue buscando mientras la marca esté puesta. `.collapse-halted` es la

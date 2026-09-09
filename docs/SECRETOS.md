@@ -3309,6 +3309,40 @@ te devuelve tus notas. **En la v0.2 no vuelve.**
 | La barra de recuperación | los bloques `▮▯` y llega al 100 % | **la suya, de 40 columnas**, y se traba entre el 52 % y el 83 % |
 | El final | reinicia y devuelve el control | **`DETENIDO`**, y se queda ahí |
 | El sonido | el cabezal buscando hasta que vuelve | el cabezal calla y suelta **un pitido largo y grave** |
+| Detrás | negro: la máquina está trabajando | la basura y las barras de arrastre **siguen puestas** |
+| La escalada | seis colapsos hasta el bloqueo | **no hay: el primero ya es el terminal** |
+
+## 24.8 ter · La consola de emergencia
+
+Cuando se detiene, abre **un renglón con un `>`** y el cursor puesto. Es la única
+cosa de todo el colapso que recibe el foco y el puntero.
+
+| | |
+| --- | --- |
+| **Qué hay que escribir** | `reboot` — con o sin las barras del prefijo |
+| **Qué hace** | apaga y enciende de verdad: lo mismo que el botón del panel y que `//reboot` |
+| **Cualquier otra cosa** | `ORDEN NO RECONOCIDA`, y sigue esperando |
+| **Si nadie escribe** | el temporizador de guarda corta a los **5 minutos** |
+
+**Es el equivalente del puzzle del bloqueo**, y por eso es *una* palabra y está
+escrita en la pantalla. El de la v1.0 te hace resolver algo porque esa máquina
+decidió echarte y quiere ver si merecés volver; ésta no decidió nada —se paró—,
+así que no hay nada que merecer: hay que darle la orden a mano, que es lo único
+que sabe entender cuando ya no le queda sistema.
+
+**Los cinco minutos son los mismos del bloqueo**, contados por la otra máquina:
+allá te echa y esperás, acá se detiene y esperás. Y lo que la levanta al final
+**no** es que el sistema se recupere —esa rutina es justamente la que no existe
+en esta versión— sino el **temporizador de guarda**, que es una pieza del aparato
+y no del programa: cuando nadie contesta, corta la corriente y la vuelve a dar.
+Los equipos de entonces los llevaban, y es lo único que puede levantar una
+máquina que ya no sabe levantarse.
+
+> ⚠ **La capa deja de estar oculta al lector de pantalla.** Todo el colapso es
+> decorado —va `aria-hidden` y no recibe puntero, para poder seguir escribiendo a
+> ciegas debajo— pero la pantalla detenida no es decorado: es lo único que hay.
+> Un control enfocable dentro de un subárbol oculto no existe para quien usa
+> lector, y entonces la salida tampoco existiría.
 
 La última línea que escribe es la que lo cuenta todo: **`SIN RUTINA DE
 RECUPERACIÓN`**. No está más rota que la otra — le falta un trozo que todavía no
@@ -3320,8 +3354,11 @@ se había escrito, que es la misma regla que gobierna sus comandos.
 > Una pantalla quieta que no dice cómo salir no se lee como una máquina detenida,
 > se lee como que la app se colgó (REGLAS · A4).
 
-**El bloqueo manda por encima.** Si la escalada decidió echarte —seis colapsos, o
-colapsar con la señal ya rota— te echa igual: eso no es cosa de la versión.
+**Y ahí no existe la pantalla de fallo total de la v1.0.** Esa versión no escala y
+no te echa: la escalada —seis colapsos, la ventana de cinco minutos, el bloqueo
+con su puzzle— es una máquina que aprende de lo que le hacés, y ésta no aprende
+nada. Se rompe entera al primer golpe y se queda ahí. Echarte es una decisión, y
+ésta no decide.
 
 **Código:** `src/components/effects/SystemCollapse.tsx` · `seDetiene`
 

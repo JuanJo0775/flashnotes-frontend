@@ -866,6 +866,24 @@ export function registerCollapse(): CollapseLevel {
     // vez, y ésa ES la condición crítica. Pedirle además que repita el colapso
     // cinco veces más sería contar dos veces lo mismo — y encima el usuario que
     // combinó las dos cosas a propósito merece el desenlace, no un contador.
+    /*
+     * ⚠ LA v0.2 NO ESCALA Y NO TE ECHA: SE DETIENE A LA PRIMERA.
+     *
+     * La escalada de la 1.0 —seis colapsos, la ventana de cinco minutos, el
+     * bloqueo con su puzzle— es una máquina que aprende de lo que le hacés. Esa
+     * versión no aprende nada: se rompe entera al primer golpe y se queda ahí.
+     *
+     * Y por eso tampoco hay pantalla de bloqueo: la de la 1.0 es la máquina
+     * ECHÁNDOTE, una decisión, y ésta no decide. Su equivalente es quedarse
+     * detenida — mismos cinco minutos, sin puzzle y sin cerrarte la puerta.
+     * Ver `SystemCollapse` y SECRETOS §24.8 bis.
+     *
+     * `intensity: 3` es la cadencia más alta de fallos de la propia pantalla de
+     * recuperación: ahí ni la pantalla que debería estar arreglando el sistema
+     * consigue sostenerse, que es exactamente lo que pasa en esa versión.
+     */
+    if (isV02()) return { rebootMs: 0, intensity: 3, lockout: false };
+
     const nivel = state.chromaticFailure
         ? levelFor(LOCKOUT_AT)
         : levelFor(collapseCount);

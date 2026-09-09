@@ -4,6 +4,7 @@
 import { BOOT_BARS } from '@/lib/system/boot';
 import { useEffect, useRef, useState } from 'react';
 import { resetIntegrity, registerRecovery } from '@/hooks/useSystemState';
+import { LOCKOUT_MS } from '@/lib/system/collapseEscalation';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import AsciiStatic from '@/components/effects/AsciiStatic';
 import { isV02 } from '@/lib/system/v02';
@@ -85,6 +86,35 @@ type Phase =
      */
     | 'halted';
 
+/**
+ * LO QUE HAY QUE ESCRIBIR PARA LEVANTARLA, en la v0.2.
+ *
+ * ⚠ ES EL EQUIVALENTE DEL PUZZLE DEL BLOQUEO, y por eso es UNA palabra y está
+ * escrita en la pantalla. El de la 1.0 te hace resolver algo porque esa máquina
+ * decidió echarte y quiere ver si merecés volver; ésta no decidió nada — se
+ * paró—, así que no hay nada que merecer: hay que darle la orden a mano, que es
+ * lo único que sabe entender cuando ya no le queda sistema.
+ *
+ * Se acepta con o sin las barras del prefijo: quien lleva media partida
+ * tecleando `//reboot` va a escribirlo con ellas, y castigar eso sería castigar
+ * haber aprendido cómo funciona la casa.
+ */
+const HALT_WORD = /^\s*(?:\/\/)?\s*reboot\s*$/i;
+
+/**
+ * Y cuánto aguanta si nadie escribe nada.
+ *
+ * ⚠ SON LOS MISMOS CINCO MINUTOS DEL BLOQUEO, a propósito: es el mismo castigo
+ * contado por la otra máquina. Allá te echa y esperás; acá se detiene y esperás.
+ *
+ * Lo que la levanta al final NO es que el sistema se recupere —esa rutina es
+ * justamente la que no existe en esta versión— sino el temporizador de guarda,
+ * que es una pieza del aparato y no del programa: cuando nadie contesta, corta
+ * la corriente y la vuelve a dar. Los equipos de entonces los llevaban, y es lo
+ * único que puede levantar una máquina que ya no sabe levantarse.
+ */
+const HALT_WATCHDOG_MS = LOCKOUT_MS;
+
 /** Dónde se traba la barra cuando el sistema ya no va a volver. */
 const STALL_MIN = 0.52;
 const STALL_SPREAD = 0.31;
@@ -96,6 +126,15 @@ const STALL_HOLD_MS = 1600;
 const STALL_ERROR_MS = 1400;
 
 interface SystemCollapseProps {
+    /**
+     * Apagar y encender de verdad, que es lo único que levanta la v0.2.
+     *
+     * ⚠ NO ES `onDone`. Aquél dice «el sistema se recuperó»: la app vuelve por
+     * donde estaba y el arranque entra desde las barras. Esto es el
+     * INTERRUPTOR — reinicia la máquina entera, igual que el botón del panel y
+     * que `//reboot`, porque acá no hay ninguna recuperación que anunciar.
+     */
+    onManualReboot?: () => void;
     /** Cuántas notas tenés. El rearranque las cuenta de verdad. */
     notesCount: number;
     /**
@@ -176,6 +215,7 @@ export default function SystemCollapse({
     notesCount,
     level,
     onDone,
+    onManualReboot,
 }: SystemCollapseProps) {
     const reducedMotion = usePrefersReducedMotion();
     const [phase, setPhase] = useState<Phase>(reducedMotion ? 'reboot' : 'cut');
@@ -224,13 +264,37 @@ export default function SystemCollapse({
      * El bloqueo sigue mandando por encima: si la escalada decidió echarte, te
      * echa igual, y eso no es cosa de la versión.
      */
-    const seDetiene = v02 && !level.lockout;
+    const seDetiene = v02;
 
-    const lineas = level.lockout
-        ? failingLines()
-        : seDetiene
-          ? haltedLines()
+    const lineas = seDetiene
+        ? haltedLines()
+        : level.lockout
+          ? failingLines()
           : rebootLines(notesCount);
+
+    /** Lo tecleado en la consola de emergencia, y lo que contestó. */
+    const [orden, setOrden] = useState('');
+    const [replica, setReplica] = useState('');
+
+    /*
+     * ⚠ EL INTERRUPTOR VA POR REF, por lo mismo que `onDone`: el padre le pasa
+     * una función nueva en cada render y la página repinta sola una vez por
+     * segundo. Con la función en las dependencias, el temporizador de guarda se
+     * rearmaba en cada repintado y no vencía NUNCA — el mismo fallo que ya
+     * apareció cuatro veces en esta casa.
+     */
+    const rebootRef = useRef(onManualReboot);
+    useEffect(() => {
+        rebootRef.current = onManualReboot;
+    }, [onManualReboot]);
+
+    /** El temporizador de guarda: si nadie contesta, corta y vuelve a dar. */
+    useEffect(() => {
+        if (phase !== 'halted') return;
+
+        const id = setTimeout(() => rebootRef.current?.(), HALT_WATCHDOG_MS);
+        return () => clearTimeout(id);
+    }, [phase]);
 
     // La secuencia hasta el rearranque.
     useEffect(() => {
@@ -367,7 +431,16 @@ export default function SystemCollapse({
             className="collapse-layer"
             data-phase={phase}
             data-intensity={level.intensity}
-            aria-hidden="true"
+            /*
+                ⚠ DETENIDA DEJA DE ESTAR OCULTA, y no es un detalle de más. Todo
+                el colapso es decorado —por eso va `aria-hidden` y no recibe
+                puntero: debajo se sigue escribiendo a ciegas— pero la pantalla
+                detenida NO es decorado: es lo único que hay, y la única salida
+                es teclear una palabra en ella. Un control enfocable dentro de un
+                subárbol oculto no existe para quien usa lector de pantalla, así
+                que la salida tampoco existiría.
+            */
+            aria-hidden={phase === 'halted' ? undefined : true}
             style={{ pointerEvents: 'none' }}
         >
             {phase === 'static' && (
@@ -389,6 +462,25 @@ export default function SystemCollapse({
             )}
 
             {phase === 'dying' && <div className="collapse-dying" />}
+
+            {/*
+                ⚠ Y DETENIDA SIGUE HABIENDO SEÑAL ROTA DETRÁS. En la 1.0 el
+                rearranque se ve sobre negro, porque ahí la máquina está
+                trabajando y lo que hay que mirar es la barra. Acá no trabaja
+                nada: la pantalla se quedó a medio caer, con la basura todavía
+                puesta y las barras de arrastre bajando por encima.
+
+                Son las MISMAS capas de la fase de estática, no unas nuevas: lo
+                que cambia es que ahí eran el principio de la caída y acá son lo
+                que quedó.
+            */}
+            {phase === 'halted' && (
+                <>
+                    <AsciiStatic className="collapse-noise mono" />
+                    <div className="collapse-drag" aria-hidden="true" />
+                    <div className="collapse-drag is-second" aria-hidden="true" />
+                </>
+            )}
 
             {(phase === 'reboot' || phase === 'stalled' || phase === 'halted') && (
                 /*
@@ -454,11 +546,72 @@ export default function SystemCollapse({
                          * se colgó. Es la lección de la pantalla de perdido del
                          * pong, escrita otra vez.
                          */
-                        <p className="collapse-failed">
-                            &gt; DETENIDO
-                            <br />
-                            &gt; REINICIE A MANO
-                        </p>
+                        <>
+                            <p className="collapse-failed">
+                                &gt; DETENIDO
+                                <br />
+                                &gt; REINICIE A MANO: ESCRIBA REBOOT
+                            </p>
+
+                            {/*
+                                LA CONSOLA DE EMERGENCIA.
+
+                                ⚠ ES LO ÚNICO DE TODO EL COLAPSO QUE RECIBE EL
+                                PUNTERO Y EL FOCO. La capa entera va con
+                                `pointer-events: none` para que debajo se pueda
+                                seguir escribiendo a ciegas; acá no hay «debajo»
+                                que valga — la máquina está parada, y lo único
+                                que queda por hacer es darle la orden.
+
+                                ⚠ Y ES UN FORMULARIO DE VERDAD, con su `label`
+                                escondida y su `autoFocus`: la salida tiene que
+                                poder usarse con el teclado y anunciarse a un
+                                lector de pantalla. Una salida que no se ve —o
+                                que no se oye— no está (REGLAS · A4).
+                            */}
+                            <form
+                                className="collapse-console"
+                                style={{ pointerEvents: 'auto' }}
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+
+                                    if (HALT_WORD.test(orden)) {
+                                        onManualReboot?.();
+                                        return;
+                                    }
+
+                                    /*
+                                     * Contesta como contestaría ella: no sabe
+                                     * qué es eso. Sin la réplica, teclear algo
+                                     * y no ver nada se lee como que el teclado
+                                     * tampoco funciona — y entonces la pantalla
+                                     * pasa de detenida a rota.
+                                     */
+                                    setReplica(orden.trim() ? 'ORDEN NO RECONOCIDA' : '');
+                                    setOrden('');
+                                }}
+                            >
+                                <label className="sr-only" htmlFor="collapse-console">
+                                    Escriba reboot para reiniciar el sistema
+                                </label>
+                                <span aria-hidden="true">&gt;</span>
+                                <input
+                                    id="collapse-console"
+                                    className="collapse-console-input"
+                                    autoFocus
+                                    autoComplete="off"
+                                    spellCheck={false}
+                                    value={orden}
+                                    onChange={(e) => setOrden(e.target.value)}
+                                />
+                            </form>
+
+                            {replica && (
+                                <p className="collapse-failed" role="status">
+                                    &gt; {replica}
+                                </p>
+                            )}
+                        </>
                     ) : phase === 'stalled' ? (
                         <p className="collapse-failed">
                             &gt; FALLO EN LA VERIFICACIÓN DE MEMORIA

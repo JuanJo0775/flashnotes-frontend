@@ -663,6 +663,15 @@ export default function Home() {
                 <SystemCollapse
                     notesCount={total}
                     level={collapse}
+                    /*
+                        EL INTERRUPTOR, para la v0.2 detenida: ahí no hay
+                        recuperación que anunciar, hay que apagar y encender. Es
+                        LA MISMA función del botón del panel y de `//reboot`, no
+                        una copia — se pidió explícitamente que el botón hiciera
+                        «exactamente lo mismo» que el comando, y esto es lo
+                        mismo otra vez.
+                    */
+                    onManualReboot={reiniciar}
                     onDone={() => {
                         setCollapse(null);
                         /*
