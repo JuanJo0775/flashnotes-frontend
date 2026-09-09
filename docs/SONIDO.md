@@ -310,6 +310,10 @@ marca.
 | `.boot-check` | El bip de POST: memoria contada, todo bien |
 | `.loose-slab--cae` | El pedazo de pared cayendo, y lo que llega al suelo detrás |
 | `.wall-rain` | El ojo mirando por el agujero: la sala se da vuelta y los datos chacharean |
+| `.is-entity` | Cuando contesta ÉL, la sala baja para escucharlo |
+| `.phantom-error` | Una ventana de error apareciendo de golpe |
+| `.lockout-body` | El bloqueo: la máquina que ya no te deja entrar |
+| `.dead-page` | La página muerta: te sacó y ya |
 
 ⚠ **El tic del teletipo va por LÍNEA, nunca por carácter.** Las respuestas se
 teclean letra a letra —dieciocho milisegundos cada una— y un tic por carácter
@@ -659,6 +663,26 @@ Sube con la misma `--blow-amp` que mueve la imagen, porque el §5 lo pide sin
 rodeos: lo que reacciona no puede ser una muestra. Y sólo suelta el trozo final
 cuando el golpe es fuerte — en los primeros la pared aguanta, y crujir sin soltar
 nada es exactamente lo que hace algo que todavía no cede.
+
+### ⚠ El ente no tiene voz, y eso es el personaje
+
+Darle un sonido propio sería ponerle un instrumento a algo que lleva todo el juego
+sin tener cuerpo. Lo que cambia cuando contesta él **no es lo que se oye: es lo
+que deja de oírse.** La sala baja mientras dura su frase y vuelve sola, despacio —
+la habitación entera se calla un poco para escucharlo, que es lo que hace una
+habitación cuando alguien habla en serio.
+
+⚠ Y **no se deduce del texto.** La minúscula lo distingue a la vista, pero fiarse
+de eso sería atar el sonido a una convención de estilo: el día que una frase suya
+empiece con un nombre propio, la sala dejaría de hacerle sitio sin que nada
+fallara. Quien sabe quién contestó es quien resolvió, así que lo dice — y el
+editor lo pinta como una clase, para que el sonido lo lea igual que lee todo lo
+demás.
+
+⚠ Y **agacharse no es invertirse.** Invertir es cambiar de sitio y se puede pedir
+en cada repaso, porque es un destino. Agacharse es una bajada CON su vuelta
+programada: repetirla cancelaría la vuelta y el zumbido se quedaría abajo para
+siempre.
 
 ⚠ **La sala dada vuelta no es subir el volumen.** Subir la salida subiría también
 el siseo de la caja, y entonces no habría inversión: habría más de lo mismo. Lo

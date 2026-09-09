@@ -105,6 +105,16 @@ export interface ScreenSound {
     readonly inverts?: true;
 
     /**
+     * Mientras la marca se vea, LA SALA SE AGACHA.
+     *
+     * ⚠ No es lo mismo que invertirla. Invertir es cambiar de sitio; agacharse
+     * es hacerle hueco a algo. Cuando contesta ÉL, el zumbido baja y vuelve
+     * despacio — la habitación entera se calla un poco para escucharlo, que es
+     * lo que hace una habitación cuando alguien habla en serio.
+     */
+    readonly ducks?: true;
+
+    /**
      * Lo que suena cuando la marca SE VA.
      *
      * ⚠ Hay momentos que no son la aparición de nada, son el final de algo, y
@@ -215,6 +225,56 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
         inverts: true,
         shot: { voice: 'chatter' },
         repeat: { ms: 900, jitter: 0.45 },
+    },
+    {
+        mark: 'is-entity',
+        what: 'Cuando contesta ÉL, la sala baja para escucharlo',
+        /*
+         * ⚠ NO TRAE VOZ PROPIA, Y ESO ES EL PUNTO. Darle un sonido al ente sería
+         * ponerle un instrumento a algo que lleva todo el juego sin tener
+         * cuerpo. Lo que cambia no es lo que se oye: es lo que DEJA de oírse.
+         *
+         * La marca la pinta el editor cuando la respuesta es suya. No se deduce
+         * del texto: fiarse de la minúscula sería atar el sonido a una
+         * convención de estilo.
+         */
+        ducks: true,
+    },
+    {
+        mark: 'phantom-error',
+        what: 'Una ventana de error apareciendo de golpe',
+        /*
+         * ⚠ EL BIP FEO, Y ACÁ ES DONDE VA. Es la bocinita haciendo lo único que
+         * sabe hacer: un cuadrado crudo de 340 Hz, corto y sin adornos. Una
+         * ventana de error de esa época no tenía un sonido bonito, tenía ESE.
+         *
+         * Y suena una vez POR VENTANA. Salen varias, una detrás de otra, y que
+         * cada una traiga el suyo es lo que convierte el bloqueo en algo que te
+         * acorrala en vez de en una pantalla con dibujos.
+         */
+        shot: { voice: 'beep', args: { hz: 340, ms: 90 } },
+    },
+    {
+        mark: 'lockout-body',
+        what: 'El bloqueo: la máquina que ya no te deja entrar',
+        /*
+         * La señal cayéndose y algo que llega al suelo detrás — el mismo par que
+         * el colapso, porque es el mismo suceso llevado hasta el final: acá no
+         * vuelve.
+         */
+        shot: { voice: 'sweep', args: { fromHz: 700, toHz: 55, ms: 1_100 } },
+        then: { voice: 'thud', ms: 800 },
+    },
+    {
+        mark: 'dead-page',
+        what: 'La página muerta: te sacó y ya',
+        /*
+         * ⚠ EL APAGADO, Y NADA MÁS. Es el final más brusco que tiene el juego
+         * —insististe con el saludo hasta que la página se murió— y lo que
+         * corresponde es lo que corresponde: le cortaron la corriente. Ponerle
+         * algo encima sería suavizarlo, y eso es justo lo que no hay que hacer.
+         */
+        shot: { voice: 'powerDown' },
     },
     {
         mark: 'boot-check',

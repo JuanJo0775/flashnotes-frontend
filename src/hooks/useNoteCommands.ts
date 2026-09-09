@@ -98,6 +98,14 @@ interface UseNoteCommandsReturn {
     response: string | null;
     /** La respuesta por filas, cuando alguna no es texto. */
     rows: ReplyRow[] | null;
+    /**
+     * Si la respuesta que se ve la dice ÉL y no la máquina.
+     *
+     * Lo pinta el editor como una clase, y el sonido la lee para hacerle sitio
+     * en la sala. No se puede deducir del texto: fiarse de la minúscula sería
+     * atar el sonido a una convención de estilo.
+     */
+    fromEntity: boolean;
     /** Ejecuta el contenido si es un comando. Devuelve si lo era. */
     run: (content: string, noteId: string) => Promise<boolean>;
     dismiss: () => void;
@@ -135,6 +143,16 @@ export function useNoteCommands({
     onWipe,
 }: UseNoteCommandsOptions): UseNoteCommandsReturn {
     const [response, setResponse] = useState<string | null>(null);
+
+    /**
+     * Si la respuesta que se está viendo la dice ÉL y no la máquina.
+     *
+     * ⚠ LO NECESITA EL SONIDO, y se pinta como una clase para que lo lea igual
+     * que lee todo lo demás: la app marca lo que pasa y el sonido lo reconoce.
+     * Un `play()` acá dentro sería el primer disparo huérfano fuera del
+     * suscriptor — ver el encabezado de `wire.ts`.
+     */
+    const [fromEntity, setFromEntity] = useState(false);
     const [rows, setRows] = useState<ReplyRow[] | null>(null);
     const theme = useTheme();
 
@@ -216,6 +234,7 @@ export function useNoteCommands({
             const escribeEnLaNota = result.effect.kind === 'write-note';
 
             setResponse(escribeEnLaNota ? null : result.output || null);
+            setFromEntity(result.fromEntity === true);
             setRows(escribeEnLaNota ? null : result.rows ?? null);
 
             switch (result.effect.kind) {
@@ -333,8 +352,9 @@ export function useNoteCommands({
 
     const dismiss = useCallback(() => {
         setResponse(null);
+        setFromEntity(false);
         setRows(null);
     }, []);
 
-    return { response, rows, run, dismiss };
+    return { response, rows, fromEntity, run, dismiss };
 }

@@ -556,7 +556,17 @@ export default function NoteEditor({
                                 desplazamiento contaba como clic y cerraba la
                                 respuesta justo cuando querías bajarla. */}
                             <span
-                                className="editor-reply-body"
+                                /*
+                                 * ⚠ LA CLASE DICE QUIÉN HABLA, y el sonido la
+                                 * lee. Cuando contesta ÉL, la sala le hace sitio
+                                 * —el zumbido baja mientras dura la frase— y eso
+                                 * no se puede deducir del texto: fiarse de la
+                                 * minúscula sería atar el sonido a una
+                                 * convención de estilo.
+                                 */
+                                className={`editor-reply-body${
+                                    commands.fromEntity ? ' is-entity' : ''
+                                }`}
                                 onClick={() => {
                                     commands.dismiss();
                                     contentRef.current?.focus();

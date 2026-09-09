@@ -31,7 +31,7 @@ import {
 } from '@/hooks/useSystemState';
 import { play } from '@/lib/system/audio/play';
 import { muteFor } from '@/lib/system/audio/mix';
-import { invertAmbience, silence } from '@/lib/system/audio/ambience';
+import { duck, invertAmbience, silence } from '@/lib/system/audio/ambience';
 import { readFound as piezasGanadas } from '@/lib/system/asciiArt';
 import { subscribeHints } from '@/lib/system/artHints';
 import { WAKE_FADE_S, startAmbience, stopAmbience } from '@/lib/system/audio/ambience';
@@ -80,6 +80,15 @@ export const LABEL_BEEP_AT = 2;
  * como que algo se cortó y empezaría a leerse como que se acabó.
  */
 export const COLLAPSE_SILENCE_MS = 200;
+
+/**
+ * Cuánto se agacha la sala mientras él habla.
+ *
+ * Lo que dura una frase suya leyendo sin prisa. Vuelve sola y despacio después:
+ * una habitación que se calla de golpe y vuelve de golpe llama la atención sobre
+ * sí misma, y acá la atención va en otra parte.
+ */
+export const DUCK_MS = 3_200;
 
 /**
  * Los hallazgos que suenan MAL.
@@ -650,6 +659,32 @@ export function startSound(): () => void {
         teletipo.observe(el, { childList: true, subtree: true, characterData: true });
     };
 
+    /*
+     * LA SALA HACIÉNDOLE SITIO.
+     *
+     * ⚠ SE PIDE UNA VEZ, AL APARECER, y no en cada repaso: `duck` programa una
+     * bajada y su vuelta, así que repetirla cancelaría la vuelta y el zumbido se
+     * quedaría abajo para siempre. Es al revés que la inversión, que es un
+     * destino y por eso sí se puede repetir.
+     */
+    const agachada = new Set<string>();
+
+    const alAgacharse = (enPantalla: Set<string>) => {
+        for (const s of SCREEN_SOUNDS) {
+            if (!s.ducks) continue;
+
+            const hay = enPantalla.has(s.mark);
+
+            if (hay && !agachada.has(s.mark)) {
+                huboActividad();
+                duck(DUCK_MS);
+            }
+
+            if (hay) agachada.add(s.mark);
+            else agachada.delete(s.mark);
+        }
+    };
+
     const mirarPantallas = () => {
         // UNA sola pasada por el documento y no una por marca: esto corre en cada
         // mutación del `body` entero, y el colapso reescribe su manta de estática
@@ -686,6 +721,13 @@ export function startSound(): () => void {
          * bajada se pierde entre dos mutaciones.
          */
         invertAmbience(SCREEN_SOUNDS.some((s) => s.inverts && enPantalla.has(s.mark)));
+
+        /*
+         * Y LA SALA AGACHÁNDOSE cuando contesta él. Ver `ducks`: el zumbido baja
+         * y vuelve solo, así que se pide una vez, al aparecer la marca — no en
+         * cada repaso, o cada mutación reiniciaría la bajada y no volvería nunca.
+         */
+        alAgacharse(enPantalla);
 
         // El tono de la carta de ajuste, lo enseñe quien lo enseñe.
         if (SCREEN_SOUNDS.some((s) => s.tone && enPantalla.has(s.mark))) startBarsTone();

@@ -247,6 +247,17 @@ export interface CommandResult {
     /** Qué secreto queda marcado como hallado, si marca alguno. */
     secretId?: string;
     /**
+     * Esta respuesta la dice ÉL, no la máquina.
+     *
+     * ⚠ LO NECESITA EL SONIDO, y no se puede deducir mirando el texto. La regla
+     * de la minúscula lo distingue a la vista, pero fiarse de eso sería atar el
+     * sonido a una convención de estilo: el día que una frase suya empiece con
+     * un nombre propio, la sala dejaría de hacerle sitio sin que nada fallara.
+     *
+     * Quien sabe quién contestó es quien resolvió, así que lo dice acá.
+     */
+    fromEntity?: true;
+    /**
      * El comando se NEGÓ A EXISTIR, y por eso no cuenta como usado.
      *
      * Lo pone `//attach_*` mientras no hayas pasado por `//ps`. Sin esto,
@@ -1325,7 +1336,9 @@ const COMMANDS: readonly Command[] = [
              * y él no es el formulario.
              */
             const suyo = askEntity('hi', ctx, lang);
-            if (suyo !== null) return { ...texto(suyo), secretId: 'entity-awake' };
+            if (suyo !== null) {
+                return { ...texto(suyo), secretId: 'entity-awake', fromEntity: true as const };
+            }
 
             const reply = greetingFor(ctx.greetings, lang);
             if (!reply.kick) return texto(reply.text);
@@ -1356,7 +1369,9 @@ const COMMANDS: readonly Command[] = [
         resolve: (ctx, _args, lang) => {
             // El ente primero. Si sigue dormido cae a la fachada de siempre.
             const dicho = askEntity('whoareu', ctx, lang);
-            if (dicho !== null) return { ...texto(dicho), secretId: 'entity-awake' };
+            if (dicho !== null) {
+                return { ...texto(dicho), secretId: 'entity-awake', fromEntity: true as const };
+            }
 
             return texto(
                 chatReplyFor('who', ctx.chat, lang).text ??
@@ -1372,7 +1387,9 @@ const COMMANDS: readonly Command[] = [
         summary: { es: 'preguntarle cómo está', en: 'ask how it is doing' },
         resolve: (ctx, _args, lang) => {
             const dicho = askEntity('howareu', ctx, lang);
-            if (dicho !== null) return { ...texto(dicho), secretId: 'entity-awake' };
+            if (dicho !== null) {
+                return { ...texto(dicho), secretId: 'entity-awake', fromEntity: true as const };
+            }
 
             return texto(
                 chatReplyFor('how', ctx.chat, lang).text ??
@@ -2108,7 +2125,12 @@ export function run(
 
         const dicho = askEntity(corto, ctx, lang);
         if (dicho !== null) {
-            return { output: dicho, effect: SIN_EFECTO, secretId: 'entity-awake' };
+            return {
+                output: dicho,
+                effect: SIN_EFECTO,
+                secretId: 'entity-awake',
+                fromEntity: true as const,
+            };
         }
 
         const desconocido = say(T.unknownCommand, lang, { name: nombre.toUpperCase() });
