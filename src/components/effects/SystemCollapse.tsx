@@ -135,6 +135,14 @@ interface SystemCollapseProps {
      * que `//reboot`, porque acá no hay ninguna recuperación que anunciar.
      */
     onManualReboot?: () => void;
+    /**
+     * Forzar la versión, en vez de preguntarle al almacén.
+     *
+     * ⚠ Lo mismo que en el arranque: el banco monta esta pantalla de verdad, y
+     * encender la v0.2 para enseñar cómo se cae allá le cambiaría la partida a
+     * quien está mirando.
+     */
+    v02?: boolean;
     /** Cuántas notas tenés. El rearranque las cuenta de verdad. */
     notesCount: number;
     /**
@@ -216,6 +224,7 @@ export default function SystemCollapse({
     level,
     onDone,
     onManualReboot,
+    v02: forzado,
 }: SystemCollapseProps) {
     const reducedMotion = usePrefersReducedMotion();
     const [phase, setPhase] = useState<Phase>(reducedMotion ? 'reboot' : 'cut');
@@ -249,7 +258,7 @@ export default function SystemCollapse({
      * ⚠ SE LEE UNA VEZ Y SIN SUSCRIBIRSE, como en el arranque: nadie salta de
      * versión con el sistema colapsado encima.
      */
-    const v02 = isV02();
+    const v02 = forzado ?? isV02();
 
     /**
      * LA v0.2 NO SABE VOLVER SOLA.

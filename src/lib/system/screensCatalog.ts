@@ -72,6 +72,15 @@ export const SYSTEM_SCREENS: readonly SystemScreen[] = [
         inerte: 'al terminar devolvería a la app',
     },
     {
+        id: 'boot-v02',
+        componente: 'BootScreen',
+        nombre: 'Arranque de la v0.2',
+        que: 'Estática en vez de barras, sin rótulo y sin contar la memoria: sólo su barra de 40 columnas.',
+        cuando: 'Cada vez que arranca la versión vieja. No es ésta con piezas quitadas: es la de antes de que se escribieran.',
+        como: 'directo',
+        inerte: 'al terminar devolvería a la app · y acá NO enciende la v0.2: se le pide la versión al montarla',
+    },
+    {
         id: 'wipe',
         componente: 'WipeScreen',
         nombre: 'El barrido',
@@ -88,6 +97,15 @@ export const SYSTEM_SCREENS: readonly SystemScreen[] = [
         cuando: 'Cuando la integridad llega a cero. Cuanto más insistís, peor vuelve.',
         como: 'directo',
         inerte: 'recargaría la página al acabar',
+    },
+    {
+        id: 'collapse-v02',
+        componente: 'SystemCollapse',
+        nombre: 'Fallo total de la v0.2',
+        que: 'Se detiene a la primera y abre una consola: hay que escribir `reboot` para levantarla.',
+        cuando: 'Al primer colapso dentro de la versión vieja. Ahí no hay escalada ni pantalla de bloqueo.',
+        como: 'directo',
+        inerte: 'el interruptor de la consola devolvería la máquina · acá sólo cierra el visor',
     },
     {
         id: 'lockout',

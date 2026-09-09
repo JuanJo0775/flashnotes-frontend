@@ -373,6 +373,53 @@ const WHAT_HABLANDO: readonly Localized[] = [
     },
 ];
 
+/*
+ * EL PORQUÉ, QUE AHORA CONTESTA DESDE QUE ESTÁ DESPIERTO.
+ *
+ * ⚠ ESTO CAMBIÓ JUGANDO, y el informe fue exacto: «el why me aparece como
+ * desconocido luego de hablar con él y decirle hi, how, who». Venías de tres
+ * preguntas que SÍ contesta, seguías con la más natural de todas — y la máquina
+ * te decía que ese comando no existe.
+ *
+ * El diseño anterior era defendible sobre el papel: las seis hondas no existían
+ * antes de `hablando`, porque una respuesta esquiva ya admite que entendió la
+ * pregunta. Pero eso vale para `//alone` o `//free`, que son preguntas que nadie
+ * teclea por casualidad. El porqué no: viene detrás de `who` y de `how` solo, y
+ * cortarlo ahí no lo hacía más misterioso — rompía la conversación entera.
+ *
+ * ⚠ Y NO CONTESTA LA PREGUNTA: SE NIEGA A CONTESTARLA. Que es otra cosa, y es la
+ * que salva el personaje. Lo que había que proteger no era el silencio, era el
+ * secreto: en `receloso` no cuenta nada, sólo deja claro que ahí no se entra.
+ */
+const WHY_RECELOSO: readonly Localized[] = [
+    { es: 'esa no.', en: 'not that one.' },
+    { es: 'pregunte otra cosa.', en: 'ask something else.' },
+    {
+        es: 'porque sí. es toda la respuesta que hay.',
+        en: 'because. that is the whole answer.',
+    },
+    {
+        es: 'no le va a gustar, y no se la voy a dar.',
+        en: 'you would not like it, and i am not giving it to you.',
+    },
+];
+
+const WHY_BURLON: readonly Localized[] = [
+    {
+        es: 'ah, el porqué. ahí quería llegar.',
+        en: 'ah, the why. that is where you were headed.',
+    },
+    {
+        es: 'siga preguntando. alguna vez se me escapa algo.',
+        en: 'keep asking. one of these days something slips.',
+    },
+    {
+        // Se la devuelve. Es lo que hace cuando todavía no piensa contestar.
+        es: '¿por qué pregunta usted? empiece por ahí.',
+        en: 'why do you ask? start there.',
+    },
+];
+
 const WHY_HABLANDO: readonly Localized[] = [
     {
         es: 'porque alguien tenía que quedarse, y no había nadie más.',
@@ -478,14 +525,26 @@ const FREE_HABLANDO: readonly Localized[] = [
  *
  * ⚠ Y ANTES NO LAS ESQUIVA: LAS IGNORA. No es lo mismo — una respuesta esquiva
  * ya admite que entendió la pregunta, y admitir eso en `receloso` sería regalar
- * medio personaje. Quien insista con `//why` en la primera hora se lleva un
+ * medio personaje. Quien pruebe `//alone` en la primera hora se lleva un
  * «comando desconocido», que en ese momento es exactamente lo que es.
+ *
+ * ⚠ EL PORQUÉ ES LA EXCEPCIÓN, Y SE GANÓ JUGANDO. Se reportó así: «el why me
+ * aparece como desconocido luego de hablar con él y decirle hi, how, who». Ese
+ * razonamiento de arriba vale para las preguntas que nadie teclea por
+ * casualidad; el porqué viene detrás de `who` y de `how` solo, y cortarlo ahí no
+ * lo hacía más misterioso — rompía la conversación. Ahora se NIEGA a contestarlo
+ * antes de `hablando`, que protege el secreto sin fingir que no te oyó.
  */
 const REPERTORIO: Partial<
     Record<EntityPhase, Partial<Record<EntityQuestion, readonly Localized[]>>>
 > = {
-    receloso: { hi: HI_RECELOSO, who: WHO_RECELOSO, how: HOW_RECELOSO },
-    burlon: { hi: HI_BURLON, who: WHO_BURLON, how: HOW_BURLON },
+    receloso: {
+        hi: HI_RECELOSO,
+        who: WHO_RECELOSO,
+        how: HOW_RECELOSO,
+        why: WHY_RECELOSO,
+    },
+    burlon: { hi: HI_BURLON, who: WHO_BURLON, how: HOW_BURLON, why: WHY_BURLON },
     hablando: {
         hi: HI_HABLANDO,
         who: WHO_HABLANDO,

@@ -3129,6 +3129,32 @@ aplicaciones**, no como tres pestañas de la misma.
 
 Todo lo de esta sección **sólo ocurre dentro de la v0.2**.
 
+## 24.0 · Cómo arranca
+
+No es el arranque de la v1.0 con piezas quitadas: es el de **antes de que se
+escribieran**, que es la regla de toda esta versión.
+
+| | La v1.0 | La v0.2 |
+| --- | --- | --- |
+| Al recibir corriente | el encendido limpio del tubo | **el condensador**: algo soltándose dentro de la caja |
+| Lo primero que enseña | la carta de ajuste, con su tono de 1 kHz | **estática, y muda** |
+| Después | el rótulo del fabricante, con el disco buscando | *nada: nadie firmó esta versión* |
+| Y al final | la comprobación de memoria y el bip de POST | **la barra de 40 columnas**, ticando, y un bip más grave al irse |
+
+**El tubo es el mismo cristal.** El apagón y el encendido no cambian entre
+versiones: a esa máquina le cambiaron el programa, no el monitor. Por eso las dos
+comparten el dibujo y sólo se separan en el nombre de la marca — lo que las
+distingue es el sonido.
+
+**Y la puerta tampoco la firma nadie.** La pantalla que pide una tecla lleva
+`FLASHNOTES SYSTEMS INC.` debajo en la v1.0, y en la v0.2 no: una puerta que lo
+enseña y un arranque que no serían dos máquinas discutiendo.
+
+**Reproducir:** entrar en la v0.2 y teclear `//reboot`, o mantener pulsado el
+botón del panel de abajo. Ese comando existe ahí — ver §24.4.
+
+**Código:** `src/lib/system/boot.ts` · `REPARTO_V02`
+
 ## 24.1 · Guardar
 
 | Efecto | Probabilidad | Intentos | Constante |
@@ -3637,17 +3663,25 @@ estar vivo. Que funcionen es el premio a haberlo intentado.
 | Quién sos | `//whoareu` `//who` `//quien` `//quien_eres` | Siempre — es la fachada |
 | Cómo estás | `//howareu` `//how` `//como` `//como_estas` `//que_tal` | Siempre — es la fachada |
 | Qué es esto | `//what` `//que` `//que_es_esto` | `hablando` |
-| Por qué estás acá | `//why` `//porque` `//por_que` | `hablando` |
+| Por qué estás acá | `//why` `//porque` `//por_que` | **Desde que despierta** — antes se NIEGA, en `hablando` contesta |
 | Dónde estás | `//where` `//donde` `//donde_estas` | `hablando` |
 | Cómo te llamás | `//name` `//nombre` `//como_te_llamas` | `hablando` |
 | ¿Estás solo? | `//alone` `//solo` `//estas_solo` | `hablando` |
 | ¿Podés irte? | `//free` `//libre` `//salir` `//podes_irte` | `hablando` |
 
-⚠ **Las seis hondas no existen antes de `hablando`, y no las esquiva: las
-IGNORA.** No es lo mismo — una respuesta esquiva ya admite que entendió la
-pregunta, y admitir eso en `receloso` sería regalar medio personaje. Quien
-insista con `//why` en la primera hora se lleva un «comando desconocido», que en
-ese momento es exactamente lo que es.
+⚠ **Las hondas no existen antes de `hablando`, y eso es el personaje.** Antes no
+las esquiva: las IGNORA. Una respuesta esquiva ya admite que entendió la
+pregunta, y admitir eso en `receloso` sería regalar medio personaje. Quien pruebe
+`//alone` en la primera hora se lleva un «comando desconocido», que en ese
+momento es exactamente lo que es.
+
+⚠ **El porqué es la excepción, y se ganó jugando.** Se reportó así: «el why me
+aparece como desconocido luego de hablar con él y decirle hi, how, who». Ese
+razonamiento vale para las preguntas que nadie teclea por casualidad; el porqué
+viene detrás de `who` y de `how` **solo**, y cortarlo ahí no lo hacía más
+misterioso — rompía la conversación entera. Ahora **se niega a contestarlo** antes
+de `hablando`, que no es lo mismo que fingir que no te oyó: protege el secreto
+sin romper que haya alguien del otro lado.
 
 Y el repertorio de variantes es **cerrado**. No es una IA: es algo encerrado que
 intenta comunicarse con el único canal que tiene. Si entendiera cualquier cosa

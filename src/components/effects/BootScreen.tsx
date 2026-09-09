@@ -51,6 +51,17 @@ const SIN_CAMBIOS = () => () => {};
 interface Props {
     onDone: () => void;
     /**
+     * Forzar la versión, en vez de preguntarle al almacén.
+     *
+     * ⚠ EXISTE POR EL CATÁLOGO, y es la única forma honesta de que se pueda
+     * mirar. El banco enseña las pantallas montándolas de verdad, pero encender
+     * la v0.2 para enseñar su arranque le cambiaría la partida a quien está
+     * mirando: esa marca vive en el almacenamiento y no se va al cerrar el
+     * visor. Un catálogo que te secuestra la sesión al consultarlo deja de ser
+     * un catálogo.
+     */
+    v02?: boolean;
+    /**
      * Desde qué tramo arranca.
      *
      * Lo pasan quienes YA hicieron parte del recorrido: el borrado de `//reset`
@@ -60,7 +71,7 @@ interface Props {
     from?: BootPhase;
 }
 
-export default function BootScreen({ onDone, from = 'off' }: Props) {
+export default function BootScreen({ onDone, from = 'off', v02: forzado }: Props) {
     /*
      * ⚠ LA IDENTIDAD SE FIJA ACÁ, y esto arregla un fallo reportado dos veces:
      * «la animación de reiniciar queda congelada en algunos momentos».
@@ -109,7 +120,7 @@ export default function BootScreen({ onDone, from = 'off' }: Props) {
      * suscribirse sólo serviría para repintar de más. Y leerlo antes de montar
      * daría un dibujo en el servidor y otro en el cliente.
      */
-    const v02 = montado ? isV02() : false;
+    const v02 = forzado ?? (montado ? isV02() : false);
 
     // El dado se tira UNA vez por encendido. Sorteando en cada paso, cada tramo
     // duraría lo suyo y el arranque no tendría una duración, tendría varias.

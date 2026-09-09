@@ -63,6 +63,15 @@ const INERTE = () => {};
  */
 const COLAPSO_SUAVE = { rebootMs: 4_000, intensity: 1, lockout: false };
 
+/**
+ * Y el de la v0.2, que no tiene grados: se detiene a la primera.
+ *
+ * `rebootMs: 0` porque no hay rearranque que cronometrar, e `intensity: 3`
+ * porque ahí la propia pantalla de recuperación falla a la cadencia más alta —
+ * son los mismos valores que devuelve el almacén en esa versión.
+ */
+const COLAPSO_V02 = { rebootMs: 0, intensity: 3, lockout: false };
+
 function Contenido({ pantalla, reiniciar }: { pantalla: SystemScreen; reiniciar: () => void }) {
     switch (pantalla.id) {
         case 'gate':
@@ -70,10 +79,32 @@ function Contenido({ pantalla, reiniciar }: { pantalla: SystemScreen; reiniciar:
             return <BootGate onReady={INERTE} />;
         case 'boot':
             return <BootScreen onDone={reiniciar} />;
+        case 'boot-v02':
+            /*
+             * ⚠ SE LE PIDE LA VERSIÓN, no se enciende la v0.2. Esa marca vive en
+             * el almacenamiento y no se iría al cerrar el visor: quien vino a
+             * mirar un arranque se quedaría jugando en otra versión.
+             */
+            return <BootScreen onDone={reiniciar} v02 />;
         case 'wipe':
             return <WipeScreen onDone={reiniciar} />;
         case 'collapse':
             return <SystemCollapse notesCount={12} level={COLAPSO_SUAVE} onDone={reiniciar} />;
+        case 'collapse-v02':
+            /*
+             * La consola es de verdad y funciona: escribir `reboot` cierra el
+             * visor, que es lo más parecido a levantar la máquina que se puede
+             * hacer acá sin tocarle la partida a nadie.
+             */
+            return (
+                <SystemCollapse
+                    notesCount={12}
+                    level={COLAPSO_V02}
+                    onDone={INERTE}
+                    onManualReboot={reiniciar}
+                    v02
+                />
+            );
         case 'lockout':
             return <SystemLockout />;
         case 'dead':

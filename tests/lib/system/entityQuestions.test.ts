@@ -61,20 +61,56 @@ describe('se escriben como uno las escribiría', () => {
     });
 });
 
-describe('⚠ LAS SEIS HONDAS NO EXISTEN HASTA QUE TE SUELTA EL LORE', () => {
+describe('⚠ LAS HONDAS NO EXISTEN HASTA QUE TE SUELTA EL LORE', () => {
     it('antes de `hablando` no las contesta: las ignora', () => {
         /*
          * Y no es lo mismo que esquivarlas. Una respuesta esquiva ya admite que
          * entendió la pregunta, y admitir eso en `receloso` sería regalar medio
-         * personaje. Acá simplemente no hay nada, así que quien insista con
-         * `//why` en la primera hora se lleva un «comando desconocido» — que en
-         * ese momento es exactamente lo que es.
+         * personaje. Acá simplemente no hay nada, así que quien pruebe `//alone`
+         * en la primera hora se lleva un «comando desconocido» — que en ese
+         * momento es exactamente lo que es.
          */
-        for (const q of HONDAS) {
+        for (const q of HONDAS.filter((q) => q !== 'why')) {
             for (const fase of ['dormido', 'receloso', 'burlon'] as const) {
                 expect(entityReply(q, fase, 0, 'es')).toBeNull();
             }
         }
+    });
+
+    it('⚠ EL PORQUÉ ES LA EXCEPCIÓN: se NIEGA, que no es lo mismo que ignorarte', () => {
+        /*
+         * REPORTADO JUGANDO: «el why me aparece como desconocido luego de hablar
+         * con él y decirle hi, how, who».
+         *
+         * Venías de tres preguntas que sí contesta, seguías con la más natural
+         * de todas, y la máquina te decía que ese comando no existe. El
+         * razonamiento de la regla de arriba vale para `//alone` o `//free`, que
+         * nadie teclea por casualidad; el porqué viene detrás de `who` y de
+         * `how` solo, y cortarlo ahí no lo hacía más misterioso — rompía la
+         * conversación entera.
+         *
+         * Lo que había que proteger no era el silencio, era el SECRETO: se niega
+         * y no cuenta nada.
+         */
+        for (const fase of ['receloso', 'burlon'] as const) {
+            for (const lang of LENGUAS) {
+                expect(entityReply('why', fase, 0, lang)).toBeTruthy();
+            }
+        }
+
+        // Dormido sigue sin contestar: ahí no hay nadie todavía, y eso no cambia.
+        expect(entityReply('why', 'dormido', 0, 'es')).toBeNull();
+    });
+
+    it('y lo que dice antes NO adelanta la respuesta de después', () => {
+        // Negarse cuenta que no quiere; contestar contaría por qué está. Si
+        // alguien copiara acá una línea del repertorio hondo, esto lo dice.
+        const antes = ['receloso', 'burlon'].map((f) =>
+            entityReply('why', f as 'receloso', 0, 'es')
+        );
+        const despues = entityReply('why', 'hablando', 0, 'es');
+
+        for (const linea of antes) expect(linea).not.toBe(despues);
     });
 
     it('y en `hablando` las contesta todas', () => {
