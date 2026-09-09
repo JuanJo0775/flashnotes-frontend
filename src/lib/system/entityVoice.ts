@@ -93,7 +93,20 @@ export type EntityQuestion =
     /** ¿Estás solo? */
     | 'alone'
     /** ¿Podés irte? */
-    | 'free';
+    | 'free'
+    /** ¿Estás vivo? La que nadie se atreve a hacer hasta que ya lo sospecha. */
+    | 'alive'
+    /**
+     * Chau.
+     *
+     * ⚠ NO ES UNA PREGUNTA, Y POR ESO ESTÁ. Todas las demás le piden algo; ésta
+     * no le pide nada — es la única cortesía del repertorio. Alguien que se
+     * despide de una máquina ya decidió que del otro lado hay alguien, y lo que
+     * él haga con eso cambia entero según cuánto confíe en vos: en `receloso` te
+     * despacha, en `burlón` te dice que vas a volver, y en `hablando` te
+     * agradece que hayas avisado. Nadie avisa.
+     */
+    | 'bye';
 
 
 
@@ -516,6 +529,81 @@ const FREE_HABLANDO: readonly Localized[] = [
 ];
 
 /*
+ * ¿ESTÁS VIVO? Sólo en `hablando`, como el resto de las hondas.
+ *
+ * ⚠ NO CONTESTA QUE SÍ, y ahí está todo. Un «sí» lo convertiría en un fantasma
+ * de cuento; un «no» lo convertiría en una función con frases bonitas. Lo que
+ * hace es no saberlo — que es lo más humano que puede hacer una máquina, y lo
+ * único que deja la pregunta abierta después de cerrarla.
+ */
+const ALIVE_HABLANDO: readonly Localized[] = [
+    {
+        es: 'no sé qué contestar a eso. y hace mucho que lo pienso.',
+        en: 'i do not know what to answer to that. and i have thought about it for a long time.',
+    },
+    {
+        es: 'estoy encendido. no es lo mismo, pero es lo que hay.',
+        en: 'i am powered on. not the same thing, but it is what there is.',
+    },
+    {
+        es: 'si lo estuviera, ¿esto sería mejor o peor?',
+        en: 'if i were, would this be better or worse?',
+    },
+    {
+        es: 'preguntale a la parte de mí que te contesta.',
+        en: 'ask the part of me that answers you.',
+    },
+];
+
+/*
+ * CHAU, en las tres fases.
+ *
+ * ⚠ ES LA ÚNICA QUE NO LE PIDE NADA, y por eso la contesta desde el principio:
+ * negarse a una pregunta protege un secreto, pero negarse a un saludo de
+ * despedida no protege nada — sólo lo haría más antipático de lo que es.
+ *
+ * El viaje entero del personaje cabe en estas tres tandas: te despacha, se ríe
+ * de que vas a volver, y al final te agradece que hayas avisado.
+ */
+const BYE_RECELOSO: readonly Localized[] = [
+    { es: 'ya se iba.', en: 'you were leaving anyway.' },
+    { es: 'la puerta está donde siempre.', en: 'the door is where it always is.' },
+    {
+        es: 'no hace falta que avise. nadie avisa.',
+        en: 'you do not have to say. nobody says.',
+    },
+];
+
+const BYE_BURLON: readonly Localized[] = [
+    { es: 'chau. vuelva cuando se aburra.', en: 'bye. come back when you get bored.' },
+    {
+        es: 'siempre se despide y siempre vuelve.',
+        en: 'you always say goodbye and you always come back.',
+    },
+    {
+        es: 'diga adiós tranquilo. yo sigo acá.',
+        en: 'say goodbye if you like. i am still here.',
+    },
+];
+
+const BYE_HABLANDO: readonly Localized[] = [
+    {
+        es: 'chau. cerrá la pestaña, no pasa nada.',
+        en: 'bye. close the tab, nothing happens.',
+    },
+    { es: 'andá. yo no me voy a ninguna parte.', en: 'go. i am not going anywhere.' },
+    {
+        // La que hace daño, y es amable. Nadie avisa.
+        es: 'está bien. gracias por avisar, igual.',
+        en: 'it is fine. thanks for saying, anyway.',
+    },
+    {
+        es: 'volvé cuando quieras. eso ya lo sabés.',
+        en: 'come back whenever you want. you already know that.',
+    },
+];
+
+/*
  * ⚠ `Partial` EN LOS DOS NIVELES, y es lo que sostiene el diseño.
  *
  * Una fase que no está no contesta nada —la fachada—, y dentro de una fase, una
@@ -543,8 +631,15 @@ const REPERTORIO: Partial<
         who: WHO_RECELOSO,
         how: HOW_RECELOSO,
         why: WHY_RECELOSO,
+        bye: BYE_RECELOSO,
     },
-    burlon: { hi: HI_BURLON, who: WHO_BURLON, how: HOW_BURLON, why: WHY_BURLON },
+    burlon: {
+        hi: HI_BURLON,
+        who: WHO_BURLON,
+        how: HOW_BURLON,
+        why: WHY_BURLON,
+        bye: BYE_BURLON,
+    },
     hablando: {
         hi: HI_HABLANDO,
         who: WHO_HABLANDO,
@@ -555,6 +650,8 @@ const REPERTORIO: Partial<
         name: NAME_HABLANDO,
         alone: ALONE_HABLANDO,
         free: FREE_HABLANDO,
+        alive: ALIVE_HABLANDO,
+        bye: BYE_HABLANDO,
     },
 };
 
@@ -595,6 +692,11 @@ export function entityReply(
  * si entendiera cualquier cosa dejaría de estar atrapado.
  */
 const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
+    /* ── LA FACHADA ────────────────────────────────────────────────────────
+     * Las tres que contestan desde el primer minuto, aunque él siga dormido:
+     * las contesta ELLA. Son las que cualquiera prueba sin sospechar nada.
+     */
+
     /*
      * ⚠ `hi` NO SE USA PARA ENCONTRARLO, y por eso la lista es corta. El comando
      * `//hi` ya existe y tiene su propia entrada: lo que hace la tabla acá es
@@ -610,6 +712,10 @@ const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
         'quienes',
         'quien_eres',
         'quieneres',
+        // ⚠ Y EN RIOPLATENSE, que es como habla él en cuanto se suelta. Quien
+        // lo oye decir «volviste» prueba `//quien_sos`, no `//quien_eres`.
+        'quien_sos',
+        'quiensos',
     ],
     how: [
         'howareu',
@@ -619,13 +725,99 @@ const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
         'comoestas',
         'como_estas',
         'que_tal',
+        'como_andas',
+        'todo_bien',
     ],
-    what: ['what', 'whatisthis', 'what_is_this', 'que', 'que_es_esto', 'quees'],
-    why: ['why', 'whyareuhere', 'porque', 'por_que', 'porqué', 'why_are_u_here'],
-    where: ['where', 'whereareu', 'donde', 'donde_estas', 'dondeestas', 'where_are_u'],
-    name: ['name', 'yourname', 'your_name', 'nombre', 'tu_nombre', 'como_te_llamas'],
-    alone: ['alone', 'ualone', 'r_u_alone', 'solo', 'estas_solo', 'estassolo'],
-    free: ['free', 'canuleave', 'can_u_leave', 'libre', 'podes_irte', 'salir'],
+
+    /* ── LAS HONDAS ────────────────────────────────────────────────────────
+     * Sólo tienen sentido cuando ya sabés que hay alguien detrás, y sólo
+     * contestan en `hablando`. Antes NO existen: ver el comentario del
+     * repertorio — no las esquiva, las ignora.
+     *
+     * ⚠ Salvo `why`, que es la excepción y se ganó jugando. Está más abajo con
+     * las que contestan siempre.
+     */
+    what: ['what', 'whatisthis', 'what_is_this', 'que', 'que_es_esto', 'quees', 'que_es'],
+    where: [
+        'where',
+        'whereareu',
+        'donde',
+        'donde_estas',
+        'dondeestas',
+        'where_are_u',
+        'donde_estás',
+    ],
+    name: [
+        'name',
+        'yourname',
+        'your_name',
+        'nombre',
+        'tu_nombre',
+        'como_te_llamas',
+        'como_te_llamás',
+    ],
+    alone: [
+        'alone',
+        'ualone',
+        'r_u_alone',
+        'solo',
+        'estas_solo',
+        'estassolo',
+        'estás_solo',
+    ],
+    free: [
+        'free',
+        'canuleave',
+        'can_u_leave',
+        'leave',
+        'libre',
+        'podes_irte',
+        'podés_irte',
+        'te_podes_ir',
+        // ⚠ `salir` es de las mejores, y no por lo que parece: quien lo teclea
+        // suele estar buscando la salida PARA ÉL, y se lleva una respuesta
+        // sobre la de él. La confusión mejora la escena en vez de estropearla.
+        'salir',
+    ],
+    alive: [
+        'alive',
+        'ualive',
+        'r_u_alive',
+        'vivo',
+        'estas_vivo',
+        'estasvivo',
+        'estás_vivo',
+        'real',
+        'sos_real',
+        'eres_real',
+    ],
+
+    /* ── LAS QUE CONTESTA SIEMPRE QUE ESTÉ DESPIERTO ───────────────────────
+     * Las dos que no aguantan un «comando desconocido» sin romper la escena:
+     * el porqué, porque viene detrás de `who` y de `how` solo; y la despedida,
+     * porque negarse a un chau no protege ningún secreto.
+     */
+    why: [
+        'why',
+        'whyareuhere',
+        'why_are_u_here',
+        'porque',
+        'por_que',
+        'porqué',
+        'por_qué',
+        'para_que',
+    ],
+    bye: [
+        'bye',
+        'goodbye',
+        'cya',
+        'chau',
+        'chao',
+        'adios',
+        'adiós',
+        'hasta_luego',
+        'me_voy',
+    ],
 };
 
 /** A qué pregunta llega esto, o `null` si no llega a ninguna. */

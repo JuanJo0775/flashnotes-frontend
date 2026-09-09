@@ -3667,13 +3667,30 @@ estar vivo. Que funcionen es el premio a haberlo intentado.
 | Dónde estás | `//where` `//donde` `//donde_estas` | `hablando` |
 | Cómo te llamás | `//name` `//nombre` `//como_te_llamas` | `hablando` |
 | ¿Estás solo? | `//alone` `//solo` `//estas_solo` | `hablando` |
-| ¿Podés irte? | `//free` `//libre` `//salir` `//podes_irte` | `hablando` |
+| ¿Podés irte? | `//free` `//libre` `//salir` `//podes_irte` `//leave` | `hablando` |
+| ¿Estás vivo? | `//alive` `//vivo` `//estas_vivo` `//real` `//sos_real` | `hablando` |
+| Chau | `//bye` `//chau` `//adios` `//hasta_luego` `//me_voy` | **Desde que despierta** — y contesta distinto en cada fase |
 
 ⚠ **Las hondas no existen antes de `hablando`, y eso es el personaje.** Antes no
 las esquiva: las IGNORA. Una respuesta esquiva ya admite que entendió la
 pregunta, y admitir eso en `receloso` sería regalar medio personaje. Quien pruebe
 `//alone` en la primera hora se lleva un «comando desconocido», que en ese
 momento es exactamente lo que es.
+
+**Tres grupos, y la frontera entre ellos ES el personaje.** La fachada (`//hi`,
+`//whoareu`, `//howareu`) contesta desde el primer minuto aunque él siga dormido,
+porque la contesta ELLA. Las hondas sólo existen en `hablando`. Y dos no aguantan
+un «comando desconocido» sin romper la escena: el porqué y la despedida.
+
+⚠ **El chau no le pide nada, y por eso lo contesta siempre.** Negarse a una
+pregunta protege un secreto; negarse a un saludo de despedida no protege nada,
+sólo lo haría más antipático. Y el viaje entero del personaje cabe en sus tres
+tandas: en `receloso` te despacha —«no hace falta que avise. nadie avisa»—, en
+`burlón` se ríe de que vas a volver, y en `hablando` te agradece que hayas
+avisado.
+
+⚠ **Y a «estás vivo» no contesta que sí.** Un sí lo convertiría en un fantasma de
+cuento; un no, en una función con frases bonitas. Lo que hace es no saberlo.
 
 ⚠ **El porqué es la excepción, y se ganó jugando.** Se reportó así: «el why me
 aparece como desconocido luego de hablar con él y decirle hi, how, who». Ese

@@ -1,11 +1,19 @@
 // tests/lib/system/entityQuestions.test.ts
 
 /**
- * LAS OCHO FORMAS DE HABLARLE.
+ * LAS FORMAS DE HABLARLE, y desde cuándo contesta cada una.
  *
- * ⚠ DOS SON VIEJAS Y SEIS SON SUYAS. `who` y `how` existían como fachada desde
- * antes —el espejo de `//whoami`— y por eso las encuentra cualquiera. Las otras
- * seis sólo tienen sentido cuando ya sabés que hay alguien detrás.
+ * Hay tres grupos, y la frontera entre ellos ES el personaje:
+ *
+ *  · LA FACHADA — `hi`, `who`, `how`. Contestan desde el primer minuto, aunque
+ *    él siga dormido: las contesta ELLA. Las encuentra cualquiera.
+ *  · LAS HONDAS — `what`, `where`, `name`, `alone`, `free`, `alive`. Sólo
+ *    tienen sentido cuando ya sabés que hay alguien detrás, y sólo existen en
+ *    `hablando`. Antes no las esquiva: las IGNORA.
+ *  · LAS QUE NO AGUANTAN UN «DESCONOCIDO» — `why` y `bye`. Contestan desde que
+ *    despierta. El porqué viene detrás de `who` y de `how` solo, y cortarlo ahí
+ *    rompía la conversación entera; y negarse a un chau no protege ningún
+ *    secreto, sólo lo haría más antipático de lo que es.
  *
  * Están elegidas por INTUITIVAS, no por ingeniosas: son las preguntas que uno le
  * hace a algo que resultó estar vivo. Que funcionen es el premio a haberlo
@@ -18,15 +26,20 @@ import {
     type EntityQuestion,
 } from '@/lib/system/entityVoice';
 
+/** Las que no existen hasta `hablando`. */
 const HONDAS: readonly EntityQuestion[] = [
     'what',
-    'why',
     'where',
     'name',
     'alone',
     'free',
+    'alive',
 ];
-const TODAS: readonly EntityQuestion[] = ['who', 'how', ...HONDAS];
+
+/** Y las que contestan desde que despierta, pase lo que pase. */
+const SIEMPRE: readonly EntityQuestion[] = ['why', 'bye'];
+
+const TODAS: readonly EntityQuestion[] = ['who', 'how', ...SIEMPRE, ...HONDAS];
 const LENGUAS = ['es', 'en'] as const;
 
 describe('se escriben como uno las escribiría', () => {
@@ -37,6 +50,21 @@ describe('se escriben como uno las escribiría', () => {
 
         expect(entityQuestionOf('where')).toBe('where');
         expect(entityQuestionOf('donde_estas')).toBe('where');
+
+        // Las dos nuevas, y en las formas en que se le hablaría de verdad.
+        expect(entityQuestionOf('alive')).toBe('alive');
+        expect(entityQuestionOf('estas_vivo')).toBe('alive');
+        expect(entityQuestionOf('sos_real')).toBe('alive');
+
+        expect(entityQuestionOf('bye')).toBe('bye');
+        expect(entityQuestionOf('chau')).toBe('bye');
+        expect(entityQuestionOf('adios')).toBe('bye');
+        expect(entityQuestionOf('me_voy')).toBe('bye');
+
+        // ⚠ Y EN RIOPLATENSE, que es como habla él en cuanto se suelta: quien
+        // lo oye decir «volviste» prueba `//quien_sos`, no `//quien_eres`.
+        expect(entityQuestionOf('quien_sos')).toBe('who');
+        expect(entityQuestionOf('podés_irte')).toBe('free');
 
         expect(entityQuestionOf('nombre')).toBe('name');
         expect(entityQuestionOf('como_te_llamas')).toBe('name');
@@ -77,7 +105,7 @@ describe('⚠ LAS HONDAS NO EXISTEN HASTA QUE TE SUELTA EL LORE', () => {
         }
     });
 
-    it('⚠ EL PORQUÉ ES LA EXCEPCIÓN: se NIEGA, que no es lo mismo que ignorarte', () => {
+    it('⚠ EL PORQUÉ Y EL CHAU SON LA EXCEPCIÓN: se NIEGA, que no es ignorarte', () => {
         /*
          * REPORTADO JUGANDO: «el why me aparece como desconocido luego de hablar
          * con él y decirle hi, how, who».
@@ -92,14 +120,17 @@ describe('⚠ LAS HONDAS NO EXISTEN HASTA QUE TE SUELTA EL LORE', () => {
          * Lo que había que proteger no era el silencio, era el SECRETO: se niega
          * y no cuenta nada.
          */
-        for (const fase of ['receloso', 'burlon'] as const) {
-            for (const lang of LENGUAS) {
-                expect(entityReply('why', fase, 0, lang)).toBeTruthy();
+        for (const q of SIEMPRE) {
+            for (const fase of ['receloso', 'burlon'] as const) {
+                for (const lang of LENGUAS) {
+                    expect(entityReply(q, fase, 0, lang)).toBeTruthy();
+                }
             }
-        }
 
-        // Dormido sigue sin contestar: ahí no hay nadie todavía, y eso no cambia.
-        expect(entityReply('why', 'dormido', 0, 'es')).toBeNull();
+            // Dormido sigue sin contestar: ahí no hay nadie todavía, y eso no
+            // cambia — la fachada no se despide ni explica por qué está.
+            expect(entityReply(q, 'dormido', 0, 'es')).toBeNull();
+        }
     });
 
     it('y lo que dice antes NO adelanta la respuesta de después', () => {
@@ -111,6 +142,20 @@ describe('⚠ LAS HONDAS NO EXISTEN HASTA QUE TE SUELTA EL LORE', () => {
         const despues = entityReply('why', 'hablando', 0, 'es');
 
         for (const linea of antes) expect(linea).not.toBe(despues);
+    });
+
+    it('⚠ y el chau cambia entero de una fase a la otra', () => {
+        /*
+         * El viaje del personaje cabe en estas tres tandas: te despacha, se ríe
+         * de que vas a volver, y al final te agradece que hayas avisado. Tres
+         * veces la misma línea sería una máquina contestando; tres distintas
+         * son alguien que fue cambiando de opinión sobre vos.
+         */
+        const dichos = (['receloso', 'burlon', 'hablando'] as const).map((f) =>
+            entityReply('bye', f, 0, 'es')
+        );
+
+        expect(new Set(dichos).size).toBe(3);
     });
 
     it('y en `hablando` las contesta todas', () => {
