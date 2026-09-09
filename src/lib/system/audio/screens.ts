@@ -377,6 +377,24 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
      * ────────────────────────────────────────────────────────────────────
      */
     {
+        mark: 'collapse-halted',
+        what: 'La v0.2 rindiéndose: se detuvo y no va a volver sola',
+        /*
+         * ⚠ UN PITIDO LARGO, GRAVE Y FEO, Y DESPUÉS NADA. Es la única fila de
+         * la tabla en la que lo que suena marca un FINAL sin que la pantalla
+         * cambie: la máquina se queda encendida, con el error puesto, y lo
+         * último que hace es quejarse por el altavoz.
+         *
+         * Larga a propósito —casi medio segundo— porque un bip corto se lee
+         * como un aviso y esto no avisa de nada: informa de que se paró. Y por
+         * el altavoz y no por la sala, que es donde vive esta versión.
+         *
+         * Lo que MÁS cuenta, igual, es lo que deja de sonar: mientras intentaba
+         * volver, el cabezal buscaba cada segundo y medio. Acá el disco calla.
+         */
+        shot: { voice: 'beep', args: { hz: 140, ms: 420 } },
+    },
+    {
         mark: 'v02-wake',
         what: 'La v0.2 recibiendo corriente: algo se suelta dentro de la caja',
         /*

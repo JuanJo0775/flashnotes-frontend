@@ -320,6 +320,7 @@ marca.
 | `.net-lost` | Quedarse sin línea: la señal se cae y no hay a quién llamar |
 | `.net-down` | El servidor dejó de contestar, con la línea todavía en pie |
 | `.net-back` | Y la línea volviendo: un contacto que se cierra |
+| `.collapse-halted` | La v0.2 rindiéndose: se detuvo y no va a volver sola |
 | `.v02-wake` | La v0.2 recibiendo corriente: algo se suelta dentro de la caja |
 | `.v02-static` | Y lo que enseña cuando no hay nada enganchado: estática, y muda |
 | `.v02-load` | La barra que se inventa el total, contando en voz alta mientras carga · y **se va** con el bip |

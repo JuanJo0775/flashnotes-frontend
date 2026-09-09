@@ -3241,6 +3241,28 @@ Con el sorteo la mayoría caían en `minor` y no se veían, y un tirón que no s
 no cuenta como avería. **Ésa es la diferencia entre las dos versiones:** en la
 v1.0 el fallo es algo que provocás; en la v0.2 es el estado normal de la casa.
 
+## 24.6 bis · Y cómo falla el aparato
+
+La avería de señal de la v1.0 es **de señal**: canales de color separados, tirón,
+franjas. La de la v0.2 es **de aparato**, y son dos cosas distintas.
+
+| | |
+| --- | --- |
+| **No se decide** | alterna entre la aberración cromática y la estática en gris, cada 2,6 s (`v02-indeciso`) |
+| **Y pierde el sincronismo vertical** | la imagen se escapa hacia arriba a saltos y vuelve a engancharse, cada 3,7 s (`v02-vhold`) |
+| **El bip** | más agudo y más largo: 240 Hz y 560 ms, contra los 180 Hz y 420 ms de la v1.0 |
+
+El sincronismo era una pieza que un televisor viejo perdía de verdad, y se
+arreglaba con un mando que ya no existe. Con las dos versiones fallando igual, la
+v0.2 era la v1.0 con otro filtro; con esto es **otra máquina fallando a su
+manera**.
+
+Sube **a saltos** y no en continuo: un desplazamiento suave se lee como una
+transición, y el escalón es lo que lo delata como una imagen que no consigue
+quedarse quieta.
+
+**Código:** `src/styles/v02.css` · `wire.ts` para el bip
+
 ## 24.7 · El reloj y la fecha
 
 | Efecto | Siempre |
@@ -3275,6 +3297,33 @@ cosas a la vez es lo que delata que nadie las ató.
 > verdad, y eso ya no sería un efecto de época.
 
 **Código:** `src/lib/system/v02Loading.ts`
+
+## 24.8 bis · El fallo total, que ahí NO se resuelve
+
+En la v1.0 el colapso es un susto con final feliz: la máquina se apaga, arranca y
+te devuelve tus notas. **En la v0.2 no vuelve.**
+
+| | La v1.0 | La v0.2 |
+| --- | --- | --- |
+| Antes del apagón | estática y **barras de color** | sólo estática: no tiene carta de ajuste |
+| La barra de recuperación | los bloques `▮▯` y llega al 100 % | **la suya, de 40 columnas**, y se traba entre el 52 % y el 83 % |
+| El final | reinicia y devuelve el control | **`DETENIDO`**, y se queda ahí |
+| El sonido | el cabezal buscando hasta que vuelve | el cabezal calla y suelta **un pitido largo y grave** |
+
+La última línea que escribe es la que lo cuenta todo: **`SIN RUTINA DE
+RECUPERACIÓN`**. No está más rota que la otra — le falta un trozo que todavía no
+se había escrito, que es la misma regla que gobierna sus comandos.
+
+> ⚠ **Imposible de resolver no es imposible de salir.** Lo que no vuelve es el
+> sistema por su cuenta. El interruptor de abajo y `//reboot` siguen ahí —y por
+> eso ese comando existe en la v0.2— y la pantalla lo **dice**: `REINICIE A MANO`.
+> Una pantalla quieta que no dice cómo salir no se lee como una máquina detenida,
+> se lee como que la app se colgó (REGLAS · A4).
+
+**El bloqueo manda por encima.** Si la escalada decidió echarte —seis colapsos, o
+colapsar con la señal ya rota— te echa igual: eso no es cosa de la versión.
+
+**Código:** `src/components/effects/SystemCollapse.tsx` · `seDetiene`
 
 ## 24.9 · Sus archivos son OTROS
 

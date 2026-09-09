@@ -73,6 +73,17 @@ soltándose dentro de la caja— y que una versión vieja arranque con eso, en v
 de con el encendido limpio de la 1.0, es exactamente la diferencia entre las dos
 máquinas.
 
+### Lo que ya cambió además del arranque
+
+- ~~**El fallo total.**~~ Ahí NO se resuelve: la máquina intenta volver, se traba
+  y escribe `SIN RUTINA DE RECUPERACIÓN`. Sale con el interruptor o con
+  `//reboot`, y la pantalla lo dice. Ver SECRETOS §24.8 bis.
+- ~~**La pantalla de carga del rearranque.**~~ Usa la barra de 40 columnas de esa
+  versión en vez de los bloques `▮▯` de la 1.0.
+- ~~**La avería de señal.**~~ Además de no decidirse, pierde el sincronismo
+  vertical —la imagen se escapa a saltos y vuelve a engancharse— y su bip es más
+  agudo y más largo. Ver SECRETOS §24.6 bis.
+
 ### Lo que sigue faltando en la v0.2
 
 - **Más variaciones de pantalla.** Lo que se pidió incluía «otras cosas», y de

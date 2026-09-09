@@ -179,8 +179,59 @@
     }
 }
 
+/*
+ * Y ADEMÁS PIERDE EL SINCRONISMO VERTICAL: la imagen se le escapa hacia arriba y
+ * vuelve a engancharse.
+ *
+ * ⚠ ES LA AVERÍA QUE LA 1.0 NO PUEDE TENER, y por eso está acá. Aquélla se rompe
+ * por el color —canales separados, tirón, franjas—, que es una avería de señal
+ * moderna. Ésta se rompe como un aparato: el sincronismo es una pieza que un
+ * televisor viejo perdía de verdad, y se arreglaba con un mando que ya no
+ * existe. Con las dos versiones haciendo lo mismo, la v0.2 era la 1.0 con otro
+ * filtro; con esto, es otra máquina fallando a su manera.
+ *
+ * ⚠ Y SUBE A SALTOS, NO EN CONTINUO. Un desplazamiento suave se lee como una
+ * transición; el escalón es lo que lo delata como una IMAGEN que no consigue
+ * quedarse quieta. Es el mismo `steps(1, end)` de todo lo demás.
+ *
+ * La mayor parte del ciclo está quieta a propósito: lo que asusta de perder el
+ * sincronismo es que va y viene.
+ */
+@keyframes v02-vhold {
+    0%,
+    58% {
+        transform: translateY(0);
+    }
+    61% {
+        transform: translateY(-2.5%);
+    }
+    64% {
+        transform: translateY(-5.5%);
+    }
+    67% {
+        transform: translateY(-9%);
+    }
+    /* Y engancha otra vez, de golpe: así es como volvía. */
+    70%,
+    88% {
+        transform: translateY(0);
+    }
+    91% {
+        transform: translateY(-4%);
+    }
+    94%,
+    100% {
+        transform: translateY(0);
+    }
+}
+
+/* ⚠ LAS DOS A LA VEZ, y no se pisan: una mueve el `filter` y la otra el
+   `transform`. Juntas cuentan lo que se quería contar — una avería que no se
+   decide, en un aparato que además no sostiene la imagen. */
 [data-v02] .chromatic-failure {
-    animation: v02-indeciso 2.6s steps(1, end) infinite !important;
+    animation:
+        v02-indeciso 2.6s steps(1, end) infinite,
+        v02-vhold 3.7s steps(1, end) infinite !important;
 }
 
 

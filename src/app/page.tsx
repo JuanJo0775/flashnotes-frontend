@@ -169,6 +169,16 @@ export default function Home() {
         // teatro: hacía el ciclo entero y devolvía la máquina igual de rota.
         // Ver `rebootSystem` — se lleva las averías de sesión y nada más.
         rebootSystem();
+
+        /*
+         * ⚠ Y SE LLEVA EL COLAPSO POR DELANTE. En la 1.0 el colapso se retira
+         * solo cuando termina de recuperarse; en la v0.2 NO se recupera —se
+         * queda detenida, esperando el interruptor— así que el interruptor
+         * tiene que poder quitarla. Sin esto, la única salida de esa pantalla
+         * sería recargar, que es exactamente la salida que no queremos obligar
+         * a nadie a encontrar (REGLAS · A4).
+         */
+        setCollapse(null);
         setBooting('off');
     }, []);
 

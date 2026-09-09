@@ -30,6 +30,7 @@ import {
     subscribe as subscribeSystem,
 } from '@/hooks/useSystemState';
 import { play } from '@/lib/system/audio/play';
+import { isV02 } from '@/lib/system/v02';
 import { muteFor } from '@/lib/system/audio/mix';
 import { duck, invertAmbience, silence } from '@/lib/system/audio/ambience';
 import { readFound as piezasGanadas } from '@/lib/system/asciiArt';
@@ -312,7 +313,19 @@ export function startSound(): () => void {
         secretosAntes = new Set(secretos);
 
         // La señal cayéndose es lo más fuerte que hace la máquina sola.
-        if (ahora.chromaticFailure && !fallandoAntes) play('beep', { hz: 180, ms: 420 });
+        if (ahora.chromaticFailure && !fallandoAntes) {
+            /*
+             * ⚠ Y EN LA v0.2 SUENA PEOR, que es lo único que este suscriptor
+             * sabe de versiones. Se permite acá y no en la tabla porque la
+             * avería de señal no tiene marca propia: la enciende el almacén, no
+             * una pantalla.
+             *
+             * Más agudo y más largo: el bip de la 1.0 es grave y corto, casi un
+             * golpe. Éste es un zumbador barato quejándose, que es lo que hay
+             * cuando lo único que suena es el altavoz.
+             */
+            play('beep', isV02() ? { hz: 240, ms: 560 } : { hz: 180, ms: 420 });
+        }
         fallandoAntes = ahora.chromaticFailure;
     });
 

@@ -767,7 +767,13 @@
    como que la app se colgó. Con la barra se lee como que está trabajando. Usa
    los mismos bloques ▮▯ que el medidor de la barra de estado: es la app
    contándote algo con sus propios caracteres. */
-.collapse-reboot {
+/* ⚠ DOS NOMBRES PARA LA MISMA COLUMNA, Y NO ES REDUNDANCIA. `.collapse-reboot`
+   es la máquina leyendo para volver, y el sonido la usa como marca: ahí el disco
+   busca, y sigue buscando mientras la marca esté puesta. `.collapse-halted` es la
+   v0.2 que se rindió —no lee nada, porque no tiene con qué volver—. Se comparte
+   el estilo, que es lo único que tienen en común. */
+.collapse-reboot,
+.collapse-halted {
     position: absolute;
     top: 12%;
     left: 8%;

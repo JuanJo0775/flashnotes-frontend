@@ -6,6 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 import { resetIntegrity, registerRecovery } from '@/hooks/useSystemState';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import AsciiStatic from '@/components/effects/AsciiStatic';
+import { isV02 } from '@/lib/system/v02';
+import { renderLoadingBar } from '@/lib/system/v02Loading';
 import { fireGlitch } from '@/hooks/useGlitch';
 import type { CollapseLevel } from '@/lib/system/collapseEscalation';
 
@@ -65,7 +67,23 @@ const FAILURE_CADENCE_MS: Record<number, number | null> = {
     3: 900,
 };
 
-type Phase = 'cut' | 'static' | 'bars' | 'dying' | 'reboot' | 'stalled';
+type Phase =
+    | 'cut'
+    | 'static'
+    | 'bars'
+    | 'dying'
+    | 'reboot'
+    | 'stalled'
+    /**
+     * v0.2 · SE RINDIÓ, Y NO VA A VOLVER SOLA.
+     *
+     * ⚠ NO ES EL BLOQUEO CON OTRO NOMBRE. El bloqueo es la máquina echándote:
+     * decidió que no entrás. Esto es al revés — la máquina QUIERE volver y no
+     * sabe cómo, porque la rutina que la levanta no se había escrito todavía.
+     * Se queda encendida, con el error puesto, esperando a que alguien le dé al
+     * interruptor.
+     */
+    | 'halted';
 
 /** Dónde se traba la barra cuando el sistema ya no va a volver. */
 const STALL_MIN = 0.52;
@@ -132,6 +150,28 @@ function failingLines(): { at: number; text: string }[] {
     ];
 }
 
+/**
+ * Y las de la v0.2, que ni siquiera lo intenta hasta el final.
+ *
+ * ⚠ LA ÚLTIMA LÍNEA ES LA QUE CUENTA TODO: `SIN RUTINA DE RECUPERACIÓN`. Esta
+ * versión no está más rota que la otra — le falta un trozo que todavía no se
+ * había escrito. Es la misma diferencia que en los comandos: lo que no existe
+ * ahí no existe porque nadie lo escribió, no porque se rompiera.
+ *
+ * Y la de después dice qué hacer. Una pantalla que se queda quieta sin decir
+ * cómo salir no es un personaje, es un cuelgue — la pantalla de perdido del
+ * pong ya enseñó esa lección: una salida que no se ve, no está (REGLAS · A4).
+ */
+function haltedLines(): { at: number; text: string }[] {
+    return [
+        { at: 0.05, text: '> REINICIANDO NUCLEO...' },
+        { at: 0.3, text: '> VERIFICANDO MEMORIA...' },
+        { at: 0.52, text: '> MEMORIA: ERROR DE PARIDAD' },
+        { at: 0.7, text: '> REINTENTANDO...' },
+        { at: 0.86, text: '> SIN RUTINA DE RECUPERACION' },
+    ];
+}
+
 export default function SystemCollapse({
     notesCount,
     level,
@@ -165,18 +205,70 @@ export default function SystemCollapse({
         onDoneRef.current = onDone;
     }, [onDone]);
 
-    const lineas = level.lockout ? failingLines() : rebootLines(notesCount);
+    /*
+     * ⚠ SE LEE UNA VEZ Y SIN SUSCRIBIRSE, como en el arranque: nadie salta de
+     * versión con el sistema colapsado encima.
+     */
+    const v02 = isV02();
+
+    /**
+     * LA v0.2 NO SABE VOLVER SOLA.
+     *
+     * En la 1.0 el colapso es un susto con final feliz: la máquina se apaga,
+     * arranca y te devuelve tus notas. Ahí la rutina de recuperación existe.
+     *
+     * ⚠ Y NO ES QUE ESTÉ MÁS ROTA: es que ese trozo no se había escrito. Es la
+     * misma regla que gobierna sus comandos — lo que no está ahí no está porque
+     * nadie lo escribió todavía.
+     *
+     * El bloqueo sigue mandando por encima: si la escalada decidió echarte, te
+     * echa igual, y eso no es cosa de la versión.
+     */
+    const seDetiene = v02 && !level.lockout;
+
+    const lineas = level.lockout
+        ? failingLines()
+        : seDetiene
+          ? haltedLines()
+          : rebootLines(notesCount);
 
     // La secuencia hasta el rearranque.
     useEffect(() => {
         const timers: ReturnType<typeof setTimeout>[] = [];
         const at = (ms: number, fn: () => void) => timers.push(setTimeout(fn, ms));
 
-        if (reducedMotion) {
+        if (reducedMotion && seDetiene) {
+            /*
+             * Con movimiento reducido se llega igual al final, sin el camino:
+             * quien pide menos movimiento pide no marearse, no perderse lo que
+             * pasa (REGLAS · A3). Y lo que pasa acá es que la máquina se
+             * detuvo.
+             */
+            at(REDUCED_MS, () => setPhase('halted'));
+        } else if (reducedMotion) {
             at(REDUCED_MS, () => {
                 registerRecovery();
                 onDone();
             });
+        } else if (seDetiene) {
+            /*
+             * ⚠ Y SIN LAS BARRAS DE COLOR. Esta versión no tiene carta de
+             * ajuste que enseñar — igual que su arranque, que pone estática
+             * donde la otra pone barras. El tramo se le da a la estática, que
+             * es lo único que sabe emitir.
+             */
+            at(CUT_MS, () => setPhase('static'));
+            at(BARS_MS, () => setPhase('dying'));
+            at(DYING_MS, () => setPhase('reboot'));
+            at(DYING_MS + STALL_HOLD_MS, () => setPhase('halted'));
+
+            /*
+             * ⚠ Y ACÁ NO HAY `onDone`. En las otras dos ramas el colapso
+             * termina y devuelve el control; ésta se queda puesta. No es un
+             * olvido: es el suceso. Sale con el interruptor de abajo o con
+             * `//reboot`, que en esta versión existe justamente porque apagar y
+             * encender es lo más viejo que sabe hacer un equipo.
+             */
         } else if (level.lockout) {
             // El rearranque ARRANCA y se traba. Saltárselo era peor: la barra
             // que empieza a subir y se queda clavada cuenta el fallo mucho mejor
@@ -226,14 +318,15 @@ export default function SystemCollapse({
         // Con el bloqueo, la barra sube deprisa hasta donde se va a trabar y ahí
         // se queda: el tope se sortea para que no siempre falle en el mismo
         // punto, que es lo que delataría que estaba guionado.
-        const tope = level.lockout ? STALL_MIN + Math.random() * STALL_SPREAD : 1;
-        const duracion = level.lockout ? STALL_HOLD_MS : level.rebootMs;
+        const seTraba = level.lockout || seDetiene;
+        const tope = seTraba ? STALL_MIN + Math.random() * STALL_SPREAD : 1;
+        const duracion = seTraba ? STALL_HOLD_MS : level.rebootMs;
 
         const inicio = Date.now();
         const id = setInterval(() => {
             const t = Math.min(tope, ((Date.now() - inicio) / duracion) * tope);
             setProgress(t);
-            if (!level.lockout && t >= 1) {
+            if (!seTraba && t >= 1) {
                 clearInterval(id);
                 resetIntegrity();
                 // La ventana de la escalada empieza a correr ACÁ, cuando el
@@ -246,7 +339,7 @@ export default function SystemCollapse({
         return () => clearInterval(id);
         // ⚠ `onDone` NO va acá: ver el ref de arriba. Entra por referencia
         // justamente para que un padre que repinta no reinicie la barra.
-    }, [phase, reducedMotion, level.rebootMs, level.lockout]);
+    }, [phase, reducedMotion, level.rebootMs, level.lockout, seDetiene]);
 
     /**
      * La pantalla de carga que también falla.
@@ -257,7 +350,7 @@ export default function SystemCollapse({
      */
     useEffect(() => {
         if (reducedMotion) return;
-        if (phase !== 'reboot' && phase !== 'stalled') return;
+        if (phase !== 'reboot' && phase !== 'stalled' && phase !== 'halted') return;
 
         const cada = FAILURE_CADENCE_MS[level.intensity] ?? null;
         if (cada === null) return;
@@ -297,11 +390,35 @@ export default function SystemCollapse({
 
             {phase === 'dying' && <div className="collapse-dying" />}
 
-            {(phase === 'reboot' || phase === 'stalled') && (
-                <div className="collapse-reboot mono">
+            {(phase === 'reboot' || phase === 'stalled' || phase === 'halted') && (
+                /*
+                    ⚠ LA PANTALLA DETENIDA LLEVA OTRA MARCA, Y ES POR EL SONIDO.
+                    `.collapse-reboot` es la máquina LEYENDO para volver: trae el
+                    cabezal y lo repite cada segundo y medio mientras la marca
+                    esté puesta. Una máquina que se rindió no está leyendo nada,
+                    y con la clase compartida el disco habría seguido buscando
+                    para siempre por debajo de un sistema detenido.
+
+                    El estilo es el mismo —se comparte por CSS—; lo que cambia
+                    es qué está pasando.
+                */
+                <div
+                    className={
+                        phase === 'halted' ? 'collapse-halted mono' : 'collapse-reboot mono'
+                    }
+                >
+                    {/*
+                        ⚠ DETENIDA, SALEN TODAS. Mientras la barra sube, cada
+                        línea aparece cuando le toca —así se lee como algo que
+                        está pasando—, pero la barra de la v0.2 se TRABA en un
+                        punto sorteado entre el 52 % y el 83 %, y las últimas
+                        quedaban colgando de un umbral al que no llegaba nunca:
+                        la línea que explica por qué no vuelve no se veía. Cuando
+                        la máquina para, termina de escribir.
+                    */}
                     <pre className="collapse-reboot-lines">
                         {lineas
-                            .filter((l) => progress >= l.at)
+                            .filter((l) => phase === 'halted' || progress >= l.at)
                             .map((l) => l.text)
                             .join('\n')}
                     </pre>
@@ -309,13 +426,40 @@ export default function SystemCollapse({
                     {/* La barra usa el mismo vocabulario ASCII que el medidor de
                         la barra de estado: bloques llenos y vacíos. Es la app
                         contándote algo con sus propios caracteres, no un widget
-                        de otra familia. */}
-                    <p className="collapse-progress">
-                        [{'▮'.repeat(Math.round(progress * 24))}
-                        {'▯'.repeat(24 - Math.round(progress * 24))}]{' '}
-                        {Math.round(progress * 100)}%
-                    </p>
-                    {phase === 'stalled' ? (
+                        de otra familia.
+
+                        ⚠ Y LA v0.2 USA LA SUYA, que es la de 40 columnas con
+                        almohadillas y puntos: la misma que enseña cargando la
+                        lista y encendiéndose. Los bloques `▮▯` no están en la
+                        monoespaciada de la casa —los pinta una fuente de
+                        reserva— y esa versión, que va de anterior, no iba a
+                        estrenar el carácter más moderno de las dos. */}
+                    {seDetiene ? (
+                        <p className="collapse-progress v02-load">
+                            {renderLoadingBar(Math.round(progress * 100))}
+                        </p>
+                    ) : (
+                        <p className="collapse-progress">
+                            [{'▮'.repeat(Math.round(progress * 24))}
+                            {'▯'.repeat(24 - Math.round(progress * 24))}]{' '}
+                            {Math.round(progress * 100)}%
+                        </p>
+                    )}
+
+                    {phase === 'halted' ? (
+                        /*
+                         * ⚠ DICE CÓMO SALIR, y eso no es una concesión: una
+                         * pantalla que se queda quieta sin decir qué hacer no se
+                         * lee como una máquina detenida, se lee como que la app
+                         * se colgó. Es la lección de la pantalla de perdido del
+                         * pong, escrita otra vez.
+                         */
+                        <p className="collapse-failed">
+                            &gt; DETENIDO
+                            <br />
+                            &gt; REINICIE A MANO
+                        </p>
+                    ) : phase === 'stalled' ? (
                         <p className="collapse-failed">
                             &gt; FALLO EN LA VERIFICACIÓN DE MEMORIA
                             <br />

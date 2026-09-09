@@ -371,6 +371,18 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
 
     // ── v02.css · la versión vieja ──────────────────────────────────────────
     {
+        id: 'v02-vhold',
+        donde: 'pantalla',
+        // Sólo existe con la versión vieja puesta: es la forma en que falla UN
+        // APARATO, y la 1.0 falla como una señal.
+        estado: 'data-v02',
+        nombre: 'Sincronismo perdido',
+        que: 'La imagen se escapa hacia arriba a saltos y vuelve a engancharse.',
+        cuando: 'Con la avería de señal, y SÓLO en la v0.2: es la forma en que falla un aparato viejo, no una señal.',
+        hoja: 'v02',
+        clases: 'chromatic-failure',
+    },
+    {
         id: 'v02-indeciso',
         estado: 'data-v02',
         donde: 'pantalla',
