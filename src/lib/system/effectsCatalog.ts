@@ -285,6 +285,15 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
         clases: 'collapse-dying',
     },
     {
+        id: 'pong-paused',
+        donde: 'capa',
+        nombre: 'Pausa del vsync-test',
+        que: 'El rótulo de pausa parpadea en escalones, sin desvanecerse.',
+        cuando: 'Con el juego parado, mientras espera que sigas.',
+        hoja: 'glitch',
+        clases: 'pong-paused',
+    },
+    {
         id: 'tube-on',
         donde: 'capa',
         nombre: 'Encendido del tubo',

@@ -15,7 +15,7 @@ Pantallas y momentos que hoy no suenan. Salió de repasar qué escucha
 
 | Qué | Por qué se nota | Nota |
 | --- | --- | --- |
-| **El pong** (`//attach_6`) | Una pantalla entera sin un solo sonido | La pelota, los rebotes contra la pared y la paleta, el punto |
+| **El pong** (`//attach_6`) | Una pantalla entera sin un solo sonido | La pelota, los rebotes contra la pared y la paleta, el punto. La pausa ya está, falta que suene |
 | **Las ventanas de error** del bloqueo | Aparecen de golpe y en silencio | Es el sitio natural del bip feo de la bocinita |
 | **La pantalla muerta** (`//hi` insistido) | El final más brusco del juego, mudo | |
 | **El bloqueo** | Idem | |
@@ -65,6 +65,15 @@ de con el encendido limpio de la 1.0, es exactamente la diferencia entre las dos
 máquinas.
 
 ---
+
+## 2 bis · El pong
+
+- **El armazón de la cabecera y el pie se comparte** con la app, no se copia: hoy
+  el pong repite la estructura con las mismas clases y ya se notó la deriva —la
+  app estrenó `[RESTART]` abajo y el pong no lo tiene—. Contenido propio, marco
+  común. **Pendiente.**
+- **Sonidos.** Los rebotes contra la pared y contra la paleta, el punto, y el
+  relé de la pausa. **Pendiente.**
 
 ## 3 · Lo que NO hay que volver a intentar
 

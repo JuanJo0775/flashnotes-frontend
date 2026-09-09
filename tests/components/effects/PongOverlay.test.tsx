@@ -64,10 +64,66 @@ describe('PongOverlay · cuándo aparece', () => {
 });
 
 describe('PongOverlay · salir', () => {
-    test('Escape cierra', () => {
+    test('⚠ Escape en partida PAUSA, no sale', () => {
+        /*
+         * Pedido jugando: «esc para pausar cuando un juego esta en proceso, y
+         * luego esc otra vez para salir». Es lo que hacia un juego de esa epoca,
+         * y es lo que evita el susto de irte sin querer con la pelota en el aire.
+         */
         const onClose = jest.fn();
         render(<PongOverlay open onClose={onClose} />);
 
+        fireEvent.keyDown(window, { key: 'Escape' });
+
+        expect(screen.getByTestId('pong-paused')).toBeInTheDocument();
+        expect(onClose).not.toHaveBeenCalled();
+    });
+
+    test('y el segundo Escape ya sale', () => {
+        const onClose = jest.fn();
+        render(<PongOverlay open onClose={onClose} />);
+
+        fireEvent.keyDown(window, { key: 'Escape' });
+        fireEvent.keyDown(window, { key: 'Escape' });
+
+        expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    test.each([['Enter'], [' ']])('⚠ y «%s» continua la partida', (key) => {
+        // Las dos, porque en pausa uno aprieta «lo que sea» para seguir. Esperar
+        // a que alguien recuerde CUAL era la tecla es una pausa mal hecha.
+        render(<PongOverlay open onClose={jest.fn()} />);
+
+        fireEvent.keyDown(window, { key: 'Escape' });
+        fireEvent.keyDown(window, { key });
+
+        expect(screen.queryByTestId('pong-paused')).toBeNull();
+    });
+
+    test('⚠ y con el juego parado, la pelota no se mueve', () => {
+        // Una pausa que deja la partida corriendo por debajo no es una pausa.
+        render(<PongOverlay open onClose={jest.fn()} />);
+        fireEvent.keyDown(window, { key: 'Escape' });
+
+        const antes = corte();
+        corre(3_000);
+
+        expect(corte()).toBe(antes);
+    });
+
+    test('Escape cierra — el segundo, desde la pausa', () => {
+        /*
+         * ⚠ ESTE TEST CAMBIO CUANDO LLEGO LA PAUSA, y el cambio es el arreglo:
+         * el primer Escape ya no sale, PARA. Salir con la pelota en el aire por
+         * un toque de mas era el susto que la pausa evita.
+         *
+         * Lo que no cambia es que la salida sigue estando a un Escape de
+         * distancia desde cualquier sitio (REGLAS · A4).
+         */
+        const onClose = jest.fn();
+        render(<PongOverlay open onClose={onClose} />);
+
+        fireEvent.keyDown(window, { key: 'Escape' });
         fireEvent.keyDown(window, { key: 'Escape' });
 
         expect(onClose).toHaveBeenCalled();
@@ -287,6 +343,40 @@ describe('PongOverlay · al perder', () => {
         pierde();
 
         expect(readScores().degraded.games).toBe(0);
+    });
+
+    test('⚠ y SIEMPRE se puede salir, tambien despues de perder', () => {
+        /*
+         * REPORTADO JUGANDO: «cuando pierde solo se puede empezar una nueva, no
+         * se puede salir dando esc».
+         *
+         * Es la regla A4: se puede salir de cualquier estado. Un juego que te
+         * deja elegir entre jugar otra o quedarte encerrado no es un juego, es
+         * una trampa — y este ademas lo pediste vos tecleando un comando, asi
+         * que la salida tiene que estar donde la dejaste.
+         */
+        const onClose = jest.fn();
+        render(<PongOverlay open onClose={onClose} />);
+        expect(pierde()).toBe(true);
+
+        fireEvent.keyDown(window, { key: 'Escape' });
+
+        expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    test('⚠ y la pantalla lo DICE, que es de lo que se quejaron', () => {
+        /*
+         * Escape siempre funciono. Lo que faltaba era que se viera: esta
+         * pantalla solo ofrecia otra partida, y las pistas de juego con el
+         * `[ESC] SALIR` quedan tapadas debajo.
+         *
+         * Una salida que no se ve no esta. Por eso el informe decia «solo se
+         * puede empezar una nueva» aunque el codigo dijera otra cosa.
+         */
+        render(<PongOverlay open onClose={jest.fn()} />);
+        expect(pierde()).toBe(true);
+
+        expect(screen.getByTestId('pong-over').textContent).toContain('ESC');
     });
 
     test('se puede volver a empezar', () => {

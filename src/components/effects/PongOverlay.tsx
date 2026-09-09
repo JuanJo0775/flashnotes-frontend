@@ -125,9 +125,25 @@ export default function PongOverlay({
     const cuadriculado = senalRota || fault;
     const glyphs = fault ? GLYPH_FAULT : GLYPH;
 
+    /**
+     * EN PAUSA, como en las máquinas viejas.
+     *
+     * ⚠ Y ESCAPE HACE DOS COSAS DISTINTAS SEGÚN DÓNDE ESTÉS, que es exactamente
+     * lo que hacía un juego de esa época: en partida PARA, y con el juego ya
+     * parado SALE. Se pidió así — «esc para pausar cuando un juego está en
+     * proceso, y luego esc otra vez para salir».
+     *
+     * El que nunca cambia es Escape sobre la pantalla de perdido: ahí no hay
+     * nada que pausar, así que sale directo.
+     */
+    const [pausa, setPausa] = useState(false);
+
     const empezar = useCallback((mode: PongMode) => {
         teclasRef.current.clear();
         anotadaRef.current = false;
+        // ⚠ Y se despausa ACÁ, donde ya se reinicia todo lo demás. Empezar una
+        // partida nueva con el juego trabado sería empezarla sin poder jugarla.
+        setPausa(false);
         setGame(createGame(mode));
     }, []);
 
@@ -140,9 +156,29 @@ export default function PongOverlay({
         }
     }, [open]);
 
+
+    /*
+     * ⚠ LOS DOS VAN POR REF PORQUE EL TECLADO SE ARMA UNA VEZ. La escucha vive
+     * en un efecto que sólo depende de `open`, así que su cierre se queda con el
+     * estado del primer render: sin esto, Escape leería para siempre «no hay
+     * pausa» y «la partida no terminó».
+     *
+     * Meterlos en las dependencias volvería a armar la escucha en cada fotograma
+     * —`game` cambia sesenta veces por segundo—, que es peor.
+     */
+    const pausaRef = useRef(pausa);
+    useEffect(() => {
+        pausaRef.current = pausa;
+    }, [pausa]);
+
+    const gameRef = useRef(game);
+    useEffect(() => {
+        gameRef.current = game;
+    }, [game]);
+
     /** El bucle. */
     useEffect(() => {
-        if (!open) return;
+        if (!open || pausa) return;
 
         let raf = 0;
         let anterior = Date.now();
@@ -169,11 +205,16 @@ export default function PongOverlay({
 
         raf = requestAnimationFrame(fotograma);
         return () => cancelAnimationFrame(raf);
-    }, [open]);
+        // ⚠ `pausa` acá dentro: el bucle se DESARMA al pausar en vez de seguir
+        // girando en vacío. Un bucle que corre sin hacer nada gasta lo mismo, y
+        // acá hay una pantalla entera de glifos detrás.
+    }, [open, pausa]);
 
     /** La caída de la tabla de glifos, cada tanto. */
     useEffect(() => {
-        if (!open || reducedMotion) return;
+        // Con el juego parado, la tabla tampoco se cae: una pantalla en pausa
+        // que sigue averiándose sola cuenta que el tiempo no se detuvo.
+        if (!open || reducedMotion || pausa) return;
 
         let timer: ReturnType<typeof setTimeout>;
 
@@ -193,7 +234,7 @@ export default function PongOverlay({
             clearTimeout(timer);
             setFault(false);
         };
-    }, [open, reducedMotion]);
+    }, [open, reducedMotion, pausa]);
 
     /** El teclado. */
     useEffect(() => {
@@ -201,9 +242,41 @@ export default function PongOverlay({
 
         const abajo = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                onClose();
+                /*
+                 * ⚠ EN PARTIDA PARA; PARADO, SALE. Es lo que hacía un juego de
+                 * esa época, y es lo que evita el susto de irte sin querer con
+                 * la pelota en el aire.
+                 *
+                 * Sobre la pantalla de perdido no hay nada que pausar, así que
+                 * de ahí también sale directo — la salida tiene que estar
+                 * siempre a un Escape (REGLAS · A4).
+                 */
+                setPausa((estaba) => {
+                    if (estaba || gameRef.current.over) {
+                        onClose();
+                        return false;
+                    }
+
+                    return true;
+                });
                 return;
             }
+
+            /*
+             * CONTINUAR. Enter o espacio, las dos: en pausa lo que uno aprieta
+             * es «lo que sea» para seguir, y con la pelota parada esperar a que
+             * alguien recuerde CUÁL era la tecla es una pausa mal hecha.
+             */
+            if (pausaRef.current && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                setPausa(false);
+                return;
+            }
+
+            // Y con el juego parado no se juega: las teclas de mover no mueven,
+            // y los modos no arrancan una partida por debajo de la pausa.
+            if (pausaRef.current) return;
+
             if (e.key === '1') {
                 empezar('wall');
                 return;
@@ -213,6 +286,7 @@ export default function PongOverlay({
                 return;
             }
             if (e.key === 'Enter') {
+                setPausa(false);
                 setGame((actual) => {
                     if (!actual.over) return actual;
                     anotadaRef.current = false;
@@ -402,6 +476,22 @@ export default function PongOverlay({
                     </span>
                 </div>
 
+                {/*
+                    LA PAUSA, con la estética de una máquina vieja: el rótulo
+                    espaciado y parpadeando, y nada más. No hay menú, no hay
+                    ajustes — un juego de esa época paraba y te miraba.
+
+                    ⚠ Va DELANTE de la pantalla de perdido en el código pero no
+                    pueden coincidir: al perder no se puede pausar, porque no hay
+                    nada corriendo que parar.
+                */}
+                {pausa && !game.over && (
+                    <div className="pong-over pong-paused" data-testid="pong-paused">
+                        <p className="pong-over-title">{t('pong.paused')}</p>
+                        <p className="pong-over-hint">{t('pong.resume')}</p>
+                    </div>
+                )}
+
                 {game.over && (
                     <div className="pong-over" data-testid="pong-over">
                         <p className="pong-over-title">
@@ -414,6 +504,15 @@ export default function PongOverlay({
                                               : '↑/↓',
                                   })}
                         </p>
+                        {/*
+                            ⚠ Y LA SALIDA SE ANUNCIA ACÁ TAMBIÉN. Escape siempre
+                            funcionó —hay un test que lo prueba— pero esta
+                            pantalla sólo ofrecía otra partida, y las pistas de
+                            juego con el `[ESC] SALIR` quedan tapadas debajo. Se
+                            reportó jugando como si no se pudiera salir, y en la
+                            práctica era verdad: una salida que no se ve no está.
+                            La regla A4 pide poder salir de cualquier estado.
+                        */}
                         <p className="pong-over-hint">{t('pong.again')}</p>
                     </div>
                 )}

@@ -1267,6 +1267,42 @@
     opacity: 0.55;
 }
 
+/* LA PAUSA, con la estetica de una maquina vieja.
+
+   ⚠ MENOS OPACA QUE LA DE PERDIDO, y a proposito: al perder el corte se
+   congela y hay algo que mirar detras; en pausa el juego SIGUE AHI, esperando,
+   y taparlo del todo contaria que se fue. Se ve la pelota donde la dejaste.
+
+   Y el rotulo parpadea, que es lo que hacia un cartel de pausa de esa epoca —
+   no habia menu, no habia ajustes: paraba y te miraba. */
+@keyframes pong-paused {
+    0%,
+    62% {
+        opacity: 1;
+    }
+    63%,
+    100% {
+        opacity: 0.25;
+    }
+}
+
+.pong-paused {
+    background: color-mix(in srgb, var(--color-primary) 55%, transparent);
+}
+
+.pong-paused .pong-over-title {
+    animation: pong-paused 1.1s steps(1, end) infinite;
+}
+
+/* ⚠ Con movimiento reducido el rotulo se queda quieto y entero. La regla A3
+   manda: un parpadeo de pantalla completa es exactamente lo que molesta, y el
+   cartel se lee igual sin el. */
+@media (prefers-reduced-motion: reduce) {
+    .pong-paused .pong-over-title {
+        animation: none;
+    }
+}
+
 .pong-over {
     position: absolute;
     inset: 0;
