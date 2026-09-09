@@ -19,7 +19,7 @@
 
 import { render, screen } from '@testing-library/react';
 import Banco from '@/components/system/Banco';
-import { EVENT_SOUNDS, INTERNAL_VOICES } from '@/lib/system/audio/events';
+import { EVENT_SOUNDS, INTERNAL_VOICES, sampleArgs } from '@/lib/system/audio/events';
 import { SCREEN_SOUNDS } from '@/lib/system/audio/screens';
 
 beforeEach(() => {
@@ -73,5 +73,84 @@ describe('la pagina de identidad cuenta el sonido entero', () => {
         expect(pendientes.length).toBeGreaterThan(0);
 
         expect(screen.getAllByText(/SIN ENCHUFAR/).length).toBe(pendientes.length);
+    });
+});
+
+describe('\u26a0 y TODAS se dejan oir', () => {
+    /*
+     * REPORTADO JUGANDO: «el banco tiene sonidos que no se dejan reproducir».
+     *
+     * Era cierto por dos motivos distintos, y los dos hacian lo mismo: dejar el
+     * boton apagado. Las voces que piden datos —hercios, amplitud— no tenian de
+     * donde sacarlos, y tres filas no disparan un golpe sino que encienden un
+     * tono sostenido o AGACHAN la sala.
+     *
+     * Un catalogo donde la mitad no se deja oir no es un catalogo: tranquiliza,
+     * que es peor. Este test cuenta los botones y exige que ninguno este muerto,
+     * asi que la proxima voz rara tampoco va a poder colarse apagada.
+     */
+    function botonesDelCatalogo(): HTMLButtonElement[] {
+        return screen.getAllByRole('button', { name: '[OÍR]' }) as HTMLButtonElement[];
+    }
+
+    it('hay un boton por fila, ni uno menos', () => {
+        render(<Banco />);
+
+        expect(botonesDelCatalogo()).toHaveLength(
+            SCREEN_SOUNDS.length + EVENT_SOUNDS.length
+        );
+    });
+
+    it('y ninguno esta apagado', () => {
+        render(<Banco />);
+
+        for (const b of botonesDelCatalogo()) expect(b).toBeEnabled();
+    });
+
+    it('⚠ las voces que piden datos traen con que', () => {
+        /*
+         * El tipo de `SAMPLE_ARGS` ya lo exige al compilar; esto ata el otro
+         * lado: que lo que sale del ayudante sea lo que `play` espera, y no un
+         * objeto vacio que dispararia un sonido distinto del de la app.
+         */
+        expect(sampleArgs('beep')).toEqual({ hz: 1_050, ms: 110 });
+        expect(sampleArgs('tear')).toEqual({ amplitudePx: 9 });
+
+        // Y las que no llevan datos devuelven nada, no un objeto de relleno.
+        expect(sampleArgs('key')).toBeUndefined();
+    });
+});
+
+describe('⚠ y ninguna fila se confunde con otra', () => {
+    /*
+     * REPORTADO JUGANDO: «se repite el de power up».
+     *
+     * Y se repetia: el boton llevaba escrito el nombre de la VOZ, y varias filas
+     * comparten voz — el apagado suena en el tubo cortandose Y en la pagina
+     * muerta, el barrido en el pedazo Y en el bloqueo. La lista salia con
+     * etiquetas identicas y no habia forma de saber cual era cual.
+     *
+     * Lo que distingue una fila de otra es el SUCESO, no la voz. Ahora el boton
+     * dice lo que hace y la fila dice de que es.
+     */
+    it('el suceso de cada fila aparece una sola vez', () => {
+        render(<Banco />);
+
+        for (const s of SCREEN_SOUNDS) {
+            expect(screen.getAllByText(s.what)).toHaveLength(1);
+        }
+    });
+
+    it('y las voces repetidas se ven como lo que son: la misma voz en dos sitios', () => {
+        // No es un defecto que `powerDown` este dos veces: es economia. El
+        // defecto era que no se supiera en que dos sitios.
+        render(<Banco />);
+
+        const enDosSitios = SCREEN_SOUNDS.filter((s) => s.shot?.voice === 'powerDown');
+        expect(enDosSitios).toHaveLength(2);
+
+        for (const s of enDosSitios) {
+            expect(screen.getByText(`.${s.mark}`)).toBeInTheDocument();
+        }
     });
 });

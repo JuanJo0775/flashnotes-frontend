@@ -19,7 +19,7 @@
  * quien buscara por qué no suena no encontraría ni el hueco.
  */
 
-import type { VoiceName } from '@/lib/system/audio/play';
+import type { VoiceArgs, VoiceName } from '@/lib/system/audio/play';
 import type { CATEGORY_OF } from '@/lib/system/audio/voices';
 
 /**
@@ -57,9 +57,9 @@ export const EVENT_SOUNDS: readonly EventSound[] = [
         where: '`click` en el documento, en captura',
     },
     {
-        what: 'Un tirón de imagen: la señal rompiéndose',
+        what: 'Un tirón de imagen: la señal rompiéndose, también dentro del pong',
         voice: 'glitchBurst',
-        where: 'el almacén de `useGlitch`',
+        where: 'el almacén de `useGlitch`, y `data-render` del pong',
     },
     {
         what: 'Cada golpe a la pared suelta, y cruje más cuanto más cede',
@@ -108,6 +108,45 @@ export const EVENT_SOUNDS: readonly EventSound[] = [
         pending: true,
     },
 ];
+
+/**
+ * Con qué se dispara cada voz que pide argumentos, para poder OÍRLA suelta.
+ *
+ * ⚠ EL CATÁLOGO SE QUEJÓ SOLO, y con razón: la mitad de las filas tenían el
+ * botón apagado porque su voz necesita datos —hercios, amplitud— y no había de
+ * dónde sacarlos. Un catálogo donde la mitad no se deja oír no es un catálogo.
+ *
+ * Los valores son los que usa la app de verdad en el sitio más representativo de
+ * cada voz, no números inventados para la demostración: lo que se oye acá tiene
+ * que ser lo que se oye jugando.
+ */
+type ConArgumentos = {
+    [N in VoiceName]: VoiceArgs[N] extends undefined ? never : N;
+}[VoiceName];
+
+/*
+ * ⚠ EL TIPO ES LO QUE IMPIDE QUE ESTO SE QUEDE CORTO. Está escrito sobre las
+ * voces QUE PIDEN ARGUMENTOS, no sobre todas: añadir una voz con datos y no
+ * darle muestra no compila, y poner una muestra a una voz que no lleva datos
+ * tampoco. Una lista de demostraciones que puede quedarse vieja en silencio no
+ * sirve, porque el fallo se ve jugando y no en la suite.
+ */
+export const SAMPLE_ARGS: { readonly [N in ConArgumentos]: VoiceArgs[N] } = {
+    beep: { hz: 1_050, ms: 110 },
+    sweep: { fromHz: 1_100, toHz: 60, ms: 900 },
+    glitchBurst: { amplitudePx: 7, durationMs: 180 },
+    tear: { amplitudePx: 9 },
+    confirm: { wrong: false },
+};
+
+/**
+ * La muestra de una voz cualquiera, sin que quien pregunta tenga que saber si
+ * esa voz lleva datos o no. Devuelve `undefined` para las que no llevan, que es
+ * exactamente lo que `play` espera recibir de ellas.
+ */
+export function sampleArgs(voice: VoiceName): VoiceArgs[VoiceName] {
+    return (SAMPLE_ARGS as Partial<Record<VoiceName, VoiceArgs[VoiceName]>>)[voice];
+}
 
 /**
  * Las voces que NO tienen suceso propio porque son INGREDIENTES.

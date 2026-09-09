@@ -72,6 +72,11 @@ máquinas.
   el pong repite la estructura con las mismas clases y ya se notó la deriva —la
   app estrenó `[RESTART]` abajo y el pong no lo tiene—. Contenido propio, marco
   común. **Pendiente.**
+- ~~**Los dos efectos prestados.**~~ Hechos: el **tic del pedazo** cuando el juego
+  se dibuja con caracteres —con el vídeo sano sería un adorno; ahí ya se rompió
+  algo y el tic es de la misma avería— y el **grano hirviendo** con el juego
+  parado, nunca sobre la pantalla de perdido. Se reusan las clases `.loose-slab`
+  y `.wall-grain`, no se copia el CSS, y el catálogo dice los dos sitios.
 - ~~**Sonidos.**~~ Hechos: tres tonos como el pong original —300 Hz la paleta,
   620 la pared, 170 el punto— y el relé al parar y seguir. El juego publica
   contadores en su raíz y el sonido los lee.

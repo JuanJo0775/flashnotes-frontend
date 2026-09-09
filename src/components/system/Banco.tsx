@@ -6,8 +6,10 @@ import { KEY_LAYERS, key as voiceKey, type KeyLayer } from '@/lib/system/audio/v
 import { ensureAudio, setSoundOn, teardownAudio } from '@/lib/system/audio/context';
 import { PEAK_DBFS } from '@/lib/system/audio/mix';
 import { play, type VoiceName } from '@/lib/system/audio/play';
-import { EVENT_SOUNDS, INTERNAL_VOICES } from '@/lib/system/audio/events';
+import { EVENT_SOUNDS, INTERNAL_VOICES, sampleArgs } from '@/lib/system/audio/events';
 import { SCREEN_SOUNDS, fire } from '@/lib/system/audio/screens';
+import { startBarsTone, stopBarsTone } from '@/lib/system/audio/bars';
+import { ambienceIsOn, duck, startAmbience } from '@/lib/system/audio/ambience';
 import { useSound } from '@/hooks/useSound';
 import { useTheme, toggleTheme } from '@/hooks/useTheme';
 import { ART, ART_FACES, ART_TOTAL } from '@/lib/system/asciiArt';
@@ -84,15 +86,26 @@ function Fila({
                 flexWrap: 'wrap',
             }}
         >
+            {/*
+                ⚠ EL BOTÓN DICE «OÍR» Y NO EL NOMBRE DE LA VOZ, y se cambió al
+                verlo: varias filas comparten voz —el apagado suena en el tubo
+                cortado Y en la página muerta, el barrido en el pedazo Y en el
+                bloqueo— así que la lista salía con etiquetas repetidas y no se
+                sabía cuál era cuál. Lo que distingue una fila de otra es el
+                SUCESO, y el suceso ya está escrito al lado.
+            */}
             <button
                 type="button"
                 className="btn-terminal"
                 disabled={!onOir}
                 onClick={onOir}
-                style={{ minWidth: '7.5rem', opacity: onOir ? 1 : 0.45 }}
+                style={{ minWidth: '5rem', opacity: onOir ? 1 : 0.45 }}
             >
-                [{voz.toUpperCase()}]
+                [OÍR]
             </button>
+            <span className="diag-label" style={{ minWidth: '7rem' }}>
+                {voz.toUpperCase()}
+            </span>
             <span style={{ flex: '1 1 16rem', minWidth: '12rem' }}>{suceso}</span>
             <span className="comment">
                 {donde}
@@ -104,6 +117,58 @@ function Fila({
         </div>
     );
 }
+
+/**
+ * Cuánto se deja sonando un sonido SOSTENIDO para poder oírlo.
+ *
+ * El tono de la carta de ajuste no es un golpe: se enciende y se queda hasta que
+ * la pantalla cambia. Acá no hay pantalla que cambie, así que la demostración
+ * pone el rato —suficiente para reconocerlo, corto para no molestar.
+ */
+const DEMO_SOSTENIDO_MS = 1_400;
+
+/**
+ * OÍR UNA FILA DE PANTALLA ENTERA, sea de la forma que sea.
+ *
+ * ⚠ SE REPORTÓ JUGANDO: «el banco tiene sonidos que no se dejan reproducir». Y
+ * era cierto por partida doble. Las filas que piden argumentos tenían el botón
+ * apagado —eso lo arregla `SAMPLE_ARGS`—, y además hay tres filas que no
+ * disparan un golpe y por eso no tenían qué disparar:
+ *
+ *  · las dos cartas de ajuste, que encienden un tono y lo dejan puesto,
+ *  · y la sala agachándose cuando contesta él, que no AÑADE nada: QUITA.
+ *
+ * Un catálogo donde la mitad no se deja oír no es un catálogo, así que acá cada
+ * forma tiene su demostración. La última necesita una sala que agachar: si no
+ * hay zumbido puesto, se enciende uno para el caso —enseñar un hueco en el
+ * silencio sería enseñar nada.
+ */
+function oirPantalla(p: (typeof SCREEN_SOUNDS)[number]) {
+    if (p.shot) {
+        fire(p.shot);
+        // Y lo que llega detrás, si la fila lo tiene: el impacto del pedazo
+        // contra el suelo es parte del suceso, no otro suceso.
+        if (p.then) {
+            const luego = p.then;
+            setTimeout(() => fire(luego), luego.ms);
+        }
+        return;
+    }
+
+    if (p.tone) {
+        startBarsTone();
+        setTimeout(stopBarsTone, DEMO_SOSTENIDO_MS);
+        return;
+    }
+
+    if (p.ducks) {
+        if (!ambienceIsOn()) startAmbience(Math.random, 0.6);
+        duck(DUCK_DEMO_MS);
+    }
+}
+
+/** Lo que se agacha la sala en la demostración, igual que cuando habla él. */
+const DUCK_DEMO_MS = 3_200;
 
 /** Las voces que se disparan tal cual, sin argumentos. */
 const SUELTAS: { name: VoiceName; label: string; nota: string }[] = [
@@ -809,11 +874,7 @@ export default function Banco() {
                             suceso={p.what}
                             voz={p.shot?.voice ?? (p.tone ? 'tono' : '—')}
                             donde={`.${p.mark}`}
-                            onOir={
-                                p.shot
-                                    ? () => disparar(() => fire(p.shot!), p.mark)
-                                    : undefined
-                            }
+                            onOir={() => disparar(() => oirPantalla(p), p.mark)}
                         />
                     ))}
 
@@ -828,17 +889,19 @@ export default function Banco() {
                             voz={e.voice}
                             donde={e.where}
                             pendiente={e.pending}
-                            onOir={
-                                // Las que llevan argumentos no se pueden disparar
-                                // a ciegas desde acá: tienen su propio mando más
-                                // arriba, con el temblor y los hercios a mano.
-                                e.voice === 'glitchBurst' ||
-                                e.voice === 'tear' ||
-                                e.voice === 'sweep' ||
-                                e.voice === 'beep' ||
-                                e.voice === 'confirm'
-                                    ? undefined
-                                    : () => disparar(() => play(e.voice as never), e.voice)
+                            /*
+                                ⚠ TODAS SUENAN. Antes las que piden argumentos
+                                salían apagadas —«el banco tiene sonidos que no se
+                                dejan reproducir»— y un catálogo donde la mitad
+                                no se deja oír no es un catálogo. Los valores
+                                salen de `sampleArgs`, que son los que usa la app
+                                de verdad.
+                            */
+                            onOir={() =>
+                                disparar(
+                                    () => play(e.voice as never, sampleArgs(e.voice) as never),
+                                    e.voice
+                                )
                             }
                         />
                     ))}

@@ -25,6 +25,17 @@ function corte(): string {
     return screen.getByTestId('pong-court').textContent ?? '';
 }
 
+/** Sube la paleta hasta arriba y espera a que la pelota se escape. */
+function pierde(limiteMs = 90_000) {
+    fireEvent.keyDown(window, { key: 'ArrowUp' });
+
+    for (let t = 0; t < limiteMs; t += 1000) {
+        corre(1000);
+        if (screen.queryByTestId('pong-over')) return true;
+    }
+    return false;
+}
+
 beforeEach(() => {
     jest.useFakeTimers();
     localStorage.clear();
@@ -314,17 +325,6 @@ describe('PongOverlay · el marcador en pantalla', () => {
 });
 
 describe('PongOverlay · al perder', () => {
-    /** Sube la paleta hasta arriba y espera a que la pelota se escape. */
-    function pierde(limiteMs = 90_000) {
-        fireEvent.keyDown(window, { key: 'ArrowUp' });
-
-        for (let t = 0; t < limiteMs; t += 1000) {
-            corre(1000);
-            if (screen.queryByTestId('pong-over')) return true;
-        }
-        return false;
-    }
-
     test('la partida termina cuando se escapa', () => {
         render(<PongOverlay open onClose={jest.fn()} />);
 
@@ -514,5 +514,69 @@ describe('PongOverlay · la avería no tiene excepciones', () => {
 
         const capa = container.querySelector('.pong-layer') as HTMLElement;
         expect(capa.style.getPropertyValue('--glitch-amp')).toBe('7px');
+    });
+});
+
+describe('PongOverlay · los dos efectos prestados', () => {
+    /**
+     * ⚠ SE COMPRUEBA QUE SE REUSA LA CLASE, NO QUE EXISTA UNA ANIMACIÓN NUEVA.
+     * Las dos capas de acá son las mismas del muro suelto —`.loose-slab` y
+     * `.wall-grain`—, ya catalogadas, ya con su CSS. Si alguien decide un día
+     * copiar el efecto en vez de prestarlo, estos tests siguen pasando y el
+     * catálogo del banco se queda con una entrada mintiendo; por eso el banco
+     * los lista por CLASE y no por sitio.
+     *
+     * Lo que sí atan es CUÁNDO sale cada uno, que es lo que se pidió.
+     */
+    const capa = (c: string) => document.querySelector(`.pong-stage .${c}`);
+
+    test('el tic del pedazo sólo con el juego dibujado a caracteres', () => {
+        /*
+         * Pedido jugando: «con eso de el Tic del pedazo, cuando se renderiza,
+         * también quiero ese efecto». La caída de la tabla de glifos sortea
+         * cuándo llega, así que acá se avanza hasta pillarla y se mira lo que
+         * la pantalla PUBLICA, no el reloj.
+         */
+        const { container } = render(<PongOverlay open onClose={jest.fn()} />);
+        const capaRaiz = container.querySelector('.pong-layer')!;
+
+        // Con el vídeo sano no hay tic: sería un adorno, y esto es una avería.
+        expect(capaRaiz.getAttribute('data-render')).toBe('fluid');
+        expect(capa('loose-slab')).toBeNull();
+
+        let pillado = false;
+        for (let i = 0; i < 400 && !pillado; i += 1) {
+            corre(100);
+            pillado = capaRaiz.getAttribute('data-render') === 'quantised';
+        }
+
+        expect(pillado).toBe(true);
+        expect(capa('loose-slab')).not.toBeNull();
+    });
+
+    test('el grano hirviendo sale con el juego parado, y se va al seguir', () => {
+        // «Y cuando está en pausa quiero el grano hirviendo». Con la pelota
+        // quieta la pantalla se queda demasiado limpia, y una pantalla limpia y
+        // quieta parece apagada.
+        render(<PongOverlay open onClose={jest.fn()} />);
+        expect(capa('wall-grain')).toBeNull();
+
+        fireEvent.keyDown(window, { key: 'Escape' });
+        expect(capa('wall-grain')).not.toBeNull();
+
+        fireEvent.keyDown(window, { key: 'Enter' });
+        expect(capa('wall-grain')).toBeNull();
+    });
+
+    test('⚠ pero no sobre la pantalla de perdido', () => {
+        /*
+         * Ahí ya hay un panel con texto encima, y el grano se le mete detrás de
+         * las letras. Perder no es una pausa: la partida terminó, no está
+         * esperándote.
+         */
+        render(<PongOverlay open onClose={jest.fn()} />);
+        expect(pierde()).toBe(true);
+
+        expect(capa('wall-grain')).toBeNull();
     });
 });

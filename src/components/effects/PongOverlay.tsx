@@ -447,6 +447,36 @@ export default function PongOverlay({
 
                 <div className="pong-stage">
                     {/*
+                        ⚠ EL TIC DEL PEDAZO, PRESTADO. Es el mismo efecto que
+                        delata la zona floja de la pared: un `backdrop-filter`
+                        que invierte un instante lo que hay DEBAJO, cada once
+                        segundos. Acá debajo hay un juego, así que lo que se
+                        invierte es el campo.
+
+                        ⚠ SE REUSA LA CLASE, NO SE COPIA EL EFECTO. Dos
+                        animaciones distintas para el mismo gesto son dos cosas
+                        que hay que acordarse de tocar juntas, y la segunda se
+                        queda vieja — el catalogo del banco existe justamente
+                        para que eso se vea.
+
+                        Y va SOLO con la rejilla puesta: cuando el juego se
+                        dibuja con caracteres ya se rompio algo, y el tic es de
+                        la misma averia. Con el video sano seria un adorno.
+                    */}
+                    {cuadriculado && <div className="loose-slab" aria-hidden="true" />}
+
+                    {/*
+                        Y EL GRANO HIRVIENDO CON EL JUEGO PARADO. Es el mismo de
+                        detras del agujero de la pared: la estatica removiendose
+                        a saltos.
+
+                        Con la pelota quieta la pantalla se queda demasiado
+                        limpia, y una pantalla limpia y quieta parece apagada. El
+                        grano cuenta que el tubo sigue encendido esperandote.
+                    */}
+                    {pausa && !game.over && <div className="wall-grain" aria-hidden="true" />}
+
+                    {/*
                      * Decorativo para quien escucha: un lector de pantalla
                      * deletreando 1.728 caracteres de rejilla no informa de
                      * nada. El estado va en el marcador, que sí se lee.

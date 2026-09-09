@@ -335,6 +335,13 @@ Contadores y no banderas: una bandera de «rebotó» habría que apagarla, y dos
 rebotes en el mismo fotograma dejarían uno mudo. Un número que sube no pierde
 ninguno.
 
+⚠ **Y la tabla de glifos cayéndose no es un cuarto tono.** Cuando el juego pasa a
+dibujarse con caracteres, eso no es un sonido de juego: es la señal rompiéndose,
+el mismo tirón que en el resto de la app. Pequeño y sólo al llegar — pasa cada
+tanto y solo, y un tirón grande convertiría una avería de fondo en el
+protagonista, que acá es la pelota. Volver a la normalidad no suena, porque
+volver no es un suceso: es dejar de pasar algo.
+
 ⚠ **El tic del teletipo va por LÍNEA, nunca por carácter.** Las respuestas se
 teclean letra a letra —dieciocho milisegundos cada una— y un tic por carácter
 sería una ametralladora aunque la compuerta lo recortara. Un teletipo golpea el
@@ -651,6 +658,23 @@ compuerta.
 que se VE —una marca del árbol que la app ya pinta— y abajo la que no: teclas,
 almacenes y observadores de atributos. Cada fila se puede disparar, porque una
 tabla que sólo se lee obliga a creérsela y una que suena se comprueba sola.
+
+⚠ **TODAS, sin excepciones.** Se reportó jugando —«el banco tiene sonidos que no
+se dejan reproducir»— y era cierto por dos motivos: las voces que piden datos
+—hercios, amplitud— no tenían de dónde sacarlos, y tres filas no disparan un
+golpe. Ahora los datos salen de `SAMPLE_ARGS`, que son los que usa la app de
+verdad, y cada forma tiene su demostración: las dos cartas de ajuste encienden su
+tono 1,4 s, y la sala agachándose enciende un zumbido si no había ninguno —enseñar
+un hueco en el silencio sería enseñar nada—. El tipo de `SAMPLE_ARGS` está escrito
+sobre las voces que llevan argumentos, así que una voz nueva sin muestra no
+compila.
+
+⚠ **Y el botón dice `[OÍR]`, no el nombre de la voz.** También se reportó —«se
+repite el de power up»—: varias filas comparten voz —el apagado suena en el tubo
+cortándose Y en la página muerta, el barrido en el pedazo Y en el bloqueo— y la
+lista salía con etiquetas idénticas. Lo que distingue una fila de otra es el
+SUCESO; la voz repetida no es un defecto, es economía, y ahora se ve en qué dos
+sitios ocurre.
 
 ⚠ **Y no puede quedarse corta.** Hay un test que exige que toda voz declarada en
 `CATEGORY_OF` aparezca en una de las dos tablas —o en `INTERNAL_VOICES` con su

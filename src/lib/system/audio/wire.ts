@@ -702,6 +702,7 @@ export function startSound(): () => void {
     let rebotes = 0;
     let perdido = false;
     let parado = false;
+    let cuadriculado = false;
 
     const leerPong = (el: Element, primera: boolean) => {
         const n = (attr: string) => Number(el.getAttribute(attr) ?? 0);
@@ -710,6 +711,7 @@ export function startSound(): () => void {
         const ahoraRebotes = n('data-bounces');
         const ahoraPerdido = el.getAttribute('data-over') === 'yes';
         const ahoraParado = el.getAttribute('data-paused') === 'yes';
+        const ahoraCuadriculado = el.getAttribute('data-render') === 'quantised';
 
         if (!primera) {
             // La paleta: el más grave de los tres, porque es el que vos hacés.
@@ -736,12 +738,28 @@ export function startSound(): () => void {
                 huboActividad();
                 play('relay');
             }
+
+            /*
+             * LA TABLA DE GLIFOS CAYÉNDOSE: el juego pasa a dibujarse con
+             * caracteres, y eso sí es la señal rompiéndose — el mismo tirón que
+             * el resto de la app, no un sonido de juego.
+             *
+             * ⚠ PEQUEÑO, Y SÓLO AL LLEGAR. Pasa cada tanto y solo: un tirón
+             * grande convertiría una avería de fondo en el protagonista, y el
+             * protagonista acá es la pelota. Volver a la normalidad no suena
+             * porque volver no es un suceso: es dejar de pasar algo.
+             */
+            if (ahoraCuadriculado && !cuadriculado) {
+                huboActividad();
+                play('glitchBurst', { amplitudePx: 3, durationMs: 110 });
+            }
         }
 
         peloteo = ahoraPeloteo;
         rebotes = ahoraRebotes;
         perdido = ahoraPerdido;
         parado = ahoraParado;
+        cuadriculado = ahoraCuadriculado;
     };
 
     const mirarPong = () => {
@@ -762,7 +780,13 @@ export function startSound(): () => void {
         pong = new MutationObserver(() => leerPong(el, false));
         pong.observe(el, {
             attributes: true,
-            attributeFilter: ['data-rally', 'data-bounces', 'data-over', 'data-paused'],
+            attributeFilter: [
+                'data-rally',
+                'data-bounces',
+                'data-over',
+                'data-paused',
+                'data-render',
+            ],
         });
     };
 

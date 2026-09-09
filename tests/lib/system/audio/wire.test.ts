@@ -350,6 +350,7 @@ describe('el pong, que ocurre entre fotogramas', () => {
         el.setAttribute('data-bounces', '0');
         el.setAttribute('data-over', 'no');
         el.setAttribute('data-paused', 'no');
+        el.setAttribute('data-render', 'fluid');
         document.body.append(el);
         return el;
     }
@@ -398,6 +399,41 @@ describe('el pong, que ocurre entre fotogramas', () => {
 
         expect(alPerder).toBeGreaterThan(0);
         expect(fuentes(antes).length).toBe(alPerder);
+    });
+
+    it('⚠ y la tabla de glifos cayendose trae SU tiron, no un blip', async () => {
+        /*
+         * Cuando el juego pasa a dibujarse con caracteres, eso no es un sonido
+         * de juego: es la señal rompiendose, el mismo tiron que en el resto de
+         * la app. Pequeño y solo al llegar — pasa cada tanto y solo, y un tiron
+         * grande convertiria una averia de fondo en el protagonista.
+         *
+         * Se mide por RUIDO: los tres tonos del pong son osciladores y no
+         * fabrican ninguno; el tiron es ruido filtrado.
+         */
+        const el = abrirPong();
+        conLaSalaYaEncendida();
+        await unTic();
+
+        const antes = marca();
+        el.setAttribute('data-render', 'quantised');
+        await unTic();
+
+        expect(ruidos(antes).length).toBeGreaterThan(0);
+    });
+
+    it('y volver a la normalidad NO suena: volver no es un suceso', async () => {
+        const el = abrirPong();
+        conLaSalaYaEncendida();
+        await unTic();
+        el.setAttribute('data-render', 'quantised');
+        await unTic();
+
+        const antes = marca();
+        el.setAttribute('data-render', 'fluid');
+        await unTic();
+
+        expect(fuentes(antes)).toHaveLength(0);
     });
 
     it('⚠ y parar es un interruptor, no un blip', async () => {
