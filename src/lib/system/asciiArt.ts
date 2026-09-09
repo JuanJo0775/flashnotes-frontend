@@ -24,7 +24,7 @@
 import type { Note } from '@/types/note.types';
 import type { Lang } from '@/config/lang';
 import { didV02RoundTrip } from '@/lib/system/v02';
-import { clearHints, hintEarned } from '@/lib/system/artHints';
+import { artChanged, clearHints, hintEarned } from '@/lib/system/artHints';
 import { damageArt } from '@/lib/system/artCorruption';
 import { eyeIsBarred } from '@/lib/system/entity';
 
@@ -1308,7 +1308,20 @@ export function awardPiece(id: string): ArtPiece | null {
      * La regla vive ACÁ y no en `artHints` para que aquel módulo no tenga que
      * leer de éste: la dependencia va en una sola dirección y no hay ciclo.
      */
+    /*
+     * SE AVISA SIEMPRE, y UNA sola vez.
+     *
+     * ⚠ Ganar una pieza pasa muchas veces; encender las pistas, una sola. Sin
+     * el aviso de abajo, todo lo que quisiera enterarse de un premio —el sonido
+     * del cajón, por ejemplo— sólo se enteraba del PRIMERO, y a partir del
+     * segundo los dibujos llegaban en silencio.
+     *
+     * ⚠ Y VA EN UN `else`, no suelto: `hintEarned` YA avisa por su cuenta.
+     * Llamando a los dos, la primera pieza despertaba a los suscritos dos veces
+     * por un solo suceso — lo cazo un test que contaba los avisos.
+     */
     if (readRevealed().size === 0) hintEarned();
+    else artChanged();
 
     return piece;
 }

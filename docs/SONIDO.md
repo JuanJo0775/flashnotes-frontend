@@ -307,6 +307,14 @@ marca.
 | `.collapse-reboot` | La máquina leyendo para volver, y sigue leyendo mientras carga |
 | `.boot-check` | El bip de POST: memoria contada, todo bien |
 
+⚠ **Y apagar y encender ARREGLA lo que arregla un reinicio.** El botón y
+`//reboot` hacían el ciclo entero y devolvían la máquina igual de rota; una
+máquina que se reinicia y sigue rota no se reinició. Ahora se lleva las averías de
+sesión —la señal cromática, el desgaste del rótulo, las rachas— que es exactamente
+lo que una recarga se lleva. No toca nada ganado: eso es `//reset`, que avisa
+antes. Y el bloqueo sobrevive con su avería, porque ahí reiniciar no puede ser la
+salida fácil.
+
 ### ⚠ Y una máquina que todavía no arrancó no tiene ruido de sala
 
 El zumbido de fondo son tres senos a **58, 116 y 175 Hz** y su entrada dura cuatro
@@ -615,7 +623,9 @@ Nada de esto existe fuera de desarrollo.
 
 - **El final** (§26): el crujido que sube con cada golpe, la caída, el ojo, los
   200 ms de silencio absoluto y el reinicio.
-- **La entrega de arte cableada.** La voz existe (`drawer`) y todavía no cuelga
-  de `awardPiece`.
+- **El tic del teletipo.** La voz existe (`tick`) y todavía no tiene sitio: las
+  respuestas se teclean carácter a carácter, y sólo `//help` se revela por
+  líneas. Un tic por carácter sería una ametralladora, así que espera a que haya
+  un momento que de verdad imprima renglones.
 - **Las muestras.** Cero por ahora, y ésa era la idea: sintético primero, y una
   muestra CC0 sólo donde el sintético falle la prueba de oído.

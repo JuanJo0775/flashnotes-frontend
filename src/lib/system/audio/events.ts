@@ -95,8 +95,7 @@ export const EVENT_SOUNDS: readonly EventSound[] = [
     {
         what: 'Ganarse una pieza de arte: un cajón que se abre',
         voice: 'drawer',
-        where: 'todavía en ninguna parte',
-        pending: true,
+        where: 'el almacén de la colección, comparando la cuenta',
     },
     {
         what: 'Un condensador soltándose dentro de la caja',

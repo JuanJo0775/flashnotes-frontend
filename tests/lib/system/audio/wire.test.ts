@@ -21,6 +21,7 @@ import { ambienceIsOn } from '@/lib/system/audio/ambience';
 import { barsToneIsOn } from '@/lib/system/audio/bars';
 import { teardownAudio } from '@/lib/system/audio/context';
 import { fireGlitch } from '@/hooks/useGlitch';
+import { awardPiece, clearFound as clearArt } from '@/lib/system/asciiArt';
 import {
     markSecretFound,
     registerLogoClick,
@@ -31,8 +32,13 @@ import { installFakeAudio, lastContext, type FakeNode } from './fakeAudio';
 let quitarFalso: () => void;
 let parar: () => void;
 
+/** Una pieza cualquiera de la coleccion. Cual sea da igual: lo que se mide
+ *  es que ganar UNA suene. */
+const PIEZA = 'moth';
+
 beforeEach(() => {
     localStorage.clear();
+    clearArt();
     quitarFalso = installFakeAudio();
     parar = startSound();
 });
@@ -159,6 +165,77 @@ describe('el glitch', () => {
         fireGlitch();
 
         expect(fuentes(antes).length).toBeGreaterThan(0);
+    });
+});
+
+describe('ganarse una pieza de arte', () => {
+    /** Lo justo para que corran los avisos del almacen. */
+    const unTic = () => new Promise((r) => setTimeout(r, 80));
+
+    /*
+     * ⚠ CUELGA DEL ALMACEN Y NO DE LOS NUEVE SITIOS QUE REGALAN ARTE.
+     * `awardFrom` se llama desde nueve componentes distintos —el pong, el
+     * bloqueo, el reloj, la sesion larga— y poner el sonido en cada uno era
+     * exactamente el futuro que este modulo existe para evitar.
+     */
+    it('el cajon se abre, un poco despues', async () => {
+        conLaSalaYaEncendida();
+        await unTic();
+        const antes = marca();
+
+        awardPiece(PIEZA);
+
+        // ⚠ No suena en el acto: ver el porque abajo.
+        expect(fuentes(antes)).toHaveLength(0);
+
+        await new Promise((r) => setTimeout(r, 400));
+
+        expect(fuentes(antes).length).toBeGreaterThan(0);
+    });
+
+    it('⚠ y llega DETRAS del hallazgo, no encima', async () => {
+        /*
+         * Ganar una pieza suele coincidir con encontrar un secreto, y las dos
+         * voces son de la misma familia: en el mismo instante la compuerta se
+         * comeria una de las dos, y cual se salva seria cuestion de suerte.
+         *
+         * Separadas se leen como lo que son — «eso contaba», y detras, «y ademas
+         * te llevas esto».
+         */
+        conLaSalaYaEncendida();
+        await unTic();
+
+        /*
+         * ⚠ UN SECRETO QUE NO USE NINGUN OTRO TEST DE ESTE FICHERO. El conjunto
+         * de hallazgos vive en MEMORIA y `localStorage.clear()` no lo toca, asi
+         * que marcar uno ya marcado no publica nada — y el test siguiente que lo
+         * usara se quedaba sin sonido. Paso: se gasto `history` aca y el test del
+         * ente, mas abajo, empezo a medir cero notas.
+         */
+        const antes = marca();
+        markSecretFound('morse');
+        awardPiece(PIEZA);
+        await unTic();
+
+        // Primero suena el hallazgo, solo.
+        const alPrincipio = fuentes(antes).length;
+        expect(alPrincipio).toBeGreaterThan(0);
+
+        await new Promise((r) => setTimeout(r, 400));
+
+        // Y el cajon llega despues, sin pelearse con el.
+        expect(fuentes(antes).length).toBeGreaterThan(alPrincipio);
+    });
+
+    it('la misma pieza NO suena dos veces', () => {
+        // `awardPiece` ya ignora las repetidas; el sonido hereda esa regla en
+        // vez de tener la suya.
+        awardPiece(PIEZA);
+        const antes = marca();
+
+        awardPiece(PIEZA);
+
+        expect(fuentes(antes)).toHaveLength(0);
     });
 });
 

@@ -30,6 +30,8 @@ import {
     subscribe as subscribeSystem,
 } from '@/hooks/useSystemState';
 import { play } from '@/lib/system/audio/play';
+import { readFound as piezasGanadas } from '@/lib/system/asciiArt';
+import { subscribeHints } from '@/lib/system/artHints';
 import { WAKE_FADE_S, startAmbience, stopAmbience } from '@/lib/system/audio/ambience';
 import { startBarsTone, stopBarsTone } from '@/lib/system/audio/bars';
 import { vary } from '@/lib/system/audio/jitter';
@@ -289,6 +291,34 @@ export function startSound(): () => void {
         // La señal cayéndose es lo más fuerte que hace la máquina sola.
         if (ahora.chromaticFailure && !fallandoAntes) play('beep', { hz: 180, ms: 420 });
         fallandoAntes = ahora.chromaticFailure;
+    });
+
+    /*
+     * LA ENTREGA DE UNA PIEZA: un cajón que se abre.
+     *
+     * ⚠ CUELGA DEL ALMACÉN Y NO DE LOS NUEVE SITIOS QUE REGALAN ARTE. `awardFrom`
+     * se llama desde nueve componentes distintos —el pong, el bloqueo, el reloj,
+     * la sesión larga— y poner el sonido en cada uno era exactamente el futuro
+     * que este módulo existe para evitar. Acá se compara la cuenta, igual que con
+     * los secretos.
+     *
+     * ⚠ Y LLEGA UN POCO DESPUÉS, A PROPÓSITO. Ganar una pieza suele coincidir con
+     * encontrar un secreto, y las dos voces son de la misma familia: en el mismo
+     * instante la compuerta se comería una de las dos, y cuál se salva sería
+     * cuestión de suerte. Separadas se leen como lo que son — «eso contaba», y
+     * detrás, «y además te llevas esto».
+     */
+    let piezasAntes = piezasGanadas().size;
+
+    const quitarArte = subscribeHints(() => {
+        const ahora = piezasGanadas().size;
+
+        if (ahora > piezasAntes) {
+            huboActividad();
+            luego(220, () => play('drawer'));
+        }
+
+        piezasAntes = ahora;
     });
 
     /*
@@ -600,6 +630,7 @@ export function startSound(): () => void {
         document.removeEventListener('click', alPulsar, true);
         quitarGlitch();
         quitarSistema();
+        quitarArte();
         observador.disconnect();
         observadorRaiz.disconnect();
         observadorPantallas.disconnect();

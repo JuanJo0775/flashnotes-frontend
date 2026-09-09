@@ -81,6 +81,18 @@ export function hintEarned(ahora: number = Date.now()) {
     avisar();
 }
 
+/**
+ * La colección cambió: avisa a quien esté mirando, y nada más.
+ *
+ * ⚠ NO ENCIENDE NINGUNA PISTA, y por eso es otra función. `hintEarned` decide
+ * además que hay que destellar la pestaña, y eso sólo toca la primera vez.
+ * Ganar una pieza pasa SIEMPRE, y quien quiera enterarse de todas —el sonido,
+ * por ejemplo— necesitaba un aviso que no llevara reglas pegadas.
+ */
+export function artChanged() {
+    avisar();
+}
+
 /** ¿Se está vislumbrando la pestaña ahora mismo? */
 export function isGlimpsing(ahora: number = Date.now()): boolean {
     return ahora < destelloHasta;

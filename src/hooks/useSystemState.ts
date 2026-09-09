@@ -754,6 +754,52 @@ export function registerChat(now: number = Date.now()): number {
  * tu trabajo. Un comando escondido que borre lo que escribiste no es un huevo de
  * pascua, es una pérdida de datos — la primera regla del proyecto.
  */
+/**
+ * APAGAR Y ENCENDER DE VERDAD: se lleva las averías de sesión y nada más.
+ *
+ * ⚠ SIN ESTO, EL REINICIO ERA TEATRO. Se pidió jugando: «los errores tipo oscuro
+ * y claro que se resuelven reiniciando, que se arreglen». Y tenía razón — el
+ * botón y `//reboot` hacían el espectáculo entero —apagado, barras, rótulo,
+ * comprobación— y devolvían la máquina exactamente igual de rota. Una máquina
+ * que se reinicia y sigue rota no se reinició.
+ *
+ * ⚠ LO QUE SE LIMPIA ES LO QUE UNA RECARGA SE LLEVA, ni más ni menos. Todo esto
+ * vive en memoria justamente porque una recarga lo borra: la avería cromática,
+ * el desgaste del rótulo, las rachas de saludos y de colapsos. Reiniciar desde
+ * dentro tiene que dejar la máquina como la deja recargar, o serían dos
+ * reinicios distintos y habría que aprender cuál sirve para qué.
+ *
+ * ⚠ Y NO TOCA NADA GANADO. Los secretos, el arte y las notas no son averías: eso
+ * es `resetEverything`, que es otra cosa y avisa antes.
+ *
+ * ⚠ EL BLOQUEO SOBREVIVE, Y CON ÉL SU AVERÍA. Es la única vez que el fallo
+ * cromático aguanta una recarga, y está decidido: sin eso, romper la señal y
+ * reiniciar sería la salida fácil justo en el único estado que la niega. Acá se
+ * relee la misma marca guardada que se lee al arrancar.
+ */
+export function rebootSystem() {
+    integrity = 100;
+    themeClicks = 0;
+    lastThemeClick = 0;
+    clickCount = 0;
+    greetings = 0;
+    lastGreetingAt = null;
+    chat = 0;
+    kicks = 0;
+    collapseCount = null;
+    lastRecoveryAt = null;
+
+    if (clickResetTimer) {
+        clearTimeout(clickResetTimer);
+        clickResetTimer = null;
+    }
+
+    // La misma regla que al arrancar: rota sólo si el bloqueo dice que lo está.
+    chromaticFailure = readLockout()?.chroma === true;
+
+    publish();
+}
+
 export function resetEverything() {
     secrets.clear();
     integrity = 100;

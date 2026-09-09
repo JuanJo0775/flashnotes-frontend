@@ -29,7 +29,7 @@ import V02Skin from '@/components/effects/V02Skin';
 import V02Glitches from '@/components/effects/V02Glitches';
 import CollectionView from '@/components/notes/CollectionView';
 import { awardFrom, readRevealed } from '@/lib/system/asciiArt';
-import { markSecretFound, resetEverything } from '@/hooks/useSystemState';
+import { markSecretFound, rebootSystem, resetEverything } from '@/hooks/useSystemState';
 import { createV02Note, saveV02Note } from '@/lib/system/v02Notes';
 import { useV02Notes } from '@/hooks/useV02Notes';
 import V02Box from '@/components/notes/V02Box';
@@ -164,7 +164,13 @@ export default function Home() {
      * llega muda, porque destruye el documento y el nuevo nace sin permiso para
      * sonar.
      */
-    const reiniciar = useCallback(() => setBooting('off'), []);
+    const reiniciar = useCallback(() => {
+        // ⚠ PRIMERO SE ARREGLA Y DESPUÉS SE ENSEÑA. Sin esto el reinicio era
+        // teatro: hacía el ciclo entero y devolvía la máquina igual de rota.
+        // Ver `rebootSystem` — se lleva las averías de sesión y nada más.
+        rebootSystem();
+        setBooting('off');
+    }, []);
 
     // Lo mínimo que los comandos y el panel necesitan saber de las notas: nombre
     // y tamaño. No se les pasa el contenido — lo que escribís no se lee.
