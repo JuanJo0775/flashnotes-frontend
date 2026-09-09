@@ -54,20 +54,32 @@ en los componentes. Ver el encabezado de `wire.ts`.
 
 ### El plan
 
-1. **Que el reinicio exista en la v0.2** — comando y botón. Arreglar la
-   incoherencia por el lado de añadir, no de quitar el botón.
-2. **Su propia pantalla de reinicio**, más rudimentaria:
-   - **estática en vez de las barras de color**,
-   - sin rótulo del fabricante y sin comprobación de memoria,
-   - con la barra de carga de 40 columnas que ya existe en `v02Loading`.
-3. **Su propio sonido**, más pobre y más eléctrico. La v0.2 es una máquina más
-   vieja: ahí la bocinita tiene que pesar más que la habitación.
+1. ~~**Que el reinicio exista en la v0.2**~~ — hecho: `//reboot` deja de estar
+   marcado `notInV02`. Se arregló añadiendo, como se pidió. El argumento que lo
+   sostiene: apagar y encender es lo más viejo que sabe hacer un equipo, y es lo
+   último que se le quitaría — lo que cambia entre versiones no es que exista,
+   es lo que se VE mientras vuelve.
+2. ~~**Su propia pantalla de reinicio**~~ — hecha, con los tres puntos:
+   estática en vez de barras, sin rótulo ni comprobación, y la barra de 40
+   columnas. Vive en el MISMO `bootScript` con otro reparto (`REPARTO_V02`) y en
+   el mismo `BootScreen`: el armazón se comparte, el contenido no.
+3. ~~**Su propio sonido**~~ — hecho: el condensador al recibir corriente, la
+   estática muda a propósito, el tic mientras la barra cuenta y un bip más grave
+   al terminar.
 
-⚠ **Y ahí tiene sitio por fin el `capacitor`.** Es la última voz construida sin
+⚠ **Y ahí tuvo sitio por fin el `capacitor`.** Es la última voz construida sin
 enchufar —un golpe de 72 a 30 Hz con un chispazo corto encima, un condensador
 soltándose dentro de la caja— y que una versión vieja arranque con eso, en vez
 de con el encendido limpio de la 1.0, es exactamente la diferencia entre las dos
 máquinas.
+
+### Lo que sigue faltando en la v0.2
+
+- **Más variaciones de pantalla.** Lo que se pidió incluía «otras cosas», y de
+  momento sólo cambió el arranque — la puerta ya se miró y perdió su firma; el
+  resto de las pantallas de esa versión sigue siendo la de la 1.0 con la piel
+  puesta.
+- **El armazón compartido del pong** sigue pendiente, que es de la otra lista.
 
 ---
 

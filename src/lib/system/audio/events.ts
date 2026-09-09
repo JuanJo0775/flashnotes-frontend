@@ -101,12 +101,6 @@ export const EVENT_SOUNDS: readonly EventSound[] = [
         voice: 'drawer',
         where: 'el almacén de la colección, comparando la cuenta',
     },
-    {
-        what: 'Un condensador soltándose dentro de la caja',
-        voice: 'capacitor',
-        where: 'todavía en ninguna parte',
-        pending: true,
-    },
 ];
 
 /**
@@ -150,6 +144,18 @@ export const SAMPLE_ARGS: { readonly [N in ConArgumentos]: VoiceArgs[N] } = {
 export function sampleArgs(voice: VoiceName): VoiceArgs[VoiceName] {
     return (SAMPLE_ARGS as Partial<Record<VoiceName, VoiceArgs[VoiceName]>>)[voice];
 }
+
+/*
+ * ⚠ ACÁ VIVÍA `capacitor`, DECLARADO COMO PENDIENTE, y ya no: encontró su sitio.
+ * Suena cuando la v0.2 recibe corriente, que es el único momento del juego en el
+ * que a esta máquina se le suelta algo por dentro. Su fila está en
+ * `SCREEN_SOUNDS`, con la marca `.v02-wake`, porque es una pantalla y no un
+ * suceso invisible.
+ *
+ * Se deja escrito el hueco por el mismo motivo por el que estaba declarado: para
+ * que quien venga a buscar por qué una voz no suena encuentre la respuesta y no
+ * un silencio.
+ */
 
 /**
  * Las voces que NO tienen suceso propio porque son INGREDIENTES.

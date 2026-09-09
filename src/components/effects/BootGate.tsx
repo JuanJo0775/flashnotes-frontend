@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { BOOT_OFF_MS, BOOT_VENDOR, BOOT_WAKE_MS, type BootPhase } from '@/lib/system/boot';
 import { isSoundOn, resumeAudio } from '@/lib/system/audio/context';
 import { useT } from '@/i18n';
+import { isV02 } from '@/lib/system/v02';
 
 /**
  * RECARGAR ES APAGAR Y ENCENDER. Primero se apaga; después pide la tecla.
@@ -212,7 +213,18 @@ export default function BootGate({ onReady }: { onReady: (desde: BootPhase) => v
                     <span className="cursor-block" aria-hidden="true" />
                 </button>
 
-                <p className="boot-vendor">{BOOT_VENDOR}</p>
+                {/*
+                    ⚠ Y EN LA v0.2 NO HAY RÓTULO. Apareció mirando la puerta con
+                    esa versión puesta: la máquina vieja pidiendo una tecla con
+                    «FLASHNOTES SYSTEMS INC.» debajo, cuando la broma entera de
+                    esta versión es que nadie la firmó —su arranque no enseña el
+                    rótulo por eso mismo—. Una puerta que lo enseña y un arranque
+                    que no son dos máquinas distintas discutiendo.
+
+                    Se lee sin suscribirse, igual que en el arranque: nadie salta
+                    de versión con la puerta delante.
+                */}
+                {!isV02() && <p className="boot-vendor">{BOOT_VENDOR}</p>}
             </div>
         </div>
     );

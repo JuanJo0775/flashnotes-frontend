@@ -320,6 +320,46 @@ marca.
 | `.net-lost` | Quedarse sin línea: la señal se cae y no hay a quién llamar |
 | `.net-down` | El servidor dejó de contestar, con la línea todavía en pie |
 | `.net-back` | Y la línea volviendo: un contacto que se cierra |
+| `.v02-wake` | La v0.2 recibiendo corriente: algo se suelta dentro de la caja |
+| `.v02-static` | Y lo que enseña cuando no hay nada enganchado: estática, y muda |
+| `.v02-load` | La barra que se inventa el total, contando en voz alta mientras carga · y **se va** con el bip |
+
+### ⚠ La v0.2 arranca distinto porque es otra máquina
+
+No es la 1.0 con cosas rotas: es la 1.0 **antes de que se escribieran**. Así que
+su encendido no es éste con piezas quitadas.
+
+| | La 1.0 | La v0.2 |
+| --- | --- | --- |
+| Al recibir corriente | el encendido limpio del tubo | **el condensador**: algo soltándose dentro de la caja |
+| Lo primero que enseña | la carta de ajuste, con su tono de 1 kHz | **estática, y muda** |
+| Después | el rótulo del fabricante, con el disco buscando | *nada: nadie firmó esta versión* |
+| Y al final | la comprobación de memoria y el bip de POST | **la barra de 40 columnas**, ticando, y un bip más grave al irse |
+
+**El tubo es el mismo cristal.** El apagón y el encendido no cambian entre
+versiones: a esa máquina le cambiaron el programa, no el monitor. Por eso
+`.v02-wake` comparte el estilo de `.tube-on` y sólo se separa en el nombre — dos
+marcas para la misma figura, porque lo que las distingue es el **sonido**.
+
+⚠ **Y ahí encontró sitio el condensador**, que era la última voz construida y sin
+enchufar. En la 1.0 no hay ningún momento en el que a esta máquina se le suelte
+algo: esa versión enciende limpio. Que una versión vieja arranque con esto **en
+vez** del encendido limpio es toda la distancia entre las dos, y no costó una
+pantalla nueva: es el mismo dibujo del tubo abriéndose con otra cosa debajo.
+
+⚠ **La estática no lleva tono, y eso es la mitad de lo que cuenta.** La carta de
+ajuste viene con su 1 kHz porque una carta de ajuste es una señal que alguien
+**emite**. La estática es lo contrario: no hay nada enganchado. Un tono ahí diría
+que algo está transmitiendo, que es justo lo que no pasa. La fila existe igual,
+con su marca y sin voz, para que quede escrito que el silencio es una decisión.
+
+**La barra tica mientras cuenta.** Es el tic del teletipo, el mismo de imprimir
+una línea: la barra se redibuja entera cada latido, así que cada latido es una
+línea escrita. Espaciado y con azar, porque una barra que avanza a compás sería
+un reloj — y ésta pega saltos y a veces retrocede. Cuando **se va**, el bip: el
+equivalente pobre del POST, más grave, más largo y más feo. Allá un pitido corto
+y limpio certifica que la comprobación salió bien; acá no se comprobó nada, así
+que lo único que dice es «ya está».
 
 ### ⚠ Las dos últimas filas de la tabla son las que más se van a oír
 
@@ -800,7 +840,8 @@ barato y más fuerte del documento entero», y no cuesta ni un fichero.
 
 ## Lo que falta
 
-- **El condensador.** La voz existe (`capacitor`) y todavía no tiene momento: un
-  condensador soltándose dentro de la caja pide un suceso que hoy no ocurre.
+⚠ **Ya no queda ninguna voz sin enchufar.** `capacitor` era la última y arranca
+la v0.2 — ver arriba. La lista de abajo se queda con lo que nunca fue una voz.
+
 - **Las muestras.** Cero por ahora, y ésa era la idea: sintético primero, y una
   muestra CC0 sólo donde el sintético falle la prueba de oído.

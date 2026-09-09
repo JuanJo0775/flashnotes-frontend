@@ -1288,7 +1288,19 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//reboot',
-        notInV02: true,
+        /*
+         * ⚠ ÉSTE SÍ EXISTE EN LA v0.2, y es de los pocos. La regla de esa
+         * versión es que no tiene lo que todavía no se había escrito — pero el
+         * botón de reinicio SÍ estaba ahí, en el panel de abajo, funcionando.
+         * Un botón que reinicia y un comando que contesta «comando desconocido»
+         * son dos versiones distintas de la misma máquina discutiendo entre
+         * ellas.
+         *
+         * Se arregla añadiendo y no quitando el botón: apagar y encender es lo
+         * más viejo que sabe hacer un equipo, y es lo último que se le quitaría.
+         * Lo que cambia entre versiones no es que exista, es lo que se VE
+         * mientras vuelve — ver `bootScript` y sus dos repartos.
+         */
         hidden: true,
         summary: { es: 'apagar y encender', en: 'turn it off and on again' },
         /*

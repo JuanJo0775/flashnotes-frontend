@@ -5,7 +5,7 @@ import { BOOT_BARS } from '@/lib/system/boot';
 import { useEffect, useRef, useState } from 'react';
 import { resetIntegrity, registerRecovery } from '@/hooks/useSystemState';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { noiseFrame } from '@/lib/system/asciiNoise';
+import AsciiStatic from '@/components/effects/AsciiStatic';
 import { fireGlitch } from '@/hooks/useGlitch';
 import type { CollapseLevel } from '@/lib/system/collapseEscalation';
 
@@ -46,13 +46,6 @@ const DYING_MS = BARS_MS + 400; // fin del apagado del tubo
 
 /** Con movimiento reducido: un corte a negro y el texto ya escrito. */
 const REDUCED_MS = 400;
-
-/** 12 fps, no 60: una señal rota no titila suave. */
-const NOISE_FPS = 12;
-
-/** Tamaño de una celda de la rejilla de basura, en píxeles. */
-const CELL_W = 8;
-const CELL_H = 15;
 
 /**
  * Cada cuánto falla la PROPIA pantalla de carga, según la intensidad del nivel.
@@ -171,7 +164,6 @@ export default function SystemCollapse({
     useEffect(() => {
         onDoneRef.current = onDone;
     }, [onDone]);
-    const noiseRef = useRef<HTMLPreElement>(null);
 
     const lineas = level.lockout ? failingLines() : rebootLines(notesCount);
 
@@ -274,33 +266,6 @@ export default function SystemCollapse({
         return () => clearInterval(id);
     }, [phase, reducedMotion, level.intensity]);
 
-    /**
-     * La basura.
-     *
-     * Se escribe directamente sobre el nodo, sin pasar por el estado de React:
-     * son miles de caracteres doce veces por segundo, y un `setState` por
-     * fotograma repintaría el árbol entero cada 83 ms.
-     */
-    useEffect(() => {
-        if (phase !== 'static' || reducedMotion) return;
-
-        const pre = noiseRef.current;
-        if (!pre) return;
-
-        const cols = Math.ceil(window.innerWidth / CELL_W);
-        const rows = Math.ceil(window.innerHeight / CELL_H);
-        let frame = 0;
-
-        const draw = () => {
-            pre.textContent = noiseFrame(cols, rows, frame);
-            frame += 1;
-        };
-
-        draw();
-        const id = setInterval(draw, 1000 / NOISE_FPS);
-
-        return () => clearInterval(id);
-    }, [phase, reducedMotion]);
 
     const segundosRestantes = Math.ceil((level.rebootMs * (1 - progress)) / 1000);
 
@@ -314,7 +279,7 @@ export default function SystemCollapse({
         >
             {phase === 'static' && (
                 <>
-                    <pre ref={noiseRef} className="collapse-noise mono" />
+                    <AsciiStatic className="collapse-noise mono" />
                     <div className="collapse-drag" />
                     <div className="collapse-drag is-second" />
                 </>

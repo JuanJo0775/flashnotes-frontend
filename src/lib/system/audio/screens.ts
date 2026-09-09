@@ -362,6 +362,75 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
          */
         shot: { voice: 'relay' },
     },
+    /*
+     * ────────────────────────────────────────────────────────────────────
+     * LA v0.2, QUE ES OTRA MÁQUINA.
+     *
+     * ⚠ NO ES LA 1.0 CON COSAS ROTAS: es la 1.0 antes de que se escribieran.
+     * Así que su arranque no es éste con piezas quitadas — no tiene carta de
+     * ajuste porque no tiene nada que emitir, no tiene rótulo porque nadie la
+     * firmó, y no cuenta la memoria porque no sabe cuánta tiene.
+     *
+     * Y suena más pobre y más eléctrica. Acá la bocinita pesa más que la
+     * habitación, que es exactamente la diferencia entre un equipo viejo y uno
+     * que ya sabe presentarse.
+     * ────────────────────────────────────────────────────────────────────
+     */
+    {
+        mark: 'v02-wake',
+        what: 'La v0.2 recibiendo corriente: algo se suelta dentro de la caja',
+        /*
+         * ⚠ ACÁ VIVE EL CONDENSADOR, Y ERA LA ÚLTIMA VOZ SIN ENCHUFAR. Estuvo
+         * construida y sin sitio desde el principio —un golpe de 72 a 30 Hz con
+         * un chispazo corto encima— porque en la 1.0 no hay ningún momento en
+         * el que a esta máquina se le suelte algo: esa versión enciende limpio.
+         *
+         * Que una versión vieja arranque con esto EN VEZ del encendido limpio es
+         * toda la distancia entre las dos, y no cuesta ni una pantalla: es el
+         * mismo dibujo del tubo abriéndose con otra cosa debajo.
+         */
+        shot: { voice: 'capacitor' },
+    },
+    {
+        mark: 'v02-static',
+        what: 'Y lo que enseña cuando no hay nada enganchado: estática, y muda',
+        /*
+         * ⚠ ESTA FILA NO TRAE VOZ, Y ES LA MITAD DE LO QUE CUENTA. La carta de
+         * ajuste de la 1.0 viene con su tono de 1 kHz porque una carta de ajuste
+         * es una señal que alguien EMITE. Esto es lo contrario: no hay señal. Un
+         * tono acá diría que algo está transmitiendo, que es justo lo que no
+         * pasa.
+         *
+         * Se declara igual, con su marca, para que quede escrito que el silencio
+         * es una decisión y no un hueco — y para que el catálogo la enseñe.
+         */
+    },
+    {
+        mark: 'v02-load',
+        what: 'La barra que se inventa el total, contando en voz alta mientras carga',
+        /*
+         * ⚠ EL TIC DEL TELETIPO, QUE ES EL DE IMPRIMIR UNA LÍNEA. La barra se
+         * redibuja entera cada latido, así que cada latido es una línea escrita:
+         * el mismo suceso que cuando la máquina contesta un comando. No hace
+         * falta una voz nueva para algo que ya tiene la suya.
+         *
+         * Espaciado y con azar, porque una barra que avanza a compás sería un
+         * reloj y esta barra no mide nada — pega saltos y a veces retrocede.
+         */
+        shot: { voice: 'tick' },
+        repeat: { ms: 380, jitter: 0.4 },
+        /*
+         * ⚠ Y CUANDO SE VA, EL BIP. Es el equivalente pobre del POST de la 1.0:
+         * allá un pitido corto y limpio a 1 050 Hz CERTIFICA que la comprobación
+         * salió bien; acá no se comprobó nada, así que lo único que dice el bip
+         * es «ya está» — más grave, más largo y más feo, que es lo que suena
+         * cuando el altavoz es lo único que hay.
+         *
+         * Va al IRSE y no al aparecer porque el final de la carga no tiene
+         * pantalla propia: lo que pasa es que la barra deja de estar.
+         */
+        onGone: { voice: 'beep', args: { hz: 620, ms: 150 } },
+    },
     {
         mark: 'boot-check',
         what: 'El bip de POST: memoria contada, todo bien',

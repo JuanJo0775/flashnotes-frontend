@@ -1078,7 +1078,56 @@
     }
 }
 
-.tube-on {
+/*
+ * LO QUE ENSEÑA LA v0.2 MIENTRAS ARRANCA, que es la mitad y peor.
+ *
+ * ⚠ ESTATÍCA DONDE LA 1.0 PONE UNA CARTA DE AJUSTE. Una carta de ajuste es una
+ * señal que alguien EMITE para que la calibres; la estática es no tener nada
+ * enganchado. Es la misma rejilla de basura del colapso —mismo módulo, mismo
+ * componente— y acá sin las barras de arrastre: allá la señal se está rompiendo
+ * y algo la arrastra, acá sencillamente no hay nada.
+ */
+.v02-static {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    overflow: hidden;
+    color: var(--color-ink);
+    font-size: 13px;
+    line-height: 15px;
+    letter-spacing: 0;
+    white-space: pre;
+    /* El texto no se selecciona ni se lee: es materia, no contenido. */
+    user-select: none;
+    opacity: 0.55;
+}
+
+/*
+ * Y LA BARRA, sola en mitad de la pantalla.
+ *
+ * Sin rótulo encima ni detalle debajo: en la lista viene acompañada porque hay
+ * algo que cargar y algo que decir sobre ello. Acá no hay nada que decir — la
+ * máquina se está encendiendo, y lo único que sabe hacer es contar hasta un
+ * número que se inventa.
+ */
+.v02-load {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: clamp(0.6rem, 1.8vw, 1rem);
+    white-space: pre;
+    user-select: none;
+}
+
+/* ⚠ DOS NOMBRES PARA LA MISMA FIGURA, Y NO ES REDUNDANCIA. `.tube-on` es el
+   encendido de la 1.0 y `.v02-wake` el de la v0.2. El dibujo es idéntico porque
+   el CRISTAL es el mismo: a esa máquina le cambiaron el programa, no el monitor.
+
+   Lo que las distingue es el SONIDO, y por eso hacen falta dos marcas — la 1.0
+   enciende limpio y la v0.2 arranca con algo soltándose dentro de la caja. Con
+   una sola clase compartirían sonido, y entonces las dos versiones encenderían
+   igual. Se comparte el estilo, que es lo único que tienen en común. */
+.tube-on,
+.v02-wake {
     position: absolute;
     inset: 0;
     background: var(--color-ink);
@@ -1090,7 +1139,8 @@
    estética: el tramo dura lo mismo —el sonido y el guion no cambian— pero la capa
    se queda quieta y transparente en vez de barrer la pantalla. */
 @media (prefers-reduced-motion: reduce) {
-    .tube-on {
+    .tube-on,
+    .v02-wake {
         animation: none;
         opacity: 0;
     }

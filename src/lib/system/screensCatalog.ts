@@ -149,6 +149,15 @@ export const NOT_SCREENS: readonly string[] = [
     'CommandRows',
     'ScrambleLine',
     'TypewriterText',
+    /*
+     * Y estas dos son MATERIALES, que es un escalón más abajo todavía: no son ni
+     * una pantalla ni una parte de una, son con qué están hechas. La estática la
+     * usan el colapso y el arranque de la v0.2; la barra de 40 columnas, esa
+     * misma versión cargando la lista y encendiéndose. Catalogarlas como
+     * pantallas diría que se pueden visitar, y no se visita un material.
+     */
+    'AsciiStatic',
+    'V02Bar',
     // Capas ambientales: no son un momento, son el fondo permanente.
     'GlitchLayer',
     'V02Glitches',

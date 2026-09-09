@@ -61,18 +61,25 @@ describe('la pagina de identidad cuenta el sonido entero', () => {
         }
     });
 
-    it('⚠ y lo pendiente se ve como pendiente', () => {
+    it('⚠ y lo pendiente se ve como pendiente — hoy no queda ninguna', () => {
         /*
-         * Una voz construida y todavia sin enchufar es una decision a medias.
-         * Enseñarla como si sonara seria mentir en la unica pagina cuyo trabajo
+         * Una voz construida y todavia sin enchufar es una decision a medias:
+         * enseñarla como si sonara seria mentir en la unica pagina cuyo trabajo
          * es no mentir.
+         *
+         * ⚠ ESTE TEST EXIGIA QUE HUBIERA AL MENOS UNA, y ya no hay: `capacitor`
+         * era la ultima y encontro su sitio en el arranque de la v0.2, que es el
+         * unico momento del juego en el que a esta maquina se le suelta algo por
+         * dentro. Exigir que quede alguna pendiente seria pedir que el trabajo
+         * no se termine.
+         *
+         * Lo que se ata es la REGLA, que sigue viva: haya las que haya, tienen
+         * que verse marcadas — ni una de mas ni una de menos.
          */
         render(<Banco />);
 
         const pendientes = EVENT_SOUNDS.filter((e) => e.pending);
-        expect(pendientes.length).toBeGreaterThan(0);
-
-        expect(screen.getAllByText(/SIN ENCHUFAR/).length).toBe(pendientes.length);
+        expect(screen.queryAllByText(/SIN ENCHUFAR/)).toHaveLength(pendientes.length);
     });
 });
 

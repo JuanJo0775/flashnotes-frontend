@@ -32,6 +32,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import BootGate from '@/components/effects/BootGate';
 import { BOOT_OFF_MS, BOOT_WAKE_MS } from '@/lib/system/boot';
 import { SOUND_STORAGE_KEY } from '@/lib/system/audio/context';
+import { forgetV02Cache } from '@/lib/system/v02';
 
 beforeEach(() => {
     localStorage.clear();
@@ -217,5 +218,44 @@ describe('⚠ con el sonido apagado no estorba', () => {
         render(<BootGate onReady={abierta} />);
 
         expect(abierta).toHaveBeenCalledWith('off');
+    });
+});
+
+describe('⚠ y en la v0.2 nadie firma la puerta', () => {
+    /*
+     * Salió mirando la puerta con esa versión puesta: pedía una tecla con
+     * «FLASHNOTES SYSTEMS INC.» debajo, cuando la broma entera de la v0.2 es que
+     * nadie la firmó — su arranque no enseña el rótulo justamente por eso.
+     *
+     * Una puerta que lo enseña y un arranque que no son dos máquinas distintas
+     * discutiendo, que es la misma incoherencia que tenía el botón de reinicio.
+     */
+    /** La puerta se pide DESPUÉS del apagón: hay que esperar a la tecla. */
+    const alPedirLaTecla = () =>
+        waitFor(() => expect(screen.getByRole('button')).toBeInTheDocument(), {
+            timeout: BOOT_OFF_MS + 500,
+        });
+
+    it('la 1.0 sí lo lleva', async () => {
+        localStorage.clear();
+        forgetV02Cache();
+
+        render(<BootGate onReady={() => {}} />);
+        await alPedirLaTecla();
+
+        expect(document.querySelector('.boot-vendor')).not.toBeNull();
+    });
+
+    it('y la v0.2 no', async () => {
+        localStorage.clear();
+        localStorage.setItem('flashnotes:v02', 'on');
+        forgetV02Cache();
+
+        render(<BootGate onReady={() => {}} />);
+        await alPedirLaTecla();
+
+        // La tecla sigue pidiéndose: lo que falta es la firma, no la puerta.
+        expect(screen.getByRole('button')).toBeInTheDocument();
+        expect(document.querySelector('.boot-vendor')).toBeNull();
     });
 });
