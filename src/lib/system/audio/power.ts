@@ -168,15 +168,29 @@ export function capacitor(g: AudioGraph, random: Random = Math.random) {
 }
 
 /**
- * LA BÚSQUEDA DE CABEZAL: varios golpes, y no a compás.
+ * EL CABEZAL: varios golpes, y no a compás.
  *
  * ⚠ UN CABEZAL NO ES UN METRÓNOMO. Busca, para, vuelve. Espaciados exactamente
  * igual suenan a bucle — que es el fallo que el §3 prohíbe para todo lo demás, y
  * que acá se colaría por la forma del RITMO en vez de por la del sonido.
+ *
+ * ⚠ Y CUÁNTOS GOLPES NO ES UN AJUSTE: ES QUÉ ESTÁ HACIENDO EL DISCO. Cuatro
+ * golpes repartidos son una BÚSQUEDA —el arranque leyendo, el sistema volviendo—
+ * y uno solo es una ESCRITURA: el cabezal aterriza donde tiene que aterrizar y
+ * ya está. Es la misma pieza mecánica haciendo dos cosas distintas, que es
+ * exactamente lo que se oía en una máquina de verdad y cómo se sabía, sin mirar,
+ * si estaba buscando algo o guardándolo.
+ *
+ * Con un solo golpe no se sortea la cuenta: uno es uno. Sortearla podría dar
+ * cero —una escritura muda— o dos, que ya se lee como un tropiezo.
  */
-export function head(g: AudioGraph, random: Random = Math.random) {
+export function head(
+    g: AudioGraph,
+    { golpes: pedidos = 4 }: { golpes?: number } = {},
+    random: Random = Math.random
+) {
     const t0 = g.ctx.currentTime;
-    const golpes = varyInt(4, 0.3, random);
+    const golpes = pedidos <= 1 ? 1 : varyInt(pedidos, 0.3, random);
 
     let cuando = 0;
 

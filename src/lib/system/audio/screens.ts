@@ -45,6 +45,14 @@ import { play } from '@/lib/system/audio/play';
  * para que cada golpe se oiga suelto, bastante seguido para que no parezca que
  * la máquina se rindió.
  */
+/**
+ * Los golpes de una BÚSQUEDA.
+ *
+ * Escrito una vez porque los dos sitios que buscan tienen que sonar igual: si
+ * uno se quedara en tres, el arranque y la vuelta serían dos discos distintos.
+ */
+export const SEEK_KNOCKS = 4;
+
 export const SEEK_MS = 1_500;
 
 /**
@@ -192,13 +200,16 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
          * o sea encima de las barras. Acá tiene su propio tramo y el arranque
          * queda en cuatro momentos que no se pisan: despertar, señal, lectura y
          * comprobación.
+         *
+         * ⚠ CUATRO GOLPES PORQUE ESTÁ BUSCANDO. El mismo cabezal con uno solo es
+         * una escritura — ver `save-ok`, al final de esta tabla.
          */
-        shot: { voice: 'head' },
+        shot: { voice: 'head', args: { golpes: SEEK_KNOCKS } },
     },
     {
         mark: 'collapse-reboot',
         what: 'La máquina leyendo para volver, y sigue leyendo mientras carga',
-        shot: { voice: 'head' },
+        shot: { voice: 'head', args: { golpes: SEEK_KNOCKS } },
         repeat: { ms: SEEK_MS, jitter: SEEK_JITTER },
     },
     {
@@ -275,6 +286,81 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
          * algo encima sería suavizarlo, y eso es justo lo que no hay que hacer.
          */
         shot: { voice: 'powerDown' },
+    },
+    /*
+     * ────────────────────────────────────────────────────────────────────
+     * LO QUE PASA MIENTRAS TRABAJÁS. Las dos únicas cosas de esta tabla que
+     * no son una avería ni una ceremonia: si tu texto está a salvo, y si la
+     * máquina sigue hablando con el otro lado.
+     *
+     * ⚠ Y SON LAS QUE MÁS SE VAN A OÍR, así que son las más chicas de todo el
+     * sistema. Una fanfarria cada dos segundos y medio deja de ser un aviso a
+     * la tercera vez, y a la décima es un motivo para apagar el sonido.
+     * ────────────────────────────────────────────────────────────────────
+     */
+    {
+        mark: 'save-ok',
+        what: 'Tu texto quedó guardado: el cabezal aterriza y escribe',
+        /*
+         * ⚠ UN SOLO GOLPE, Y ES EL MISMO CABEZAL DEL ARRANQUE. Una máquina de
+         * esa época no te decía «guardado»: hacía ruido al escribir, y ESE ruido
+         * era la confirmación. La gente aprendía a esperarlo y a desconfiar
+         * cuando no llegaba.
+         *
+         * Cuatro golpes serían una búsqueda —el disco yendo a ver dónde poner
+         * esto— y uno es el aterrizaje. La diferencia entre buscar y escribir es
+         * la cuenta, y no hace falta nada más para contarla.
+         */
+        shot: { voice: 'head', args: { golpes: 1 } },
+    },
+    {
+        mark: 'save-fail',
+        what: 'NO se guardó, que es la única de estas dos que importa de verdad',
+        /*
+         * ⚠ FEO Y GRAVE, A PROPÓSITO. El resto del sistema se permite ser
+         * bonito; esto no. Es el aviso de que lo que escribiste puede perderse,
+         * y tiene que interrumpir.
+         *
+         * Es la bocinita otra vez —la misma de las ventanas de error— pero una
+         * octava más abajo y más larga: la ventana de error es un susto, y esto
+         * es una mala noticia.
+         */
+        shot: { voice: 'beep', args: { hz: 190, ms: 220 } },
+    },
+    {
+        mark: 'net-lost',
+        what: 'Quedarse sin línea: la señal se cae y no hay a quién llamar',
+        /*
+         * ⚠ EL MISMO BARRIDO QUE SE CAE EN `//reset`, pero corto y sin impacto
+         * detrás. Allá se cae la imagen entera y algo llega al suelo; acá sólo se
+         * cae la LÍNEA, y una línea que se corta no hace ruido al aterrizar.
+         *
+         * Que las dos cosas usen el mismo barrido no es economía: es que son la
+         * misma clase de suceso —algo que estaba y dejó de estar— y el oído las
+         * empareja solo.
+         */
+        shot: { voice: 'sweep', args: { fromHz: 420, toHz: 90, ms: 260 } },
+    },
+    {
+        mark: 'net-down',
+        what: 'El servidor dejó de contestar, con la línea todavía en pie',
+        /*
+         * Más arriba y más corto que quedarse sin red, y ésa es toda la
+         * diferencia que hace falta: la línea sigue, lo que no contesta es el
+         * otro lado. Se oye como medio corte, que es exactamente lo que es.
+         */
+        shot: { voice: 'sweep', args: { fromHz: 520, toHz: 260, ms: 180 } },
+    },
+    {
+        mark: 'net-back',
+        what: 'Y la línea volviendo: un contacto que se cierra',
+        /*
+         * ⚠ EL RELÉ, QUE ES LO CONTRARIO DE UN BARRIDO. Los cortes bajan; una
+         * conexión no «sube», se CIERRA — un contacto que engancha, con su
+         * rebote. Es la misma armadura del cambio de tema, y que se repita está
+         * bien: en esta máquina las cosas se conectan de una sola manera.
+         */
+        shot: { voice: 'relay' },
     },
     {
         mark: 'boot-check',

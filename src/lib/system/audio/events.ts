@@ -133,6 +133,9 @@ type ConArgumentos = {
  */
 export const SAMPLE_ARGS: { readonly [N in ConArgumentos]: VoiceArgs[N] } = {
     beep: { hz: 1_050, ms: 110 },
+    // La búsqueda, que es la que se oye arrancando. La escritura de un golpe
+    // vive en su fila de pantalla, con el resto de lo que guarda.
+    head: { golpes: 4 },
     sweep: { fromHz: 1_100, toHz: 60, ms: 900 },
     glitchBurst: { amplitudePx: 7, durationMs: 180 },
     tear: { amplitudePx: 9 },

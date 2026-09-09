@@ -106,7 +106,11 @@ export default function StatusBar({
     const systemStatus = (): { node: React.ReactNode; isFragment: boolean } => {
         if (!isOnline)
             return {
-                node: <span className="text-danger">{t('status.noNet')}</span>,
+                node: (
+                    <span key="net-lost" className="text-danger net-lost">
+                        {t('status.noNet')}
+                    </span>
+                ),
                 isFragment: false,
             };
         // Truthy y no `!== null`: así una caída de 0 ms —que no es una caída—
@@ -115,7 +119,7 @@ export default function StatusBar({
         if (lastOutageMs)
             return {
                 node: (
-                    <span>
+                    <span key="net-back" className="net-back">
                         {t('status.reconnected', {
                             duration: formatDuration(lastOutageMs),
                         })}
@@ -125,7 +129,11 @@ export default function StatusBar({
             };
         if (!backendReachable && !isChecking)
             return {
-                node: <span className="text-warn">{t('status.serverDown')}</span>,
+                node: (
+                    <span key="net-down" className="text-warn net-down">
+                        {t('status.serverDown')}
+                    </span>
+                ),
                 isFragment: false,
             };
         if (error)
@@ -163,14 +171,42 @@ export default function StatusBar({
         };
     };
 
+    /*
+     * ⚠ CADA ESTADO CON SU `key`, Y NO ES DECORACIÓN: ES LO QUE HACE QUE SUENEN.
+     *
+     * El sonido se entera de lo que pasa mirando MARCAS del árbol, con un
+     * observador de `childList` — un nodo que aparece. Sin `key`, React ve un
+     * `<span>` en el mismo hueco y REUTILIZA el elemento: le cambia la clase y
+     * el texto y no toca la estructura. Eso es una mutación de atributos, que
+     * este observador no mira a propósito —el colapso reescribe su manta doce
+     * veces por segundo y mirarlas todas costaría carísimo—.
+     *
+     * Con `key`, cada estado es un elemento distinto: el anterior se va y el
+     * nuevo aparece. La marca APARECE, que es de lo único que el sonido sabe.
+     *
+     * Vale para las de acá y para las de red, y por eso están todas escritas
+     * igual aunque a la vista no cambie nada.
+     */
     const saveStatus = () => {
         switch (saveState) {
             case 'saving':
-                return <span className="loading-dots dim">{t('status.saving')}</span>;
+                return (
+                    <span key="saving" className="loading-dots dim">
+                        {t('status.saving')}
+                    </span>
+                );
             case 'saved':
-                return <span>{t('status.saved')}</span>;
+                return (
+                    <span key="saved" className="save-ok">
+                        {t('status.saved')}
+                    </span>
+                );
             case 'error':
-                return <span className="text-danger">{t('status.notSaved')}</span>;
+                return (
+                    <span key="save-fail" className="text-danger save-fail">
+                        {t('status.notSaved')}
+                    </span>
+                );
             default:
                 return null;
         }

@@ -144,9 +144,28 @@ describe('el arranque', () => {
         const g = ensureAudio()!;
         const antes = lastContext()!.created.length;
 
-        head(g, azar(7));
+        head(g, { golpes: 4 }, azar(7));
 
         expect(fuentes(antes).length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('⚠ pero escribir es UN golpe, y exactamente uno', () => {
+        /*
+         * Es la misma pieza mecánica haciendo otra cosa: buscar es ir a ver
+         * dónde, escribir es aterrizar donde ya sabés. En una máquina de verdad
+         * se distinguían de oído sin mirar la pantalla, y eso es lo que hace que
+         * el guardado no necesite decir nada.
+         *
+         * ⚠ Y NO SE SORTEA LA CUENTA. Con la variación de siempre, uno podía
+         * salir cero —una escritura muda, o sea una mentira— o dos, que ya se
+         * lee como un tropiezo del disco.
+         */
+        const g = ensureAudio()!;
+        const antes = lastContext()!.created.length;
+
+        head(g, { golpes: 1 }, azar(7));
+
+        expect(fuentes(antes)).toHaveLength(1);
     });
 
     it('y esos golpes NO caen a intervalos iguales', () => {
@@ -158,7 +177,7 @@ describe('el arranque', () => {
         const g = ensureAudio()!;
         const antes = lastContext()!.created.length;
 
-        head(g, azar(8));
+        head(g, { golpes: 4 }, azar(8));
 
         const inicios = fuentes(antes)
             .map((f) => f.started!)

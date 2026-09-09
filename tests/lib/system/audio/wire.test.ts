@@ -451,6 +451,95 @@ describe('el pong, que ocurre entre fotogramas', () => {
     });
 });
 
+describe('lo que pasa mientras trabajas', () => {
+    const unTic = () => new Promise((r) => setTimeout(r, 90));
+
+    /** Pone una marca en el cuerpo y devuelve como quitarla. */
+    function marcar(clase: string) {
+        const el = document.createElement('span');
+        el.className = clase;
+        document.body.append(el);
+        return () => el.remove();
+    }
+
+    it('⚠ guardar suena, y es UN golpe de cabezal', async () => {
+        /*
+         * Una maquina de esa epoca no te decia «guardado»: hacia ruido al
+         * escribir, y ESE ruido era la confirmacion. La gente aprendia a
+         * esperarlo y a desconfiar cuando no llegaba.
+         *
+         * Se mide por ruido y por CUENTA: el cabezal es ruido filtrado, y un
+         * golpe solo es lo que separa escribir de buscar. Cuatro serian el disco
+         * yendo a ver donde poner esto — otra cosa, y mucho mas larga para algo
+         * que pasa cada dos segundos y medio.
+         */
+        conLaSalaYaEncendida();
+        await unTic();
+        const antes = marca();
+
+        const quitar = marcar('save-ok');
+        await unTic();
+
+        expect(ruidos(antes)).toHaveLength(1);
+        quitar();
+    });
+
+    it('⚠ y NO guardar suena feo, que es la que importa', async () => {
+        /*
+         * El resto del sistema se permite ser bonito; esto no. Es el aviso de
+         * que lo que escribiste puede perderse.
+         *
+         * Se mide por OSCILADOR: la bocinita es un cuadrado crudo, y el cabezal
+         * del guardado no tiene ni uno. Contando fuentes a secas, este test
+         * pasaria con el aviso de fallo borrado.
+         */
+        conLaSalaYaEncendida();
+        await unTic();
+        const antes = marca();
+
+        const quitar = marcar('save-fail');
+        await unTic();
+
+        const osciladores = fuentes(antes).filter((n) => n.kind === 'oscillator');
+        expect(osciladores.length).toBeGreaterThan(0);
+        expect(osciladores[0].frequency!.value).toBeLessThan(260);
+        quitar();
+    });
+
+    it('quedarse sin linea se CAE', async () => {
+        // Un barrido que baja, corto y sin impacto detras: lo que se corta es la
+        // linea, y una linea no hace ruido al llegar al suelo.
+        conLaSalaYaEncendida();
+        await unTic();
+        const antes = marca();
+
+        const quitar = marcar('net-lost');
+        await unTic();
+
+        const osc = fuentes(antes).find((n) => n.kind === 'oscillator');
+        expect(osc).toBeDefined();
+        quitar();
+    });
+
+    it('⚠ y la linea volviendo NO se cae al reves: se CIERRA', async () => {
+        /*
+         * Los cortes bajan; una conexion no «sube», engancha. Es la armadura del
+         * rele, que es ruido percutido dos veces — asi que un barrido devuelto
+         * por error acá se ve enseguida: traeria un oscilador.
+         */
+        conLaSalaYaEncendida();
+        await unTic();
+        const antes = marca();
+
+        const quitar = marcar('net-back');
+        await unTic();
+
+        expect(ruidos(antes).length).toBeGreaterThan(0);
+        expect(fuentes(antes).filter((n) => n.kind === 'oscillator')).toHaveLength(0);
+        quitar();
+    });
+});
+
 describe('el tic del teletipo', () => {
     /*
      * ⚠ POR LINEA Y NUNCA POR CARACTER. Las respuestas se teclean letra a letra

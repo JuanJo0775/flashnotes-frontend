@@ -20,8 +20,13 @@ Pantallas y momentos que hoy no suenan. Salió de repasar qué escucha
 | **La pantalla muerta** (`//hi` insistido) | El final más brusco del juego, mudo | |
 | **El bloqueo** | Idem | |
 | **El ente hablando** | La sala no le hace sitio | `duck()` existe en `ambience.ts` y no lo llama nadie |
-| **Guardar / no guardar** | El único aviso de que tu texto está a salvo | |
-| **Quedarse sin red** | `[SIN_RED]` y el reconectado | |
+| ~~**Guardar / no guardar**~~ | El único aviso de que tu texto está a salvo | Hecho: un golpe de cabezal al guardar —escribir es un golpe, buscar son cuatro— y la bocinita grave y larga cuando no se guarda |
+| ~~**Quedarse sin red**~~ | `[SIN_RED]` y el reconectado | Hecho: barrido corto al caerse la línea, medio barrido cuando lo que calla es el servidor, y el relé al volver |
+
+⚠ **Y con esto la 1.0 se queda sin mudos.** Los cinco de arriba cuelgan de
+`screens.ts` por marcas de la barra de estado, sin una sola llamada suelta. Lo
+único que hizo falta en la app fueron cinco clases y sus `key` — ver el
+documento: sin `key`, React recicla el `<span>` y la marca no APARECE nunca.
 
 ⚠ Todos tienen que colgar de `screens.ts` / `events.ts`, no de llamadas sueltas
 en los componentes. Ver el encabezado de `wire.ts`.

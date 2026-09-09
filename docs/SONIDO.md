@@ -272,6 +272,7 @@ hipótesis: `awardFrom` ya se llama desde nueve sitios distintos.
 | El tubo encendiéndose, apagándose y la carga | la tabla `screens.ts`, por marcas que la app ya pinta | no |
 | Barrido y colapso | los atributos que la app ya pone en el documento | no |
 | El tema cambiando | el mismo atributo `data-theme` | no |
+| Guardar, no guardar y la línea | marcas de la barra de estado, por la misma tabla | no |
 
 ⚠ **Borrar suena mientras borra, y calla al terminar.** Mantener el retroceso
 apretado hace que el navegador dispare una y otra vez, y cada repetición borra un
@@ -314,6 +315,48 @@ marca.
 | `.phantom-error` | Una ventana de error apareciendo de golpe |
 | `.lockout-body` | El bloqueo: la máquina que ya no te deja entrar |
 | `.dead-page` | La página muerta: te sacó y ya |
+| `.save-ok` | Tu texto quedó guardado: el cabezal aterriza y escribe |
+| `.save-fail` | NO se guardó, que es la única de estas dos que importa de verdad |
+| `.net-lost` | Quedarse sin línea: la señal se cae y no hay a quién llamar |
+| `.net-down` | El servidor dejó de contestar, con la línea todavía en pie |
+| `.net-back` | Y la línea volviendo: un contacto que se cierra |
+
+### ⚠ Las dos últimas filas de la tabla son las que más se van a oír
+
+Todo lo de arriba es una avería o una ceremonia: pasa una vez, o pasa cuando algo
+se rompe. **Guardar pasa cada dos segundos y medio**, que es el autoguardado, y
+quedarse sin línea pasa cuando pasa.
+
+Por eso son los sonidos más pequeños del sistema. Una fanfarria cada dos segundos
+y medio deja de ser un aviso a la tercera vez y a la décima es un motivo para
+apagar el sonido — que es la única forma real de que este trabajo se pierda
+entero.
+
+**El guardado es UN golpe de cabezal, y es el mismo cabezal del arranque.** Una
+máquina de esa época no decía «guardado»: hacía ruido al escribir, y ese ruido
+era la confirmación. Cuatro golpes repartidos son una **búsqueda** —el disco
+yendo a ver dónde poner esto— y uno solo es una **escritura**: aterriza donde ya
+sabe. Es la misma pieza mecánica contando dos cosas distintas, y no hace falta
+nada más que la cuenta para distinguirlas.
+
+⚠ **Y el que NO se guardó es feo a propósito.** Es la bocinita de las ventanas de
+error, una octava más abajo y más larga: la ventana de error es un susto, y esto
+es una mala noticia. Es el único sitio del sistema donde el sonido tiene permiso
+para interrumpir, porque es el único que avisa de que podés perder lo que
+escribiste.
+
+**Los cortes bajan y las conexiones se cierran.** Quedarse sin red es el mismo
+barrido descendente de `//reset`, corto y sin el impacto detrás: allá se cae la
+imagen entera y algo llega al suelo, acá sólo se cae la línea. Volver no es ese
+barrido al revés — es el **relé**, un contacto que engancha con su rebote, la
+misma armadura del cambio de tema.
+
+⚠ **Y para que suenen, los rótulos de la barra llevan `key`.** No es decoración.
+El observador mira `childList` —un nodo que aparece— y sin `key` React reutiliza
+el mismo `<span>` cambiándole la clase, que es una mutación de atributos y ésas
+no se miran a propósito: el colapso reescribe su manta doce veces por segundo.
+Quitar la `key` deja la barra idéntica a la vista y el guardado mudo, sin que
+falle nada. Por eso hay un test.
 
 ### ⚠ El pong tiene TRES tonos, y son los de verdad
 

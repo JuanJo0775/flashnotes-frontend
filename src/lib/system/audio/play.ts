@@ -50,7 +50,11 @@ export interface VoiceArgs {
     capacitor: undefined;
     powerUp: undefined;
     powerDown: undefined;
-    head: undefined;
+    /*
+     * ⚠ CUÁNTOS GOLPES ES QUÉ ESTÁ HACIENDO EL DISCO, no un ajuste: cuatro son
+     * una búsqueda y uno es una escritura. Ver `head` en `power.ts`.
+     */
+    head: { golpes: number };
     thud: undefined;
     confirm: { wrong: boolean };
     sweep: { fromHz: number; toHz: number; ms: number };
