@@ -618,6 +618,21 @@ describe('PongOverlay · los dos efectos prestados', () => {
         expect(grano).toBeGreaterThan(cartel);
     });
 
+    test('⚠ y por encima del de perdido también, que es más opaco todavía', () => {
+        // El velo de perdido va al 82%. Debajo de eso no queda ni el 5%.
+        const { container } = render(<PongOverlay open onClose={jest.fn()} />);
+        expect(pierde()).toBe(true);
+
+        const hermanos = [...container.querySelector('.pong-frame')!.children];
+        const cartel = hermanos.findIndex(
+            (e) => e.getAttribute('data-testid') === 'pong-over'
+        );
+        const grano = hermanos.findIndex((e) => e.classList.contains('pong-grain'));
+
+        expect(cartel).toBeGreaterThanOrEqual(0);
+        expect(grano).toBeGreaterThan(cartel);
+    });
+
     test('⚠ y el tic va al final de la mesa, o invierte el vacío', () => {
         /*
          * `backdrop-filter` actúa sobre lo que hay pintado DEBAJO. Con la capa
@@ -654,14 +669,26 @@ describe('PongOverlay · los dos efectos prestados', () => {
         expect(capa('wall-grain')).toBeNull();
     });
 
-    test('⚠ pero no sobre la pantalla de perdido', () => {
+    test('⚠ y también sobre la pantalla de perdido', () => {
         /*
-         * Ahí ya hay un panel con texto encima, y el grano se le mete detrás de
-         * las letras. Perder no es una pausa: la partida terminó, no está
-         * esperándote.
+         * PEDIDO JUGANDO: «y la misma de grano hirviendo en la parte de que se
+         * pierde, ahí también».
+         *
+         * La primera versión lo dejaba fuera razonando que perder no es una
+         * pausa. Es verdad que no lo es, pero no era eso lo que decidía: lo que
+         * decide es que las dos son una imagen PARADA, y una imagen parada y
+         * limpia parece una pantalla apagada.
          */
         render(<PongOverlay open onClose={jest.fn()} />);
         expect(pierde()).toBe(true);
+
+        expect(capa('wall-grain')).not.toBeNull();
+    });
+
+    test('pero no mientras se juega: ahí lo que se mueve es la pelota', () => {
+        render(<PongOverlay open onClose={jest.fn()} />);
+
+        corre(2_000);
 
         expect(capa('wall-grain')).toBeNull();
     });

@@ -534,34 +534,7 @@ export default function PongOverlay({
                     </div>
                 )}
 
-                {/*
-                    EL GRANO HIRVIENDO CON EL JUEGO PARADO. Es el mismo de detrás
-                    del agujero de la pared: la estática removiéndose a saltos.
 
-                    Con la pelota quieta la pantalla se queda demasiado limpia, y
-                    una pantalla limpia y quieta parece apagada. El grano cuenta
-                    que el tubo sigue encendido esperándote.
-
-                    ⚠ VA DESPUÉS DEL CARTEL, Y AHÍ ESTÁ TODO. Estuvo dentro de la
-                    mesa, o sea DEBAJO del velo de la pausa —que es un
-                    `color-mix` al 55%—, y un grano al 12% debajo de eso queda en
-                    un 5%: no se veía. Se reportó jugando dos veces.
-
-                    Y es donde tiene que ir igual: el grano es suciedad del
-                    CRISTAL, y el cristal está delante de todo lo que se pinta,
-                    cartel incluido.
-
-                    ⚠ Y DENTRO DE UN RECORTE. El grano de la casa se pinta con
-                    20% de sobra por los cuatro lados para que al saltar no
-                    descubra un canto, y esto no recortaba nada: el rectángulo se
-                    salía y se le veía dar saltos por encima del marcador —«se ve
-                    feo y temblando»—.
-                */}
-                {pausa && !game.over && (
-                    <div className="pong-grain" aria-hidden="true">
-                        <div className="wall-grain" />
-                    </div>
-                )}
 
                 {game.over && (
                     <div className="pong-over" data-testid="pong-over">
@@ -585,6 +558,41 @@ export default function PongOverlay({
                             La regla A4 pide poder salir de cualquier estado.
                         */}
                         <p className="pong-over-hint">{t('pong.again')}</p>
+                    </div>
+                )}
+
+                {/*
+                    EL GRANO HIRVIENDO CON EL JUEGO PARADO. Es el mismo de detrás
+                    del agujero de la pared: la estática removiéndose a saltos.
+
+                    ⚠ EN LAS DOS PANTALLAS QUIETAS, pausa y perdido. La primera
+                    vez sólo estaba en la pausa, razonando que perder no es una
+                    pausa; y es verdad que no lo es, pero eso no era lo que
+                    decidía. Lo que decide es lo que se está mirando: una imagen
+                    parada. Con la pelota quieta la pantalla se queda demasiado
+                    limpia, y una pantalla limpia y quieta parece APAGADA — en
+                    las dos igual. El grano es lo que cuenta que el tubo sigue
+                    encendido.
+
+                    ⚠ VA DESPUÉS DE LOS DOS CARTELES, Y AHÍ ESTÁ TODO. Estuvo
+                    dentro de la mesa, o sea DEBAJO del velo —que es un
+                    `color-mix` al 55%, y al 82% el de perdido—, y un grano al
+                    12% debajo de eso queda en un 5%: no se veía. Se reportó
+                    jugando dos veces.
+
+                    Y es donde le toca igual: el grano es suciedad del CRISTAL, y
+                    el cristal está delante de todo lo que se pinta, carteles
+                    incluidos.
+
+                    ⚠ Y DENTRO DE UN RECORTE. El grano de la casa se pinta con
+                    20% de sobra por los cuatro lados para que al saltar no
+                    descubra un canto, y esto no recortaba nada: el rectángulo se
+                    salía y se le veía dar saltos por encima del marcador —«se ve
+                    feo y temblando»—.
+                */}
+                {(pausa || game.over) && (
+                    <div className="pong-grain" aria-hidden="true">
+                        <div className="wall-grain" />
                     </div>
                 )}
             </div>
