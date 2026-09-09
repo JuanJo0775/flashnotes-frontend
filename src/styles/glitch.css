@@ -1232,6 +1232,38 @@
     pointer-events: none;
 }
 
+/*
+ * ⚠ Y SE LE SUBE UN POCO, porque debajo no hay lo mismo. En la pared el grano
+ * va al 12% encima de la lluvia binaria —un fondo que ya se mueve y que le
+ * presta contraste—. Acá cae sobre el velo liso de la pausa, y sobre un color
+ * plano el 12% no se lee: parece que la pantalla está limpia, que es justo lo
+ * que el grano viene a desmentir.
+ */
+.pong-grain .wall-grain {
+    opacity: 0.2;
+}
+
+/*
+ * EL TIC DEL PEDAZO, CON EL RELOJ DEL PONG.
+ *
+ * ⚠ TAL CUAL, NO SE VEÍA NUNCA, y el motivo está en los números. El tic de la
+ * pared llega al 96% de un ciclo de once segundos —o sea a los 10,5 s— porque
+ * allá la capa está puesta para siempre, y el silencio entre destellos es lo que
+ * lo hace un fallo en vez de un elemento animado. Acá la capa sólo está mientras
+ * el juego se dibuja con caracteres: de 220 a 700 ms. La animación empezaba en
+ * cero y se desmontaba muchísimo antes de su único fotograma útil.
+ *
+ * El retardo NEGATIVO la arranca ya empezada, justo antes del destello: se monta
+ * la capa y el tic llega a los ~65 ms. Mismos keyframes, misma duración del
+ * destello, mismo gesto — lo único que cambia es por dónde se entra.
+ *
+ * Y acá el espaciado no hace falta ponerlo: lo espacia la propia avería, que
+ * aparece cada siete a diecisiete segundos.
+ */
+.pong-stage > .loose-slab {
+    animation-delay: -10.45s;
+}
+
 .pong-court {
     margin: 0;
     font: inherit;

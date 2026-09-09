@@ -85,6 +85,16 @@ máquinas.
 
 Escrito para no repetir el trabajo de descubrirlo.
 
+- **Una capa prestada no se ve por estar puesta: hay que mirar QUIÉN pinta
+  encima.** Los dos efectos del pong estuvieron puestos y mudos. El tic filtra
+  con `backdrop-filter`, o sea lo de DEBAJO, y estaba antes de la rejilla:
+  invertía el vacío. El grano estaba dentro de la mesa, debajo del velo de la
+  pausa —un `color-mix` al 55%—, y un 12% debajo de eso queda en un 5%. Se
+  arreglan por orden de hermanos, no tocando el efecto.
+- **Y un efecto espaciado no se ve en una ventana corta.** El tic de la pared
+  llega al 96% de un ciclo de once segundos; la capa del pong vive de 220 a
+  700 ms. Un `animation-delay` negativo entra por donde está el destello, sin
+  duplicar los keyframes.
 - **El apagón de una recarga del navegador no puede sonar.** Pasa antes del
   primer gesto y ningún navegador deja sonar antes de eso. Se probó mover la
   imagen detrás de la tecla y era peor: rompe el orden de los hechos. Por eso

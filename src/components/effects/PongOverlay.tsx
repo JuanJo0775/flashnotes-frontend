@@ -447,52 +447,6 @@ export default function PongOverlay({
 
                 <div className="pong-stage">
                     {/*
-                        ⚠ EL TIC DEL PEDAZO, PRESTADO. Es el mismo efecto que
-                        delata la zona floja de la pared: un `backdrop-filter`
-                        que invierte un instante lo que hay DEBAJO, cada once
-                        segundos. Acá debajo hay un juego, así que lo que se
-                        invierte es el campo.
-
-                        ⚠ SE REUSA LA CLASE, NO SE COPIA EL EFECTO. Dos
-                        animaciones distintas para el mismo gesto son dos cosas
-                        que hay que acordarse de tocar juntas, y la segunda se
-                        queda vieja — el catalogo del banco existe justamente
-                        para que eso se vea.
-
-                        Y va SOLO con la rejilla puesta: cuando el juego se
-                        dibuja con caracteres ya se rompio algo, y el tic es de
-                        la misma averia. Con el video sano seria un adorno.
-                    */}
-                    {cuadriculado && <div className="loose-slab" aria-hidden="true" />}
-
-                    {/*
-                        Y EL GRANO HIRVIENDO CON EL JUEGO PARADO. Es el mismo de
-                        detras del agujero de la pared: la estatica removiendose
-                        a saltos.
-
-                        Con la pelota quieta la pantalla se queda demasiado
-                        limpia, y una pantalla limpia y quieta parece apagada. El
-                        grano cuenta que el tubo sigue encendido esperandote.
-                    */}
-                    {pausa && !game.over && (
-                        /*
-                            ⚠ Y VA DENTRO DE UN RECORTE. El grano de la casa se
-                            pinta con 20% de sobra por los cuatro lados para que
-                            al saltar no descubra un canto, y la mesa del pong no
-                            recorta nada: el rectángulo se salía por arriba y por
-                            los lados y se le veía dar saltos por encima del
-                            marcador —«se ve feo y temblando»—.
-
-                            Recortado a la mesa se queda lo que se pedía: el
-                            grano hirviendo, quieto en su sitio, removiéndose
-                            dentro del campo.
-                        */
-                        <div className="pong-grain" aria-hidden="true">
-                            <div className="wall-grain" />
-                        </div>
-                    )}
-
-                    {/*
                      * Decorativo para quien escucha: un lector de pantalla
                      * deletreando 1.728 caracteres de rejilla no informa de
                      * nada. El estado va en el marcador, que sí se lee.
@@ -528,6 +482,29 @@ export default function PongOverlay({
                         </>
                     )}
 
+                    {/*
+                        EL TIC DEL PEDAZO: el mismo `backdrop-filter` que delata
+                        la zona floja de la pared, invirtiendo un instante lo que
+                        hay debajo. Acá debajo hay un juego, así que lo que se
+                        invierte es el campo.
+
+                        ⚠ Y VA AL FINAL DE LA MESA, QUE NO ES ORDEN DE LECTURA:
+                        ES LO QUE HACE QUE SE VEA. Estuvo arriba del todo y no se
+                        veía nada, con razón — `backdrop-filter` actúa sobre lo
+                        que hay pintado DEBAJO, y la rejilla se pintaba después.
+                        Estaba invirtiendo el vacío.
+
+                        ⚠ SE REUSA LA CLASE, NO SE COPIA EL EFECTO. Dos
+                        animaciones distintas para el mismo gesto son dos cosas
+                        que hay que acordarse de tocar juntas, y la segunda se
+                        queda vieja — el catálogo del banco existe justamente
+                        para que eso se vea.
+
+                        Y va SOLO con la rejilla puesta: cuando el juego se
+                        dibuja con caracteres ya se rompió algo, y el tic es de
+                        la misma avería. Con el vídeo sano sería un adorno.
+                    */}
+                    {cuadriculado && <div className="loose-slab" aria-hidden="true" />}
                 </div>
 
                 <div className="pong-hud pong-hud-bottom">
@@ -554,6 +531,35 @@ export default function PongOverlay({
                     <div className="pong-over pong-paused" data-testid="pong-paused">
                         <p className="pong-over-title">{t('pong.paused')}</p>
                         <p className="pong-over-hint">{t('pong.resume')}</p>
+                    </div>
+                )}
+
+                {/*
+                    EL GRANO HIRVIENDO CON EL JUEGO PARADO. Es el mismo de detrás
+                    del agujero de la pared: la estática removiéndose a saltos.
+
+                    Con la pelota quieta la pantalla se queda demasiado limpia, y
+                    una pantalla limpia y quieta parece apagada. El grano cuenta
+                    que el tubo sigue encendido esperándote.
+
+                    ⚠ VA DESPUÉS DEL CARTEL, Y AHÍ ESTÁ TODO. Estuvo dentro de la
+                    mesa, o sea DEBAJO del velo de la pausa —que es un
+                    `color-mix` al 55%—, y un grano al 12% debajo de eso queda en
+                    un 5%: no se veía. Se reportó jugando dos veces.
+
+                    Y es donde tiene que ir igual: el grano es suciedad del
+                    CRISTAL, y el cristal está delante de todo lo que se pinta,
+                    cartel incluido.
+
+                    ⚠ Y DENTRO DE UN RECORTE. El grano de la casa se pinta con
+                    20% de sobra por los cuatro lados para que al saltar no
+                    descubra un canto, y esto no recortaba nada: el rectángulo se
+                    salía y se le veía dar saltos por encima del marcador —«se ve
+                    feo y temblando»—.
+                */}
+                {pausa && !game.over && (
+                    <div className="pong-grain" aria-hidden="true">
+                        <div className="wall-grain" />
                     </div>
                 )}
 

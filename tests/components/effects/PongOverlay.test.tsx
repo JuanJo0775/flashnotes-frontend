@@ -140,6 +140,32 @@ describe('PongOverlay · salir', () => {
         expect(onClose).toHaveBeenCalled();
     });
 
+    test('⚠ y en partida la pantalla DICE pausa, no salir', () => {
+        /*
+         * REPORTADO JUGANDO: «cuando el juego corre, el esc sea para pausar,
+         * porque actualmente sigue diciendo esc para salir».
+         *
+         * Es el mismo fallo que la pantalla de perdido, al revés: allá Escape
+         * funcionaba y no se anunciaba, y acá se anunciaba lo que ya no hace.
+         * Una pista que miente es peor que no tener pista — la de perdido hizo
+         * que se reportara como roto algo que andaba.
+         */
+        render(<PongOverlay open onClose={jest.fn()} />);
+
+        const pista = screen.getByTestId('pong-hint').textContent ?? '';
+        expect(pista).toMatch(/PAUSA|PAUSE/);
+        expect(pista).not.toMatch(/SALIR|QUIT/);
+    });
+
+    test('y con el juego parado sí ofrece la salida', () => {
+        // Porque ahí es donde el segundo Escape sale. Lo que se anuncia es lo
+        // que la tecla hace EN ESE SITIO, que es la regla entera.
+        render(<PongOverlay open onClose={jest.fn()} />);
+        fireEvent.keyDown(window, { key: 'Escape' });
+
+        expect(screen.getByTestId('pong-paused').textContent).toMatch(/SALIR|EXIT/);
+    });
+
     test('cerrado, Escape ya no llama a nadie', () => {
         const onClose = jest.fn();
         render(<PongOverlay open={false} onClose={onClose} />);
@@ -528,7 +554,10 @@ describe('PongOverlay · los dos efectos prestados', () => {
      *
      * Lo que sí atan es CUÁNDO sale cada uno, que es lo que se pidió.
      */
-    const capa = (c: string) => document.querySelector(`.pong-stage .${c}`);
+    // ⚠ Desde `.pong-frame` y no desde `.pong-stage`: el grano tuvo que salir de
+    // la mesa para quedar POR ENCIMA del velo de la pausa, que es lo que lo
+    // hacía invisible. El tic sigue dentro, que es donde tiene algo que invertir.
+    const capa = (c: string) => document.querySelector(`.pong-frame .${c}`);
 
     test('el tic del pedazo sólo con el juego dibujado a caracteres', () => {
         /*
@@ -566,6 +595,49 @@ describe('PongOverlay · los dos efectos prestados', () => {
         fireEvent.keyDown(window, { key: 'Escape' });
 
         expect(capa('wall-grain')!.parentElement).toHaveClass('pong-grain');
+    });
+
+    test('⚠ y el grano va POR ENCIMA del velo de la pausa', () => {
+        /*
+         * REPORTADO JUGANDO, dos veces: «no lo veo en la parte de pausa del
+         * pinpong». Y estaba puesto — debajo del cartel, que es un velo al 55%.
+         * Un grano al 12% debajo de eso queda en un 5%: no se ve.
+         *
+         * El grano es suciedad del CRISTAL, y el cristal está delante de todo lo
+         * que se pinta, cartel incluido. Se comprueba por orden de hermanos, que
+         * es lo que decide quién pinta encima entre dos capas colocadas.
+         */
+        const { container } = render(<PongOverlay open onClose={jest.fn()} />);
+        fireEvent.keyDown(window, { key: 'Escape' });
+
+        const hermanos = [...container.querySelector('.pong-frame')!.children];
+        const cartel = hermanos.findIndex((e) => e.classList.contains('pong-paused'));
+        const grano = hermanos.findIndex((e) => e.classList.contains('pong-grain'));
+
+        expect(cartel).toBeGreaterThanOrEqual(0);
+        expect(grano).toBeGreaterThan(cartel);
+    });
+
+    test('⚠ y el tic va al final de la mesa, o invierte el vacío', () => {
+        /*
+         * `backdrop-filter` actúa sobre lo que hay pintado DEBAJO. Con la capa
+         * puesta antes de la rejilla no había nada debajo todavía: el efecto
+         * corría en vacío, igual que le pasó a `filter` en la pared.
+         */
+        const { container } = render(<PongOverlay open onClose={jest.fn()} />);
+
+        let pillado = false;
+        for (let i = 0; i < 400 && !pillado; i += 1) {
+            corre(100);
+            pillado = !!container.querySelector('.pong-stage > .loose-slab');
+        }
+        expect(pillado).toBe(true);
+
+        const mesa = [...container.querySelector('.pong-stage')!.children];
+        const campo = mesa.findIndex((e) => e.classList.contains('pong-court'));
+        const tic = mesa.findIndex((e) => e.classList.contains('loose-slab'));
+
+        expect(tic).toBeGreaterThan(campo);
     });
 
     test('el grano hirviendo sale con el juego parado, y se va al seguir', () => {
