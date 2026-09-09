@@ -685,6 +685,87 @@ export function startSound(): () => void {
         }
     };
 
+    /*
+     * EL PONG, que ocurre entre fotogramas.
+     *
+     * ⚠ SUS TRES TONOS SON LOS DE VERDAD. El pong original tenía exactamente
+     * tres sonidos —paleta, pared y punto— y los tres eran la misma onda
+     * cuadrada a distinta altura, porque el circuito no daba para más. Eso es lo
+     * que hace que dos blips se reconozcan como un juego y no como una interfaz.
+     *
+     * El juego publica contadores en su raíz y acá se miran subir. Un `play()`
+     * dentro del componente sería el primer disparo huérfano fuera de este
+     * módulo — ver el encabezado.
+     */
+    let pong: MutationObserver | null = null;
+    let peloteo = 0;
+    let rebotes = 0;
+    let perdido = false;
+    let parado = false;
+
+    const leerPong = (el: Element, primera: boolean) => {
+        const n = (attr: string) => Number(el.getAttribute(attr) ?? 0);
+
+        const ahoraPeloteo = n('data-rally');
+        const ahoraRebotes = n('data-bounces');
+        const ahoraPerdido = el.getAttribute('data-over') === 'yes';
+        const ahoraParado = el.getAttribute('data-paused') === 'yes';
+
+        if (!primera) {
+            // La paleta: el más grave de los tres, porque es el que vos hacés.
+            if (ahoraPeloteo > peloteo) {
+                huboActividad();
+                play('beep', { hz: 300, ms: 45 });
+            }
+
+            // La pared y el techo: más agudo y más corto. No lo hiciste vos.
+            if (ahoraRebotes > rebotes) {
+                huboActividad();
+                play('beep', { hz: 620, ms: 30 });
+            }
+
+            // Y el punto: largo y abajo. Es el único de los tres que dura.
+            if (ahoraPerdido && !perdido) {
+                huboActividad();
+                play('beep', { hz: 170, ms: 320 });
+            }
+
+            // Parar y seguir son un interruptor, no un blip: el relé es
+            // exactamente eso, y ya existe.
+            if (ahoraParado !== parado) {
+                huboActividad();
+                play('relay');
+            }
+        }
+
+        peloteo = ahoraPeloteo;
+        rebotes = ahoraRebotes;
+        perdido = ahoraPerdido;
+        parado = ahoraParado;
+    };
+
+    const mirarPong = () => {
+        const el = document.querySelector('.pong-layer');
+
+        if (!el) {
+            pong?.disconnect();
+            pong = null;
+            return;
+        }
+
+        if (pong) return;
+
+        // La primera lectura NO suena: es el estado con el que se abre, no algo
+        // que haya pasado.
+        leerPong(el, true);
+
+        pong = new MutationObserver(() => leerPong(el, false));
+        pong.observe(el, {
+            attributes: true,
+            attributeFilter: ['data-rally', 'data-bounces', 'data-over', 'data-paused'],
+        });
+    };
+
     const mirarPantallas = () => {
         // UNA sola pasada por el documento y no una por marca: esto corre en cada
         // mutación del `body` entero, y el colapso reescribe su manta de estática
@@ -769,6 +850,7 @@ export function startSound(): () => void {
         }
 
         mirarTeletipo();
+        mirarPong();
     };
 
     const observadorPantallas = new MutationObserver(mirarPantallas);
@@ -791,6 +873,7 @@ export function startSound(): () => void {
         observadorRaiz.disconnect();
         observadorPantallas.disconnect();
         teletipo?.disconnect();
+        pong?.disconnect();
         stopBarsTone();
     };
 }

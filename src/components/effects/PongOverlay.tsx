@@ -381,6 +381,25 @@ export default function PongOverlay({
             role="application"
             aria-label={t('pong.title')}
             data-render={cuadriculado ? 'quantised' : 'fluid'}
+            /*
+             * ⚠ EL JUEGO PUBLICA LO QUE PASA, Y EL SONIDO LO LEE. Los rebotes
+             * ocurren dentro del paso de física, entre fotograma y fotograma, y
+             * el suscriptor del sonido no puede verlos desde afuera.
+             *
+             * Antes que meter un `play()` acá dentro —el primer disparo huérfano
+             * fuera del suscriptor, que es lo que ese módulo existe para evitar—
+             * se pone en un atributo lo que ya se sabe. Es el mismo trato que
+             * usa la pared floja con `--blow-amp`: la app marca lo que hace, el
+             * sonido lo reconoce.
+             *
+             * Son CONTADORES y no banderas: una bandera de «rebotó» habría que
+             * apagarla, y dos rebotes seguidos en el mismo fotograma dejarían
+             * uno mudo. Un número que sube no se pierde ninguno.
+             */
+            data-rally={game.rally}
+            data-bounces={game.bounces}
+            data-over={game.over ? 'yes' : 'no'}
+            data-paused={pausa ? 'yes' : 'no'}
         >
             {/* El mismo cromo de la app, con el contenido del juego.
                 No es decoración: los conmutadores son los DE VERDAD, así que

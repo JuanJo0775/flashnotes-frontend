@@ -315,6 +315,26 @@ marca.
 | `.lockout-body` | El bloqueo: la máquina que ya no te deja entrar |
 | `.dead-page` | La página muerta: te sacó y ya |
 
+### ⚠ El pong tiene TRES tonos, y son los de verdad
+
+El pong original tenía exactamente tres sonidos —paleta, pared y punto— y los tres
+eran **la misma onda cuadrada a distinta altura**, porque el circuito no daba para
+más. Eso es lo que hace que dos blips se reconozcan como un juego y no como una
+interfaz, así que se respeta: 300 Hz la paleta, 620 la pared, 170 el punto.
+
+El más grave es el tuyo. La pared es más aguda y más corta porque no la hiciste
+vos. Y el punto es el único de los tres que dura.
+
+⚠ **El juego publica lo que pasa y el sonido lo lee.** Los rebotes ocurren dentro
+del paso de física, entre fotograma y fotograma, y el suscriptor no puede verlos
+desde afuera. Antes que meter un `play()` en el componente —el primer disparo
+huérfano fuera del suscriptor— el juego escribe **contadores** en su raíz. Es el
+mismo trato que usa la pared floja con `--blow-amp`.
+
+Contadores y no banderas: una bandera de «rebotó» habría que apagarla, y dos
+rebotes en el mismo fotograma dejarían uno mudo. Un número que sube no pierde
+ninguno.
+
 ⚠ **El tic del teletipo va por LÍNEA, nunca por carácter.** Las respuestas se
 teclean letra a letra —dieciocho milisegundos cada una— y un tic por carácter
 sería una ametralladora aunque la compuerta lo recortara. Un teletipo golpea el

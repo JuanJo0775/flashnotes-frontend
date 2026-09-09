@@ -331,6 +331,90 @@ describe('el final del §26', () => {
     });
 });
 
+describe('el pong, que ocurre entre fotogramas', () => {
+    /*
+     * ⚠ EL JUEGO PUBLICA Y EL SONIDO LEE. Los rebotes pasan dentro del paso de
+     * fisica y el suscriptor no puede verlos desde afuera. Antes que meter un
+     * `play()` en el componente —el primer disparo huerfano fuera de este
+     * modulo— el juego escribe contadores en su raiz.
+     *
+     * Contadores y no banderas: una bandera de «reboto» habria que apagarla, y
+     * dos rebotes en el mismo fotograma dejarian uno mudo.
+     */
+    const unTic = () => new Promise((r) => setTimeout(r, 90));
+
+    function abrirPong() {
+        const el = document.createElement('div');
+        el.className = 'pong-layer';
+        el.setAttribute('data-rally', '0');
+        el.setAttribute('data-bounces', '0');
+        el.setAttribute('data-over', 'no');
+        el.setAttribute('data-paused', 'no');
+        document.body.append(el);
+        return el;
+    }
+
+    it('⚠ abrirlo NO suena: es el estado con el que empieza', async () => {
+        conLaSalaYaEncendida();
+        await unTic();
+        const antes = marca();
+
+        abrirPong();
+        await unTic();
+
+        expect(fuentes(antes)).toHaveLength(0);
+    });
+
+    it('devolverla suena, y rebotar contra la pared tambien', async () => {
+        const el = abrirPong();
+        conLaSalaYaEncendida();
+        await unTic();
+
+        const antes = marca();
+        el.setAttribute('data-rally', '1');
+        await unTic();
+        const trasPaleta = fuentes(antes).length;
+
+        el.setAttribute('data-bounces', '1');
+        await unTic();
+
+        expect(trasPaleta).toBeGreaterThan(0);
+        expect(fuentes(antes).length).toBeGreaterThan(trasPaleta);
+    });
+
+    it('y perder suena una vez, no en cada repaso', async () => {
+        const el = abrirPong();
+        conLaSalaYaEncendida();
+        await unTic();
+
+        const antes = marca();
+        el.setAttribute('data-over', 'yes');
+        await unTic();
+        const alPerder = fuentes(antes).length;
+
+        // Otra mutacion cualquiera: perder ya paso, no vuelve a pasar.
+        el.setAttribute('data-paused', 'no');
+        await unTic();
+
+        expect(alPerder).toBeGreaterThan(0);
+        expect(fuentes(antes).length).toBe(alPerder);
+    });
+
+    it('⚠ y parar es un interruptor, no un blip', async () => {
+        // Parar y seguir son la misma clase de suceso, asi que suenan igual: un
+        // rele. Es lo que ya suena cuando se cambia el tema.
+        const el = abrirPong();
+        conLaSalaYaEncendida();
+        await unTic();
+
+        const antes = marca();
+        el.setAttribute('data-paused', 'yes');
+        await unTic();
+
+        expect(fuentes(antes).length).toBeGreaterThan(0);
+    });
+});
+
 describe('el tic del teletipo', () => {
     /*
      * ⚠ POR LINEA Y NUNCA POR CARACTER. Las respuestas se teclean letra a letra

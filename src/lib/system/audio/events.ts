@@ -82,14 +82,14 @@ export const EVENT_SOUNDS: readonly EventSound[] = [
         where: 'los mismos atributos, 620 ms después',
     },
     {
-        what: 'La avería de señal, y el segundo clic en el rótulo',
+        what: 'La avería de señal, el segundo clic en el rótulo, y los tres tonos del pong',
         voice: 'beep',
-        where: 'el almacén del sistema, y el contador de clics del rótulo',
+        where: 'el almacén del sistema, el contador del rótulo, y los contadores del pong',
     },
     {
-        what: 'El tema cambiando — es lo que hace el parpadeo del tema roto',
+        what: 'El tema cambiando, y parar o seguir el juego',
         voice: 'relay',
-        where: 'el atributo `data-theme`',
+        where: 'el atributo `data-theme`, y `data-paused` del pong',
     },
     {
         what: 'Una línea impresa por el teletipo, nunca un carácter',

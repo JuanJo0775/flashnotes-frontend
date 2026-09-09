@@ -72,8 +72,9 @@ máquinas.
   el pong repite la estructura con las mismas clases y ya se notó la deriva —la
   app estrenó `[RESTART]` abajo y el pong no lo tiene—. Contenido propio, marco
   común. **Pendiente.**
-- **Sonidos.** Los rebotes contra la pared y contra la paleta, el punto, y el
-  relé de la pausa. **Pendiente.**
+- ~~**Sonidos.**~~ Hechos: tres tonos como el pong original —300 Hz la paleta,
+  620 la pared, 170 el punto— y el relé al parar y seguir. El juego publica
+  contadores en su raíz y el sonido los lee.
 
 ## 3 · Lo que NO hay que volver a intentar
 
