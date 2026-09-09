@@ -728,6 +728,25 @@ export default function Banco() {
                         </button>
                     </label>
 
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <button
+                            type="button"
+                            className="btn-terminal"
+                            onClick={() =>
+                                disparar(
+                                    () => play('tear', { amplitudePx: temblor }),
+                                    `DESGARRO ${temblor}px`
+                                )
+                            }
+                        >
+                            [DESGARRO]
+                        </button>
+                        <Guia />
+                        <span className="comment">
+                            usa el mismo temblor de arriba · cuanto más cede la pared, más cruje
+                        </span>
+                    </div>
+
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <span className="diag-label" style={{ minWidth: '5rem' }}>
                             CUARTO
@@ -814,6 +833,7 @@ export default function Banco() {
                                 // a ciegas desde acá: tienen su propio mando más
                                 // arriba, con el temblor y los hercios a mano.
                                 e.voice === 'glitchBurst' ||
+                                e.voice === 'tear' ||
                                 e.voice === 'sweep' ||
                                 e.voice === 'beep' ||
                                 e.voice === 'confirm'

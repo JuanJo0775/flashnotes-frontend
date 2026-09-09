@@ -57,9 +57,14 @@ export const EVENT_SOUNDS: readonly EventSound[] = [
         where: '`click` en el documento, en captura',
     },
     {
-        what: 'Un tirón de imagen, y los golpes a la pared',
+        what: 'Un tirón de imagen: la señal rompiéndose',
         voice: 'glitchBurst',
-        where: 'el almacén de `useGlitch`, y un observador del `body`',
+        where: 'el almacén de `useGlitch`',
+    },
+    {
+        what: 'Cada golpe a la pared suelta, y cruje más cuanto más cede',
+        voice: 'tear',
+        where: 'la clase `is-blow` y la variable `--blow-amp` del `body`',
     },
     {
         what: 'Encontrar un secreto — y los del ente suenan torcidos',

@@ -131,6 +131,7 @@ del altavoz de la máquina, se oye con la oreja.
 | `beep` | `confirm` | bocinita | La onda cuadrada cruda. La única que suena barata a propósito |
 | `confirm` | `confirm` | bocinita | Dos notas. Una familia, no treinta y tres melodías |
 | `glitchBurst` | `glitch` | bocinita | El fallo, cortado en escalones |
+| `tear` | `glitch` | aire | Algo pegado que cede a tirones. Madera y yeso, no electrónica |
 | `button` | `keys` | aire | El pulsador de la interfaz. NO es la misma voz que una tecla |
 | `head` | `keys` | aire | La búsqueda de cabezal: varios golpes, y no a compás |
 | `capacitor` | `glitch` | aire | La corriente entrando. Un golpe, sin tono |
@@ -306,6 +307,7 @@ marca.
 | `.boot-logo` | Un disco leyendo para arrancar, bajo el rótulo del fabricante |
 | `.collapse-reboot` | La máquina leyendo para volver, y sigue leyendo mientras carga |
 | `.boot-check` | El bip de POST: memoria contada, todo bien |
+| `.loose-slab--cae` | El pedazo de pared cayendo, y lo que llega al suelo detrás |
 
 ⚠ **El tic del teletipo va por LÍNEA, nunca por carácter.** Las respuestas se
 teclean letra a letra —dieciocho milisegundos cada una— y un tic por carácter
@@ -633,10 +635,43 @@ suena no encontraría ni el hueco.
 
 Nada de esto existe fuera de desarrollo.
 
+## El final del §26
+
+Cuatro de sus cinco tramos ya suenan, y ninguno se pisa con el siguiente:
+
+| | Qué pasa | Qué suena |
+| --- | --- | --- |
+| 1 | Cada golpe despega la pared | **El crujido de desgarro**, y cruje más cuanto más cede |
+| 2 | El pedazo cae | Un barrido descendente, y el impacto **detrás** |
+| 3 | El ojo mira por el agujero | *(todavía nada)* |
+| 4 | Todo falla | **Silencio absoluto, 200 ms**, y después los relés del tema |
+| 5 | Reinicia | *(no puede sonar: es una recarga de verdad)* |
+
+⚠ **El crujido no es un glitch, y eso se corrigió.** Ahí sonaba `glitchBurst`, que
+es el ruido de la **señal** rompiéndose: eléctrico, escalonado, de banda ancha. Lo
+que pasa en la pantalla es otra cosa entera — un objeto físico pegado que cede a
+golpes. Madera y yeso, no electrónica. El comentario del cableado ya lo llamaba
+«el crujido» desde el primer día; sólo faltaba construirlo.
+
+Sube con la misma `--blow-amp` que mueve la imagen, porque el §5 lo pide sin
+rodeos: lo que reacciona no puede ser una muestra. Y sólo suelta el trozo final
+cuando el golpe es fuerte — en los primeros la pared aguanta, y crujir sin soltar
+nada es exactamente lo que hace algo que todavía no cede.
+
+⚠ **Y el silencio es de verdad.** No basta con callar el zumbido: justo ahí empieza
+el parpadeo de tema, que dispara relés, y un silencio con clics dentro no es un
+silencio. Se corta en `mix.ts`, en el único embudo por el que pasan todas las
+voces, para que ninguna se escape por su cuenta. El plan lo llama «el recurso más
+barato y más fuerte del documento entero», y no cuesta ni un fichero.
+
 ## Lo que falta
 
-- **El final** (§26): el crujido que sube con cada golpe, la caída, el ojo, los
-  200 ms de silencio absoluto y el reinicio.
+- **El ojo** (§26 · 3): el ambiente tendría que INVERTIRSE mientras el ojo mira
+  —el zumbido sube, todo lo demás se enmudece— y la lluvia binaria traer chachareo
+  de datos. Es la única parte del final que falta.
+- **El reinicio del final** (§26 · 5): no puede sonar. El derrumbe termina en un
+  `location.reload()` de verdad, y lo que hay después nace sin permiso — la misma
+  ley que deja mudo el apagón de una recarga.
 - **El condensador.** La voz existe (`capacitor`) y todavía no tiene momento: un
   condensador soltándose dentro de la caja pide un suceso que hoy no ocurre.
 - **Las muestras.** Cero por ahora, y ésa era la idea: sintético primero, y una

@@ -15,7 +15,12 @@
  * pasaban todas las llamadas.
  */
 
-import { IDLE_MS, LABEL_BEEP_AT, startSound } from '@/lib/system/audio/wire';
+import {
+    COLLAPSE_SILENCE_MS,
+    IDLE_MS,
+    LABEL_BEEP_AT,
+    startSound,
+} from '@/lib/system/audio/wire';
 import { SEEK_JITTER, SEEK_MS } from '@/lib/system/audio/screens';
 import { ambienceIsOn } from '@/lib/system/audio/ambience';
 import { barsToneIsOn } from '@/lib/system/audio/bars';
@@ -165,6 +170,106 @@ describe('el glitch', () => {
         fireGlitch();
 
         expect(fuentes(antes).length).toBeGreaterThan(0);
+    });
+});
+
+describe('el final del §26', () => {
+    const unTic = () => new Promise((r) => setTimeout(r, 90));
+
+    it('⚠ cada golpe a la pared CRUJE, y no suena a glitch', async () => {
+        /*
+         * Aca sonaba `glitchBurst`, que es el ruido de la SEÑAL rompiendose:
+         * electrico, escalonado, de banda ancha. Lo que pasa en la pantalla es
+         * otra cosa entera — un objeto fisico pegado que cede a golpes. Madera y
+         * yeso, no electronica.
+         *
+         * Se mide por RUIDO porque el desgarro es ruido filtrado y no tiene ni
+         * un oscilador: si alguien devolviera el glitch, el tirón de imagen
+         * traeria los suyos.
+         */
+        conLaSalaYaEncendida();
+        await unTic();
+        const antes = marca();
+
+        document.body.style.setProperty('--blow-amp', '9');
+        document.body.classList.add('is-blow');
+        await unTic();
+
+        expect(ruidos(antes).length).toBeGreaterThan(0);
+        document.body.classList.remove('is-blow');
+    });
+
+    it('el pedazo cayendo trae su barrido, y el impacto DETRAS', async () => {
+        /*
+         * Los dos a la vez serian un golpe sucio; separados son una cosa que cae
+         * y otra que llega al suelo, que es lo que se esta viendo.
+         */
+        const pedazo = document.createElement('div');
+        pedazo.className = 'loose-slab--cae';
+
+        conLaSalaYaEncendida();
+        await unTic();
+        const antes = marca();
+
+        document.body.append(pedazo);
+        await unTic();
+        const alCaer = fuentes(antes).length;
+
+        await new Promise((r) => setTimeout(r, 700));
+
+        expect(alCaer).toBeGreaterThan(0);
+        expect(fuentes(antes).length).toBeGreaterThan(alCaer);
+        pedazo.remove();
+    });
+
+    it('⚠ y el derrumbe deja SILENCIO ABSOLUTO, no casi silencio', async () => {
+        /*
+         * El plan lo llama «el recurso mas barato y mas fuerte del documento
+         * entero»: despues de veinte minutos con algo de fondo, quitarlo de
+         * golpe es lo mas fuerte que se puede hacer.
+         *
+         * ⚠ Y NO BASTA CON CALLAR EL ZUMBIDO. Justo ahi empieza el parpadeo de
+         * tema, que dispara reles — y un silencio con clics dentro no es un
+         * silencio. Se mide que NINGUNA voz nueva entra.
+         */
+        conLaSalaYaEncendida();
+        await unTic();
+
+        document.body.classList.add('is-failing');
+        await unTic();
+        const antes = marca();
+
+        // Se intenta sonar por todos lados: nada puede colarse.
+        const area = document.createElement('textarea');
+        document.body.append(area);
+        teclear('a', area);
+        markSecretFound('inspect');
+
+        expect(fuentes(antes)).toHaveLength(0);
+
+        area.remove();
+        document.body.classList.remove('is-failing');
+    });
+
+    it('y cuando el hueco pasa, la maquina vuelve a poder sonar', async () => {
+        // Un silencio que no termina no es un silencio, es una averia.
+        conLaSalaYaEncendida();
+        await unTic();
+
+        document.body.classList.add('is-failing');
+        await unTic();
+
+        await new Promise((r) => setTimeout(r, COLLAPSE_SILENCE_MS + 120));
+        const antes = marca();
+
+        const area = document.createElement('textarea');
+        document.body.append(area);
+        teclear('a', area);
+
+        expect(fuentes(antes).length).toBeGreaterThan(0);
+
+        area.remove();
+        document.body.classList.remove('is-failing');
     });
 });
 

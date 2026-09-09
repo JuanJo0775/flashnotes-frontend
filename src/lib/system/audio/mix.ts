@@ -135,7 +135,40 @@ const ultimo = new Map<SoundCategory, number>();
  * ocurren a la vez constantemente —escribís y la máquina falla encima— y con
  * una sola puerta uno se comería al otro según cuál llegara primero.
  */
+/**
+ * Hasta cuándo NO suena nada. Cero cuando no hay nada que callar.
+ *
+ * ⚠ ESTO NO ES UNA COMPUERTA MÁS: ES EL SILENCIO DEL §26, y el plan lo llama
+ * «el recurso más barato y más fuerte del documento entero». Después de veinte
+ * minutos con algo de fondo, quitarlo DE GOLPE es lo más fuerte que se puede
+ * hacer — y no cuesta ni un fichero.
+ *
+ * Callar sólo el zumbido no alcanzaba: durante esos milisegundos el derrumbe
+ * dispara los relés del parpadeo de tema, y un silencio con clics dentro no es
+ * un silencio. Se corta acá, en el único embudo por el que pasan todas las
+ * voces, para que ninguna se escape por su cuenta.
+ */
+let mudoHasta = 0;
+
+/**
+ * Calla TODO durante un rato.
+ *
+ * No cancela lo que ya esté sonando —eso lo hace el zumbido por su lado, con
+ * `silence`—: impide que empiece nada nuevo, que es lo que deja el hueco.
+ */
+export function muteFor(ms: number, now: number = Date.now()) {
+    mudoHasta = now + ms;
+}
+
+/** Si ahora mismo hay un silencio impuesto. */
+export function isMuted(now: number = Date.now()): boolean {
+    return now < mudoHasta;
+}
+
 export function allow(category: SoundCategory, now: number = Date.now()): boolean {
+    // El silencio manda sobre la compuerta: primero se comprueba si toca callar.
+    if (isMuted(now)) return false;
+
     const previo = ultimo.get(category);
 
     if (previo !== undefined && now - previo < GATE_MS) return false;
@@ -147,4 +180,6 @@ export function allow(category: SoundCategory, now: number = Date.now()): boolea
 /** Olvida todas las marcas. Para los tests y para cuando se apaga el sonido. */
 export function resetGate() {
     ultimo.clear();
+    // Y el silencio también: un contexto nuevo no hereda el hueco del anterior.
+    mudoHasta = 0;
 }

@@ -34,6 +34,7 @@ import {
     key,
     relay,
     sweep,
+    tear,
     thud,
     tick,
 } from '@/lib/system/audio/voices';
@@ -54,6 +55,7 @@ export interface VoiceArgs {
     sweep: { fromHz: number; toHz: number; ms: number };
     beep: { hz: number; ms: number };
     glitchBurst: { amplitudePx: number; durationMs: number };
+    tear: { amplitudePx: number };
 }
 
 export type VoiceName = keyof VoiceArgs;
@@ -80,6 +82,7 @@ const VOICES = {
     confirm,
     sweep,
     glitchBurst,
+    tear,
 } as const;
 
 /**

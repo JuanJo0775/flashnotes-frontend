@@ -182,6 +182,18 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
         repeat: { ms: SEEK_MS, jitter: SEEK_JITTER },
     },
     {
+        mark: 'loose-slab--cae',
+        what: 'El pedazo de pared cayendo, y lo que llega al suelo detrás',
+        /*
+         * ⚠ EL IMPACTO LLEGA DETRÁS, no encima. El §26 lo pide así: «barrido
+         * descendente y un impacto lejano». Los dos a la vez serían un golpe
+         * sucio; separados son una cosa que cae y otra que llega al suelo, que
+         * es lo que se está viendo.
+         */
+        shot: { voice: 'sweep', args: { fromHz: 900, toHz: 70, ms: 700 } },
+        then: { voice: 'thud', ms: 520 },
+    },
+    {
         mark: 'boot-check',
         what: 'El bip de POST: memoria contada, todo bien',
         /*

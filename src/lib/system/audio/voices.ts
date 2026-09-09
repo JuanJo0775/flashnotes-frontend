@@ -77,6 +77,12 @@ export const CATEGORY_OF = {
     drawer: 'confirm',
     relay: 'glitch',
     glitchBurst: 'glitch',
+    /*
+     * El desgarro es de la familia del glitch por MEZCLA y no por origen: es lo
+     * más fuerte que puede pasar sin que el sistema se caiga, y merece la misma
+     * atención que un tirón de imagen. Lo que suena, en cambio, es madera.
+     */
+    tear: 'glitch',
 } as const satisfies Record<string, SoundCategory>;
 
 /**
@@ -481,6 +487,92 @@ export function confirm(
         osc.start(desde);
         osc.stop(desde + largo + 0.01);
     });
+}
+
+/**
+ * EL CRUJIDO DE DESGARRO. Algo pegado que se despega, y cede de a poco.
+ *
+ * ⚠ SUBE CON LA AMPLITUD DEL GOLPE, y ésa es la razón de que exista. El §5 lo
+ * pide sin rodeos: lo que reacciona no puede ser una muestra. La pared se
+ * despega a golpes, y cada golpe la mueve más — un crujido siempre igual
+ * contaría que da lo mismo cuántas veces le pegues, que es justo lo contrario de
+ * lo que la pantalla está enseñando.
+ *
+ * ⚠ Y NO ES UN GLITCH. Acá sonaba `glitchBurst`, que es el ruido de la SEÑAL
+ * rompiéndose: eléctrico, escalonado, de banda ancha. Esto es un objeto físico
+ * cediendo, que es otra cosa entera — madera y yeso, no electrónica. El comentario
+ * del cableado ya lo llamaba «el crujido» desde el principio; sólo faltaba
+ * construirlo.
+ *
+ * Tres cosas lo hacen leer como algo que SE RASGA en vez de como un golpe:
+ *
+ *  1 · EL DESGARRO ES IRREGULAR. Un montón de rasguños cortísimos repartidos al
+ *      azar en el tiempo, no una envolvente lisa. Lo que se rompe no cede
+ *      parejo: cede a tirones, y entre tirón y tirón aguanta.
+ *  2 · SUENA A MEDIO GRAVE. Un pasabanda ancho alrededor de 500 Hz: la madera y
+ *      el yeso viven ahí. Más agudo sería papel; más grave, un mueble.
+ *  3 · Y TERMINA CON UN CHASQUIDO SECO, el trozo que por fin suelta.
+ */
+export function tear(
+    g: AudioGraph,
+    { amplitudePx }: { amplitudePx: number },
+    random: Random = Math.random
+) {
+    const t0 = g.ctx.currentTime;
+
+    // 3 px es el tirón leve y 12 el del último golpe: el mismo reparto que usa
+    // la imagen, para que los dos cuenten lo mismo.
+    const fuerza = Math.min(1, Math.max(0.15, amplitudePx / 12));
+    const largo = vary(0.18 + fuerza * 0.16, 0.12, random);
+
+    const src = fuenteDeRuido(g, random);
+    const f = filtro(g, 'bandpass', vary(500 - fuerza * 120, 0.1, random), 1.4);
+    const gain = g.ctx.createGain();
+
+    /*
+     * LOS TIRONES.
+     *
+     * Cuantos más, más se rompe. Cada uno salta a su nivel y se cae enseguida,
+     * y entre medio queda casi nada — que es lo que separa un desgarro de un
+     * siseo. Los tiempos van al azar y NO repartidos: lo que cede a intervalos
+     * iguales suena a motor.
+     */
+    const tirones = varyInt(5 + Math.round(fuerza * 7), 0.25, random);
+    gain.gain.setValueAtTime(0.0001, t0);
+
+    for (let i = 0; i < tirones; i += 1) {
+        const cuando = t0 + random() * largo;
+        const nivel = vary(0.12 + fuerza * 0.3, 0.35, random) * f.makeup;
+
+        gain.gain.setValueAtTime(nivel, cuando);
+        gain.gain.exponentialRampToValueAtTime(0.0001, cuando + vary(0.014, 0.4, random));
+    }
+
+    src.connect(f.nodo).connect(gain);
+    gain.connect(g.air);
+    gain.connect(g.room);
+    arrancar(src, t0, random);
+    src.stop(t0 + largo + 0.05);
+
+    /*
+     * Y EL TROZO QUE SUELTA, al final y sólo cuando el golpe es fuerte.
+     *
+     * En los primeros golpes la pared aguanta: crujir sin soltar nada es
+     * exactamente lo que hace algo que todavía no cede.
+     */
+    if (fuerza < 0.55) return;
+
+    const suelta = fuenteDeRuido(g, random);
+    const fs = filtro(g, 'bandpass', vary(1_700, 0.12, random), 2);
+    const gSuelta = g.ctx.createGain();
+    const cuando = t0 + largo * vary(0.85, 0.08, random);
+
+    percutir(gSuelta, cuando, vary(0.3, 0.2, random) * fs.makeup, 0.0006, 0.03);
+    suelta.connect(fs.nodo).connect(gSuelta);
+    gSuelta.connect(g.air);
+    gSuelta.connect(g.room);
+    arrancar(suelta, cuando, random);
+    suelta.stop(cuando + 0.05);
 }
 
 /**

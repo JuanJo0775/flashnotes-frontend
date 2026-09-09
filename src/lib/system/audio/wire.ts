@@ -30,6 +30,8 @@ import {
     subscribe as subscribeSystem,
 } from '@/hooks/useSystemState';
 import { play } from '@/lib/system/audio/play';
+import { muteFor } from '@/lib/system/audio/mix';
+import { silence } from '@/lib/system/audio/ambience';
 import { readFound as piezasGanadas } from '@/lib/system/asciiArt';
 import { subscribeHints } from '@/lib/system/artHints';
 import { WAKE_FADE_S, startAmbience, stopAmbience } from '@/lib/system/audio/ambience';
@@ -66,6 +68,18 @@ export const IDLE_MS = 40_000;
  * versión al tercero, la avería del quinto al octavo y el colapso al noveno.
  */
 export const LABEL_BEEP_AT = 2;
+
+/**
+ * Los milisegundos de SILENCIO ABSOLUTO del derrumbe (§26).
+ *
+ * ⚠ El plan lo llama «el recurso más barato y más fuerte del documento entero»,
+ * y tiene razón: después de veinte minutos con algo de fondo, quitarlo de golpe
+ * es lo más fuerte que se puede hacer. No cuesta ni un fichero.
+ *
+ * Doscientos y no más: es un hueco, no una pausa. Más largo dejaría de leerse
+ * como que algo se cortó y empezaría a leerse como que se acabó.
+ */
+export const COLLAPSE_SILENCE_MS = 200;
 
 /**
  * Los hallazgos que suenan MAL.
@@ -328,17 +342,44 @@ export function startSound(): () => void {
      * Observarlo es lo que hace que el crujido lea la MISMA amplitud que mueve
      * la imagen — el §5 lo pide: lo que reacciona no puede ser una muestra.
      */
+    let derrumbandose = false;
+
     const observador = new MutationObserver(() => {
+        /*
+         * EL DERRUMBE DEL §26: SILENCIO ABSOLUTO, Y DESPUÉS TODO LO DEMÁS.
+         *
+         * `LooseWall` pone `is-failing` en el `body` cuando el sistema se cae
+         * del todo. Se calla el zumbido a CERO EXACTO —no a casi nada, que no es
+         * lo mismo— y se cierra el paso a cualquier voz nueva, porque justo ahí
+         * empieza el parpadeo de tema y un silencio con relés dentro no es un
+         * silencio.
+         */
+        const cayendo = document.body.classList.contains('is-failing');
+
+        if (cayendo && !derrumbandose) {
+            silence(COLLAPSE_SILENCE_MS);
+            muteFor(COLLAPSE_SILENCE_MS);
+        }
+
+        derrumbandose = cayendo;
+
         if (!document.body.classList.contains('is-blow')) return;
 
         const amp = parseFloat(
             getComputedStyle(document.body).getPropertyValue('--blow-amp')
         );
 
-        play('glitchBurst', {
-            amplitudePx: Number.isFinite(amp) ? amp : 6,
-            durationMs: 120,
-        });
+        /*
+         * ⚠ UN CRUJIDO, NO UN GLITCH, y esto se corrigió. Acá sonaba
+         * `glitchBurst`, que es el ruido de la SEÑAL rompiéndose: eléctrico,
+         * escalonado, de banda ancha. Lo que pasa en la pantalla es otra cosa
+         * entera — un objeto físico pegado que cede a golpes. Madera y yeso, no
+         * electrónica.
+         *
+         * El comentario de arriba ya lo llamaba «el crujido» desde el primer día;
+         * sólo faltaba construirlo.
+         */
+        play('tear', { amplitudePx: Number.isFinite(amp) ? amp : 6 });
     });
 
     observador.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'] });
