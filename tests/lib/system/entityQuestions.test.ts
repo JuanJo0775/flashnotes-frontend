@@ -48,7 +48,14 @@ describe('se escriben como uno las escribiría', () => {
 
     it('y el repertorio sigue siendo CERRADO', () => {
         // Si entendiera cualquier cosa dejaría de estar atrapado.
-        for (const v of ['hola', 'ayuda', 'cuando', 'cuanto', '']) {
+        /*
+         * ⚠ `hola` YA NO SIRVE DE EJEMPLO, y el cambio es correcto: desde que
+         * el saludo es una de sus preguntas, `hola` es la forma castellana de
+         * `hi` — igual que `quien` lo es de `who` y `donde` de `where`. Lo que
+         * este test vigila es que el repertorio sea CERRADO, no que una palabra
+         * concreta quede fuera para siempre.
+         */
+        for (const v of ['gracias', 'ayuda', 'cuando', 'cuanto', '']) {
             expect(entityQuestionOf(v)).toBeNull();
         }
     });

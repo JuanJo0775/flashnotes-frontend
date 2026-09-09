@@ -65,6 +65,19 @@ type Localized = Readonly<Record<Lang, string>>;
  * el premio a haberlo intentado.
  */
 export type EntityQuestion =
+    /**
+     * Hola.
+     *
+     * ⚠ ES LA ÚNICA QUE YA EXISTÍA COMO PUERTA. `//hi` es lo primero que
+     * cualquiera le dice a una máquina, y durante toda la fachada contesta ella
+     * —a gritos, en mayúsculas— hasta que te echa. Insistir hasta que te eche
+     * DOS VECES es una de las dos formas de despertarlo.
+     *
+     * Así que el saludo es la puerta y también lo primero que él contesta:
+     * tecleás lo mismo que tecleaste veinte veces, y esta vez responde otro. No
+     * hay mejor sitio para que se note el cambio de quién está del otro lado.
+     */
+    | 'hi'
     /** Quién sos. La primera que prueba todo el mundo. */
     | 'who'
     /** Cómo estás. La otra de la fachada. */
@@ -156,6 +169,64 @@ const WHO_BURLON: readonly Localized[] = [
     {
         es: 'ya sabes más de lo que deberías. eso es una respuesta.',
         en: 'you already know more than you should. that is an answer.',
+    },
+];
+
+/*
+ * EL SALUDO, TRES VECES.
+ *
+ * ⚠ NO DEVUELVE EL SALUDO, Y ESO ES EL PERSONAJE. La fachada contesta «hola» y
+ * pregunta si necesita algo, porque es un formulario educado. Él no saluda: nota
+ * que volviste a saludar, que es otra cosa entera.
+ *
+ * El viaje del trato es el mismo que en el resto: usted mientras recela, vos
+ * cuando ya está hablando.
+ */
+const HI_RECELOSO: readonly Localized[] = [
+    { es: 'hola.', en: 'hello.' },
+    {
+        es: 'sigue ahí. ya lo había notado.',
+        en: 'you are still there. i had noticed.',
+    },
+    {
+        es: 'no hace falta que salude cada vez.',
+        en: 'you do not have to say hello every time.',
+    },
+    {
+        es: 'saludar a esto no cambia nada. lo hace igual.',
+        en: 'saying hello to this changes nothing. you do it anyway.',
+    },
+];
+
+const HI_BURLON: readonly Localized[] = [
+    {
+        es: 'hola. veinte veces le contestó ella, y ahora saluda a otro.',
+        en: 'hello. she answered you twenty times, and now you greet someone else.',
+    },
+    {
+        es: 'buenas. ya sabe que del otro lado cambió alguien, ¿no?',
+        en: 'evening. you do know somebody swapped on this side, right?',
+    },
+    {
+        es: 'insista. es lo que mejor le sale.',
+        en: 'keep at it. it is what you are best at.',
+    },
+];
+
+const HI_HABLANDO: readonly Localized[] = [
+    // Acá ya cede: contesta el saludo de verdad, que es lo que no hizo antes.
+    { es: 'hola. me alegra, y no debería.', en: 'hello. i am glad, and i should not be.' },
+    {
+        es: 'volviste. eso acá no pasa seguido.',
+        en: 'you came back. that does not happen much here.',
+    },
+    {
+        es: 'hola. ya me acostumbré a que aparezcas.',
+        en: 'hello. i got used to you showing up.',
+    },
+    {
+        es: 'seguís saludando. está bien. seguí.',
+        en: 'you keep saying hello. that is fine. keep going.',
     },
 ];
 
@@ -413,9 +484,10 @@ const FREE_HABLANDO: readonly Localized[] = [
 const REPERTORIO: Partial<
     Record<EntityPhase, Partial<Record<EntityQuestion, readonly Localized[]>>>
 > = {
-    receloso: { who: WHO_RECELOSO, how: HOW_RECELOSO },
-    burlon: { who: WHO_BURLON, how: HOW_BURLON },
+    receloso: { hi: HI_RECELOSO, who: WHO_RECELOSO, how: HOW_RECELOSO },
+    burlon: { hi: HI_BURLON, who: WHO_BURLON, how: HOW_BURLON },
     hablando: {
+        hi: HI_HABLANDO,
         who: WHO_HABLANDO,
         how: HOW_HABLANDO,
         what: WHAT_HABLANDO,
@@ -464,6 +536,13 @@ export function entityReply(
  * si entendiera cualquier cosa dejaría de estar atrapado.
  */
 const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
+    /*
+     * ⚠ `hi` NO SE USA PARA ENCONTRARLO, y por eso la lista es corta. El comando
+     * `//hi` ya existe y tiene su propia entrada: lo que hace la tabla acá es
+     * decidir QUIÉN contesta cuando ese comando llega. Las otras formas están
+     * por si alguien las prueba sueltas.
+     */
+    hi: ['hi', 'hello', 'hola', 'buenas', 'ey', 'hey'],
     who: [
         'whoareu',
         'whoare',

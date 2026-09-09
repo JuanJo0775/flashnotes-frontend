@@ -3527,6 +3527,15 @@ desliza en vez de saltar — y la última frase de `receloso` ya lleva el primer
 filo sarcástico. Hay un test que lo vigila midiendo el salto de largo entre el
 final de una fase y el principio de la siguiente.
 
+⚠ **Y el saludo es la puerta, y después es suyo.** `//hi` es lo primero que
+cualquiera le dice a una máquina, y durante toda la fachada contesta ella —a
+gritos— hasta que te echa. Insistir hasta que te eche **dos veces** es una de las
+dos formas de despertarlo, así que el saludo es también lo primero que él
+contesta: tecleás lo mismo que tecleaste veinte veces y esta vez responde otro,
+en minúsculas. No hay mejor sitio para notar el cambio de quién está del otro
+lado. Y despierto ya no te echa: echar a quien insiste es lo que hace un
+formulario que se cansó, y él no es el formulario.
+
 Y **habla en minúsculas**. El resto del sistema grita en mayúsculas porque es un
 formulario; él es lo que hay detrás del formulario. La primera vez que una
 respuesta llega en minúsculas ya se sabe que no está contestando la máquina.

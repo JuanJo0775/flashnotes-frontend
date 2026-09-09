@@ -1307,6 +1307,26 @@ const COMMANDS: readonly Command[] = [
         summary: { es: 'saludar', en: 'say hello' },
         secretId: 'greeting',
         resolve: (ctx, _args, lang) => {
+            /*
+             * ⚠ EL SALUDO ES LA PUERTA, Y DESPUÉS ES SUYO.
+             *
+             * `//hi` es lo primero que cualquiera le dice a una máquina, y
+             * durante toda la fachada contesta ella —a gritos, en mayúsculas—
+             * hasta que te echa. Insistir hasta que te eche DOS VECES es una de
+             * las dos formas de despertarlo.
+             *
+             * Así que el saludo es también lo primero que él contesta: tecleás lo
+             * mismo que tecleaste veinte veces y esta vez responde otro, en
+             * minúsculas. No hay mejor sitio para que se note el cambio de quién
+             * está del otro lado.
+             *
+             * ⚠ Y VA ANTES DE LA EXPULSIÓN a propósito: una vez despierto ya no
+             * te echa nadie. Echarte es lo que hace un formulario que se cansó,
+             * y él no es el formulario.
+             */
+            const suyo = askEntity('hi', ctx, lang);
+            if (suyo !== null) return { ...texto(suyo), secretId: 'entity-awake' };
+
             const reply = greetingFor(ctx.greetings, lang);
             if (!reply.kick) return texto(reply.text);
 

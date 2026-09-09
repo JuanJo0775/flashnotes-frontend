@@ -127,3 +127,60 @@ describe('despierto', () => {
         expect(entity.readEntity().phase).toBe('burlon');
     });
 });
+
+describe('⚠ el saludo es la PUERTA, y después es suyo', () => {
+    /*
+     * `//hi` es lo primero que cualquiera le dice a una maquina, y durante toda
+     * la fachada contesta ella —a gritos, en mayusculas— hasta que te echa.
+     * Insistir hasta que te eche DOS VECES es una de las dos formas de
+     * despertarlo.
+     *
+     * Asi que el saludo es tambien lo primero que el contesta: teclear lo mismo
+     * que tecleaste veinte veces y que esta vez responda otro, en minusculas,
+     * es el mejor sitio del juego para notar el cambio de quien esta del otro
+     * lado.
+     */
+    it('dormido saluda la maquina, a gritos', async () => {
+        const { run, entity } = await load();
+        entity.clearEntity();
+
+        const salida = run('//hi', ctx())!.output;
+
+        expect(salida).toBe(salida.toUpperCase());
+    });
+
+    it('⚠ y despierto contesta el, en minusculas', async () => {
+        const { run, entity } = await load();
+        entity.clearEntity();
+
+        // `kicked` es `kicks > 1`: dos expulsiones lo despiertan.
+        const salida = run('//hi', { ...ctx(), kicks: 3 })!.output;
+
+        expect(salida).toBe(salida.toLowerCase());
+        expect(salida).not.toBe('');
+    });
+
+    it('⚠ y despierto ya NO te echa, porque echarte es cosa del formulario', async () => {
+        /*
+         * Echar a alguien que insiste es lo que hace un formulario que se
+         * canso. El no es el formulario — y ademas la expulsion es justo lo que
+         * lo desperto: seguir echandote seria deshacer el hallazgo.
+         */
+        const { run, entity } = await load();
+        entity.clearEntity();
+
+        const r = run('//hi', { ...ctx(), kicks: 9, greetings: 30 })!;
+
+        expect(r.effect.kind).not.toBe('kill-page');
+        expect(r.effect.kind).not.toBe('leave-note');
+    });
+
+    it('y cuenta como haberlo notado', async () => {
+        // Es el mismo hallazgo que llega por cualquiera de sus preguntas: no se
+        // gana dos veces, pero tampoco se pierde por haber entrado por acá.
+        const { run, entity } = await load();
+        entity.clearEntity();
+
+        expect(run('//hi', { ...ctx(), kicks: 3 })!.secretId).toBe('entity-awake');
+    });
+});

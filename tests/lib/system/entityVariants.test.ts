@@ -31,7 +31,14 @@ describe('reconoce variantes de la misma pregunta', () => {
 describe('pero el repertorio es CERRADO', () => {
     it('lo que no está, no está', () => {
         // Si entendiera cualquier cosa dejaría de estar atrapado.
-        for (const v of ['hola', 'ayuda', 'que_hora_es', '']) {
+        /*
+         * ⚠ `hola` YA NO SIRVE DE EJEMPLO, y el cambio es correcto: desde que
+         * el saludo es una de sus preguntas, `hola` es la forma castellana de
+         * `hi` — igual que `quien` lo es de `who` y `donde` de `where`. Lo que
+         * este test vigila es que el repertorio sea CERRADO, no que una palabra
+         * concreta quede fuera para siempre.
+         */
+        for (const v of ['gracias', 'ayuda', 'que_hora_es', '']) {
             expect(entityQuestionOf(v)).toBeNull();
         }
     });
