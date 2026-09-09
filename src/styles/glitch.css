@@ -767,7 +767,50 @@
    como que la app se colgó. Con la barra se lee como que está trabajando. Usa
    los mismos bloques ▮▯ que el medidor de la barra de estado: es la app
    contándote algo con sus propios caracteres. */
-.collapse-reboot {
+/*
+ * LA CONSOLA DE EMERGENCIA de la v0.2 detenida.
+ *
+ * ⚠ NO SE PARECE AL EDITOR NI A UN CAMPO DE FORMULARIO: es un renglón con un
+ * `>` delante y un cursor. Lo que queda cuando ya no hay sistema no tiene cajas
+ * ni bordes — es la máquina en su nivel más bajo, escuchando una orden.
+ */
+.collapse-console {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5ch;
+    margin-top: 0.75rem;
+    font: inherit;
+}
+
+.collapse-console-input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    /* El cursor del sistema, que es el único adorno que se permite acá. */
+    caret-color: currentColor;
+    outline: none;
+    text-transform: lowercase;
+}
+
+/* ⚠ El foco NO se dibuja con un anillo: se dibuja con el subrayado del propio
+   renglón, que es como se veía un campo en una consola de esa época. Quitar la
+   marca de foco sin poner otra sería dejar a alguien sin saber dónde escribe. */
+.collapse-console-input:focus-visible {
+    border-bottom: 1px solid currentColor;
+}
+
+/* ⚠ DOS NOMBRES PARA LA MISMA COLUMNA, Y NO ES REDUNDANCIA. `.collapse-reboot`
+   es la máquina leyendo para volver, y el sonido la usa como marca: ahí el disco
+   busca, y sigue buscando mientras la marca esté puesta. `.collapse-halted` es la
+   v0.2 que se rindió —no lee nada, porque no tiene con qué volver—. Se comparte
+   el estilo, que es lo único que tienen en común. */
+.collapse-reboot,
+.collapse-halted {
     position: absolute;
     top: 12%;
     left: 8%;
@@ -1213,6 +1256,57 @@
     border-bottom: 1px solid var(--color-ink);
 }
 
+/*
+ * EL RECORTE DEL GRANO PRESTADO.
+ *
+ * ⚠ EXISTE POR UN DESBORDE, no por gusto. `.wall-grain` se pinta con `inset:
+ * -20%` a propósito: así, cuando el ruido salta, no descubre ningún canto. En el
+ * agujero de la pared eso no se nota porque el hueco recorta; la mesa del pong
+ * no recortaba nada, y el rectángulo asomaba por arriba y por los lados dando
+ * saltos por encima del marcador. Se reportó jugando: «se ve feo y temblando».
+ *
+ * El arreglo es el recorte y no quitarle el movimiento: lo que se pidió es el
+ * grano HIRVIENDO, y un grano quieto es una textura.
+ */
+.pong-grain {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+/*
+ * ⚠ Y SE LE SUBE UN POCO, porque debajo no hay lo mismo. En la pared el grano
+ * va al 12% encima de la lluvia binaria —un fondo que ya se mueve y que le
+ * presta contraste—. Acá cae sobre el velo liso de la pausa, y sobre un color
+ * plano el 12% no se lee: parece que la pantalla está limpia, que es justo lo
+ * que el grano viene a desmentir.
+ */
+.pong-grain .wall-grain {
+    opacity: 0.2;
+}
+
+/*
+ * EL TIC DEL PEDAZO, CON EL RELOJ DEL PONG.
+ *
+ * ⚠ TAL CUAL, NO SE VEÍA NUNCA, y el motivo está en los números. El tic de la
+ * pared llega al 96% de un ciclo de once segundos —o sea a los 10,5 s— porque
+ * allá la capa está puesta para siempre, y el silencio entre destellos es lo que
+ * lo hace un fallo en vez de un elemento animado. Acá la capa sólo está mientras
+ * el juego se dibuja con caracteres: de 220 a 700 ms. La animación empezaba en
+ * cero y se desmontaba muchísimo antes de su único fotograma útil.
+ *
+ * El retardo NEGATIVO la arranca ya empezada, justo antes del destello: se monta
+ * la capa y el tic llega a los ~65 ms. Mismos keyframes, misma duración del
+ * destello, mismo gesto — lo único que cambia es por dónde se entra.
+ *
+ * Y acá el espaciado no hace falta ponerlo: lo espacia la propia avería, que
+ * aparece cada siete a diecisiete segundos.
+ */
+.pong-stage > .loose-slab {
+    animation-delay: -10.45s;
+}
+
 .pong-court {
     margin: 0;
     font: inherit;
@@ -1265,6 +1359,42 @@
 .pong-proc,
 .pong-hint {
     opacity: 0.55;
+}
+
+/* LA PAUSA, con la estetica de una maquina vieja.
+
+   ⚠ MENOS OPACA QUE LA DE PERDIDO, y a proposito: al perder el corte se
+   congela y hay algo que mirar detras; en pausa el juego SIGUE AHI, esperando,
+   y taparlo del todo contaria que se fue. Se ve la pelota donde la dejaste.
+
+   Y el rotulo parpadea, que es lo que hacia un cartel de pausa de esa epoca —
+   no habia menu, no habia ajustes: paraba y te miraba. */
+@keyframes pong-paused {
+    0%,
+    62% {
+        opacity: 1;
+    }
+    63%,
+    100% {
+        opacity: 0.25;
+    }
+}
+
+.pong-paused {
+    background: color-mix(in srgb, var(--color-primary) 55%, transparent);
+}
+
+.pong-paused .pong-over-title {
+    animation: pong-paused 1.1s steps(1, end) infinite;
+}
+
+/* ⚠ Con movimiento reducido el rotulo se queda quieto y entero. La regla A3
+   manda: un parpadeo de pantalla completa es exactamente lo que molesta, y el
+   cartel se lee igual sin el. */
+@media (prefers-reduced-motion: reduce) {
+    .pong-paused .pong-over-title {
+        animation: none;
+    }
 }
 
 .pong-over {
@@ -1390,4 +1520,820 @@
    sigue encendida justo en el momento en que se apaga. */
 [data-tube-off] .scanline-effect {
     display: none;
+}
+
+/*
+ * ══ EL PEDAZO DE PANTALLA QUE SE DESPRENDE ══════════════════════════════════
+ *
+ * ⚠ NO ES UNA VENTANA: ES UN TROZO DEL FONDO. Una ventana es algo que la app
+ * pone encima, y romperla no dice nada del sitio donde estás. Un trozo de la
+ * PANTALLA que se despega dice que el fondo era una superficie, que tenía un
+ * detrás, y que ese detrás llevaba ahí todo el tiempo.
+ *
+ * ⚠ Y ES LA PANTALLA TAMBIÉN MIENTRAS CAE. Éste es el principio que lo sostiene
+ * todo y el que más veces se rompió: el trozo no es un rectángulo del color del
+ * fondo, es un pedazo de lo que la pantalla estaba haciendo, así que SE LLEVA
+ * PUESTO el grano y el barrido. Un rectángulo plano dando vueltas es una ficha;
+ * un trozo con el barrido corriéndole por dentro mientras gira es la pantalla
+ * partiéndose, que es lo que pasa.
+ */
+
+/*
+ * La geometría, escrita UNA vez.
+ *
+ * ⚠ EL PEDAZO Y LA CICATRIZ SON EL MISMO TROZO. La cicatriz no está «más o
+ * menos donde estaba»: es exactamente eso, recompuesto. Con las medidas
+ * copiadas en dos reglas, cualquier ajuste de una dejaba la otra corrida y el
+ * final perdía lo único que lo ata al principio.
+ *
+ * ⚠ EL CUARTO INFERIOR DERECHO. Dividí la pantalla en cuatro y es ése — lejos
+ * del editor y de la lista, que es donde de verdad trabajás, y en la esquina
+ * que uno mira menos. Que el fallo esté justo donde nadie mira es parte de que
+ * haya que encontrarlo.
+ *
+ * ⚠ ES UN PEDAZO, NO EL CUARTO ENTERO. El cuarto inferior derecho es sólo DÓNDE
+ * está; lo que se cae es un trozo de ese tamaño — como cuando se desprende un
+ * fragmento de una pared, no como cuando se cae la pared. Y por eso lo de
+ * detrás se ve SÓLO por ahí: el agujero es pequeño, así que asomarse cuesta, y
+ * lo que hay al otro lado no se enseña entero.
+ */
+.loose-zone,
+.wall-scar {
+    /*
+     * ⚠ EL TAMAÑO LO MANDA EL CAMPO DE DÍGITOS, no al revés. La letra no puede
+     * bajar de 9 px —por debajo el navegador la pinta con subpíxel y salen
+     * colores— así que las columnas que caben son las que caben, y con un hueco
+     * de sello el ojo salía dibujado a 46 columnas: una mancha con forma de
+     * ojo. Más hueco es más resolución, y la resolución es lo único que separa
+     * una cosa de la otra. La cuenta está en `eyeStatic.ts`.
+     */
+    --loose-w: 340px;
+    --loose-h: 224px;
+
+    position: fixed;
+    /*
+     * ⚠ ANCLADO A LA ESQUINA, NO A UN PORCENTAJE DEL BORDE IZQUIERDO. Estaba en
+     * `top: 58%; left: 66%`, y así el trozo crece HACIA AFUERA: en cuanto la
+     * ventana es estrecha, la mitad del agujero se va de la pantalla. Medido
+     * desde abajo y desde la derecha crece hacia adentro y cae siempre en el
+     * mismo sitio — el cuarto inferior derecho, lejos del editor y de la lista,
+     * en la esquina que uno mira menos. Que el fallo esté justo donde nadie
+     * mira es parte de que haya que encontrarlo.
+     */
+    right: 16.5%;
+    bottom: 11%;
+    width: var(--loose-w);
+    height: var(--loose-h);
+    pointer-events: none;
+}
+
+/*
+ * ⚠ VA POR DELANTE DE TODO, PORQUE ES EL CRISTAL.
+ *
+ * El trozo flojo no está encima de la interfaz ni debajo: ES la superficie
+ * donde la interfaz se pinta. Por eso va al frente y por eso NO PINTA NADA —
+ * ver `.loose-slab`. Estando delante y siendo transparente, es exactamente la
+ * pantalla que tenga debajo en cada momento: la lista, el editor, la papelera,
+ * el tema claro o el oscuro. No hay ningún color que acertar porque no hay
+ * ningún color.
+ *
+ * Y por eso también se lo puede encontrar en cualquier pantalla: su tic no
+ * pinta un rectángulo, invierte el trozo de imagen que haya ahí.
+ *
+ * Al caer baja a `z-index: 1` — ver `.loose-zone--cae`.
+ */
+.loose-zone {
+    z-index: 9994;
+}
+
+/*
+ * ⚠ EN CUANTO LE PEGAS UNA VEZ, EL HUECO YA ESTÁ AHÍ DETRÁS.
+ *
+ * Antes de eso no puede estar: el pedazo no pinta nada —es la pantalla— así que
+ * no tapa nada, y un hueco sin nada que lo tape se vería desde el primer
+ * momento. Por eso el hueco va recortado a cero hasta el primer golpe.
+ *
+ * Del primer golpe en adelante el pedazo SÍ pinta (ver `.loose-slab--suelto`),
+ * o sea que vuelve a tapar, y entonces lo que enseña el hueco es la GEOMETRÍA:
+ * el trozo se ladea y por la rendija que deja asoma lo de detrás. Que la
+ * abertura la haga el propio movimiento del pedazo y no un recorte es lo que la
+ * hace creíble — se abre en cuña, como se abre algo que se está despegando por
+ * un canto, y no como una persiana.
+ */
+.loose-zone--suelta {
+    --grieta: var(--loose-h);
+}
+
+/*
+ * ⚠ Y AL SOLTARSE SE VA DETRÁS DE LA APP.
+ *
+ * Mientras está pegado es el cristal, o sea lo más de delante que hay. En
+ * cuanto se despega deja de ser la superficie y pasa a ser un objeto cayendo
+ * por dentro del aparato: detrás de la barra de abajo, detrás de todo. Nada se
+ * cae por delante del mueble que tiene delante.
+ *
+ * Y de paso el hueco se abre entero: la grieta pasa a medir lo que mide el
+ * pedazo, que es la forma de decir «ya no queda nada tapando».
+ */
+.loose-zone--cae {
+    --grieta: var(--loose-h);
+
+    z-index: 1;
+}
+
+/*
+ * EL GRANO DE LA CASA, escrito una vez y usado en los dos lados del agujero.
+ *
+ * ⚠ ES EL MISMO SVG QUE `body::before`, carácter por carácter. El trozo tiene
+ * que llevar el grano de la página o no es la página; y lo que hay detrás tiene
+ * que llevar grano o no es una señal. Que los dos salgan del mismo ruido es lo
+ * que los hace parientes: el sitio se rompe de una sola manera.
+ */
+.loose-slab,
+.wall-noise,
+.wall-grain {
+    --tube-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* El hueco: lo que hay detrás de la pantalla, esperando a que se caiga.
+ *
+ * ⚠ ESTÁ ENTERO DESDE EL PRINCIPIO, y no se ve, porque el pedazo lo tapa
+ * exactamente. Lo que lo revela es que el pedazo SE MUEVA — primero una rendija
+ * por el canto con cada golpe, y al final el hueco entero cuando se cae. Ése es
+ * el principio y no hay que ayudarlo con recortes: si algo tapa y se quita, lo
+ * de detrás aparece solo.
+ *
+ * ⚠ Y ES OSCURO EN LOS DOS TEMAS. No ignora el tema por comodidad: un agujero
+ * es oscuro, eso es físico. Pintarlo claro en el tema claro diría que lo que
+ * hay detrás también es interfaz, y lo que hay detrás no es interfaz. */
+.loose-hole {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: #0a0908;
+    /*
+     * ⚠ NO SE VE HASTA QUE SE ABRE. `--grieta` es cuánto se ha despegado el
+     * pedazo por el canto de arriba, en píxeles, y lo pone `LooseWall` con cada
+     * golpe. A cero no se ve nada; con el pedazo caído vale lo que mide el
+     * hueco.
+     *
+     * Éste es el reemplazo del truco viejo, que era tapar el hueco con un
+     * rectángulo pintado del color del fondo. Aquello obligaba a ACERTARLE al
+     * color de la pantalla —y fallaba en cuanto la pantalla era otra, como el
+     * papel del editor— y encima ponía un rectángulo opaco a pantalla completa
+     * por delante de la app. Recortando el hueco no hay ningún color que
+     * acertar: lo que no está abierto, sencillamente no está.
+     */
+    clip-path: inset(0 0 calc(100% - var(--grieta, 0px)) 0);
+}
+
+/*
+ * Y el pedazo.
+ *
+ * ⚠ NO PINTA NADA. NINGÚN COLOR. Y eso no es una carencia: es la única forma de
+ * que sea de verdad un trozo de pantalla.
+ *
+ * Estuvo pintado del color del lienzo, con el grano encima, midiendo el fondo
+ * para acertarle. Y le acertaba — en la lista de notas y en tema oscuro. En
+ * cuanto abrías una nota, debajo había papel y no lienzo, y el trozo se veía
+ * como un parche de otro color puesto encima del editor. El error no era el
+ * tono: era la idea. Un pedazo de pantalla no COPIA lo que hay en la pantalla,
+ * ES lo que hay en la pantalla — y la única manera de serlo en todas las vistas
+ * y en los dos temas es no pintar.
+ *
+ * Lo que tapaba el hueco tampoco hace falta que lo tape mientras nadie lo ha
+ * tocado: el hueco va recortado a cero (ver `.loose-hole`), así que no hay nada
+ * debajo que esconder. Del primer golpe en adelante sí pinta — ver
+ * `.loose-slab--suelto`, que es donde se resuelve la contradicción.
+ *
+ * ⚠ SIN `cursor: pointer` Y SIN `:hover`. Un cursor de mano lo anunciaría como
+ * un control, y esto no es un control: es un fallo. Lo que hay que notar se
+ * nota pegándole, no pasando por encima.
+ */
+.loose-slab {
+    position: absolute;
+    inset: 0;
+    user-select: none;
+    /* Desde el canto de arriba: se despega por abajo, como una lámina mal
+       pegada, no como una ficha que gira sobre su centro. */
+    transform-origin: 50% 0%;
+    animation: loose-slab-twitch 11s steps(1, end) infinite;
+}
+
+/*
+ * Lo único que lo delata: ESA ZONA GLITCHEA de vez en cuando.
+ *
+ * ⚠ Y GLITCHEA CON `backdrop-filter`, NUNCA CON `filter`. `filter` actúa sobre
+ * lo que pinta el elemento, y este elemento no pinta nada: la regla corría en
+ * vacío. `backdrop-filter` actúa sobre lo que hay DEBAJO, así que lo que se
+ * invierte un instante es el trozo de imagen que haya ahí — la lista, el
+ * editor, lo que sea. Es exactamente lo que hace `.glitch-negative` con la
+ * pantalla entera, en un rectángulo.
+ *
+ * Un tic cada tantos segundos en la misma esquina basta para que alguien piense
+ * «¿eso se movió?» y vaya a mirar. Espaciado a propósito — seguido dejaría de
+ * ser un fallo y pasaría a ser un elemento animado.
+ */
+@keyframes loose-slab-twitch {
+    0%,
+    95.6% {
+        backdrop-filter: none;
+    }
+    96% {
+        backdrop-filter: invert(0.12);
+    }
+    96.8% {
+        backdrop-filter: invert(0.04) contrast(1.4);
+    }
+    97.6%,
+    100% {
+        backdrop-filter: none;
+    }
+}
+
+/*
+ * ⚠ Y EN CUANTO LE PEGAS, SE DESPEGA — Y PARA DESPEGARSE HAY QUE VERLO.
+ *
+ * Ésta es la contradicción entera de la escena, y se resuelve en el TIEMPO y no
+ * en el color. Sin tocar, el pedazo es la pantalla y por eso no pinta nada:
+ * cualquier color que eligiéramos fallaría en alguna vista o en algún tema. En
+ * cuanto recibe el primer golpe deja de estar pegado, y algo que se está
+ * despegando ES un objeto: se ladea, y para que ladearse signifique algo tiene
+ * que tener superficie.
+ *
+ * Así que ahí se lleva puesto el color que HABÍA debajo — medido en ese mismo
+ * instante por `LooseWall`, en la vista y el tema que sean — con el grano de la
+ * casa encima. El primer fotograma después del golpe es idéntico al último de
+ * antes; lo único que cambia es que a partir de ahí se mueve.
+ */
+.loose-slab--suelto {
+    overflow: hidden;
+    background-color: var(--slab-bg, var(--color-primary));
+    /* El velo al 95% sobre el ruido da el mismo 5% de grano que pinta la
+       página: el pedazo se lleva puesta la textura del tubo. */
+    background-image:
+        linear-gradient(
+            color-mix(in srgb, var(--slab-bg, var(--color-primary)) 95%, transparent),
+            color-mix(in srgb, var(--slab-bg, var(--color-primary)) 95%, transparent)
+        ),
+        var(--tube-grain);
+    /* Ya no hace falta el tic: lo que llama la atención ahora es que se mueve. */
+    animation: none;
+}
+
+/*
+ * EL DESPRENDIMIENTO: se suelta, cae y se va de la pantalla.
+ *
+ * ⚠ Y AQUÍ SÍ SE PINTA, aunque pegado no pinte nada. Mientras es el cristal
+ * tiene que ser invisible; en cuanto se despega es un objeto, y un objeto que
+ * se cae TIENE que verse caer o no se cayó: se desvaneció.
+ *
+ * ⚠ Y SE PINTA DEL COLOR QUE HABÍA DEBAJO, no de uno elegido. `--slab-bg` lo
+ * mide `LooseWall` en el instante en que se suelta, mirando qué está pintado
+ * de verdad en ese punto de la pantalla. Si se soltó sobre el lienzo se lleva
+ * el lienzo; si se soltó sobre el papel del editor se lleva el papel. Un color
+ * fijo sólo habría acertado en una vista y en un tema.
+ *
+ * ⚠ SIN SOMBRA Y SIN CANTO CLARO. Los llevaba, y era lo que más lo delataba:
+ * una sombra difusa es lo que proyecta un objeto sobre un fondo, o sea la
+ * confesión de que el trozo es una cosa PUESTA encima de la pantalla. Lo que lo
+ * despega del fondo mientras vuela no es un borde: es que se ve por dentro lo
+ * que la pantalla estaba haciendo.
+ *
+ * Y la caída ACELERA. Estaba con una curva que frenaba al final, así que el
+ * trozo se posaba en lugar de caerse. Nada se posa: se cae.
+ */
+.loose-slab--cae {
+    /*
+     * ⚠ Y AL SOLTARSE PIERDE LA LUZ. Es la salida a la contradicción del final:
+     * pegado tiene que ser INVISIBLE —lleva el color exacto que se midió
+     * debajo— y cayendo tiene que VERSE CAER. Con el mismo color en las dos, lo
+     * segundo es imposible: un rectángulo del color del fondo cayendo sobre el
+     * fondo no se ve caer, se desvanece. Y era lo que pasaba.
+     *
+     * ⚠ Y EL TONO SALE DE LOS TOKENS, NO DE UN FILTRO. Estuvo resuelto con
+     * `invert()`, y eso INTRODUCE COLOR: los grises de esta casa son cálidos
+     * —#e6e4de, #121110— y su inverso es frío, así que el trozo caía azulado.
+     * En una app monocroma estricta eso es lo más ruidoso que puede pasar.
+     *
+     * Mezclado con `--color-ink` no aparece ningún color nuevo: es el mismo par
+     * de tonos con el que la casa hace todos sus intermedios, y funciona en los
+     * dos temas por construcción — en oscuro la tinta es clara y el trozo se
+     * aclara; en claro la tinta es oscura y el trozo se oscurece. Siempre se
+     * separa del fondo, y siempre dentro de la paleta.
+     */
+    --slab-caida: color-mix(
+        in srgb,
+        var(--color-ink) 46%,
+        var(--slab-bg, var(--color-primary))
+    );
+
+    background-color: var(--slab-caida);
+    /* El grano se rehace con el tono de la caída, y encima van las franjas: a
+       partir de acá ya no es superficie, es una señal que se cae. */
+    background-image:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0 6px,
+            color-mix(in srgb, var(--color-ink) 10%, transparent) 6px 8px
+        ),
+        linear-gradient(
+            color-mix(in srgb, var(--slab-caida) 95%, transparent),
+            color-mix(in srgb, var(--slab-caida) 95%, transparent)
+        ),
+        var(--tube-grain);
+    animation: loose-slab-fall 1600ms cubic-bezier(0.42, 0, 1, 1) forwards;
+}
+
+/*
+ * ⚠ Y SALE DESDE DONDE LO DEJÓ EL ÚLTIMO GOLPE, no desde su sitio.
+ *
+ * El primer fotograma de la caída es la inclinación que ya tenía: el pedazo
+ * llevaba siete golpes despegándose y no puede volver a cuadrarse justo antes
+ * de irse. Después se resbala hacia el otro lado —el canto que lo aguantaba
+ * cede— y de ahí ya cae girando.
+ *
+ * Y ACELERA. Estuvo con una curva que frenaba al final, así que el trozo se
+ * posaba en lugar de caerse. Nada se posa: se cae.
+ */
+@keyframes loose-slab-fall {
+    0% {
+        transform: rotate(9deg) translate(10px, 26px);
+    }
+    12% {
+        transform: rotate(-4deg) translate(-8px, 10px);
+    }
+    100% {
+        transform: rotate(26deg) translate(46px, 115vh);
+    }
+}
+
+/*
+ * ⚠ Y SE LLEVA EL BARRIDO PUESTO.
+ *
+ * La línea de barrido de la página es `position: fixed`: se queda cruzando la
+ * pantalla mientras el trozo gira, así que en cuanto el trozo se mueve deja de
+ * tener barrido y pasa a ser un rectángulo liso — una ficha. Ésta es la suya,
+ * corriéndole por dentro y girando con él. Es la misma línea de la casa: el
+ * mismo grosor, el mismo degradado y el mismo token.
+ *
+ * Sólo existe mientras cae. Pegado no hace falta: pegado lo cruza la de la
+ * pantalla, que es la de verdad.
+ */
+.loose-slab--cae::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        color-mix(in srgb, var(--color-ink) 16%, transparent),
+        transparent
+    );
+    animation: loose-slab-scan 620ms linear infinite;
+    will-change: transform;
+}
+
+@keyframes loose-slab-scan {
+    from {
+        transform: translate3d(0, -2px, 0);
+    }
+    to {
+        transform: translate3d(0, var(--loose-h), 0);
+    }
+}
+
+/*
+ * ══ LO QUE HAY DETRÁS: TRES CAPAS, NO UNA ══════════════════════════════════
+ *
+ * ⚠ BINARIO, ESTÁTICA E INTERFERENCIA, LAS TRES A LA VEZ. Con la lluvia de
+ * dígitos sola es un gráfico bonito. Las tres conviviendo son lo que convierte
+ * un dibujo en algo que está TRANSMITIENDO desde el otro lado: hay una señal
+ * (los dígitos), hay ruido encima (el grano) y hay un canal que no llega bien
+ * (las bandas y los saltos de sincronismo).
+ *
+ * El orden importa y es el de una señal de verdad: primero lo que se transmite,
+ * y encima lo que la estropea.
+ */
+
+/*
+ * 0 · LA ESTÁTICA DE DETRÁS.
+ *
+ * ⚠ EL VACÍO DEL OJO NO ES NEGRO: ES ESTÁTICA. Y ésa es la diferencia entre un
+ * recorte y una ventana. Con el hueco pintado de negro liso, la forma del ojo
+ * era un agujero en una hoja de dígitos y no había nada al otro lado; con
+ * estática debajo, los dígitos son el VELO y el ojo es donde el velo no está —
+ * o sea que al mirar por el ojo se ve lo que hay detrás del velo, que es una
+ * señal.
+ *
+ * Es el mismo ruido de la casa, más fuerte que el de encima y más lento: lo de
+ * atrás está más lejos, y lo que está más lejos se mueve menos.
+ */
+.wall-noise {
+    position: absolute;
+    /* De sobra por los cuatro lados: al saltar no puede descubrir un canto. */
+    inset: -20%;
+    pointer-events: none;
+    opacity: 0.26;
+    background-image: var(--tube-grain);
+    animation: wall-grain-boil 420ms steps(1, end) infinite reverse;
+    will-change: transform;
+}
+
+/*
+ * 1 · BINARIO. La lluvia, y en la lluvia un ojo.
+ *
+ * ⚠ EL OJO ESTÁ RECORTADO, NO PINTADO. El campo se llena de unos y ceros y la
+ * forma es donde los dígitos NO están. Una silueta encima del ruido se leía
+ * como un emoji pegado sobre una textura: el problema no era el dibujo, era que
+ * el ojo y el fondo estaban hechos de cosas distintas.
+ *
+ * ⚠ Y ESTA CAPA NO OBEDECE AL TEMA. Todo lo demás cambia con claro/oscuro
+ * porque es interfaz; esto está DETRÁS de la interfaz. Que siguiera al tema
+ * sería admitir que es una parte más de la app — y además desaparecía en claro,
+ * que fue exactamente lo que pasó con la primera versión.
+ */
+.wall-rain {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    /* ⚠ Y MONOCROMO. La referencia venía en cian y de ella se tomó la FORMA, no
+       la paleta: esta app no tiene un solo color en ninguna parte, así que uno
+       suelto acá sería lo más ruidoso de todo el producto — y llamaría la
+       atención justo sobre lo que tiene que encontrarse solo. */
+    /*
+     * ⚠ Y EL GRIS ES CÁLIDO, COMO TODOS LOS DE LA CASA.
+     *
+     * Estuvo en `#d3d9da`, que tiene más azul que rojo: un gris FRÍO. Y aunque
+     * nadie lo hubiera escrito como «color», al lado de una app cuyos grises
+     * son cálidos —`#e8e5dc`, `#12110d`— se lee exactamente como lo que la
+     * referencia del cliente traía y que había que dejar fuera: cian. La forma
+     * se copió; la paleta no. Esto es lo que faltaba de esa decisión.
+     */
+    color: #dad6cb;
+    font-family: var(--font-mono);
+    /*
+     * ⚠ FIJO, Y A 9 px NI UNO MENOS. El campo tiene un número exacto de
+     * columnas y tiene que caber entero — la cuenta está en `eyeStatic.ts` y
+     * sale de estas tres líneas.
+     *
+     * Y EL CUERPO NO ES UNA CUESTIÓN DE GUSTO: a 6 px el navegador pintaba los
+     * dígitos con suavizado de SUBPÍXEL y salían azules y naranjas. O sea que
+     * la única parte del producto que no puede llevar color era la que llevaba
+     * más. A 9 px cada dígito es un glifo de verdad y sale gris.
+     */
+    font-size: 9px;
+    line-height: 1.06;
+    letter-spacing: 0.04em;
+    white-space: pre;
+    user-select: none;
+    /* Un halo mínimo: los fósforos de un tubo sangran un poco, y sin eso los
+       dígitos se ven impresos en vez de encendidos. Mínimo de verdad: con más,
+       el sangrado se mete en el vacío del ojo y le come el canto. */
+    text-shadow: 0 0 2px rgba(218, 214, 203, 0.28);
+    /*
+     * ⚠ Y EN SU PROPIA CAPA DE COMPOSICIÓN, que es la otra mitad de matar el
+     * color. Con el texto pintado en la capa del documento, el navegador vuelve
+     * al suavizado de subpíxel aunque el cuerpo sea grande; forzando una capa
+     * propia pinta en escala de grises y no hay franjas de color en ningún
+     * borde.
+     */
+    transform: translateZ(0);
+}
+
+/*
+ * 2 · ESTÁTICA. El grano de la casa, encima de la señal y hirviendo.
+ *
+ * ⚠ ENCIMA Y NO DEBAJO. Debajo sería una textura de fondo, o sea decoración.
+ * Encima es lo que se le pone a una imagen que llega mal — y por eso el ojo se
+ * ve A TRAVÉS de algo en lugar de estar dibujado sobre algo.
+ *
+ * Es el mismo ruido de `body::before`. Lo único que cambia es que acá se mueve:
+ * el de la página es papel y no tiene por qué moverse; éste es una señal, y una
+ * señal quieta está muerta. Salta entre cuatro posiciones con `steps`, como
+ * todo lo que falla en esta casa — un grano que se deslizara sería un degradado
+ * animado, que es lo contrario de estática.
+ */
+.wall-grain {
+    position: absolute;
+    /* De sobra por los cuatro lados: al saltar no puede descubrir un canto. */
+    inset: -20%;
+    pointer-events: none;
+    /*
+     * ⚠ POCO, Y NO ES TIMIDEZ. Estuvo al 40% y llenaba de gris el vacío del
+     * ojo: la forma dejaba de ser una AUSENCIA y pasaba a ser una zona con
+     * menos dígitos, o sea nada. El grano tiene que notarse encima de la señal
+     * y no taparla — que es exactamente lo que hace en la página, donde va al
+     * 5% sobre el papel. El que hace el trabajo de estática es el de DETRÁS;
+     * éste sólo ensucia el cristal.
+     */
+    opacity: 0.12;
+    background-image: var(--tube-grain);
+    animation: wall-grain-boil 300ms steps(1, end) infinite;
+    will-change: transform;
+}
+
+@keyframes wall-grain-boil {
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+    25% {
+        transform: translate3d(-13px, 7px, 0);
+    }
+    50% {
+        transform: translate3d(9px, -11px, 0);
+    }
+    75% {
+        transform: translate3d(-5px, -3px, 0);
+    }
+}
+
+/*
+ * 3 · INTERFERENCIA. Bandas que barren y el canal partiéndose.
+ *
+ * Son las franjas de `.glitch-bands` —el mismo patrón de 6/8 px y el mismo
+ * `band-roll`— en gris, porque esta capa no obedece al tema. Y encima, el
+ * arrastre ancho de `.chromatic-tear` con su `chroma-roll`, también en gris:
+ * la banda lenta que baja es lo que hace que se lea como una señal que no
+ * engancha, y no como un rayado decorativo.
+ */
+.wall-bands {
+    position: absolute;
+    inset: -24px 0 0 0;
+    pointer-events: none;
+    /*
+     * ⚠ LAS FRANJAS DE ACÁ VAN OSCURAS, Y NO ES UN CAPRICHO.
+     *
+     * Las de la página son claras porque van sobre el lienzo y el token de
+     * tinta se invierte con el tema. Acá no hay tema: el hueco es oscuro
+     * siempre, así que una franja clara ACLARA el vacío del ojo — y el vacío
+     * del ojo es lo único que dibuja la forma. Con franjas oscuras la
+     * interferencia se lee igual, sobre los dígitos, y el negro sigue siendo
+     * negro.
+     */
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0 6px,
+        rgba(0, 0, 0, 0.55) 6px 8px
+    );
+    animation: band-roll 700ms steps(6, end) infinite;
+    will-change: transform;
+}
+
+.wall-bands::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+        to bottom,
+        transparent 0 42%,
+        rgba(218, 214, 203, 0.09) 46% 50%,
+        transparent 54% 100%
+    );
+    /* El doble de alto que la capa, para que el bucle no muestre el corte. */
+    background-size: 100% 200%;
+    animation: chroma-roll 3.4s linear infinite;
+    will-change: transform;
+}
+
+/*
+ * Y EL SALTO DE SINCRONISMO: cada tanto la imagen pierde el vertical.
+ *
+ * ⚠ LO QUE SALTA ES LA SEÑAL, NO EL AGUJERO. Estaba puesto sobre `.loose-hole`
+ * y entonces saltaba el hueco entero: un agujero en una pared moviéndose de
+ * sitio, que es imposible y se veía imposible. El pedazo se cayó y lo que queda
+ * está quieto para siempre; lo que se descuadra es lo que se ve por ahí.
+ *
+ * ⚠ MUY DE TARDE EN TARDE Y CORTÍSIMO. Casi todo el ciclo no pasa nada y al
+ * final hay un tirón. Seguido sería una imagen temblando —o sea, un efecto—;
+ * espaciado es una señal que se cae un instante y se recupera, que es lo que
+ * hace una de verdad.
+ */
+.wall-rain {
+    animation: wall-vhold 4.3s steps(1, end) infinite;
+}
+
+@keyframes wall-vhold {
+    0%,
+    91% {
+        transform: translate3d(0, 0, 0);
+    }
+    92% {
+        transform: translate3d(0, -14px, 0);
+    }
+    94% {
+        transform: translate3d(0, 9px, 0);
+    }
+    96% {
+        transform: translate3d(0, -4px, 0);
+    }
+    97%,
+    100% {
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+/*
+ * ⚠ EL CIERRE Y LA LLEGADA DEL OJO VIVEN EN `eyeStatic.ts`, NO ACÁ.
+ *
+ * Hubo una versión en la que el ojo era SVG y se cerraba con una animación CSS.
+ * Ahora está hecho de dígitos, así que cerrarlo es cambiar el dibujo, no
+ * transformar un elemento — y todo el arco (llegar, abrirse, mirar, parpadear,
+ * cerrarse, irse) lo decide `eyeAt()`. Las reglas de aquella versión se
+ * borraron: CSS muerta que nadie aplica es peor que no tener nada, porque el
+ * siguiente que la lea va a creer que hace algo.
+ */
+
+/*
+ * ══ EL GOLPE ═══════════════════════════════════════════════════════════════
+ *
+ * ⚠ ES EL CROMO DE VERDAD, NO UNO PARECIDO. Los mismos `@keyframes` que la
+ * avería de la señal (§14). Inventar uno propio para esto diría que es otra
+ * clase de avería, y es la misma — el sitio se rompe de una sola manera.
+ *
+ * ⚠ ESTA REGLA NO EXISTÍA. `LooseWall` ponía y quitaba la clase `is-blow` en el
+ * `body` desde el primer día, y en la hoja no había NADA que la mirara salvo la
+ * excepción de movimiento reducido: cada golpe no pintaba absolutamente nada.
+ * El documento de traspaso daba el efecto por comprobado.
+ *
+ * ⚠ Y VA SOBRE EL CONTENEDOR, NUNCA SOBRE <body>. `chroma-swap` aplica un
+ * `filter`, y un `filter` crea bloque contenedor para los descendientes
+ * `position: fixed`: puesto en el `body` se llevaría por delante el grano, el
+ * barrido y el propio pedazo. Es la misma regla que sigue toda la avería.
+ *
+ * Y si sólo se moviera el pedazo, se leería como arrastrar una ficha. Que se
+ * resienta todo lo demás es lo que lo convierte en pegarle a la superficie
+ * donde vive todo.
+ */
+body.is-blow .container-terminal {
+    /*
+     * ⚠ Y ES UN TIRÓN, NO UNA SEPARACIÓN DE CANALES.
+     *
+     * Estuvo con el cromo —`chroma-swap` y `chroma-drift`— y era un error de
+     * casa. La aberración cromática pinta ROJO Y CIAN, y esta app no tiene un
+     * solo color en ninguna parte: siete ráfagas de color a pantalla completa,
+     * una por golpe, son lo más ruidoso que llega a verse en todo el producto,
+     * y encima justo encima de la escena que tiene que encontrarse sola.
+     *
+     * Y hay otra razón, de significado: la avería cromática (§14) es un ESTADO
+     * raro y voluntario, algo que te ganás insistiendo con el interruptor de
+     * tema. Gastarla en cada martillazo la abarata.
+     *
+     * Lo que corresponde es el glitch AMBIENTAL, que es lo que esta pantalla
+     * hace cuando algo va mal y es monocromo por construcción: el tirón, con la
+     * amplitud subiendo golpe a golpe, y las franjas. El color se reserva para
+     * el derrumbe final, que es cuando el sistema falla de verdad.
+     *
+     * ⚠ VA SOBRE EL CONTENEDOR, NUNCA SOBRE <body>: es lo que se mueve, y el
+     * grano, el barrido y el propio pedazo son hermanos suyos, no hijos.
+     */
+    --glitch-amp: var(--blow-amp, 3px);
+
+    animation: glitch-jolt 120ms steps(1, end) 2;
+}
+
+/*
+ * ⚠ Y LAS FRANJAS SON LAS DE LA CASA, LITERALMENTE.
+ *
+ * `LooseWall` monta un `.glitch-bands` mientras dura el golpe: la misma capa
+ * que usa el glitch ambiental, sin una regla nueva. No es sólo economía — es la
+ * única forma de que la franja pase POR ENCIMA del pedazo.
+ *
+ * Estuvieron un rato como `::after` del contenedor, y desde ahí no podían: el
+ * contenedor tiene `z-index`, o sea que abre contexto de apilamiento, así que
+ * ningún hijo suyo llega por encima de la zona (9994). Se veía la pantalla
+ * entera rayada y el trozo limpio — que es exactamente lo contrario de lo que
+ * el golpe tiene que contar.
+ */
+
+/*
+ * ══ Y AL FINAL, TODO FALLA ═════════════════════════════════════════════════
+ *
+ * ⚠ EL REINICIO NO PUEDE SER UNA RECARGA A SECAS. Lo era: el ojo se cerraba y
+ * la página se recargaba de golpe, sin que pasara nada en medio. Un final que
+ * no se ve fallar no es un final, es un corte.
+ *
+ * Lo que falla es lo mismo que falla siempre, todo junto y a fondo: la
+ * separación de canales, el tirón, las franjas — y el TEMA, que se cae de claro
+ * a oscuro y vuelve. Esa última parte la pone `LooseWall` con
+ * `flipThemeVolatile`, que es la misma sacudida de tema de la avería de señal.
+ */
+body.is-failing .container-terminal {
+    --chroma-red: var(--color-danger);
+    --chroma-cyan: #00b8c4;
+    --glitch-amp: 9px;
+    animation:
+        chroma-swap 100ms steps(1, end) infinite,
+        chroma-drift 70ms steps(1, end) infinite,
+        glitch-jolt 140ms steps(1, end) infinite;
+}
+
+/* Y las franjas, otra vez las de la casa, pero sin parar: durante el derrumbe
+   la señal no se recupera entre tirón y tirón. */
+body.is-failing .glitch-bands {
+    animation: band-roll 120ms steps(6, end) infinite;
+}
+
+/* El agujero se cae con el resto. Lo que estaba transmitiendo también pierde la
+   señal, y la zona entera se sacude: si el trozo roto se quedara quieto y
+   limpio mientras la pantalla se derrumba, diría que no es parte de lo mismo —
+   y es parte de lo mismo. */
+body.is-failing .wall-rain {
+    animation: wall-vhold 260ms steps(1, end) infinite;
+}
+
+body.is-failing .loose-zone {
+    --glitch-amp: 6px;
+    animation: glitch-jolt 140ms steps(1, end) infinite;
+}
+
+/*
+ * ══ LA CICATRIZ ════════════════════════════════════════════════════════════
+ *
+ * La pantalla volvió como si nada, pero esa zona tiembla de vez en cuando. Va
+ * sin contenido: es un temblor en el aire, no un elemento. Con algo dentro
+ * sería un recordatorio, y un recordatorio es alguien contándotelo.
+ *
+ * ⚠ Y ESTÁ HECHA DE LO MISMO QUE TODO LO DEMÁS. Era un rectángulo gris que
+ * subía y bajaba de opacidad: un recuadro translúcido parpadeando no es una
+ * avería, es un elemento de interfaz apareciendo. Son las franjas de la casa,
+ * saltando en el trozo exacto que se cayó.
+ *
+ * Muy de tanto en tanto y muy corto: si se viera seguido dejaría de ser una
+ * cicatriz para ser una decoración.
+ */
+.wall-scar {
+    z-index: 9992;
+    opacity: 0;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0 6px,
+        color-mix(in srgb, var(--color-ink) 12%, transparent) 6px 8px
+    );
+    animation: wall-scar-twitch 23s steps(1, end) infinite;
+}
+
+@keyframes wall-scar-twitch {
+    0%,
+    97.4% {
+        opacity: 0;
+        transform: none;
+    }
+    97.6% {
+        opacity: 1;
+        transform: translate3d(-3px, 1px, 0);
+    }
+    98% {
+        opacity: 0.45;
+        transform: translate3d(2px, -1px, 0);
+    }
+    98.4% {
+        opacity: 0.9;
+        transform: translate3d(-1px, 0, 0);
+    }
+    98.8%,
+    100% {
+        opacity: 0;
+        transform: none;
+    }
+}
+
+/*
+ * Con movimiento reducido no hay temblor, ni grano hirviendo, ni bandas, ni
+ * sacudidas: todo queda quieto.
+ *
+ * ⚠ EL OJO SIGUE ESTANDO. Lo que se apaga es el movimiento de las capas, no la
+ * escena: quien pide menos movimiento pide no marearse, no perderse el final.
+ * `LooseWall` se encarga de que el arco corra igual y de que no haya sacudida
+ * de tema, que es lo único de todo esto que de verdad podría hacer daño.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .wall-scar,
+    .loose-slab,
+    .loose-slab--suelto,
+    .loose-slab--cae,
+    .loose-slab--cae::before,
+    .loose-hole,
+    .wall-noise,
+    .wall-grain,
+    .wall-bands,
+    .wall-bands::after,
+    body.is-blow .container-terminal,
+    body.is-failing .container-terminal,
+    .wall-rain,
+    body.is-failing .glitch-bands,
+    body.is-failing .wall-rain,
+    body.is-failing .loose-zone {
+        animation: none;
+    }
+
+    .wall-scar {
+        opacity: 0;
+    }
 }

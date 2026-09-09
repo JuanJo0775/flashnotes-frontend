@@ -56,6 +56,8 @@ interface NoteEditorProps {
     notes?: readonly { title: string; chars: number }[];
     onOpenDiagnostics?: () => void;
     onCollapse?: () => void;
+    /** `//reboot`: apaga y enciende sin recargar, o sea sin perder el sonido. */
+    onReboot?: () => void;
     /** Abre el `vsync-test`: sólo lo pide `//attach_6`. */
     onPlayPong?: () => void;
     /** Insististe hasta que te echó tres veces. */
@@ -77,6 +79,7 @@ export default function NoteEditor({
     notes = [],
     onOpenDiagnostics,
     onCollapse,
+    onReboot,
     onPlayPong,
     onKillPage,
     onWipe,
@@ -150,6 +153,7 @@ export default function NoteEditor({
         notes,
         onOpenDiagnostics: onOpenDiagnostics ?? noop,
         onCollapse: onCollapse ?? noop,
+        onReboot: onReboot ?? noop,
         onClearNote: clearNote,
         onPlayPong: onPlayPong ?? noop,
         // `//hi` insistido de más: la máquina te echa de la nota.
@@ -552,7 +556,17 @@ export default function NoteEditor({
                                 desplazamiento contaba como clic y cerraba la
                                 respuesta justo cuando querías bajarla. */}
                             <span
-                                className="editor-reply-body"
+                                /*
+                                 * ⚠ LA CLASE DICE QUIÉN HABLA, y el sonido la
+                                 * lee. Cuando contesta ÉL, la sala le hace sitio
+                                 * —el zumbido baja mientras dura la frase— y eso
+                                 * no se puede deducir del texto: fiarse de la
+                                 * minúscula sería atar el sonido a una
+                                 * convención de estilo.
+                                 */
+                                className={`editor-reply-body${
+                                    commands.fromEntity ? ' is-entity' : ''
+                                }`}
                                 onClick={() => {
                                     commands.dismiss();
                                     contentRef.current?.focus();

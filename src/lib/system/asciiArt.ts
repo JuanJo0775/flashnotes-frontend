@@ -24,8 +24,9 @@
 import type { Note } from '@/types/note.types';
 import type { Lang } from '@/config/lang';
 import { didV02RoundTrip } from '@/lib/system/v02';
-import { clearHints, hintEarned } from '@/lib/system/artHints';
+import { artChanged, clearHints, hintEarned } from '@/lib/system/artHints';
 import { damageArt } from '@/lib/system/artCorruption';
+import { eyeIsBarred } from '@/lib/system/entity';
 
 type Localized = Readonly<Record<Lang, string>>;
 
@@ -103,9 +104,14 @@ export type ArtSource =
      * Su pieza es el OJO: lo que todo lo ve. Es lo único de la app que sabe
      * cuánto llevás acá, porque nunca se fue.
      *
-     * ⚠ TODAVÍA SIN CABLEAR, a propósito: el ente no existe. Y mientras no
-     * exista, `everything` —el cuaderno— es inalcanzable, porque exige tenerlas
-     * todas. Es deuda conocida, no un olvido.
+     * ⚠ UN HUECO, DOS DIBUJOS. Se gana al final del arco, y cuál te toca depende
+     * de lo que elegiste: ayudarlo deja el ojo, reportarlo deja el ojo TAPADO.
+     * No son dos piezas — con dos, la colección pasaría a diecisiete y nunca se
+     * podría completar. Ver `artOf` y `entityEnding.ts`.
+     *
+     * Cablearla es lo que por fin hace alcanzable el CUADERNO (`everything`),
+     * que exige todas las demás y llevaba sin poder conseguirse desde el
+     * rediseño de la colección.
      */
     | 'entity'
     /**
@@ -955,44 +961,77 @@ export const ART: readonly ArtPiece[] = [
          * y lo que cuenta es que la máquina siguió ahí mientras tanto.
          */
         /*
-         * ⚠ HECHO DE UNOS Y CEROS, Y EL OJO APARECE POR AUSENCIA.
+         * ⚠ ESTÁ DIBUJADO CON UNA RAMPA DE TONOS, no con unos y ceros.
          *
-         * No está dibujado con líneas: es un campo de dígitos con un hueco
-         * dentro, y el hueco tiene forma de ojo. Es lo mismo que hace la máquina
-         * — no te mira con un ojo, te mira con lo que guarda de vos.
+         * Los caracteres van de vacío a macizo —` .,:;clodxkO0KXNWM`— y cada
+         * celda lleva el que pese lo que pesa la luz en ese punto. Es lo que
+         * hace la referencia del cliente, y es lo que le da modelado: un campo
+         * binario sólo sabe decir «hay» o «no hay», y con eso un ojo es una
+         * silueta. Con la rampa hay párpado, iris, pupila y brillo.
          *
-         * ⚠ LA LLUVIA VA DENSA, SIN ESPACIOS ENTRE DÍGITOS.
+         * ⚠ Y NO SON CONTORNOS: SON CUÑAS DE TONO. El párpado de arriba no es
+         * una raya maciza, es un bloque que va de claro en el canto superior a
+         * macizo en la línea de pestañas — cuatro o cinco pasos de la rampa. Lo
+         * mismo abajo, más corto. Dibujado como un arco fino el ojo se lee como
+         * un esquema; dibujado como cuña se lee como una superficie con luz.
          *
-         * Una versión escribía `1 0 1 1` con un espacio de por medio, y con eso
-         * no hay nada que recortar: el campo ya estaba medio vacío, así que el
-         * hueco no se distinguía del fondo. Acá lo único que dibuja es el
-         * CONTRASTE entre lleno y vacío, y por eso el campo tiene que estar
-         * lleno del todo.
+         * ⚠ Y EL INTERIOR VA NEGRO, salvo dos grumos. Lo que se dibuja son los
+         * párpados y el IRIS; la esclerótica es vacío — rellenar el ojo entero
+         * da una mancha clara con forma de ojo, y una mancha no mira. Pero
+         * negro liso tampoco: entre el iris y las puntas hay dos grumos de tono
+         * medio, los rincones del ojo. Sin ellos la pieza se lee como dos arcos
+         * y un borrón.
          *
-         * ⚠ Y EL IRIS ES UN ANILLO CON LA PUPILA HUECA.
+         * ⚠ Y EL IRIS NO PUEDE TOCAR LA LÍNEA DE PESTAÑAS. Pegados, los dos
+         * macizos se funden en una sola mancha y el ojo deja de estar abierto.
+         * Hace falta una fila de aire entre ellos.
          *
-         * Dentro del hueco los dígitos VUELVEN, y en el centro se apagan otra
-         * vez. Ese segundo cambio de lleno a vacío es lo que hace que mire: sin
-         * él sólo hay una rendija.
+         * ⚠ LA BANDA DEL PÁRPADO TIENE QUE MEDIR MÁS DE UNA FILA. La celda de
+         * esta pieza es casi el doble de alta que de ancha, así que un arco más
+         * fino que eso cae entre dos filas y desaparece a trozos: el párpado
+         * salía roto por las puntas sin que se entendiera por qué.
+         *
+         * ⚠ Y LA RAMPA NO LLEVA COMILLA SIMPLE. La referencia la usa como tono
+         * claro, pero acá los dibujos viven en cadenas entrecomilladas: una
+         * comilla dentro parte la cadena. El hueco lo cubren el punto y la coma.
+         *
+         * ⚠ Y NO LLEVA RUIDO POR CELDA. Éste fue el error que más veces se
+         * repitió, y el que hacía que el dibujo se viera «raro» sin que se
+         * supiera por qué: con una tirada al azar por celda, dos caracteres
+         * vecinos saltaban tres o cuatro pasos de la rampa y el resultado se
+         * leía sucio, como sal y pimienta encima de un dibujo. En la referencia
+         * los vecinos se llevan UN paso: son degradados.
+         *
+         * Lo único que se añade es un tramado ORDENADO de medio paso —el Bayer
+         * de siempre— que rompe las bandas sin ensuciar nada, y un vaivén de
+         * dos senos de frecuencia muy baja para que el tono no salga estéril.
+         * El vaivén va MULTIPLICANDO y no sumando: sumado levanta también los
+         * negros y el fondo deja de ser fondo.
+         *
+         * ⚠ Y HAY UN UMBRAL POR DEBAJO DEL CUAL TODO ES NEGRO. Sin él, el
+         * tramado y el vaivén empujaban valores casi nulos hasta el primer
+         * escalón de la rampa, y quedaban caracteres sueltos flotando en el
+         * fondo — el detalle que más se notaba y peor se veía.
          *
          * El patrón sale de una semilla fija, no de `Math.random`: una pieza de
          * la colección tiene que ser SIEMPRE la misma. Si cambiara en cada
          * dibujado no habría nada que coleccionar.
          */
         art: [
-            '1011101110100001001101001110100110111101',
-            '1100111111111              0011011000010',
-            '000101100                      000011001',
-            '1110000           1000           1010011',
-            '00001          1000100000          01000',
-            '010           0001    0111           101',
-            '0            0000      1011            0',
-            '101           1111    0000           011',
-            '01000          1000101110          11001',
-            '1010111           1001           1000111',
-            '010010110                      011011100',
-            '1011100010100              1010111110100',
-            '1000111100000000001101100011000101010101',
+            '                ...,,,,,,,..            ',
+            '         .,:;;cclclllloooooll;;,,       ',
+            '     .,;codxkOkOOOkkkOO00000Okdoc;,     ',
+            '    :coxOKNNMMMWWNNXNNNNWWWNXK0kxol:    ',
+            '    cdkKXWMMMMNKOkxxdddxxkO00K0Okxdl    ',
+            '    dxOOkoc:.    xWMM0,       .:cdxd    ',
+            '  :;o;.  .,,,  ;NWWdKMMx  .:::.   .cc;. ',
+            ' .;c     .,,,  oXX,,,NMX   .,.      l;. ',
+            '    ldk         ONNWWMW,         xdl    ',
+            '    ;cdxOOO       :l;       xdddolc:    ',
+            '     ,:clodxxkOO0KKKKK00kkddolc;::.     ',
+            '        ,:;;clooxxkkkxxdolc;;:,.        ',
+            '            .,,::::;:;::,,.             ',
+            '                                        ',
         ].join('\n'),
     },
     {
@@ -1269,7 +1308,20 @@ export function awardPiece(id: string): ArtPiece | null {
      * La regla vive ACÁ y no en `artHints` para que aquel módulo no tenga que
      * leer de éste: la dependencia va en una sola dirección y no hay ciclo.
      */
+    /*
+     * SE AVISA SIEMPRE, y UNA sola vez.
+     *
+     * ⚠ Ganar una pieza pasa muchas veces; encender las pistas, una sola. Sin
+     * el aviso de abajo, todo lo que quisiera enterarse de un premio —el sonido
+     * del cajón, por ejemplo— sólo se enteraba del PRIMERO, y a partir del
+     * segundo los dibujos llegaban en silencio.
+     *
+     * ⚠ Y VA EN UN `else`, no suelto: `hintEarned` YA avisa por su cuenta.
+     * Llamando a los dos, la primera pieza despertaba a los suscritos dos veces
+     * por un solo suceso — lo cazo un test que contaba los avisos.
+     */
     if (readRevealed().size === 0) hintEarned();
+    else artChanged();
 
     return piece;
 }
@@ -1353,8 +1405,105 @@ export function captionKnown(piece: ArtPiece): boolean {
  * colección lo enseñaba entero mientras el catálogo lo tapaba.
  */
 export function artOf(piece: ArtPiece): string {
-    return captionKnown(piece) ? piece.art : damageArt(piece.art, piece.id);
+    const dibujo = piece.id === EYE_ID && eyeIsBarred() ? EYE_BARRED : piece.art;
+
+    return captionKnown(piece) ? dibujo : damageArt(dibujo, piece.id);
 }
+
+/**
+ * UN HUECO, DOS DIBUJOS.
+ *
+ * La pieza catorce es UNA, y cuál te toca depende de lo que elegiste al final:
+ * ayudarlo te deja el ojo, reportarlo te deja el ojo TAPADO.
+ *
+ * ⚠ NO SON DOS PIEZAS, y no es una comodidad de implementación. Si lo fueran, la
+ * colección pasaría a diecisiete y NUNCA SE PODRÍA COMPLETAR: sólo se puede
+ * tener una, y el cuaderno firmado exige todas las demás. Sería el mismo agujero
+ * que ya se cazó con el secreto `collection`.
+ *
+ * Con un hueco, los dos finales completan la colección — y queda marcada para
+ * siempre por la decisión: dos personas que la tienen entera la tienen distinta.
+ *
+ * ⚠ ES EL MISMO DIBUJO, CELDA POR CELDA, CON UNA EQUIS ENCIMA. No es otra
+ * pieza parecida: es ésta, tachada. Si el dibujo de debajo cambiara, las dos
+ * versiones se leerían como dos piezas distintas — y son una.
+ *
+ * Una equis y no una barra: una barra tapa, y tapar deja la duda de si debajo
+ * había algo. Una equis ANULA — dice que alguien lo vio, decidió que no, y lo
+ * marcó. Y deja ver: el aspa cruza el iris pero no lo borra, así que entre los
+ * dos trazos se siguen leyendo los párpados y trozos del iris. Se ve que había
+ * un ojo, se ve dónde estaba, y se ve que alguien lo anuló.
+ *
+ * ⚠ Y EL ASPA LLEVA UN CANAL DE AIRE ALREDEDOR. Ésta es la parte que la hace
+ * legible, y sin ella no funcionaba: la `X` YA EXISTE en la rampa de tonos del
+ * dibujo, así que dos trazos de equis sobre un campo lleno de equis se leían
+ * como más textura. Vaciando una celda a cada lado del trazo, el aspa deja de
+ * competir con el dibujo y pasa a estar POR DELANTE de él — que es lo que hace
+ * una marca puesta encima: ocupa sitio y tapa un poco alrededor.
+ *
+ * ⚠ Y EL TRAZO SE MIDE PERPENDICULAR, NO EN VERTICAL. El aspa va muy tendida
+ * —cuarenta columnas por catorce filas— así que una tolerancia medida en
+ * vertical se convierte en una banda horizontal enorme: salía un lazo.
+ */
+const EYE_ID = 'eye';
+
+const EYE_BARRED = [
+    '  X             ...,,,,,,,..         X  ',
+    '  XXXX   .,:;;cclclllloooooll;;,, XXXX  ',
+    '     XXXX dxkOkOOOkkkOO00000Ok XXXX     ',
+    '    :co XXXX MMWWNNXNNNNWWW XXXX ol:    ',
+    '    cdkKXW XXXX Okxxdddx XXXX 0Okxdl    ',
+    '    dxOOkoc:. XXX  MM  XXX    .:cdxd    ',
+    '  :;o;.  .,,,    XXXXXX   .:::.   .cc;. ',
+    ' .;c     .,,,    XXXXXX    .,.      l;. ',
+    '    ldk       XXX  WW  XXX       xdl    ',
+    '    ;cdxOO XXXX   :l;    XXXX ddolc:    ',
+    '     ,: XXXX kOO0KKKKK00kkd XXXX :.     ',
+    '     XXXX ;;clooxxkkkxxdolc;;: XXXX     ',
+    '  XXXX      .,,::::;:;::,,.       XXXX  ',
+    '  X                                  X  ',
+].join('\n');
+
+/**
+ * Y cómo se llama la pieza cuando llega tachada.
+ *
+ * ⚠ NO ES EL MISMO PIE. La pieza es una y el hueco es uno, pero el final que te
+ * toca decide sus dos caras: el dibujo lo elige `artOf` y el nombre lo elige
+ * `captionOf`.
+ *
+ * ⚠ Y CAMBIA LA VOZ, que es el remate. El pie de siempre lo dice ÉL, de tú: «te
+ * estoy viendo». En el final en que lo reportás el ente calla para siempre, así
+ * que quien rotula la pieza es la máquina institucional — y ésa no tutea porque
+ * no sabe quién sos (ver `lore.ts` y `greeting.ts`). El archivo lo nombra el que
+ * lo anuló, y lo primero que hace es negar que hubiera algo.
+ */
+const EYE_BARRED_CAPTION: Record<Lang, string> = {
+    es: 'OJO VEDADO · USTED NO VIO NADA',
+    en: 'BARRED EYE · YOU SAW NOTHING',
+};
+
+/**
+ * Las CARAS alternativas: dibujos que comparten hueco con una pieza.
+ *
+ * ⚠ NO SON PIEZAS Y NO PUEDEN CONTARSE COMO TALES. El hueco es uno y cuál te
+ * toca depende del final: ayudarlo te deja el ojo, reportarlo te deja el ojo
+ * vedado. Si contaran como dos, la colección pasaría a diecisiete y NUNCA se
+ * podría completar, porque los dos finales se excluyen entre sí.
+ *
+ * Se exporta porque desde fuera del módulo esta cara era invisible: la página de
+ * identidad enseñaba dieciséis dibujos cuando existen diecisiete, y el que
+ * faltaba era justamente el del final alternativo — el que menos gente ve.
+ *
+ * Un test exige que las dos caras MIDAN lo mismo, celda por celda. `ARTE.md` ya
+ * avisaba de esa deriva y no había nada que la sujetara: las dos no se miran
+ * nunca juntas, así que una podría quedarse corta durante meses.
+ */
+export const ART_FACES: readonly {
+    /** El `id` de la pieza cuyo hueco comparte. */
+    of: string;
+    caption: Record<Lang, string>;
+    art: string;
+}[] = [{ of: EYE_ID, caption: EYE_BARRED_CAPTION, art: EYE_BARRED }];
 
 /**
  * El pie que toca ENSEÑAR de esta pieza.
@@ -1375,8 +1524,18 @@ export function artOf(piece: ArtPiece): string {
  */
 export function captionOf(piece: ArtPiece, lang: Lang): string {
     if (!readOpened().has(piece.id)) return UNOPENED[lang];
+    if (!captionKnown(piece)) return UNNAMED[lang];
 
-    return captionKnown(piece) ? piece.caption[lang] : UNNAMED[lang];
+    /*
+     * ⚠ Y EL OJO TAPADO SE LLAMA DISTINTO, igual que se dibuja distinto.
+     *
+     * `artOf` ya elegía el dibujo según el final y el pie se quedaba fijo, así
+     * que el ojo censurado salía rotulado «TE ESTOY VIENDO» — justo la frase
+     * que ese final acaba de tachar.
+     */
+    if (piece.id === EYE_ID && eyeIsBarred()) return EYE_BARRED_CAPTION[lang];
+
+    return piece.caption[lang];
 }
 
 export function catalogRows(lang: Lang = 'es'): CatalogRow[] {

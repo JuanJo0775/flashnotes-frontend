@@ -3,7 +3,7 @@
 /**
  * Cuánto conocés del sistema, dicho de una forma que dé ganas de seguir.
  *
- * `7/28` es un dato. Una barra y un rango son una invitación: se ve de un
+ * `7/33` es un dato. Una barra y un rango son una invitación: se ve de un
  * vistazo que falta mucho, y el nombre del escalón siguiente da curiosidad sin
  * decir de qué va.
  *
@@ -26,11 +26,19 @@ export const BAR_CELLS = 14;
  * Hablan de **quien mira**, no de lo que hay: describen una actitud —pasar por
  * encima, fijarse, insistir— y por eso ninguno se queda viejo cuando se añade
  * una pieza nueva.
+ *
+ * ⚠ Y VAN DE MENOS A MÁS, QUE ES LO ÚNICO QUE TIENEN QUE HACER. `CURIOSO` iba
+ * antes que `SE FIJA`, y esos dos estaban dados vuelta: fijarse es NOTAR que
+ * algo no encaja, y la curiosidad es lo que viene DESPUÉS de notarlo — primero
+ * ves el detalle raro, entonces te pica, y entonces insistís. Con el orden
+ * invertido la escalera subía, bajaba y volvía a subir, y quien llevaba diez
+ * hallazgos se veía rotulado con una actitud más floja que la de quien llevaba
+ * cinco.
  */
 export const RANKS: readonly { es: string; en: string }[] = [
     { es: 'DE PASO', en: 'PASSING THROUGH' },
-    { es: 'CURIOSO', en: 'CURIOUS' },
     { es: 'SE FIJA', en: 'PAYS ATTENTION' },
+    { es: 'CURIOSO', en: 'CURIOUS' },
     { es: 'INSISTE', en: 'PERSISTENT' },
     { es: 'CONOCE LA CASA', en: 'KNOWS THE PLACE' },
     { es: 'NO QUEDA NADA', en: 'NOTHING LEFT' },

@@ -4,6 +4,9 @@
 import { useCallback, useState } from 'react';
 import { notesApi } from '@/lib/api/notes.api';
 import { formatLog } from '@/lib/system/requestLog';
+import { idleMs } from '@/lib/system/idle';
+import { readEntity } from '@/lib/system/entity';
+import { readFound } from '@/lib/system/asciiArt';
 import { startDrift } from '@/lib/system/timeDrift';
 
 import { formatFileSize, formatTime } from '@/lib/utils/formatters';
@@ -23,10 +26,12 @@ import {
     registerKick,
     registerV02Toggle,
     kickCount,
+    isLockedOutNow,
     resetEverything,
     setEffectsEnabled,
 } from '@/hooks/useSystemState';
 import { useTheme } from '@/hooks/useTheme';
+import { isSoundOn, setSoundOn } from '@/lib/system/audio/context';
 import type { NoteHistory } from '@/types/note.types';
 import { getLang } from '@/i18n';
 import type { Localized } from '@/i18n';
@@ -61,6 +66,15 @@ interface UseNoteCommandsOptions {
     notes: readonly { title: string; chars: number }[];
     onOpenDiagnostics: () => void;
     onCollapse: () => void;
+    /**
+     * `//reboot`: apaga y enciende, sin perder nada.
+     *
+     * ⚠ NO RECARGA LA PÁGINA, y ésa es la gracia. Una recarga de verdad destruye
+     * el documento y el nuevo nace sin permiso para sonar, así que su apagón se
+     * ve y no se oye. Acá no se navega a ninguna parte: el audio sigue
+     * desbloqueado y el ciclo entero se oye como se ve.
+     */
+    onReboot: () => void;
     onClearNote: () => void;
     /** Abre el `vsync-test`. Sólo lo dispara `//attach_6`. */
     onPlayPong: () => void;
@@ -84,6 +98,14 @@ interface UseNoteCommandsReturn {
     response: string | null;
     /** La respuesta por filas, cuando alguna no es texto. */
     rows: ReplyRow[] | null;
+    /**
+     * Si la respuesta que se ve la dice ÉL y no la máquina.
+     *
+     * Lo pinta el editor como una clase, y el sonido la lee para hacerle sitio
+     * en la sala. No se puede deducir del texto: fiarse de la minúscula sería
+     * atar el sonido a una convención de estilo.
+     */
+    fromEntity: boolean;
     /** Ejecuta el contenido si es un comando. Devuelve si lo era. */
     run: (content: string, noteId: string) => Promise<boolean>;
     dismiss: () => void;
@@ -112,6 +134,7 @@ export function useNoteCommands({
     notes,
     onOpenDiagnostics,
     onCollapse,
+    onReboot,
     onClearNote,
     onPlayPong,
     onLeaveNote,
@@ -120,6 +143,16 @@ export function useNoteCommands({
     onWipe,
 }: UseNoteCommandsOptions): UseNoteCommandsReturn {
     const [response, setResponse] = useState<string | null>(null);
+
+    /**
+     * Si la respuesta que se está viendo la dice ÉL y no la máquina.
+     *
+     * ⚠ LO NECESITA EL SONIDO, y se pinta como una clase para que lo lea igual
+     * que lee todo lo demás: la app marca lo que pasa y el sonido lo reconoce.
+     * Un `play()` acá dentro sería el primer disparo huérfano fuera del
+     * suscriptor — ver el encabezado de `wire.ts`.
+     */
+    const [fromEntity, setFromEntity] = useState(false);
     const [rows, setRows] = useState<ReplyRow[] | null>(null);
     const theme = useTheme();
 
@@ -139,6 +172,7 @@ export function useNoteCommands({
                 integrity: system.integrity,
                 theme,
                 effectsEnabled: system.effectsEnabled,
+                soundEnabled: isSoundOn(),
                 secretsFound: system.secretsFound,
                 secretsTotal: system.secretsTotal,
                 log: formatLog(),
@@ -148,6 +182,23 @@ export function useNoteCommands({
                 greetings: 0,
                 chat: 0,
                 kicks: 0,
+                // Uno de los dos sitios donde no deberías haber estado. Se le
+                // pasa hecho porque `lib/system` no importa de `hooks`.
+                lockedOut: isLockedOutNow(),
+                /*
+                 * LOS TRES FAVORES, comprobados contra lo que la app ya sabe.
+                 *
+                 * Ninguno inventa un registro: el silencio sale del reloj de
+                 * inactividad que ya existía, la nota llena sale de SU PIEZA
+                 * —que se gana justamente llenándola— y lo único que hubo que
+                 * anotar aparte es que fuiste a la papelera de la v0.2, porque
+                 * eso no dejaba rastro en ningún lado.
+                 */
+                favors: {
+                    sawV02Trash: readEntity().didV02Trash === true,
+                    idleMs: idleMs(),
+                    filledNote: readFound().has('quill'),
+                },
             };
 
             // La cuenta sólo se toca cuando el comando es el saludo: contar en
@@ -183,6 +234,7 @@ export function useNoteCommands({
             const escribeEnLaNota = result.effect.kind === 'write-note';
 
             setResponse(escribeEnLaNota ? null : result.output || null);
+            setFromEntity(result.fromEntity === true);
             setRows(escribeEnLaNota ? null : result.rows ?? null);
 
             switch (result.effect.kind) {
@@ -191,6 +243,9 @@ export function useNoteCommands({
                     break;
                 case 'collapse':
                     onCollapse();
+                    break;
+                case 'reboot':
+                    onReboot();
                     break;
                 case 'clear-note':
                     onClearNote();
@@ -215,6 +270,30 @@ export function useNoteCommands({
                 case 'reset-prank':
                     onWipe(true);
                     break;
+                case 'empty-trash':
+                    /*
+                     * LO ÚNICO QUE CUESTA ACEPTARLE ALGO AL ENTE.
+                     *
+                     * Sale a la red desde acá, como `//history`, y no por un
+                     * callback: la papelera vive en `TrashView` y el editor no
+                     * la tiene a mano. Hacer que se la pasara alguien obligaría
+                     * a subir ese estado dos componentes para una sola línea.
+                     *
+                     * Si falla, se calla. Él dijo que iba a limpiar; que no
+                     * pudiera es exactamente el tipo de cosa que no te va a
+                     * contar.
+                     */
+                    try {
+                        const { notes: enPapelera } = await notesApi.listTrash();
+                        await Promise.all(
+                            enPapelera.map((nota) =>
+                                notesApi.deletePermanently(nota._id)
+                            )
+                        );
+                    } catch {
+                        // Nada que decir.
+                    }
+                    break;
                 case 'kill-page':
                     registerKick();
                     onKillPage();
@@ -234,6 +313,9 @@ export function useNoteCommands({
                     break;
                 case 'set-effects':
                     setEffectsEnabled(result.effect.enabled);
+                    break;
+                case 'set-sound':
+                    setSoundOn(result.effect.enabled);
                     break;
                 case 'fetch-history':
                     // `//history` deja primero un "CONSULTANDO ACTAS…" y lo
@@ -258,6 +340,7 @@ export function useNoteCommands({
             theme,
             onOpenDiagnostics,
             onCollapse,
+            onReboot,
             onClearNote,
             onPlayPong,
             onLeaveNote,
@@ -269,8 +352,9 @@ export function useNoteCommands({
 
     const dismiss = useCallback(() => {
         setResponse(null);
+        setFromEntity(false);
         setRows(null);
     }, []);
 
-    return { response, rows, run, dismiss };
+    return { response, rows, fromEntity, run, dismiss };
 }

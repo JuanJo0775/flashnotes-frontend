@@ -14,6 +14,7 @@
 
 import { render, act } from '@testing-library/react';
 import BootScreen from '@/components/effects/BootScreen';
+import { forgetV02Cache } from '@/lib/system/v02';
 
 /**
  * Pone o quita el bloqueo EN EL ALMACENAMIENTO, que es de donde lo lee.
@@ -74,12 +75,29 @@ describe('el arranque normal', () => {
         expect(document.querySelector('.boot-bars')).toBeNull();
     });
 
-    it('después las barras, el rótulo y la comprobación', () => {
+    it('⚠ y se ENCIENDE antes de que haya imagen', () => {
+        /*
+         * La misma figura del apagón al revés: un punto que se abre en línea y
+         * la línea en imagen. Vivía sólo en la puerta del arranque, así que un
+         * reinicio pedido desde dentro —`//reboot`— pasaba del apagón a las
+         * barras sin encenderse, o sea sin la mitad que se oye.
+         */
         conBloqueo(false);
         render(<BootScreen onDone={() => {}} />);
         correElGuion(1, 0);
 
         correElGuion(1);
+
+        expect(document.querySelector('.tube-on')).not.toBeNull();
+        expect(document.querySelector('.boot-bars')).toBeNull();
+    });
+
+    it('después las barras, el rótulo y la comprobación', () => {
+        conBloqueo(false);
+        render(<BootScreen onDone={() => {}} />);
+        correElGuion(1, 0);
+
+        correElGuion(2);
         expect(document.querySelector('.boot-bars')).not.toBeNull();
 
         correElGuion(1);
@@ -94,7 +112,7 @@ describe('el arranque normal', () => {
         const listo = jest.fn();
         render(<BootScreen onDone={listo} />);
 
-        correElGuion(6);
+        correElGuion(7);
 
         expect(listo).toHaveBeenCalled();
     });
@@ -136,5 +154,71 @@ describe('con el bloqueo puesto', () => {
         correElGuion(4);
 
         expect(listo).toHaveBeenCalled();
+    });
+});
+
+describe('⚠ el arranque de la v0.2, que es otra máquina', () => {
+    /*
+     * No es éste con piezas quitadas: es la 1.0 ANTES de que se escribieran. No
+     * hay carta de ajuste porque no tiene nada que emitir, no hay rótulo porque
+     * nadie firmó esa versión, y no cuenta la memoria porque no sabe cuánta
+     * tiene.
+     *
+     * El guion ya está probado aparte; acá se mira lo que aquél no puede ver:
+     * que las dos pantallas nuevas se PINTAN, y que ninguna de la 1.0 se cuela.
+     */
+    const enV02 = () => {
+        localStorage.clear();
+        localStorage.setItem('flashnotes:v02', 'on');
+        // El módulo cachea la respuesta en memoria: sin esto, un test anterior
+        // que ya preguntó deja la caché puesta y éste mediría la otra versión.
+        forgetV02Cache();
+    };
+
+    it('recibe corriente con SU marca, no con la del tubo limpio', () => {
+        // La figura es la misma —el mismo cristal— y la marca es otra, porque lo
+        // que las distingue es el sonido: acá se suelta algo dentro de la caja.
+        enV02();
+        render(<BootScreen onDone={() => {}} />);
+        correElGuion(1, 0);
+        correElGuion(1);
+
+        expect(document.querySelector('.v02-wake')).not.toBeNull();
+        expect(document.querySelector('.tube-on')).toBeNull();
+    });
+
+    it('enseña estática donde la otra enseña la carta de ajuste', () => {
+        enV02();
+        render(<BootScreen onDone={() => {}} />);
+        correElGuion(1, 0);
+        correElGuion(2);
+
+        expect(document.querySelector('.v02-static')).not.toBeNull();
+        expect(document.querySelector('.boot-bars')).toBeNull();
+    });
+
+    it('y después la barra que se inventa el total', () => {
+        enV02();
+        render(<BootScreen onDone={() => {}} />);
+        correElGuion(1, 0);
+        correElGuion(3);
+
+        const barra = document.querySelector('.v02-load');
+        expect(barra).not.toBeNull();
+        // La barra de esa versión, con sus corchetes y su porcentaje.
+        expect(barra!.textContent).toMatch(/^\[[#.]+\]\s+\d+%$/);
+    });
+
+    it('⚠ y NUNCA se le cuela el rótulo del fabricante', () => {
+        // Sería un fabricante firmando una versión que nadie firmó.
+        enV02();
+        render(<BootScreen onDone={() => {}} />);
+        correElGuion(1, 0);
+
+        for (let i = 0; i < 6; i += 1) {
+            correElGuion(1);
+            expect(document.querySelector('.boot-logo')).toBeNull();
+            expect(document.querySelector('.boot-check')).toBeNull();
+        }
     });
 });

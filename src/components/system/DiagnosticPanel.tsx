@@ -1,7 +1,7 @@
 // src/components/system/DiagnosticPanel.tsx
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import ProgressBar from '@/components/ui/ProgressBar';
 import { useTheme } from '@/hooks/useTheme';
 import { useLang } from '@/i18n';
@@ -13,6 +13,8 @@ import {
 import { coreTemperature, CORE_MAX_C, CORE_MIN_C } from '@/lib/system/diagnostics';
 import { strainedCore, strainedIntegrity } from '@/lib/system/strain';
 import { useGlitch } from '@/hooks/useGlitch';
+import { setSoundOn } from '@/lib/system/audio/context';
+import { useSound } from '@/hooks/useSound';
 import { secretsBar, secretsRank } from '@/lib/system/secretsRank';
 import { ART_TOTAL, readFound } from '@/lib/system/asciiArt';
 
@@ -68,6 +70,7 @@ export default function DiagnosticPanel({
     const ref = useRef<HTMLDialogElement>(null);
     const closeRef = useRef<HTMLButtonElement>(null);
     const system = useSystemState();
+    const sonando = useSound();
     const theme = useTheme();
     const t = useT();
     const lang = useLang();
@@ -138,7 +141,22 @@ export default function DiagnosticPanel({
 
     // Cuántas piezas llevás recuperadas. Se lee acá y no de `system` porque la
     // colección vive en `localStorage` y no pasa por el estado del sistema.
-    const piezas = readFound().size;
+    /*
+     * ⚠ NO SE LEE AL PINTAR, y antes sí: `readFound()` va a `localStorage`, así
+     * que el servidor decía 0 y el cliente decía lo que tuvieras. React lo
+     * cazaba como desajuste de hidratación y REGENERABA EL ÁRBOL ENTERO — con
+     * una excepción en consola que llevaba ahí sin que nadie la mirara.
+     *
+     * Es la regla C1 del proyecto, y `useSyncExternalStore` es su respuesta:
+     * devuelve el valor del SERVIDOR en el primer render y el de verdad después,
+     * sin desajuste. La suscripción es vacía porque el catálogo no avisa de
+     * nada: este panel se repinta por su propio estado, y con eso relee.
+     */
+    const piezas = useSyncExternalStore(
+        () => () => {},
+        () => readFound().size,
+        () => 0
+    );
     // El ritmo de escritura lo calienta, y las averías también: forzar la
     // máquina cuesta, y el núcleo es donde se lee ese coste.
     const temp = strainedCore(coreTemperature(charsPerMinute), desgaste);
@@ -242,7 +260,7 @@ export default function DiagnosticPanel({
                     </Reading>
                     {/* No es un dato más: es lo que le dice a alguien cuánto
                         conoce del sistema, y por eso lleva barra y escalón. Un
-                        `7/28` seco se lee y se olvida; una barra a un cuarto da
+                        `7/33` seco se lee y se olvida; una barra a un cuarto da
                         ganas de saber qué hay en los otros tres. */}
                     <Reading label={t('diag.secrets')}>
                         <span className="flex items-center gap-2">
@@ -327,6 +345,18 @@ export default function DiagnosticPanel({
                         {t('diag.effects', {
                             state: system.effectsEnabled ? 'ON' : 'OFF',
                         })}
+                    </button>
+                    {/*
+                        El sonido, al lado de los efectos y no en otra parte: son
+                        el mismo tipo de interruptor y quien busque uno va a
+                        buscar el otro donde encontró el primero.
+                    */}
+                    <button
+                        type="button"
+                        onClick={() => setSoundOn(!sonando)}
+                        className="btn-terminal"
+                    >
+                        {t('diag.sound', { state: sonando ? 'ON' : 'OFF' })}
                     </button>
                     <button
                         ref={closeRef}

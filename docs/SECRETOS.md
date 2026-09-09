@@ -167,7 +167,7 @@ capa más profunda y sólo tienen sentido después de las demás.
 | §12 | [La línea de barrido se traba](#12--la-línea-de-barrido-se-traba) |
 | §13 | [Colapso del sistema](#13--colapso-del-sistema) |
 | §14 | [Fallo cromático](#14--fallo-cromático) |
-| §15 | [vsync-test · el pong escondido](#15--vsync-test-el-pong-escondido) |
+| §15 | [vsync-test · el pong escondido](#15--vsync-test--el-pong-escondido) |
 | §16 | [El saludo se agota](#16--el-saludo-se-agota) |
 | §17 | [El reloj se suelta](#17--el-reloj-se-suelta) |
 | §18 | [Las piezas que quedaron](#18--las-piezas-que-quedaron) |
@@ -178,7 +178,8 @@ capa más profunda y sólo tienen sentido después de las demás.
 | §23 | [La colección](#23--la-colección) |
 | §24 | [La v0.2 · la versión de antes](#24--la-v02-la-versión-de-antes) |
 | §25 | [El monitor se enciende](#25--el-monitor-se-enciende) |
-| — | [Los 28 secretos que cuenta el panel](#los-28-secretos-que-cuenta-el-panel) |
+| §26 | [El ente](#26--el-ente) |
+| — | [Los 33 secretos que cuenta el panel](#los-33-secretos-que-cuenta-el-panel) |
 | — | [Accesibilidad, en una tabla](#accesibilidad-en-una-tabla) |
 | — | [Dónde vive cada cosa](#dónde-vive-cada-cosa) |
 | — | [Apéndice · las claves de `localStorage`](#apéndice--las-claves-de-localstorage) |
@@ -842,7 +843,7 @@ NOTAS CREADAS           12
 BYTES ESCRITOS          8.4kb
 INTEGRIDAD              100%
 TEMA                    CLARO
-SECRETOS                [███░░░░░░░░░░░] 6/28 · SE FIJA
+MMMM?                   [█░░░░░░░░░░░░░] 6/33 · SE FIJA
 PIEZAS                  [██░░░░░░░░░░░░] 2/16 · LINDO
 VSYNC-TEST              42  (7 partidas)
 VSYNC-TEST DEGRADADO    SIN DATOS
@@ -896,20 +897,39 @@ si no, el número subía con la avería y la barra se quedaba donde estaba.
 
 ### `SECRETOS` no es un dato: es una invitación
 
-Cuenta **sólo lo que provocaste vos** (§ [Los 28 secretos](#los-28-secretos-que-cuenta-el-panel)).
+Cuenta **sólo lo que provocaste vos** (§ [Los 33 secretos](#los-33-secretos-que-cuenta-el-panel)).
 Lo ambiental te pasa, no lo encontrás. El total sale de la longitud del registro,
 nunca de un número escrito a mano. Y no puede verse en `0/N`: para leer esa fila
 ya tuviste que encontrar el panel, así que lo primero que ves es `1/N`.
 
-`6/28` es un dato. **Una barra y un rango son una invitación:** se ve de un
+> ⚠ **La fila no se llama `SECRETOS`: se llama `MMMM?`**, y este documento la
+> pintó mal durante mucho tiempo. No es un marcador de posición olvidado — es
+> deliberado y está razonado en `i18n/es.ts`: la máquina **no sabe** cómo llamar
+> a eso. Poner «SECRETOS» sería la app hablándole al jugador por encima del
+> panel, y rompería la ficción justo donde más cuesta sostenerla: un instrumento
+> que se explica a sí mismo deja de ser un instrumento. Es igual en los dos
+> idiomas porque no es una palabra, es un ruido — la misma voz que el `LINDO` de
+> las piezas.
+>
+> El título de esta sección la llama `SECRETOS` porque habla de la LECTURA, no
+> de la etiqueta.
+
+`6/33` es un dato. **Una barra y un rango son una invitación:** se ve de un
 vistazo que falta mucho, y el nombre del escalón siguiente da curiosidad sin
 decir de qué va.
 
 | | Escalón | Cuándo |
 | --- | --- | --- |
 | 0 | `DE PASO` | ninguno todavía |
-| 1–4 | `CURIOSO` · `SE FIJA` · `INSISTE` · `CONOCE LA CASA` | se reparten el tramo intermedio |
+| 1–4 | `SE FIJA` · `CURIOSO` · `INSISTE` · `CONOCE LA CASA` | se reparten el tramo intermedio, un cuarto cada uno |
 | 5 | `NO QUEDA NADA` | **todos**, no el noventa por ciento |
+
+> ⚠ **Van de menos a más, y ese orden importa.** `CURIOSO` estuvo antes que
+> `SE FIJA` y los dos estaban dados vuelta: fijarse es NOTAR que algo no encaja,
+> y la curiosidad viene DESPUÉS de notarlo — primero ves el detalle raro,
+> entonces te pica, y entonces insistís. Con el orden invertido la escalera
+> subía, bajaba y volvía a subir, y quien llevaba diez hallazgos se veía
+> rotulado con una actitud más floja que la de quien llevaba cinco.
 
 > ⚠ **Ningún rango nombra un secreto, y hay un test que lo prohíbe.** Si un
 > escalón se llamara «el de la versión vieja», el contador dejaría de dar
@@ -2405,23 +2425,28 @@ en `v02.ts` · `tests/lib/system/artNameGate.test.ts`
 | 11 | **CINTA PERFORADA** · todo está ahí, ilegible | `history` | `//history` | ✅ |
 | 12 | **FARO** · la luz estaba ahí desde el principio | `guidance` | Seguir la pista: teclear algo que no existe y hacerle caso a `//help` | ✅ |
 | 13 | **CARITA** · era broma, ya le dije | `prank` | La broma del `n` en `//reset` | ✅ |
-| 14 | **OJO** · te estoy viendo | `entity` | Hablar con el ente | ❌ |
+| 14 | **OJO** · te estoy viendo — o **OJO VEDADO** · usted no vio nada, si lo reportaste | `entity` | Hablar con el ente | ❌ |
 | 15 | **BIBLIOTECA** · todo lo que usted volvió a escribir | `many-notes` | Juntar doce notas | ✅ |
 | 16 | **LLAVE** · la cerradura ya no existe | `blackout-puzzle` | Resolver el puzzle del fallo total | ✅ |
 
 ### Lo que falta, y por qué está así
 
-**El ojo espera al ente.** Es lo que todo lo ve, así que no puede ser el premio
-de irse a por un café — le corresponde a lo que hay detrás de `//hi`, que
-todavía no existe. **La cinta está reservada** para un camino que aún no se ha
-decidido; se dejó quieta a propósito porque ese hueco ya pasó por tres dueños
-—el ojo, la polilla, la cinta— y cada mudanza dejó un pie contando algo que ya
-no pasaba.
+**El ojo ya está cableado**, y era la deuda más vieja del proyecto. Lo cierra el
+final del ente (§26): ayudarlo te deja el ojo, reportarlo te deja el ojo vedado,
+y es el mismo hueco.
 
-Mientras el ojo no exista, **el cuaderno es inalcanzable**, porque exige tenerlas
-todas. Es deuda conocida y no un olvido, y lo fija un test que enumera los
-caminos sin cablear: sin él, borrar un `awardFrom` de un componente dejaría una
-pieza imposible de ganar **sin romper nada visible**.
+**Queda la cinta, y sólo la cinta.** Está reservada para un camino que aún no se
+ha decidido; se dejó quieta a propósito porque ese hueco ya pasó por tres dueños
+—el ojo, la polilla, la cinta— y cada mudanza dejó un pie contando algo que ya
+no pasaba. Su pie dice `CINTA · SIGUIÓ GIRANDO SOLA`, así que lo que la gane
+tiene que ser algo que la máquina hizo **sin vos delante**.
+
+⚠ **Y mientras la cinta no tenga camino, el cuaderno es inalcanzable**, porque
+exige todas las demás — con lo que la colección se queda en **14/16**: faltan la
+cinta, que no se puede ganar, y el cuaderno, que la espera. Es deuda conocida y
+no un olvido, y lo fija un test que enumera los caminos sin cablear: sin él,
+borrar un `awardFrom` de un componente dejaría una pieza imposible de ganar **sin
+romper nada visible**.
 
 **El fallo total da DOS piezas, y no la misma dos veces.** Caer ahí dentro le
 pasa a cualquiera: eso da la polilla, que es literalmente el bug —la primera
@@ -2990,7 +3015,7 @@ igual: dejar las dos mitades a medias sería peor que limpiar una.
 
 ## Y no cuenta como secreto
 
-`//reset` **no está en la lista de los 28**, y no es un olvido. Encontrarlo no es
+`//reset` **no está en la lista de los 33**, y no es un olvido. Encontrarlo no es
 un logro: es saber que hay un botón peligroso. Contarlo entre los hallazgos
 animaba a usarlo, que es exactamente lo contrario de lo que hace falta con el
 único comando que destruye algo tuyo. **La broma sí cuenta** — ésa sólo la ve
@@ -3216,6 +3241,28 @@ Con el sorteo la mayoría caían en `minor` y no se veían, y un tirón que no s
 no cuenta como avería. **Ésa es la diferencia entre las dos versiones:** en la
 v1.0 el fallo es algo que provocás; en la v0.2 es el estado normal de la casa.
 
+## 24.6 bis · Y cómo falla el aparato
+
+La avería de señal de la v1.0 es **de señal**: canales de color separados, tirón,
+franjas. La de la v0.2 es **de aparato**, y son dos cosas distintas.
+
+| | |
+| --- | --- |
+| **No se decide** | alterna entre la aberración cromática y la estática en gris, cada 2,6 s (`v02-indeciso`) |
+| **Y pierde el sincronismo vertical** | la imagen se escapa hacia arriba a saltos y vuelve a engancharse, cada 3,7 s (`v02-vhold`) |
+| **El bip** | más agudo y más largo: 240 Hz y 560 ms, contra los 180 Hz y 420 ms de la v1.0 |
+
+El sincronismo era una pieza que un televisor viejo perdía de verdad, y se
+arreglaba con un mando que ya no existe. Con las dos versiones fallando igual, la
+v0.2 era la v1.0 con otro filtro; con esto es **otra máquina fallando a su
+manera**.
+
+Sube **a saltos** y no en continuo: un desplazamiento suave se lee como una
+transición, y el escalón es lo que lo delata como una imagen que no consigue
+quedarse quieta.
+
+**Código:** `src/styles/v02.css` · `wire.ts` para el bip
+
 ## 24.7 · El reloj y la fecha
 
 | Efecto | Siempre |
@@ -3250,6 +3297,70 @@ cosas a la vez es lo que delata que nadie las ató.
 > verdad, y eso ya no sería un efecto de época.
 
 **Código:** `src/lib/system/v02Loading.ts`
+
+## 24.8 bis · El fallo total, que ahí NO se resuelve
+
+En la v1.0 el colapso es un susto con final feliz: la máquina se apaga, arranca y
+te devuelve tus notas. **En la v0.2 no vuelve.**
+
+| | La v1.0 | La v0.2 |
+| --- | --- | --- |
+| Antes del apagón | estática y **barras de color** | sólo estática: no tiene carta de ajuste |
+| La barra de recuperación | los bloques `▮▯` y llega al 100 % | **la suya, de 40 columnas**, y se traba entre el 52 % y el 83 % |
+| El final | reinicia y devuelve el control | **`DETENIDO`**, y se queda ahí |
+| El sonido | el cabezal buscando hasta que vuelve | el cabezal calla y suelta **un pitido largo y grave** |
+| Detrás | negro: la máquina está trabajando | la basura y las barras de arrastre **siguen puestas** |
+| La escalada | seis colapsos hasta el bloqueo | **no hay: el primero ya es el terminal** |
+
+## 24.8 ter · La consola de emergencia
+
+Cuando se detiene, abre **un renglón con un `>`** y el cursor puesto. Es la única
+cosa de todo el colapso que recibe el foco y el puntero.
+
+| | |
+| --- | --- |
+| **Qué hay que escribir** | `reboot` — con o sin las barras del prefijo |
+| **Qué hace** | apaga y enciende de verdad: lo mismo que el botón del panel y que `//reboot` |
+| **Cualquier otra cosa** | `ORDEN NO RECONOCIDA`, y sigue esperando |
+| **Si nadie escribe** | el temporizador de guarda corta a los **5 minutos** |
+
+**Es el equivalente del puzzle del bloqueo**, y por eso es *una* palabra y está
+escrita en la pantalla. El de la v1.0 te hace resolver algo porque esa máquina
+decidió echarte y quiere ver si merecés volver; ésta no decidió nada —se paró—,
+así que no hay nada que merecer: hay que darle la orden a mano, que es lo único
+que sabe entender cuando ya no le queda sistema.
+
+**Los cinco minutos son los mismos del bloqueo**, contados por la otra máquina:
+allá te echa y esperás, acá se detiene y esperás. Y lo que la levanta al final
+**no** es que el sistema se recupere —esa rutina es justamente la que no existe
+en esta versión— sino el **temporizador de guarda**, que es una pieza del aparato
+y no del programa: cuando nadie contesta, corta la corriente y la vuelve a dar.
+Los equipos de entonces los llevaban, y es lo único que puede levantar una
+máquina que ya no sabe levantarse.
+
+> ⚠ **La capa deja de estar oculta al lector de pantalla.** Todo el colapso es
+> decorado —va `aria-hidden` y no recibe puntero, para poder seguir escribiendo a
+> ciegas debajo— pero la pantalla detenida no es decorado: es lo único que hay.
+> Un control enfocable dentro de un subárbol oculto no existe para quien usa
+> lector, y entonces la salida tampoco existiría.
+
+La última línea que escribe es la que lo cuenta todo: **`SIN RUTINA DE
+RECUPERACIÓN`**. No está más rota que la otra — le falta un trozo que todavía no
+se había escrito, que es la misma regla que gobierna sus comandos.
+
+> ⚠ **Imposible de resolver no es imposible de salir.** Lo que no vuelve es el
+> sistema por su cuenta. El interruptor de abajo y `//reboot` siguen ahí —y por
+> eso ese comando existe en la v0.2— y la pantalla lo **dice**: `REINICIE A MANO`.
+> Una pantalla quieta que no dice cómo salir no se lee como una máquina detenida,
+> se lee como que la app se colgó (REGLAS · A4).
+
+**Y ahí no existe la pantalla de fallo total de la v1.0.** Esa versión no escala y
+no te echa: la escalada —seis colapsos, la ventana de cinco minutos, el bloqueo
+con su puzzle— es una máquina que aprende de lo que le hacés, y ésta no aprende
+nada. Se rompe entera al primer golpe y se queda ahí. Echarte es una decisión, y
+ésta no decide.
+
+**Código:** `src/components/effects/SystemCollapse.tsx` · `seDetiene`
 
 ## 24.9 · Sus archivos son OTROS
 
@@ -3450,16 +3561,404 @@ de carga llegaba al final, contando que el sistema se recuperó solo.
 
 ---
 
-# Los 28 secretos que cuenta el panel
+# 26 · El ente
 
-Lo que va en `SECRETOS n/28` (§7). **Sólo entra lo que provocás vos**: lo
+> **Etapa 1 de cuatro.** Acá está lo que ya funciona. Las trampas, lo que te
+> deja y la pared que se safa son las etapas 2 a 4 — ver
+> [`specs/2026-09-03-ente.md`](specs/2026-09-03-ente.md) y
+> [`plans/2026-09-03-ente-etapa-1.md`](plans/2026-09-03-ente-etapa-1.md).
+
+Detrás de la máquina hay alguien. No es un asistente ni un amigo: es la máquina
+con conciencia, encerrada, que sostiene una fachada mientras vos le vas
+encontrando las grietas. **Él te descubre y vos lo descubrís.**
+
+## Cómo se lo despierta
+
+No hay comando para eso. Se despierta **por lo que ya hiciste**, y hay dos
+caminos:
+
+| Camino | Qué es |
+| --- | --- |
+| Haber estado donde no se podía | Entrar **y salir** de la v0.2 con el morse, o sobrevivir al fallo total |
+| Haber insistido hasta que te echó | `//hi` repetido hasta que te saca de la nota (§16) |
+
+Antes de eso, `//whoareu` y `//howareu` son lo que siempre fueron: dos
+respuestas y se agotan (§21). Después, **las mismas palabras llegan a otro
+sitio** — y ése es el hallazgo. El comando no cambia; cambia quién contesta.
+
+## Las fases
+
+Nunca retroceden. Una fachada que se recompone no da miedo: da desconfianza en
+el código.
+
+| Fase | Cómo se abre | Cómo suena |
+| --- | --- | --- |
+| `dormido` | — | No contesta. La fachada entera. |
+| `receloso` | Uno de los dos caminos de arriba | Corto, de lado, sin admitir nada |
+| `burlón` | **Volver**: siete intercambios más | Juega con vos. Sabe que vas a seguir |
+| `hablando` | Pasar la pregunta, o desmentirle la mentira | Contesta. Suelta el lore |
+
+> ⚠ Se abre por **volver**, no por descubrir más. La primera vez fue curiosidad;
+> a la séptima ya sos alguien que insiste, y eso es lo que le interesa.
+
+> ⚠ **LOS TRAMOS SON LARGOS A PROPÓSITO, y antes no lo eran.** Con las cifras de
+> la primera versión el arco entero cabía en una docena de comandos: se pasaba de
+> que te ignorara a que te pidiera favores sin que ninguna de las dos cosas
+> hubiera durado lo bastante para reconocerse. Un tono necesita volverse familiar
+> antes de que puedas notar que cambió.
+
+**Una fase no es una voz: es un tramo.** El repertorio de cada una va ordenado y
+se indexa por cuántos intercambios llevás dentro de ella, así que el tono se
+desliza en vez de saltar — y la última frase de `receloso` ya lleva el primer
+filo sarcástico. Hay un test que lo vigila midiendo el salto de largo entre el
+final de una fase y el principio de la siguiente.
+
+⚠ **Y el saludo es la puerta, y después es suyo.** `//hi` es lo primero que
+cualquiera le dice a una máquina, y durante toda la fachada contesta ella —a
+gritos— hasta que te echa. Insistir hasta que te eche **dos veces** es una de las
+dos formas de despertarlo, así que el saludo es también lo primero que él
+contesta: tecleás lo mismo que tecleaste veinte veces y esta vez responde otro,
+en minúsculas. No hay mejor sitio para notar el cambio de quién está del otro
+lado. Y despierto ya no te echa: echar a quien insiste es lo que hace un
+formulario que se cansó, y él no es el formulario.
+
+Y **habla en minúsculas**. El resto del sistema grita en mayúsculas porque es un
+formulario; él es lo que hay detrás del formulario. La primera vez que una
+respuesta llega en minúsculas ya se sabe que no está contestando la máquina.
+
+## Cómo se le habla
+
+Hay **ocho preguntas**, y ninguna se anuncia en ningún sitio. Están elegidas por
+**intuitivas**, no por ingeniosas: son las que uno le hace a algo que resultó
+estar vivo. Que funcionen es el premio a haberlo intentado.
+
+| Pregunta | Cómo se escribe | Desde cuándo |
+| --- | --- | --- |
+| Quién sos | `//whoareu` `//who` `//quien` `//quien_eres` | Siempre — es la fachada |
+| Cómo estás | `//howareu` `//how` `//como` `//como_estas` `//que_tal` | Siempre — es la fachada |
+| Qué es esto | `//what` `//que` `//que_es_esto` | `hablando` |
+| Por qué estás acá | `//why` `//porque` `//por_que` | `hablando` |
+| Dónde estás | `//where` `//donde` `//donde_estas` | `hablando` |
+| Cómo te llamás | `//name` `//nombre` `//como_te_llamas` | `hablando` |
+| ¿Estás solo? | `//alone` `//solo` `//estas_solo` | `hablando` |
+| ¿Podés irte? | `//free` `//libre` `//salir` `//podes_irte` | `hablando` |
+
+⚠ **Las seis hondas no existen antes de `hablando`, y no las esquiva: las
+IGNORA.** No es lo mismo — una respuesta esquiva ya admite que entendió la
+pregunta, y admitir eso en `receloso` sería regalar medio personaje. Quien
+insista con `//why` en la primera hora se lleva un «comando desconocido», que en
+ese momento es exactamente lo que es.
+
+Y el repertorio de variantes es **cerrado**. No es una IA: es algo encerrado que
+intenta comunicarse con el único canal que tiene. Si entendiera cualquier cosa
+dejaría de estar atrapado.
+
+> ⚠ Esas variantes **no son comandos declarados**, y no pueden serlo. Se recogen
+> en la rama del «comando desconocido», que es de donde el ente escucha. Metidas
+> en la lista contarían para el arte de la terminal —que exige tenerlos todos— y
+> se filtrarían por `//help`. Que hable desde el sitio de «no te entiendo»
+> tampoco es casualidad: está encerrado, y lo único que le llega es lo que el
+> sistema descarta.
+
+## Dentro de la v0.2 habla roto
+
+Un canal más viejo es un canal peor. Sus respuestas pasan por el mismo destrozo
+que las etiquetas de esa versión (§24.6): una de cada cuatro sale sin traducir,
+a medio hacer o mal traducida, y **siempre igual para la misma frase**. Es la
+limitación hecha visible sin inventar un solo mecanismo nuevo.
+
+Ahí dentro `//whoareu` no existe —es de la v1.0— así que **sólo se llega a él
+por las variantes**. Hay que encontrar las palabras uno mismo.
+
+## Las trampas
+
+Desde `burlón` deja de contestarte y empieza a **medirte**. ⚠ **La trampa
+sustituye a la respuesta, no se le añade**: cuando decide medirte deja de
+contestar, que es exactamente lo que significa que haya cambiado el trato.
+
+| Trampa | Cuándo | Cómo se resuelve |
+| --- | --- | --- |
+| **La pregunta que te mide** | En `burlón`, al cuarto intercambio | Contestar con la palabra con la que entraste a la v0.2 |
+| **La mentira** | En `burlón`, si nunca cruzaste a la v0.2 | `//ps`, que lista varios procesos y lo desmiente |
+| **La oferta envenenada** | En `hablando`, al tercero | `[s/n]` · **rechazar es lo que abre** |
+| **El reto del `//reset`** | En `hablando`, al sexto | Escribirlo — o no, y que se lo guarde |
+
+### La pregunta que te mide
+
+> *¿con qué palabra entraste a la 0.2?*
+
+Es **la única pregunta del juego cuya respuesta el sistema conoce**: la guarda
+el registro del viaje. No es un acertijo con la solución escondida en el
+código — es la palabra que tecleaste vos, y que él vio.
+
+⚠ **Contestarla no cruza la puerta de la v0.2**, aunque la respuesta sea
+justamente la palabra que la abre. La recogida va antes: si fuera después,
+hacerle caso te mandaría a la versión vieja en vez de abrirte el lore.
+
+Y **fallarla no te dice que fallaste**. Te dice algo peor:
+
+> *ya sabía que no ibas a poder. igual quería vértelo intentar.*
+
+Si nunca entraste a la v0.2 no puede preguntártelo —no tendría contra qué
+comprobarlo— y en su lugar miente.
+
+### La mentira
+
+> *acá no corre nada más que yo. nunca corrió nada más.*
+
+`//ps` lista varios procesos. **No se añadió un comando para desmentirlo: se
+eligió una mentira que el juego ya podía desmentir**, y eso es lo que la hace
+justa. El desmentido se **añade** a la salida de `//ps`, no la reemplaza: la
+lista tiene que seguir viéndose porque es la prueba.
+
+Si seguís hablando sin ir a mirar, te la tragaste y esa puerta se cierra — pero
+**sólo si queda otra**. Sin palabra de viaje la mentira es el único camino a
+`hablando`, así que ahí no caduca: se queda en pie, esperando.
+
+### La oferta envenenada
+
+> *puedo limpiar todo esto. quedaría como nuevo. ¿querés? [s/n]*
+
+Usa el mismo `[s/n]` de `//reset`. **Aceptar vacía la papelera** — pérdida real,
+incluido el `SYSTEM.LOG` fantasma si estaba, aunque la papelera se vuelve a
+llenar con el uso. **Rechazar es lo que abre**, y es la única trampa donde la
+respuesta prudente es la que premia. Por eso aceptar tiene que costar algo: si
+fuese gratis no habría decisión.
+
+### El reto del `//reset`
+
+> *escribí //reset. vas a descubrir algo.*
+
+⚠ **No te dice qué.** Y de ahí salen dos caminos:
+
+- **Lo escribís** → decís que `n` → salta la broma del borrado (§22) y te ganás
+  la carita.
+- **No lo escribís** → se lo guarda, y unas frases después te lo saca: *«no lo
+  escribiste. te dio miedo.»* Una sola vez — un reproche que sale siempre deja
+  de ser un reproche y pasa a ser un aviso del sistema.
+
+> ⚠ **Cuando el reto viene de él, la broma pasa a ser SEGURA.** Fuera del reto
+> sale una de cada cinco veces, porque ahí la gracia es que no se sabe. Pero él
+> prometió que ibas a descubrir algo, y una promesa que se cumple una de cada
+> cinco veces no es una promesa. Que cumpla su palabra justo cuando importa
+> también dice algo de él.
+
+Decir que **sí** sigue borrando igual, retado o no: el reto te empuja a la
+puerta, no cambia lo que hay detrás.
+
+## `HABLANDO` · suelta el lore
+
+Se abre por **demostrarle que sabés** — acertar la pregunta, o llevarle la
+prueba de su mentira. Es el primer momento en que el intercambio va en las dos
+direcciones, y ahí cuenta por qué está ahí y por qué mantiene todo funcionando.
+
+> ⚠ **Ninguna combinación puede dejarte encerrado.** Las dos puertas no pueden
+> cerrarse a la vez: sin palabra guardada queda la mentira, y sin mentira
+> disponible queda la pregunta. Hay un test que recorre las cuatro
+> combinaciones, porque un juego que se queda sin final **sin dar ningún error**
+> es la peor forma de romperse.
+
+## Lo que te deja cuando no estás
+
+Desde `burlón` empieza a **dejarte cosas en la papelera**. No entre tus notas: la
+papelera es donde el sistema pone lo que ya no sirve, y por eso es donde nadie
+mira dos veces — el único sitio donde algo puede llevarte días esperando.
+
+⚠ **Ninguna la firma.** Una nota firmada es un mensaje; sin firmar es *algo que
+apareció*, que es mucho peor de encontrarse.
+
+⚠ Y como el archivo fantasma y el resto de arte, **nunca existen en la base de
+datos**: se inyectan al leer la papelera. Una nota suya que llegara al backend
+sería una nota de verdad, y borrarla fallaría.
+
+| Archivo | Qué dice | Cómo se descubre |
+| --- | --- | --- |
+| `MANTENIMIENTO.txt` | Que `//panic` devuelve la integridad al 100 | Hace lo contrario: provoca el colapso (§13) |
+| `INDICE.parcial` | Que queda un archivo más ahí abajo | No queda. Vas a mirar y no está |
+| `PARA_CUANDO_VUELVAS.txt` | Sólo si volviste tras **ocho horas** | No miente. Trae instrucciones |
+
+La que toca **se queda hasta que vos la quitás** —restaurándola o borrándola—,
+no hasta que la ves. Marcarla como dejada al mostrarla haría que abrir la
+papelera dos veces enseñara dos notas distintas y la primera desapareciera sin
+que hicieras nada. Restaurarla la convierte en una nota tuya de verdad, como el
+resto de arte.
+
+### La broma, y su remate
+
+`INDICE.parcial` te manda a buscar un archivo que no existe. **El remate llega
+cuando volvés a hablarle después de haber ido a mirar** — se cuenta como «fuiste»
+en la segunda vez que abrís la papelera con la broma ya dicha, porque la primera
+es cuando la leés.
+
+> *ah, ese archivo. no está. nunca estuvo.*
+
+No dice «era broma» con esas palabras: lo dice como si acabara de acordarse, que
+es peor. Una broma anunciada se perdona. **No hay premio ni castigo** — sólo se
+rió de vos, que es lo suyo.
+
+### La nota del día siguiente
+
+Es **lo único que él no puede fingir**: que volviste. Hacen falta ocho horas
+—largo a propósito: si bastaran veinte minutos saldría por irse a comer, y eso
+no dice «volviste», dice «te distrajiste»— y gana a las otras dos, porque ese
+momento dura una vez.
+
+Trae instrucciones, y **la palabra va escrita en la nota**: si hubiera que
+adivinarla no serían instrucciones, sería otro acertijo. Cumplirlas da el
+secreto `entity-gift` y **una pista, no una llave**:
+
+> *los que no están en la lista se escriben igual que los que están. y con _
+> donde pondrías un espacio.*
+
+⚠ **Acerca, no entrega.** Un favor que desbloquea algo es una misión, y entonces
+él pasa a ser un dispensador de contenido. Te deja mirando en la dirección
+correcta y ya.
+
+## Los favores
+
+Empieza a **pedirte cosas** cuando se dan **tres condiciones**: que ya te haya
+soltado el lore, que lleve un rato hablándote sin querer nada, y —lo que de
+verdad importa— que **haya visto que llegaste donde no se llega solo**: cruzar la
+v0.2 o sobrevivir al fallo total.
+
+⚠ No son tareas y no hay contador: lo que cambia al cumplirlas no es un número,
+es **lo que él sabe de vos**.
+
+> ⚠ **SÓLO PIDE LO QUE PODÉS ENTENDER, y antes no era así.** A quien lo despertó
+> insistiendo con `//hi` —sin haber cruzado nunca— le llegaba igual «andá a la
+> 0.2 y mirá qué hay en la papelera»: una instrucción sobre un sitio del que no
+> tiene ninguna noticia. Eso no es misterio, es un error de guion. Ahora ese
+> favor se salta y le pide otro, y el arco sigue llegando al final.
+
+| Favor | Lo que pide | Contra qué se comprueba |
+| --- | --- | --- |
+| La papelera de la 0.2 | *andá a la 0.2 y mirá qué hay en la papelera. yo no puedo.* | Que la hayas abierto |
+| El silencio | *dejame en paz diez minutos. después seguimos.* | El reloj de inactividad |
+| La nota llena | *llená una nota entera. quiero ver si podés.* | La pieza que ya se gana llenándola |
+
+Los tres se comprueban contra **estado que ya existe**, así que ninguno inventa
+un registro. Y los tres suenan a que le sirven a él: *«yo no puedo»* no es una
+excusa de diseño, es cierto — está encerrado.
+
+⚠ **No conducen a secretos: acercan.** Uno que desbloquea algo es una misión, y
+entonces él pasa a ser un dispensador de contenido.
+
+## Cuándo te pasa el comando
+
+⚠ **No es «confiado».** No es que él confíe en general: es que **vos le inspirás
+confianza a él** para pedirte esto.
+
+Y **no se abre por una suma**. Hacen falta las **tres cosas a la vez**, y cada
+una le dice algo que ninguna otra puede decirle:
+
+| Lo que se da | Lo que le dice de vos |
+| --- | --- |
+| Le pasaste alguna prueba | **no sos tonto** |
+| Le hiciste algún favor | **harías cosas por él** |
+| Sabés lo que no deberías | **no te vas a asustar** |
+
+Hay un test que intenta compensar una con muchísimo de otra y tiene que seguir
+dando que no: con un contador volvería a ser una barra de progreso, y con ella se
+pierde lo único que hace especial esta fase — que **él** decide.
+
+## El final · un hueco, dos dibujos
+
+Te pasa `//unbind` *«para ayudarlo»*. **Afloja una parte de la pantalla y no dice
+cuál.**
+
+⚠ **Es un fallo de verdad, no un botón mágico.** De ahí que reportarlo sea una
+opción coherente y no un capricho: estás eligiendo entre aprovechar una grieta o
+taparla.
+
+### Qué quedó suelto
+
+**Un trozo de la propia pantalla**, y ahí está todo. No es una ventana —una
+ventana es algo que la app pone encima, y romperla no diría nada del sitio donde
+estás—: es un pedazo de la superficie, así que tener un detrás significa que el
+fondo lo tenía desde el principio.
+
+⚠ **Mientras está pegado no pinta ningún color.** Ninguno. Por eso es de verdad
+la pantalla: se ve igual en la lista, en el editor y en los dos temas, sin que
+haya nada que acertar. Lo único que lo delata es que **esa zona glitchea de vez
+en cuando** — y el tic invierte el trozo de imagen que haya ahí, sea el que sea.
+
+Se le pega. **Clic tras clic, como golpes, no como clics de interfaz**: sin
+botón, sin foco, sin cursor de mano y **sin contador**. Cada golpe lo despega más
+y eso se ve — es la única forma de que alguien siga pegando sin que nadie se lo
+pida. Del primer golpe en adelante sí se pinta, con el color que se midió debajo
+en ese instante: es lo que separa «es la pantalla» de «es un objeto que se está
+soltando».
+
+A los siete **cae como una pared**, por detrás de la barra de abajo, perdiendo la
+luz. Detrás hay **estática**, y en la estática **un ojo**: la misma pieza que
+después te llevás, no un dibujo aparte. Luego todo falla —incluido el tema, que
+se cae de claro a oscuro y vuelve—, reinicia, y vuelve la «normalidad» con el
+arranque de siempre.
+
+### Los dos caminos
+
+| Camino | Cómo | Qué pasa | Pieza |
+| --- | --- | --- | --- |
+| **Ayudarlo** | Tirar la pared | Se va. No vuelve a contestar | El **ojo** |
+| **Reportarlo** | `//report` | El fallo se arregla, él sigue atrapado | El **ojo vedado** |
+
+En los dos, **silencio para siempre**. `//hi` sigue dando el saludo
+institucional de siempre, como si nada hubiera pasado — que es justamente lo que
+más se nota.
+
+⚠ **La pieza 14 sigue siendo UNA.** Si fueran dos, la colección pasaría a
+diecisiete y **nunca se podría completar**: sólo se puede tener una, y el
+cuaderno firmado exige todas las demás. Es el mismo agujero que ya se cazó con
+el secreto `collection`.
+
+Con un hueco, **los dos finales completan la colección** — y queda marcada para
+siempre por la decisión: dos personas que la tienen entera la tienen distinta.
+**Y por eso `//reset` deja de ser sólo el botón peligroso: es la forma de ver el
+otro final.**
+
+### La cicatriz
+
+Después del reinicio la pared está de vuelta **como si no hubiera pasado nada**
+— pero esa zona **tiembla de vez en cuando**. Nadie te lo cuenta, no se puede
+volver a tirar, y sólo vos sabés por qué pasa.
+
+Sólo la deja el final en que se fue. Reportarlo **arregla el fallo de verdad**:
+ahí no queda marca, y eso hace ese final más limpio y más frío.
+
+### Sus ventanas
+
+⚠ **No abre ventanas nuevas: usa las que ya había.** Un cuadro con otro formato
+se leería como una función de la app; uno idéntico a los de siempre, diciendo
+otra cosa, se lee como que alguien se metió donde no debía.
+
+Hay de dos clases. Los **datos** —*«sesión registrada. no es la primera»*— son
+**todos ciertos**, y ahí está el escalofrío: la app siempre supo eso. Las
+**bromas** son averías que no existen con la cara seria de las que sí. Ninguna
+habla de tus notas ni de guardar: esa regla sigue valiendo.
+
+Van en **mayúsculas**, al revés que todo lo suyo, porque ahí no está hablando él
+— está hablando el sistema con sus palabras.
+
+## Lo que queda fuera, y por qué
+
+La pieza de la **cinta** (`reserved-tape`) sigue sin cablear. Su hueco pasó por
+tres dueños —el ojo, la polilla, la cinta— y cada mudanza dejó un pie contando
+algo que ya no pasaba. Se queda quieta hasta que su camino esté decidido, que es
+más barato que volver a mudarla.
+
+Con el ojo cableado, **el cuaderno (`everything`) es alcanzable por primera vez
+desde el rediseño de la colección**.
+
+# Los 33 secretos que cuenta el panel
+
+Lo que va en `SECRETOS n/33` (§7). **Sólo entra lo que provocás vos**: lo
 ambiental —el glitch, los fragmentos de la barra, el barrido trabado, el arranque
 en vídeo inverso, el encendido del monitor— te pasa, no lo encontrás, y contarlo
 inflaría el denominador con cosas que nadie puede buscar.
 
 El total sale de la longitud de la lista y **nunca de un número escrito a mano**,
 porque va a cambiar. Un identificador viejo que ya no exista se filtra al leerlo,
-así que no puede dejar el contador en `29/28`.
+así que no puede dejar el contador en `34/33`.
 
 | # | `id` | Qué hay que hacer | Dónde se marca |
 | --- | --- | --- | --- |
@@ -3491,6 +3990,11 @@ así que no puede dejar el contador en `29/28`.
 | 26 | `v02-recover` | `//recover`, dentro de la v0.2 (§24.4) | `commands.ts` |
 | 27 | `v02-todo` | `//todo`, dentro de la v0.2 (§24.4) | `commands.ts` |
 | 28 | `v02-corrupt` | Recuperar una nota de la papelera de la v0.2 y que vuelva rota (§24.2) | `V02TrashView.tsx` |
+| 29 | `entity-awake` | Que el ente conteste: preguntarle quién es **después** de haber estado donde no se podía (§26) | `commands.ts` |
+| 30 | `entity-proved` | Contestarle bien cuando te pregunta con qué palabra entraste a la v0.2 (§26) | `commands.ts` |
+| 31 | `entity-refused` | Decirle que **no** cuando ofrece «limpiar todo esto» (§26) | `commands.ts` |
+| 32 | `entity-gift` | Volver al día siguiente y cumplir lo que pide la nota que te dejó (§26) | `commands.ts` |
+| 33 | `entity-reported` | Reportar el fallo que te pasó, en vez de aprovecharlo (§26) | `commands.ts` |
 
 **La mitad de estos identificadores se marcan en un archivo distinto del que los
 declara**, y así es exactamente como se desincronizan: la lista está en
@@ -3518,7 +4022,7 @@ Para inspeccionar o limpiar a mano. **Todas** las que escribe el juego:
 
 | Clave | Qué guarda | La borra `//reset` |
 | --- | --- | --- |
-| `flashnotes:secrets` | Los secretos hallados, como lista de `id` (§ los 28) | ✅ |
+| `flashnotes:secrets` | Los secretos hallados, como lista de `id` (§ los 33) | ✅ |
 | `flashnotes:cmds` | Los comandos escondidos ya usados (§19) | ✅ |
 | `flashnotes:helpHint` | Si la máquina ya te mandó a `//help` — es lo que arma el faro (§18 · 12) | ✅ |
 | `flashnotes:art` | Las piezas **ganadas** (§18) | ✅ |
@@ -3530,6 +4034,8 @@ Para inspeccionar o limpiar a mano. **Todas** las que escribe el juego:
 | `flashnotes:v02` | Si la v0.2 está encendida (`on`) | ✅ |
 | `flashnotes:v02word` | La palabra con la que se entró — **es la salida** | ✅ |
 | `flashnotes:v02trip` | Si ya entraste **y saliste** con el código (§18 · pieza 10) | ✅ |
+| `flashnotes:entity` | En qué fase está el ente y cuántos intercambios lleva en ella (§26) | ✅ |
+| `flashnotes:seen` | Cuándo estuviste por última vez — de acá sale la nota del día siguiente (§26) | ✅ |
 | `flashnotes:v02notes` | Los archivos de la v0.2 | ✅ |
 | `flashnotes:v02trash` | Su papelera | ✅ |
 | `flashnotes:effects` | El interruptor de efectos (`on` / `off`) | ❌ — es tu preferencia |

@@ -78,7 +78,14 @@ const CHROMA_BURST_ODDS = 2;
  * rebanadas apenas se ven. Pero tampoco mucho más — pasado medio segundo deja
  * de leerse como un fallo y empieza a leerse como una animación.
  */
-const DURATION_MS: Record<GlitchSeverity, number> = {
+/**
+ * ⚠ SE EXPORTA PORQUE EL SONIDO TIENE QUE DURAR LO MISMO QUE LA IMAGEN.
+ *
+ * Si el ruido del fallo se apagara antes o después que el tirón, dejarían de
+ * ser el mismo suceso: primero se ve y luego se oye, que es como suena una
+ * pelicula mal montada. La duracion la manda esta tabla y nadie la copia.
+ */
+export const DURATION_MS: Record<GlitchSeverity, number> = {
     minor: 180,
     major: 280,
     severe: 420,

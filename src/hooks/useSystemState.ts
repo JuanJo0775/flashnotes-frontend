@@ -14,6 +14,7 @@ import {
 import { countGreeting, CHAT_WINDOW_MS } from '@/lib/system/greeting';
 import { clearFound as clearArt, onlyMissing, ART_SOURCES } from '@/lib/system/asciiArt';
 import { forgetHint } from '@/lib/system/helpHint';
+import { clearEntity } from '@/lib/system/entity';
 import { resetScores } from '@/lib/system/pongScores';
 import { clearUsed } from '@/lib/system/commandUnlock';
 import { leaveV02, isV02, toggleV02, forgetV02Trip } from '@/lib/system/v02';
@@ -166,6 +167,52 @@ export const SECRET_IDS = [
     'v02-recover',
     'v02-todo',
     'v02-corrupt',
+    /*
+     * HABER DESPERTADO AL ENTE.
+     *
+     * No es lo mismo que `chat`: aquél es haber hablado con la fachada —dos
+     * respuestas y se acaba—, éste es haber notado que detrás hay alguien. Son
+     * dos hallazgos distintos y el contador tiene que decirlo.
+     */
+    'entity-awake',
+    /*
+     * DEMOSTRARLE QUE SABÉS.
+     *
+     * Contestar bien la única pregunta del juego cuya respuesta el sistema
+     * conoce. Es el primer momento en que el intercambio va en las dos
+     * direcciones, y por eso cuenta aparte de haberlo despertado.
+     */
+    'entity-proved',
+    /*
+     * DECIRLE QUE NO.
+     *
+     * Rechazar que «limpie todo esto». Es la única trampa del juego donde la
+     * respuesta prudente es la que premia — y por eso aceptar cuesta la
+     * papelera: sin precio no habría decisión, habría un botón con dos
+     * etiquetas.
+     */
+    'entity-refused',
+    /*
+     * HABER VUELTO, Y HABERLE HECHO CASO.
+     *
+     * Te fuiste, volviste al día siguiente y había una nota esperándote con
+     * instrucciones. Es lo único del juego que premia haber vuelto — y lo único
+     * que él no puede fingir que pasó.
+     */
+    'entity-gift',
+    /*
+     * HABERLO REPORTADO.
+     *
+     * El otro final. Cuenta como hallazgo igual que ayudarlo: taparlo es una
+     * decisión, no un fallo — el comando que te pasó es una grieta de verdad, y
+     * elegir cerrarla es tan razonable como aprovecharla.
+     *
+     * ⚠ Ayudarlo NO tiene secreto propio: su premio es la pieza, y contarlo dos
+     * veces desequilibraría los dos finales. Éste lo tiene porque su pieza llega
+     * tapada, y sin él reportar valdría menos en el contador que ayudar — que es
+     * exactamente la clase de empujón que este final no puede tener.
+     */
+    'entity-reported',
 ] as const;
 
 export type SecretId = (typeof SECRET_IDS)[number];
@@ -421,6 +468,19 @@ export function subscribe(listener: () => void) {
     };
 }
 
+/**
+ * Los secretos hallados, por identificador.
+ *
+ * ⚠ EXISTE PARA QUE EL SONIDO SEPA CUÁL acaba de encontrarse. El almacén avisa
+ * de que la CUENTA subió, y con eso basta para pintar un contador — pero no
+ * para elegir sonido, porque los hallazgos del ente suenan distinto de los
+ * demás. Quien escucha compara este conjunto con el que tenía y deduce el
+ * nuevo, en vez de obligar a `markSecretFound` a avisar a alguien más.
+ */
+export function foundSecrets(): ReadonlySet<string> {
+    return secrets;
+}
+
 export function getSystemState(): SystemState {
     return state;
 }
@@ -512,6 +572,19 @@ export function markSecretFound(id: string) {
  * no daban ninguna señal, así que un curioso que tocaba el logo dos veces y
  * paraba no se enteraba de que ahí había algo.
  */
+/**
+ * Cuántos clics seguidos lleva el rótulo de la cabecera.
+ *
+ * ⚠ SE EXPONE PARA QUE EL SONIDO NO TENGA QUE CONTARLOS ÉL. El contador ya vive
+ * acá, con su ventana de olvido de cuatro segundos y su reinicio; un segundo
+ * contador en el cableado del sonido se desincronizaría el día que alguien
+ * ajustara esa ventana, y nadie lo notaría hasta que el aviso sonara cuando no
+ * toca. Compartir, no copiar.
+ */
+export function logoClicks(): number {
+    return clickCount;
+}
+
 export function registerLogoClick(): LogoClickOutcome {
     clickCount += 1;
 
@@ -681,6 +754,52 @@ export function registerChat(now: number = Date.now()): number {
  * tu trabajo. Un comando escondido que borre lo que escribiste no es un huevo de
  * pascua, es una pérdida de datos — la primera regla del proyecto.
  */
+/**
+ * APAGAR Y ENCENDER DE VERDAD: se lleva las averías de sesión y nada más.
+ *
+ * ⚠ SIN ESTO, EL REINICIO ERA TEATRO. Se pidió jugando: «los errores tipo oscuro
+ * y claro que se resuelven reiniciando, que se arreglen». Y tenía razón — el
+ * botón y `//reboot` hacían el espectáculo entero —apagado, barras, rótulo,
+ * comprobación— y devolvían la máquina exactamente igual de rota. Una máquina
+ * que se reinicia y sigue rota no se reinició.
+ *
+ * ⚠ LO QUE SE LIMPIA ES LO QUE UNA RECARGA SE LLEVA, ni más ni menos. Todo esto
+ * vive en memoria justamente porque una recarga lo borra: la avería cromática,
+ * el desgaste del rótulo, las rachas de saludos y de colapsos. Reiniciar desde
+ * dentro tiene que dejar la máquina como la deja recargar, o serían dos
+ * reinicios distintos y habría que aprender cuál sirve para qué.
+ *
+ * ⚠ Y NO TOCA NADA GANADO. Los secretos, el arte y las notas no son averías: eso
+ * es `resetEverything`, que es otra cosa y avisa antes.
+ *
+ * ⚠ EL BLOQUEO SOBREVIVE, Y CON ÉL SU AVERÍA. Es la única vez que el fallo
+ * cromático aguanta una recarga, y está decidido: sin eso, romper la señal y
+ * reiniciar sería la salida fácil justo en el único estado que la niega. Acá se
+ * relee la misma marca guardada que se lee al arrancar.
+ */
+export function rebootSystem() {
+    integrity = 100;
+    themeClicks = 0;
+    lastThemeClick = 0;
+    clickCount = 0;
+    greetings = 0;
+    lastGreetingAt = null;
+    chat = 0;
+    kicks = 0;
+    collapseCount = null;
+    lastRecoveryAt = null;
+
+    if (clickResetTimer) {
+        clearTimeout(clickResetTimer);
+        clickResetTimer = null;
+    }
+
+    // La misma regla que al arrancar: rota sólo si el bloqueo dice que lo está.
+    chromaticFailure = readLockout()?.chroma === true;
+
+    publish();
+}
+
 export function resetEverything() {
     secrets.clear();
     integrity = 100;
@@ -700,10 +819,16 @@ export function resetEverything() {
     resetScores();
     clearUsed();
     leaveV02();
+    // Se lleva por delante la palabra del viaje, que es la única que el ente
+    // puede preguntarte. Ver `markV02RoundTrip()`.
     forgetV02Trip();
     // ⚠ ESTO FALTABA: era la única clave que el borrado no tocaba, y el faro
     // se recuperaba con el primer `//help` de después.
     forgetHint();
+    // El ente vuelve a estar dormido. Dejarlo despierto tras un borrado sería
+    // la única cosa del sistema que se acuerda de vos cuando ya nada más lo
+    // hace — y eso es otro secreto, no el que hay.
+    clearEntity();
     clearV02Notes();
     clearDropped();
     forgetWord();
@@ -741,6 +866,24 @@ export function registerCollapse(): CollapseLevel {
     // vez, y ésa ES la condición crítica. Pedirle además que repita el colapso
     // cinco veces más sería contar dos veces lo mismo — y encima el usuario que
     // combinó las dos cosas a propósito merece el desenlace, no un contador.
+    /*
+     * ⚠ LA v0.2 NO ESCALA Y NO TE ECHA: SE DETIENE A LA PRIMERA.
+     *
+     * La escalada de la 1.0 —seis colapsos, la ventana de cinco minutos, el
+     * bloqueo con su puzzle— es una máquina que aprende de lo que le hacés. Esa
+     * versión no aprende nada: se rompe entera al primer golpe y se queda ahí.
+     *
+     * Y por eso tampoco hay pantalla de bloqueo: la de la 1.0 es la máquina
+     * ECHÁNDOTE, una decisión, y ésta no decide. Su equivalente es quedarse
+     * detenida — mismos cinco minutos, sin puzzle y sin cerrarte la puerta.
+     * Ver `SystemCollapse` y SECRETOS §24.8 bis.
+     *
+     * `intensity: 3` es la cadencia más alta de fallos de la propia pantalla de
+     * recuperación: ahí ni la pantalla que debería estar arreglando el sistema
+     * consigue sostenerse, que es exactamente lo que pasa en esa versión.
+     */
+    if (isV02()) return { rebootMs: 0, intensity: 3, lockout: false };
+
     const nivel = state.chromaticFailure
         ? levelFor(LOCKOUT_AT)
         : levelFor(collapseCount);

@@ -270,19 +270,56 @@ Son **16**, todas de **40 caracteres** de ancho.
 **Se gana:** `entity` · **id:** `eye`
 
 ```
-1011101110100001001101001110100110111101
-1100111111111              0011011000010
-000101100                      000011001
-1110000           1000           1010011
-00001          1000100000          01000
-010           0001    0111           101
-0            0000      1011            0
-101           1111    0000           011
-01000          1000101110          11001
-1010111           1001           1000111
-010010110                      011011100
-1011100010100              1010111110100
-1000111100000000001101100011000101010101
+                ...,,,,,,,..            
+         .,:;;cclclllloooooll;;,,       
+     .,;codxkOkOOOkkkOO00000Okdoc;,     
+    :coxOKNNMMMWWNNXNNNNWWWNXK0kxol:    
+    cdkKXWMMMMNKOkxxdddxxkO00K0Okxdl    
+    dxOOkoc:.    xWMM0,       .:cdxd    
+  :;o;.  .,,,  ;NWWdKMMx  .:::.   .cc;. 
+ .;c     .,,,  oXX,,,NMX   .,.      l;. 
+    ldk         ONNWWMW,         xdl    
+    ;cdxOOO       :l;       xdddolc:    
+     ,:clodxxkOO0KKKKK00kkddolc;::.     
+        ,:;;clooxxkkkxxdolc;;:,.        
+            .,,::::;:;::,,.             
+                                        
+```
+
+### Y su versión tapada
+
+⚠ **No es otra pieza: es la misma, con una equis encima.** La catorce es UNA, y cuál te
+toca depende de lo que elegiste al final — ayudarlo te deja el ojo, reportarlo te
+deja el ojo VEDADO. Si fueran dos, la colección pasaría a diecisiete y nunca se
+podría completar.
+
+⚠ **Y el dibujo de debajo es el mismo celda por celda.** Va acá pegada a la otra
+por eso:
+quien retoque una tiene que retocar la otra, o dejarán de leerse como el mismo
+dibujo. Vive en `EYE_BARRED`, dentro de `asciiArt.ts`, y no lleva `id:` propio
+justamente porque no es una pieza aparte.
+
+Una **equis**, y no una barra. Una barra tapa, y tapar deja la duda de si debajo
+había algo. Una equis **anula**: dice que alguien lo vio, decidió que no, y lo
+marcó. Y deja ver — el aspa cruza el iris pero no lo borra, así que entre los dos
+trazos se siguen leyendo los párpados y trozos del iris. Se ve que había un ojo,
+se ve dónde estaba, y se ve que alguien lo anuló. Tachado no es borrado.
+
+```
+  X             ...,,,,,,,..         X  
+  XXXX   .,:;;cclclllloooooll;;,, XXXX  
+     XXXX dxkOkOOOkkkOO00000Ok XXXX     
+    :co XXXX MMWWNNXNNNNWWW XXXX ol:    
+    cdkKXW XXXX Okxxdddx XXXX 0Okxdl    
+    dxOOkoc:. XXX  MM  XXX    .:cdxd    
+  :;o;.  .,,,    XXXXXX   .:::.   .cc;. 
+ .;c     .,,,    XXXXXX    .,.      l;. 
+    ldk       XXX  WW  XXX       xdl    
+    ;cdxOO XXXX   :l;    XXXX ddolc:    
+     ,: XXXX kOO0KKKKK00kkd XXXX :.     
+     XXXX ;;clooxxkkkxxdolc;;: XXXX     
+  XXXX      .,,::::;:;::,,.       XXXX  
+  X                                  X  
 ```
 
 ## 15/16 · BIBLIOTECA · TODO LO QUE USTED VOLVIÓ A ESCRIBIR

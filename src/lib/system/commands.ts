@@ -16,7 +16,70 @@ import {
     readAnswer,
 } from '@/lib/system/confirm';
 import { isSessionWord } from '@/lib/system/morse';
-import { isV02, v02Word } from '@/lib/system/v02';
+import {
+    isV02,
+    v02Word,
+    didV02RoundTrip,
+    tripWord,
+    v02Label,
+} from '@/lib/system/v02';
+import {
+    clearLie,
+    countExchange,
+    markDared,
+    markFavor,
+    markGave,
+    markJokeOver,
+    markProved,
+    markDodged,
+    markLieStanding,
+    markLieSwallowed,
+    phaseAfter,
+    readEntity,
+    setAsk,
+    setPhase,
+    type EntityWorld,
+} from '@/lib/system/entity';
+import {
+    entityQuestionOf,
+    entityReply,
+    trialLine,
+    TRIAL_REPLY,
+} from '@/lib/system/entityVoice';
+import {
+    dodgedNow,
+    lieGoneStale,
+    trialDue,
+    wordIsRight,
+} from '@/lib/system/entityTrials';
+import { GIFT_WORD } from '@/lib/system/entityNotes';
+import {
+    REPORT,
+    UNBIND,
+    commandGiven,
+    entityGone,
+    reportedIt,
+    unbind,
+} from '@/lib/system/entityEnding';
+import {
+    favorDone,
+    favorDue,
+    favorLine,
+    willingNow,
+    type FavorWorld,
+} from '@/lib/system/entityFavors';
+
+/**
+ * Lo que se asume cuando nadie dice lo contrario: que no hiciste nada.
+ *
+ * `ctx.favors` es opcional por lo mismo que `ctx.lockedOut`: obligatorio dejaría
+ * en rojo los ficheros de test que arman un contexto a mano.
+ */
+const SIN_FAVORES: FavorWorld = {
+    sawV02Trash: false,
+    idleMs: 0,
+    filledNote: false,
+};
 import { allDropped } from '@/lib/system/dropped';
 import type { Lang } from '@/config/lang';
 import type { Localized, LocalizedPlural, Vars } from '@/i18n';
@@ -44,6 +107,13 @@ export interface CommandContext {
     integrity: number;
     theme: 'light' | 'dark';
     effectsEnabled: boolean;
+    /**
+     * Si la máquina suena.
+     *
+     * Hermano de `effectsEnabled` y por el mismo motivo: este módulo es PURO y
+     * no puede leer `localStorage` ni `matchMedia` para averiguarlo.
+     */
+    soundEnabled: boolean;
     secretsFound: number;
     secretsTotal: number;
     /** El registro de peticiones ya formateado (ver requestLog.ts). */
@@ -66,6 +136,26 @@ export interface CommandContext {
     /** Cuántas veces te ha echado de la nota, contando ÉSTA si toca. */
     kicks: number;
     /**
+     * ¿Sobreviviste alguna vez al fallo total?
+     *
+     * Lo usa el ente para saber si estuviste donde no se podía. Entra por acá y
+     * no se lee directamente porque vive en `useSystemState`, y este módulo no
+     * importa de `hooks` — la misma razón por la que `helpHint.ts` está suelto.
+     *
+     * ⚠ OPCIONAL A PROPÓSITO. Obligatorio dejaría en rojo los diez ficheros de
+     * test que arman un contexto a mano. Ausente significa «que se sepa, no»: el
+     * único que lo rellena de verdad es `useNoteCommands`, y lo hace siempre.
+     */
+    lockedOut?: boolean;
+    /**
+     * Lo que hace falta para saber si le cumpliste el favor que te pidió.
+     *
+     * Entra por acá y no se lee desde este módulo porque sale de sitios que
+     * `lib/system` no puede tocar —la papelera de la v0.2, el reloj de
+     * inactividad—, igual que `lockedOut`. Opcional por el mismo motivo.
+     */
+    favors?: FavorWorld;
+    /**
      * En qué idioma contesta el sistema.
      *
      * Es opcional para que este módulo siga probándose sin montar nada: si no
@@ -79,6 +169,19 @@ export type CommandEffect =
     | { kind: 'none' }
     | { kind: 'open-diagnostics' }
     | { kind: 'collapse' }
+    /**
+     * Apagar y encender, sin perder nada.
+     *
+     * ⚠ NO RECARGA LA PÁGINA, Y ÉSA ES LA GRACIA. Una recarga de verdad destruye
+     * el documento, y el nuevo nace sin permiso para sonar: el apagón se ve y no
+     * se oye, que es lo que se reportó una y otra vez. Un reinicio hecho desde
+     * dentro no navega a ninguna parte, así que el audio sigue desbloqueado y el
+     * ciclo entero —apagado, encendido, barras, rótulo, comprobación— se oye
+     * como se ve.
+     *
+     * Y no borra nada. Es el vecino inofensivo de `//reset`.
+     */
+    | { kind: 'reboot' }
     | { kind: 'clear-note' }
     | { kind: 'fetch-history' }
     | { kind: 'play-pong' }
@@ -99,7 +202,17 @@ export type CommandEffect =
     /** Enseña el borrado entero y no borra nada. La broma del «no». */
     | { kind: 'reset-prank' }
     | { kind: 'recover'; text: string }
-    | { kind: 'set-effects'; enabled: boolean };
+    | { kind: 'set-effects'; enabled: boolean }
+    | { kind: 'set-sound'; enabled: boolean }
+    /**
+     * Vacía la papelera.
+     *
+     * Lo único que cuesta aceptarle algo al ente. Es una pérdida de verdad —se
+     * va lo que hubiera ahí, incluido el `SYSTEM.LOG` fantasma— pero la
+     * papelera se vuelve a llenar con el uso, así que no cierra ningún secreto
+     * para siempre.
+     */
+    | { kind: 'empty-trash' };
 
 /** Una fila de la respuesta: texto, o un nombre que no se deja leer. */
 export type ReplyRow =
@@ -133,6 +246,17 @@ export interface CommandResult {
     rows?: ReplyRow[];
     /** Qué secreto queda marcado como hallado, si marca alguno. */
     secretId?: string;
+    /**
+     * Esta respuesta la dice ÉL, no la máquina.
+     *
+     * ⚠ LO NECESITA EL SONIDO, y no se puede deducir mirando el texto. La regla
+     * de la minúscula lo distingue a la vista, pero fiarse de eso sería atar el
+     * sonido a una convención de estilo: el día que una frase suya empiece con
+     * un nombre propio, la sala dejaría de hacerle sitio sin que nada fallara.
+     *
+     * Quien sabe quién contestó es quien resolvió, así que lo dice acá.
+     */
+    fromEntity?: true;
     /**
      * El comando se NEGÓ A EXISTIR, y por eso no cuenta como usado.
      *
@@ -467,6 +591,7 @@ const T = {
     fetchingHistory: { es: 'CONSULTANDO ACTAS…', en: 'CONSULTING THE RECORDS…' },
     openingDiag: { es: 'ABRIENDO DIAGNÓSTICO…', en: 'OPENING DIAGNOSTICS…' },
     effectsLabel: { es: 'EFECTOS', en: 'EFFECTS' },
+    soundLabel: { es: 'SONIDO', en: 'SOUND' },
     useVerb: { es: 'USÁ', en: 'USE' },
     systemLabel: { es: 'SISTEMA', en: 'SYSTEM' },
     noFilesThisShift: {
@@ -555,6 +680,16 @@ export const LEAKABLE: readonly string[] = [
     '//log',
     '//diag',
     '//date_off',
+    /*
+     * ⚠ `//reboot` SE FILTRA AUNQUE HAGA ALGO GRANDE, y cumple las tres reglas
+     * de arriba: no destruye nada —es el vecino inofensivo de `//reset`—, no es
+     * un eslabón que necesite otro antes, y no abre ninguna capa. Lo que enseña
+     * es el arranque, que ya viste al llegar.
+     *
+     * Lo que sí regala es OÍRLO entero, que en una recarga de navegador no se
+     * puede. Vale la pena que se encuentre.
+     */
+    '//reboot',
     '//history',
 ];
 
@@ -652,6 +787,227 @@ function v02Complete(): boolean {
 function allCommandsFound(): boolean {
     const escondidos = COMMANDS.filter((c) => c.hidden);
     return escondidos.length > 0 && escondidos.every((c) => isUnlocked(c.name));
+}
+
+/**
+ * La respuesta del ente a esta pregunta, o `null` si todavía no hay nadie.
+ *
+ * ⚠ AVANZA LA FASE ANTES DE CONTESTAR, no después. Si contestara primero, la
+ * frase que abre `burlon` saldría una pregunta tarde y la costura se vería justo
+ * donde el diseño existe para que no se vea.
+ *
+ * `null` significa «sigue dormido»: quien llama tiene que caer al comportamiento
+ * de siempre, que es la fachada intacta.
+ */
+function askEntity(
+    linea: string,
+    ctx: CommandContext,
+    lang: Lang
+): string | null {
+    const pregunta = entityQuestionOf(linea);
+    if (pregunta === null) return null;
+
+    const mundo: EntityWorld = {
+        /*
+         * Los dos sitios que esta etapa reconoce. El morse se suma en la etapa
+         * 2, cuando exista la pregunta que lo comprueba.
+         */
+        trespassed: didV02RoundTrip() || ctx.lockedOut === true,
+        /*
+         * ⚠ `> 1`, NO `> 0`. `ctx.kicks` es la cuenta prospectiva —
+         * `kickCount() + 1`, «cuántas van contando ésta»— así que en una sesión
+         * limpia vale 1. Con `> 0` el ente despertaría en el primer comando.
+         */
+        kicked: ctx.kicks > 1,
+    };
+
+    const antes = readEntity();
+    const fase = phaseAfter(antes, mundo);
+    if (fase !== antes.phase) setPhase(fase);
+
+    // El índice se captura ANTES de sumar y se usa para todo: para elegir la
+    // frase y para la clave del destrozo. Leerlo dos veces daría dos números.
+    const cuantos = readEntity().exchanges;
+
+    /*
+     * ⚠ LA TRAMPA SUSTITUYE A LA RESPUESTA, no se le añade.
+     *
+     * Si dijera las dos cosas —contestarte y además medirte— la pregunta se
+     * leería como un adorno pegado al final y no como lo que hace él. Cuando
+     * decide medirte DEJA DE CONTESTAR, que es exactamente lo que significa que
+     * haya cambiado el trato.
+     */
+    // ⚠ `tripWord()` y NO `v02Word()`: la segunda ya se borró. `leaveV02()`
+    // la tira al salir, y el ente sólo despierta al VOLVER — o sea siempre
+    // después. Lo único que sobrevive es la palabra del viaje.
+    /*
+     * ⚠ CUANDO SE DECIDE, TE LO PASA. Y ESTO VA ANTES QUE TODO LO DEMÁS.
+     *
+     * Es lo último que hace y lo único que le importa: una trampa después de
+     * haberse decidido sería él perdiendo el tiempo con juegos justo cuando
+     * acaba de pedirte ayuda de verdad.
+     *
+     * Una sola vez — `markGave()` cierra la puerta, y a partir de ahí lo que
+     * hay son dos comandos y una decisión tuya.
+     */
+    if (readEntity().gaveCommand !== true && willingNow(readEntity(), ctx.secretsFound)) {
+        markGave();
+        setPhase('dispuesto');
+        countExchange();
+        return TRIAL_REPLY.handing[lang];
+    }
+
+    // Se fue. En los dos finales no vuelve a contestar nunca.
+    if (entityGone()) return null;
+
+    /*
+     * ⚠ LOS FAVORES VAN ANTES QUE LAS TRAMPAS, y después de haberse decidido.
+     *
+     * Cuando ya notó que sabés lo que no deberías, deja de jugar y empieza a
+     * pedir. Seguir tendiéndote trampas ahí sería no haberse enterado de nada:
+     * lo que quiere de vos a estas alturas es otra cosa.
+     *
+     * PRIMERO SE MIRA SI EL QUE PIDIÓ YA ESTÁ HECHO. Es lo que hace que
+     * cumplirlo tenga efecto sin que haya que avisarle: él simplemente lo nota
+     * la próxima vez que le hablás, como todo lo demás que sabe de vos.
+     */
+    const favor = favorDue(readEntity(), ctx.secretsFound, {
+        /*
+         * ⚠ LA PUERTA ES HABER VISTO LO QUE NO SE VE, y el mismo dato que
+         * despierta al ente: cruzar la v0.2 o sobrevivir al fallo total.
+         */
+        sawTooMuch: mundo.trespassed,
+        /*
+         * ⚠ Y SÓLO SABÉS QUÉ ES LA v0.2 SI ESTUVISTE.
+         *
+         * A quien lo despertó insistiendo con `//hi` no se le manda a la 0.2:
+         * para esa persona es un sitio que no existe, y la frase se leía como
+         * un error del juego en vez de como un favor.
+         */
+        knowsV02: didV02RoundTrip(),
+    });
+
+    if (favor !== null) {
+        if (favorDone(favor, ctx.favors ?? SIN_FAVORES)) {
+            markFavor(favor);
+        } else {
+            countExchange();
+            return favorLine(favor, lang);
+        }
+    }
+
+    const toca = trialDue(readEntity(), { word: tripWord() });
+
+    if (toca === 'word') {
+        setAsk('word');
+        countExchange();
+        return trialLine('word', lang);
+    }
+
+    if (toca === 'dare') {
+        /*
+         * TE EMPUJA A UNA PUERTA QUE YA ESTABA.
+         *
+         * No te da nada: `//reset` y su broma existen desde mucho antes. Él
+         * sólo te señala dónde está y se queda mirando. Es el ejemplo exacto de
+         * su forma de pedir las cosas.
+         */
+        markDared();
+        countExchange();
+        return trialLine('dare', lang);
+    }
+
+    if (toca === 'offer') {
+        // El mismo `[s/n]` de `//reset`. La respuesta la recoge el bloque del
+        // principio de `run()`, que mira PRIMERO cuál de las dos preguntas era.
+        askConfirm('entity-clean');
+        countExchange();
+        return trialLine('offer', lang);
+    }
+
+    if (toca === 'lie') {
+        // Queda EN PIE. No se resuelve acá: se resuelve si vas a comprobarlo
+        // —`//ps`, más abajo— o si dejás de intentarlo, unas frases después.
+        markLieStanding();
+        countExchange();
+        return trialLine('lie', lang);
+    }
+
+    /*
+     * SE TE PASÓ.
+     *
+     * Seguiste hablándole y no fuiste a mirar. Él no te dice nada: sólo deja de
+     * estar disponible esa puerta, y sigue con la fachada puesta. Que no haya
+     * ningún aviso ES el castigo — te enterás de que había algo cuando ya no
+     * está.
+     */
+    if (lieGoneStale(readEntity(), { word: tripWord() })) {
+        clearLie();
+        markLieSwallowed();
+    }
+
+    /*
+     * «ESE ARCHIVO NO ESTÁ».
+     *
+     * Te mandó a buscar algo que no existe y fuiste a mirar. El remate llega
+     * ACÁ y no antes: sin haber ido no hay nada de qué reírse, y soltarlo antes
+     * lo convertiría en un aviso de que no busques justo después de mandarte a
+     * buscar.
+     *
+     * ⚠ Una sola vez. Un remate que se repite deja de ser un remate y pasa a
+     * ser un tic. Y no da ni premio ni castigo: sólo se rió de vos, que es lo
+     * suyo — meterle un secreto lo convertiría en contenido.
+     */
+    const eso = readEntity();
+    if (eso.leftBroma === true && eso.looked === true && eso.jokeOver !== true) {
+        markJokeOver();
+        countExchange();
+        return TRIAL_REPLY.jokeOver[lang];
+    }
+
+    /*
+     * «TE DIO MIEDO».
+     *
+     * Te retó, seguiste hablando y nunca lo escribiste. Se lo guarda y te lo
+     * saca ahora.
+     *
+     * ⚠ UNA SOLA VEZ, en el intercambio en que lo nota. Un reproche que sale en
+     * cada frase deja de ser un reproche y pasa a ser un aviso del sistema —y
+     * él no avisa, comenta.
+     */
+    const suyo = readEntity();
+    if (suyo.dared === true && suyo.dodged !== true && dodgedNow(suyo)) {
+        markDodged();
+        countExchange();
+        return TRIAL_REPLY.dareLater[lang];
+    }
+
+    // ⚠ `dicho` y no `texto`: `texto()` es el helper de respuestas de este
+    // fichero, y una constante con ese nombre lo ensombrecería aquí dentro.
+    const dicho = entityReply(pregunta, fase, cuantos, lang);
+    if (dicho === null) return null;
+
+    countExchange();
+
+    if (!isV02()) return dicho;
+
+    /*
+     * ⚠ DESDE LA v0.2 SALE ROTO.
+     *
+     * Un canal más viejo es un canal peor, y el destrozo YA EXISTE: `v02Label`
+     * rompe una de cada cuatro etiquetas —sin traducir, a medio hacer, o mal
+     * traducida— y siempre igual para la misma clave. Pasarlo por ahí es la
+     * limitación hecha visible sin inventar un solo mecanismo nuevo.
+     *
+     * La clave lleva la fase y la cuenta, así que cada frase tiene SU avería y
+     * la misma frase se rompe siempre igual. Y el inglés va de `raw`: una de
+     * las tres averías es quedarse sin traducir, y ahí es él llegando en el
+     * idioma en que lo escribieron.
+     */
+    return v02Label(`ente:${fase}:${cuantos}`, {
+        ok: dicho,
+        raw: entityReply(pregunta, fase, cuantos, 'en') ?? dicho,
+    });
 }
 
 const COMMANDS: readonly Command[] = [
@@ -874,11 +1230,90 @@ const COMMANDS: readonly Command[] = [
 
             // Sin argumento no cambia nada: informa. Un `//chaos` suelto que
             // apagara los efectos sería una sorpresa desagradable.
+            /*
+             * ⚠ EL PREFIJO SALE DE `COMMAND_PREFIX`, no escrito a mano.
+             *
+             * Acá decía `>chaos on`, con el prefijo VIEJO, y llevaba así desde
+             * que se cambió a `//`. Nadie lo vio porque no rompe nada: sólo le
+             * dice a quien lo lee que teclee algo que ya no existe.
+             *
+             * Leerlo de la constante es lo que impide que vuelva a pasar la
+             * próxima vez que el prefijo cambie. Hay un test que además exige
+             * que ningún texto del sistema lleve el viejo.
+             */
             const uso = T.useVerb[lang];
+            const p = COMMAND_PREFIX;
             return texto(
-                `${rotulo}: ${ctx.effectsEnabled ? 'ON' : 'OFF'} · ${uso} >chaos on | >chaos off`
+                `${rotulo}: ${ctx.effectsEnabled ? 'ON' : 'OFF'} · ${uso} ${p}chaos on | ${p}chaos off`
             );
         },
+    },
+    {
+        /*
+         * ⚠ ESTE COMANDO NO ES UN SECRETO, y no llevar `secretId` es deliberado.
+         *
+         * Los hallazgos son cosas que descubrís del sistema; un interruptor es
+         * un ajuste. Y hay una razón más dura: contarlo subiría la colección a
+         * treinta y cuatro, y `SECRETOS.md`, el panel y media docena de tests
+         * dicen treinta y tres. Un ajuste no puede mover el marcador del juego.
+         */
+        name: '//sound',
+        notInV02: true,
+        hidden: true,
+        summary: {
+            es: 'encender o apagar el sonido (on | off)',
+            en: 'turn the sound on or off (on | off)',
+        },
+        resolve: (ctx, args, lang) => {
+            const arg = args.trim().toLowerCase();
+            // `on` y `off` son argumentos, no palabras: no se traducen.
+            const rotulo = T.soundLabel[lang];
+
+            if (arg === 'on' || arg === 'off') {
+                const enabled = arg === 'on';
+                return {
+                    output: `${rotulo}: ${enabled ? 'ON' : 'OFF'}`,
+                    effect: { kind: 'set-sound', enabled },
+                };
+            }
+
+            // Sin argumento informa y no cambia nada, igual que `//chaos`: un
+            // `//sound` suelto que apagara la máquina sería una sorpresa.
+            const uso = T.useVerb[lang];
+            const p = COMMAND_PREFIX;
+            return texto(
+                `${rotulo}: ${ctx.soundEnabled ? 'ON' : 'OFF'} · ${uso} ${p}sound on | ${p}sound off`
+            );
+        },
+    },
+    {
+        name: '//reboot',
+        /*
+         * ⚠ ÉSTE SÍ EXISTE EN LA v0.2, y es de los pocos. La regla de esa
+         * versión es que no tiene lo que todavía no se había escrito — pero el
+         * botón de reinicio SÍ estaba ahí, en el panel de abajo, funcionando.
+         * Un botón que reinicia y un comando que contesta «comando desconocido»
+         * son dos versiones distintas de la misma máquina discutiendo entre
+         * ellas.
+         *
+         * Se arregla añadiendo y no quitando el botón: apagar y encender es lo
+         * más viejo que sabe hacer un equipo, y es lo último que se le quitaría.
+         * Lo que cambia entre versiones no es que exista, es lo que se VE
+         * mientras vuelve — ver `bootScript` y sus dos repartos.
+         */
+        hidden: true,
+        summary: { es: 'apagar y encender', en: 'turn it off and on again' },
+        /*
+         * ⚠ EL ÚNICO SITIO DONDE EL ARRANQUE SE OYE ENTERO.
+         *
+         * Una recarga del navegador destruye el documento y el nuevo nace sin
+         * permiso para sonar, así que su apagón se ve y no se oye. Acá no se
+         * navega a ninguna parte: el audio sigue desbloqueado desde que
+         * escribiste el comando, y el ciclo suena como se ve.
+         *
+         * No borra nada, y por eso puede filtrarse: ver `LEAKABLE`.
+         */
+        resolve: () => ({ output: '', effect: { kind: 'reboot' } }),
     },
     {
         name: '//panic',
@@ -895,6 +1330,28 @@ const COMMANDS: readonly Command[] = [
         summary: { es: 'saludar', en: 'say hello' },
         secretId: 'greeting',
         resolve: (ctx, _args, lang) => {
+            /*
+             * ⚠ EL SALUDO ES LA PUERTA, Y DESPUÉS ES SUYO.
+             *
+             * `//hi` es lo primero que cualquiera le dice a una máquina, y
+             * durante toda la fachada contesta ella —a gritos, en mayúsculas—
+             * hasta que te echa. Insistir hasta que te eche DOS VECES es una de
+             * las dos formas de despertarlo.
+             *
+             * Así que el saludo es también lo primero que él contesta: tecleás lo
+             * mismo que tecleaste veinte veces y esta vez responde otro, en
+             * minúsculas. No hay mejor sitio para que se note el cambio de quién
+             * está del otro lado.
+             *
+             * ⚠ Y VA ANTES DE LA EXPULSIÓN a propósito: una vez despierto ya no
+             * te echa nadie. Echarte es lo que hace un formulario que se cansó,
+             * y él no es el formulario.
+             */
+            const suyo = askEntity('hi', ctx, lang);
+            if (suyo !== null) {
+                return { ...texto(suyo), secretId: 'entity-awake', fromEntity: true as const };
+            }
+
             const reply = greetingFor(ctx.greetings, lang);
             if (!reply.kick) return texto(reply.text);
 
@@ -921,11 +1378,18 @@ const COMMANDS: readonly Command[] = [
         // El espejo de `//whoami`: allá no puede saber quién sos vos —la cookie
         // es httpOnly— y acá sí sabe quién es ella. La máquina se conoce mejor a
         // sí misma que a vos, y eso dice todo lo que hay que decir de esta app.
-        resolve: (ctx, _args, lang) =>
-            texto(
+        resolve: (ctx, _args, lang) => {
+            // El ente primero. Si sigue dormido cae a la fachada de siempre.
+            const dicho = askEntity('whoareu', ctx, lang);
+            if (dicho !== null) {
+                return { ...texto(dicho), secretId: 'entity-awake', fromEntity: true as const };
+            }
+
+            return texto(
                 chatReplyFor('who', ctx.chat, lang).text ??
                     unknownCommand('whoareu', lang)
-            ),
+            );
+        },
     },
     {
         name: '//howareu',
@@ -933,11 +1397,17 @@ const COMMANDS: readonly Command[] = [
         notInV02: true,
         hidden: true,
         summary: { es: 'preguntarle cómo está', en: 'ask how it is doing' },
-        resolve: (ctx, _args, lang) =>
-            texto(
+        resolve: (ctx, _args, lang) => {
+            const dicho = askEntity('howareu', ctx, lang);
+            if (dicho !== null) {
+                return { ...texto(dicho), secretId: 'entity-awake', fromEntity: true as const };
+            }
+
+            return texto(
                 chatReplyFor('how', ctx.chat, lang).text ??
                     unknownCommand('howareu', lang)
-            ),
+            );
+        },
     },
     {
         name: '//date_off',
@@ -1243,7 +1713,21 @@ const COMMANDS: readonly Command[] = [
     {
         name: '//attach_6',
         notInV02: true,
-        match: /^attach_(\d+)$/,
+        /*
+         * ⚠ SIN CEROS A LA IZQUIERDA. Con `\d+` a secas, `//attach_06` —y
+         * `//attach_006`, y los que quieras— abrían el vsync-test igual que el
+         * token bueno, porque `Number('06')` es 6. Se reportó jugando.
+         *
+         * No es quisquillosidad: la tabla de `//ps` escribe los PID SIN rellenar,
+         * así que `//attach_6` es lo único que ahí se lee. Un token «unico» que
+         * acepta infinitas escrituras deja de ser un token, y lo que se gana
+         * adivinando ceros no es un hallazgo.
+         *
+         * Lo que no case cae en «comando desconocido», que es exactamente lo que
+         * contesta una palabra inventada — y es lo correcto: un «casi» sería un
+         * cartel diciendo que ahí hay algo.
+         */
+        match: /^attach_([1-9]\d*)$/,
         hidden: true,
         summary: { es: '—', en: '—' },
         resolve: (_ctx, args, lang) => {
@@ -1378,11 +1862,43 @@ export function run(
      * su texto tiene que seguir su camino, incluido volver a ser una nota
      * normal.
      */
-    if (pendingConfirm() !== null) {
+    const preguntando = pendingConfirm();
+    if (preguntando !== null) {
         const respuesta = readAnswer(content);
 
         if (respuesta !== null) {
             clearConfirm();
+
+            /*
+             * ⚠ PRIMERO CUÁL, DESPUÉS QUÉ.
+             *
+             * Las dos preguntas del juego usan la misma letra en la misma
+             * línea. Sin esta rama, aceptarle al ente que limpie la papelera
+             * caería en el borrado del progreso entero — secretos, piezas,
+             * marcadores— por un `s` que quería decir otra cosa.
+             */
+            if (preguntando === 'entity-clean') {
+                if (respuesta === 'yes') {
+                    return {
+                        output: TRIAL_REPLY.offerTaken[lang],
+                        effect: { kind: 'empty-trash' },
+                    };
+                }
+
+                /*
+                 * Decirle que no es lo que abre, y no cuesta nada.
+                 *
+                 * Es la única trampa donde la respuesta prudente es la que
+                 * premia. Por eso aceptar tiene que costar algo de verdad: si
+                 * fuese gratis no habría decisión, habría un botón con dos
+                 * etiquetas.
+                 */
+                return {
+                    output: TRIAL_REPLY.offerRefused[lang],
+                    effect: SIN_EFECTO,
+                    secretId: 'entity-refused',
+                };
+            }
 
             if (respuesta === 'yes') {
                 return { output: '', effect: { kind: 'reset-all' } };
@@ -1400,7 +1916,21 @@ export function run(
              * borre y que a veces no borre sería una app que no hace lo que le
              * pedís, y eso no es un secreto, es un fallo.
              */
-            if (isPrank(random)) {
+            /*
+             * ⚠ SI EL RETO VINO DE ÉL, LA BROMA ES SEGURA.
+             *
+             * Fuera del reto sigue mandando el dado —una de cada cinco— porque
+             * ahí la gracia es justamente que no se sabe. Pero él prometió que
+             * ibas a descubrir algo, y una promesa que se cumple una de cada
+             * cinco veces no es una promesa: es un fallo con buena prensa.
+             *
+             * Sólo vale si todavía no te lo dio por esquivado: cumplirle a
+             * quien ya se rajó no premia nada.
+             */
+            const prometido =
+                readEntity().dared === true && readEntity().dodged !== true;
+
+            if (prometido || isPrank(random)) {
                 // Y da su pieza: una carita. Es el único momento en que la
                 // máquina se ríe CON vos y no de vos.
                 awardFrom('prank');
@@ -1450,6 +1980,45 @@ export function run(
         disponibles.find((c) => c.name === buscado) ??
         disponibles.find((c) => c.match?.test(corto));
 
+    /*
+     * ⚠ LA RESPUESTA A SU PREGUNTA VA ANTES QUE LA PUERTA DE LA v0.2.
+     *
+     * La respuesta ES la palabra de la v0.2, y teclear esa palabra normalmente
+     * cruza la puerta. Si esta recogida fuera después, contestarle bien te
+     * mandaría a la versión vieja en lugar de abrirte el lore: la recompensa
+     * exacta que no corresponde, y encima confusa — hiciste lo que te pidió y
+     * el sistema te llevó a otro sitio.
+     *
+     * CONSUME UNA SOLA LÍNEA. Aciertes o falles, la pregunta se retira: una
+     * pregunta que se queda puesta se come el comando siguiente y parece que la
+     * app se colgó.
+     */
+    if (readEntity().asking === 'word') {
+        setAsk(null);
+
+        if (wordIsRight(corto, tripWord())) {
+            /*
+             * El primer momento en que el intercambio va en las dos
+             * direcciones. Por eso abre fase y no da sólo una frase.
+             *
+             * ⚠ Y ANOTA QUE LE PASASTE UNA PRUEBA, que es distinto de estar en
+             * `hablando`: a `hablando` también se llega y después se sigue sin
+             * demostrar nada más. Sin esto, `willingNow` no da `true` nunca y
+             * el final no existe.
+             */
+            markProved();
+            setPhase('hablando');
+
+            return {
+                output: TRIAL_REPLY.wordOk[lang],
+                effect: SIN_EFECTO,
+                secretId: 'entity-proved',
+            };
+        }
+
+        return { output: TRIAL_REPLY.wordBad[lang], effect: SIN_EFECTO };
+    }
+
     // LA PALABRA DEL MORSE. Se reconoce acá y no como un comando declarado
     // porque cambia por sesión: metida en la lista se filtraría por `//help` y
     // por las ventanas de error, que sólo conocen los comandos declarados. Acá
@@ -1494,6 +2063,88 @@ export function run(
     }
 
     if (!command) {
+        /*
+         * ⚠ EL ENTE ESCUCHA JUSTO ACÁ, donde la máquina deja de entender.
+         *
+         * Las variantes escritas a mano —`//quien`, `//como_estas`, `//who`— no
+         * son comandos declarados, y NO PUEDEN SERLO por dos razones concretas:
+         *
+         *  · `allCommandsFound()` exige que TODOS los ocultos estén
+         *    desbloqueados. Uno más, que no se lista en ningún lado, dejaría el
+         *    arte de la terminal prácticamente inalcanzable.
+         *  · Un comando con patrón abierto se tragaría los desconocidos de
+         *    verdad, y con ellos el `rememberHint()` de abajo, que es de donde
+         *    cuelga el faro de `//help`.
+         *
+         * Puesto acá no toca ninguna de las dos cosas. Y de regalo funciona
+         * DENTRO DE LA v0.2 sin nada especial: ahí `//whoareu` está filtrado por
+         * `notInV02`, así que cae solo en esta rama.
+         *
+         * Que hable desde el sitio de «no te entiendo» tampoco es casualidad:
+         * está encerrado, y lo único que le llega es lo que el sistema descarta.
+         */
+        /*
+         * LOS DOS COMANDOS DEL FINAL.
+         *
+         * No están declarados en `COMMANDS`, por lo mismo que las variantes de
+         * sus preguntas: `allCommandsFound()` exige tener TODOS los ocultos, y
+         * dos que sólo existen después de un arco entero dejarían el arte de la
+         * terminal fuera del alcance de casi cualquiera.
+         *
+         * ⚠ Y NO EXISTEN HASTA QUE ÉL TE PASA EL SUYO. Antes contestan «comando
+         * desconocido», que es lo que son: teclear `//unbind` por casualidad no
+         * puede abrirte el final.
+         */
+        if (commandGiven() && !entityGone()) {
+            if (corto === UNBIND) {
+                unbind();
+                return { output: TRIAL_REPLY.unbound[lang], effect: SIN_EFECTO };
+            }
+
+            /*
+             * REPORTARLO ES EL OTRO FINAL, y se puede desde que te lo pasa —
+             * incluso sin haberlo ejecutado. Elegir taparlo sin mirar qué era es
+             * una decisión tan válida como la otra, y bastante más humana.
+             */
+            if (corto === REPORT) {
+                reportedIt();
+                return {
+                    output: TRIAL_REPLY.reported[lang],
+                    effect: SIN_EFECTO,
+                    secretId: 'entity-reported',
+                };
+            }
+        }
+
+        /*
+         * LAS INSTRUCCIONES DE LA NOTA DEL DÍA SIGUIENTE.
+         *
+         * La palabra va ESCRITA en la nota, así que no hay nada que adivinar:
+         * lo que se premia es haber vuelto y haberle hecho caso. Y sin la nota
+         * de por medio la palabra no existe — teclearla por casualidad no puede
+         * dar nada, porque el regalo es por haber vuelto.
+         *
+         * ⚠ Lo que suelta ACERCA, no entrega: la pista del `_`. Un favor que
+         * desbloquea algo es una misión, y entonces él pasa a ser un menú.
+         */
+        if (readEntity().leftVuelta === true && corto === GIFT_WORD) {
+            return {
+                output: TRIAL_REPLY.gift[lang],
+                effect: SIN_EFECTO,
+                secretId: 'entity-gift',
+            };
+        }
+
+        const dicho = askEntity(corto, ctx, lang);
+        if (dicho !== null) {
+            return {
+                output: dicho,
+                effect: SIN_EFECTO,
+                secretId: 'entity-awake',
+                fromEntity: true as const,
+            };
+        }
+
         const desconocido = say(T.unknownCommand, lang, { name: nombre.toUpperCase() });
 
         // ACÁ ES DONDE SE ENCIENDE EL FARO. Tecleaste algo que no existe y la
@@ -1546,13 +2197,42 @@ export function run(
         (v02Complete() ? awardFrom('v02') : null) ??
         (allCommandsFound() ? awardFrom('all-commands') : null);
 
-    return {
-        output: ganada ? `${output}
+    /*
+     * LA PRUEBA DE SU MENTIRA.
+     *
+     * Dijo que acá no corre nada más que él, y `//ps` lista varios procesos. No
+     * se añadió un comando para desmentirlo: se eligió una mentira que el juego
+     * YA PODÍA desmentir, que es lo que la hace justa.
+     *
+     * ⚠ Va acá, DESPUÉS de resolver, y se AÑADE a la salida en vez de
+     * reemplazarla. La lista de procesos tiene que seguir viéndose: es la
+     * prueba. Tragársela para poner en su lugar lo que él dice convertiría una
+     * comprobación en un truco de la app.
+     */
+    let pillado: string | null = null;
+    if (readEntity().lieStanding === true && command.name === '//ps') {
+        clearLie();
+        // La otra prueba. Las dos abren `hablando` y las dos cuentan.
+        markProved();
+        setPhase('hablando');
+        pillado = TRIAL_REPLY.lieProved[lang];
+    }
 
-${T.artEarned[lang]}` : output,
+    // Un `if` y no un ternario anidado: son dos añadidos distintos al mismo
+    // texto, y encadenarlos con `?:` lo dejaba ilegible.
+    let salida = output;
+    if (pillado) salida = `${output}
+
+${pillado}`;
+    else if (ganada) salida = `${output}
+
+${T.artEarned[lang]}`;
+
+    return {
+        output: salida,
         effect,
         rows,
-        secretId: secretId ?? command.secretId,
+        secretId: pillado ? 'entity-proved' : secretId ?? command.secretId,
     };
 }
 

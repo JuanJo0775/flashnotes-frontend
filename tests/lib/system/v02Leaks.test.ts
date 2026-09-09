@@ -66,3 +66,50 @@ describe('lo que sueltan las ventanas de error', () => {
         expect(hiddenCommandNames().length).toBeGreaterThan(0);
     });
 });
+
+describe('⚠ y el reinicio, que sí existe en las dos', () => {
+    /*
+     * Era la incoherencia más vieja de esa versión: el BOTÓN de reinicio se ve y
+     * funciona en el panel de abajo, y el comando contestaba «comando
+     * desconocido». Dos versiones de la misma máquina discutiendo entre ellas.
+     *
+     * Se arregló añadiendo el comando y no quitando el botón: apagar y encender
+     * es lo más viejo que sabe hacer un equipo, y es lo último que se le
+     * quitaría. Lo que cambia entre versiones no es que exista — es lo que se VE
+     * mientras vuelve, y de eso va `bootScript` con sus dos repartos.
+     */
+    /** Lo mínimo que `//reboot` mira del contexto: nada. */
+    const ctx = () =>
+        ({
+            now: new Date('2026-09-09T14:52:00'),
+            sessionStart: new Date('2026-09-09T14:00:00'),
+            notes: [],
+            integrity: 100,
+            theme: 'light' as const,
+            effectsEnabled: true,
+            soundEnabled: true,
+            secretsFound: 0,
+            secretsTotal: 12,
+            log: '',
+            greetings: 0,
+            chat: 0,
+            kicks: 0,
+            lang: 'es' as const,
+        }) as never;
+
+    it('se puede teclear dentro de la v0.2', async () => {
+        const { run, v02 } = await load();
+        v02.enterV02('NIDO');
+
+        const r = run('//reboot', ctx());
+
+        expect(r).not.toBeNull();
+        expect(r!.effect).toEqual({ kind: 'reboot' });
+    });
+
+    it('y sigue existiendo en la 1.0, igual que siempre', async () => {
+        const { run } = await load();
+
+        expect(run('//reboot', ctx())!.effect).toEqual({ kind: 'reboot' });
+    });
+});

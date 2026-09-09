@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useEvent } from '@/hooks/useEvent';
 import { wipeAt, wipeDuration, wipeLine } from '@/lib/system/wipe';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useT } from '@/i18n';
@@ -40,20 +41,35 @@ interface Props {
 }
 
 export default function WipeScreen({ onDone, prank = false }: Props) {
+    /*
+     * ⚠ LA IDENTIDAD SE FIJA ACÁ, y esto arregla un fallo reportado dos veces:
+     * «la animación de reiniciar queda congelada en algunos momentos».
+     *
+     * El padre pasa una flecha escrita en el JSX —una función NUEVA en cada
+     * render— y la página repinta sola por lo menos una vez por segundo, porque
+     * hay un reloj en la barra de estado. Con `onDone` en las dependencias, cada
+     * repintado desarmaba el temporizador del tramo y lo volvía a armar desde
+     * cero: un tramo más largo que un segundo NO TERMINABA NUNCA.
+     *
+     * Por eso pasaba «a veces» — la duración se sortea, y sólo se congelaba
+     * cuando el tramo salía largo. Ver `useEvent`.
+     */
+    const avisar = useEvent(onDone);
+
     const quieto = usePrefersReducedMotion();
     const t = useT();
     const [step, setStep] = useState(0);
 
     useEffect(() => {
         if (quieto) {
-            onDone();
+            avisar();
             return;
         }
 
         const fase = wipeAt(step, prank);
 
         if (fase.kind === 'done') {
-            onDone();
+            avisar();
             return;
         }
 
@@ -62,7 +78,7 @@ export default function WipeScreen({ onDone, prank = false }: Props) {
             wipeDuration(step, prank)
         );
         return () => clearTimeout(id);
-    }, [step, prank, quieto, onDone]);
+    }, [step, prank, quieto, avisar]);
 
     /*
      * EL DESVANECIDO SE APLICA AL DOCUMENTO, no acá dentro.

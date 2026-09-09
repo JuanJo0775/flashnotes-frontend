@@ -21,6 +21,7 @@ const ctx = (over: Partial<CommandContext> = {}): CommandContext => ({
     integrity: 100,
     theme: 'light',
     effectsEnabled: true,
+    soundEnabled: true,
     secretsFound: 3,
     secretsTotal: 12,
     log: '14:52:03  GET     /health  200  19ms',

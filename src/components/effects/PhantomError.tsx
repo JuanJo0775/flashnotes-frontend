@@ -9,6 +9,9 @@ import {
 } from '@/hooks/useSystemState';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { hiddenCommandNames } from '@/lib/system/commands';
+import { entityWindow } from '@/lib/system/entityWindows';
+import { readEntity } from '@/lib/system/entity';
+import { getLang } from '@/i18n';
 
 /**
  * Ventanas de error que aparecen y se cierran solas.
@@ -256,6 +259,41 @@ export default function PhantomError() {
 
         /** Abre una ventana y programa su cierre. */
         function abrirUna(despues: (ms: number, fn: () => void) => void) {
+            /*
+             * ⚠ ALGUNA ES SUYA, Y NO SE NOTA POR EL FORMATO.
+             *
+             * El ente no abre ventanas nuevas: usa éstas. Un cuadro con otra
+             * pinta se leería como una función de la app; uno idéntico a los de
+             * siempre, diciendo otra cosa, se lee como que alguien se metió
+             * donde no debía.
+             *
+             * Va PRIMERO porque cuando le toca a él, le toca a él: mezclarlo con
+             * el sorteo de la fuga de comandos daría ventanas suyas hablando de
+             * símbolos sin resolver, que no es lo que quiere decir.
+             */
+            const suya = entityWindow(readEntity().phase !== 'dormido');
+            if (suya !== null) {
+                const id = (nextId += 1);
+                setPhantoms((abiertas) =>
+                    abiertas.length >= PHANTOM_MAX_OPEN
+                        ? abiertas
+                        : [
+                              ...abiertas,
+                              {
+                                  id,
+                                  code: suya.code,
+                                  text: suya.text[getLang()],
+                                  topPct: 12 + Math.random() * 64,
+                                  leftPct: 8 + Math.random() * 62,
+                              },
+                          ]
+                );
+                despues(visibleMs(), () =>
+                    setPhantoms((abiertas) => abiertas.filter((v) => v.id !== id))
+                );
+                return;
+            }
+
             const mensaje =
                 Math.random() < LEAK_ODDS && hiddenCommandNames().length > 0
                     ? {

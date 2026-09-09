@@ -999,17 +999,152 @@
     font-family: var(--font-mono);
 }
 
-/* ⚠ ACÁ HUBO UN ENCENDIDO DEL TUBO Y SE QUITÓ.
+/* EL BOTÓN DE ENCENDIDO, en el panel frontal: junto al piloto de estado.
 
-   Era una línea que nacía en el centro y se abría hacia arriba y abajo, pintada
-   con la TINTA del tema — o sea, del color contrario al fondo. Se veía como una
-   pantalla ajena abriéndose encima, no como un monitor encendiéndose.
+   ⚠ ES UN `nav-tab`, COMO LOS MANDOS DE ARRIBA, y acá sólo va lo que ese estilo
+   no puede saber. Tuvo una caja propia con su borde y su relleno, y se reportó
+   al verlo: un control que se comporta como los demás y se pinta distinto
+   obliga a aprenderlo dos veces.
 
-   El apagón de un tubo ya existe y está bien: `collapse-dying`, el del fallo
-   crítico, después de la estática y las franjas. Ése es el gesto de la casa, y se
-   usa donde toca — en el borrado. Inventar su inverso para el arranque era un
-   segundo lenguaje para decir algo que no hacía falta decir: lo que abre el
-   arranque son las barras de color, y con eso basta. */
+   ⚠ HAY QUE MANTENERLO PULSADO, y el relleno es lo que lo cuenta. Un toque
+   suelto costaría el ciclo entero —ocho segundos, sin cancelar— y está al
+   alcance de cualquier roce. Ninguna máquina se reinicia de un roce. */
+.power-button {
+    position: relative;
+    /* Ni se encoge ni se estira: la barra reparte el resto, y un botón que
+       cambia de ancho movería el piloto de estado de sitio. */
+    flex: none;
+}
+
+/* LA CUENTA: una segunda copia del rótulo, encima y con los colores del
+   «activo» —los mismos con los que esta app dice que algo está seleccionado—,
+   que SUBE desde abajo mientras sostenés y BAJA al soltar.
+
+   ⚠ EL RECORTE LO PONE EL COMPONENTE, EN LÍNEA, Y NO HAY TRANSICIÓN AQUÍ.
+   Estuvo hecho con `transition: clip-path` y NO CORRÍA: se midió en el
+   navegador —con el movimiento reducido apagado y en un elemento aislado— y el
+   valor se quedaba clavado en el inicial, así que el botón se sostenía y no se
+   veía nada. Se reportó tal cual.
+
+   A pasos no puede fallar, y encima es más de la casa: un terminal llena de a
+   bloques, no con suavizado. Y el dibujo sale del MISMO contador que dispara el
+   reinicio, así que no pueden desincronizarse — antes eran dos números, uno acá
+   y otro en TypeScript, y hacía falta un test para atarlos. */
+.power-fill {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-inverse);
+    color: var(--color-ink);
+    pointer-events: none;
+}
+
+/* EL ENCENDIDO DEL TUBO. El inverso EXACTO del apagón, y por eso funciona.
+
+   ⚠ ACÁ HUBO OTRO ENCENDIDO ANTES Y SE QUITÓ, con razón: era una línea que nacía
+   en el centro y se abría hacia arriba y abajo. Se veía como una pantalla ajena
+   abriéndose ENCIMA, no como un monitor encendiéndose — un segundo lenguaje para
+   decir algo que la casa ya sabía decir.
+
+   La diferencia está en de dónde sale la forma. `collapse-dying` no es «una
+   línea»: es la IMAGEN ENTERA aplastándose a una línea y la línea cerrándose a
+   un punto. Recorrer esos mismos tres estados al revés —punto, línea, imagen— no
+   inventa nada: es la misma figura leyendo hacia el otro lado, que es literalmente
+   lo que hace un tubo al recibir tensión.
+
+   ⚠ Y TERMINA DESVANECIÉNDOSE, que es lo que lo salva. Un inverso literal
+   acabaría en un rectángulo opaco tapando la pantalla; al irse, la capa REVELA lo
+   que hay detrás en vez de cubrirlo. Tapar era el error de la versión vieja. */
+@keyframes tube-on {
+    0% {
+        transform: scaleY(0.02) scaleX(0);
+        opacity: 0;
+    }
+    /* El punto se abre en línea: es lo primero que hace un tubo. */
+    28% {
+        transform: scaleY(0.02) scaleX(1);
+        opacity: 1;
+    }
+    /* Y la línea se abre en imagen. */
+    60% {
+        transform: scaleY(1) scaleX(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scaleY(1) scaleX(1);
+        opacity: 0;
+    }
+}
+
+/*
+ * LO QUE ENSEÑA LA v0.2 MIENTRAS ARRANCA, que es la mitad y peor.
+ *
+ * ⚠ ESTATÍCA DONDE LA 1.0 PONE UNA CARTA DE AJUSTE. Una carta de ajuste es una
+ * señal que alguien EMITE para que la calibres; la estática es no tener nada
+ * enganchado. Es la misma rejilla de basura del colapso —mismo módulo, mismo
+ * componente— y acá sin las barras de arrastre: allá la señal se está rompiendo
+ * y algo la arrastra, acá sencillamente no hay nada.
+ */
+.v02-static {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    overflow: hidden;
+    color: var(--color-ink);
+    font-size: 13px;
+    line-height: 15px;
+    letter-spacing: 0;
+    white-space: pre;
+    /* El texto no se selecciona ni se lee: es materia, no contenido. */
+    user-select: none;
+    opacity: 0.55;
+}
+
+/*
+ * Y LA BARRA, sola en mitad de la pantalla.
+ *
+ * Sin rótulo encima ni detalle debajo: en la lista viene acompañada porque hay
+ * algo que cargar y algo que decir sobre ello. Acá no hay nada que decir — la
+ * máquina se está encendiendo, y lo único que sabe hacer es contar hasta un
+ * número que se inventa.
+ */
+.v02-load {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: clamp(0.6rem, 1.8vw, 1rem);
+    white-space: pre;
+    user-select: none;
+}
+
+/* ⚠ DOS NOMBRES PARA LA MISMA FIGURA, Y NO ES REDUNDANCIA. `.tube-on` es el
+   encendido de la 1.0 y `.v02-wake` el de la v0.2. El dibujo es idéntico porque
+   el CRISTAL es el mismo: a esa máquina le cambiaron el programa, no el monitor.
+
+   Lo que las distingue es el SONIDO, y por eso hacen falta dos marcas — la 1.0
+   enciende limpio y la v0.2 arranca con algo soltándose dentro de la caja. Con
+   una sola clase compartirían sonido, y entonces las dos versiones encenderían
+   igual. Se comparte el estilo, que es lo único que tienen en común. */
+.tube-on,
+.v02-wake {
+    position: absolute;
+    inset: 0;
+    background: var(--color-ink);
+    transform-origin: center;
+    animation: tube-on 700ms linear forwards;
+}
+
+/* ⚠ Y CON MOVIMIENTO REDUCIDO NO SE MUEVE NADA. La regla A3 manda sobre la
+   estética: el tramo dura lo mismo —el sonido y el guion no cambian— pero la capa
+   se queda quieta y transparente en vez de barrer la pantalla. */
+@media (prefers-reduced-motion: reduce) {
+    .tube-on,
+    .v02-wake {
+        animation: none;
+        opacity: 0;
+    }
+}
 
 /* Y LA APP ENTRA DESVANECIÉNDOSE, no de golpe. Aparecer de una después de un
    arranque de monitor rompe justo lo que el arranque acaba de construir: lo que
@@ -1064,7 +1199,13 @@ body > *:not(.boot-screen):not(.wipe-screen):not(.scanline-effect) {
     flex: 1;
 }
 
-.boot-logo {
+/* ⚠ DOS NOMBRES PARA LA MISMA COLUMNA, Y NO ES REDUNDANCIA. `.boot-logo` es
+   el rótulo del fabricante, y el sonido lo usa como marca: ahí suena el disco
+   leyendo. La puerta apila igual pero NO enseña ningún rótulo, así que
+   quedarse con la clase del logo la haría sonar a algo que no está pasando.
+   Se comparte el estilo, que es lo único que tenían en común. */
+.boot-logo,
+.boot-gate-stack {
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -1110,4 +1251,26 @@ body > *:not(.boot-screen):not(.wipe-screen):not(.scanline-effect) {
 
 .wipe-bars > span {
     flex: 1;
+}
+
+/* La puerta del arranque: «pulse una tecla».
+   Existe por una ley del navegador —el audio no arranca sin un gesto— y de paso
+   entra en la ficción, porque las máquinas de la época pedían exactamente eso.
+   Ver `BootGate`. */
+.boot-gate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--spacing) * 2);
+    background: none;
+    border: 0;
+    color: var(--color-ink);
+    font-size: var(--text-xl);
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    /* ⚠ EL AIRE ES PARA EL ANILLO DE FOCO, no es decoración. El botón recibe
+       el foco al aparecer, así que el contorno se pinta SIEMPRE — y sin relleno
+       iba pegado a las letras, cortando la primera y la última. Se reportó así:
+       «le falta margen a los lados en ese cuadro». */
+    padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 4);
 }

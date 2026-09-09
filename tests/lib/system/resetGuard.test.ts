@@ -37,6 +37,7 @@ const ctx = () =>
         integrity: 100,
         theme: 'light' as const,
         effectsEnabled: true,
+        soundEnabled: true,
         secretsFound: 0,
         secretsTotal: 27,
         log: '',

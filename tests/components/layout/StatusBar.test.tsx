@@ -106,3 +106,46 @@ describe('StatusBar · medidor', () => {
         expect(screen.getByText('[NOTA 1.5k/10k]')).toBeInTheDocument();
     });
 });
+
+describe('StatusBar · las marcas que hacen sonar la barra', () => {
+    /**
+     * ⚠ ESTE BLOQUE PROTEGE UNA `key` QUE PARECE DE ADORNO.
+     *
+     * El sonido se entera de lo que pasa mirando marcas del árbol, con un
+     * observador de `childList`: un nodo que APARECE. Sin `key`, React ve un
+     * `<span>` en el mismo hueco y reutiliza el elemento — le cambia la clase y
+     * el texto y no toca la estructura. Eso es una mutación de atributos, que
+     * ese observador no mira a propósito, porque el colapso reescribe su manta
+     * doce veces por segundo y mirarlas todas costaría carísimo.
+     *
+     * O sea: quitar la `key` deja la barra idéntica a la vista y deja el
+     * guardado MUDO, sin que falle nada. Por eso hay un test.
+     */
+    it('guardado y no guardado llevan su marca', () => {
+        pintar({ saveState: 'saved' });
+        expect(document.querySelector('.save-ok')).toBeInTheDocument();
+
+        pintar({ saveState: 'error' });
+        expect(document.querySelector('.save-fail')).toBeInTheDocument();
+    });
+
+    it('⚠ y al cambiar de estado el nodo viejo SE VA, no se recicla', () => {
+        const { rerender } = pintar({ saveState: 'saving' });
+
+        const viejo = document.querySelector('.status-bar .loading-dots')!;
+        expect(viejo).toBeInTheDocument();
+
+        rerender(
+            <StatusBar
+                notesCount={3}
+                isLoading={false}
+                error={null}
+                saveState="saved"
+            />
+        );
+
+        // Lo que el observador necesita ver: uno que se fue y otro que llegó.
+        expect(viejo.isConnected).toBe(false);
+        expect(document.querySelector('.save-ok')).toBeInTheDocument();
+    });
+});

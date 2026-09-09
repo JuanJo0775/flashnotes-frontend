@@ -28,14 +28,24 @@ describe('el guion', () => {
         expect(bootAt(guion, 0).phase).toBe('off');
     });
 
+    it('⚠ y SE ENCIENDE antes de que haya imagen', () => {
+        /*
+         * La misma figura del apagón al revés: un punto que se abre en línea y
+         * la línea en imagen. Vivía sólo en la puerta del arranque, así que un
+         * reinicio pedido desde dentro —`//reboot`— pasaba del apagón a las
+         * barras sin encenderse, o sea sin la mitad que se oye.
+         */
+        expect(bootAt(guion, 1).phase).toBe('wake');
+    });
+
     it('y luego barras, rótulo, comprobación', () => {
-        expect(bootAt(guion, 1).phase).toBe('bars');
-        expect(bootAt(guion, 2).phase).toBe('logo');
-        expect(bootAt(guion, 3).phase).toBe('check');
+        expect(bootAt(guion, 2).phase).toBe('bars');
+        expect(bootAt(guion, 3).phase).toBe('logo');
+        expect(bootAt(guion, 4).phase).toBe('check');
     });
 
     it('y termina', () => {
-        expect(bootAt(guion, 4).phase).toBe('done');
+        expect(bootAt(guion, 5).phase).toBe('done');
         expect(bootAt(guion, 99).phase).toBe('done');
     });
 
@@ -72,12 +82,12 @@ describe('cuánto tarda en arrancar', () => {
     });
 
     it('el reparto suma exactamente lo que se sorteó', () => {
-        // Sin contar el apagón, que es un gesto fijo y no una espera. Si el
-        // reparto no sumara el total, el arranque duraría otra cosa que la que
-        // dice durar y el sorteo dejaría de significar nada.
+        // Sin contar el apagón NI EL ENCENDIDO, que son gestos fijos y no
+        // esperas. Si el reparto no sumara el total, el arranque duraría otra
+        // cosa que la que dice durar y el sorteo dejaría de significar nada.
         const total = 6_000;
         const suma = bootScript(total)
-            .filter((p) => p.phase !== 'off')
+            .filter((p) => p.phase !== 'off' && p.phase !== 'wake')
             .reduce((t, p) => t + p.ms, 0);
 
         expect(suma).toBe(total);

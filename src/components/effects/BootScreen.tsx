@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEvent } from '@/hooks/useEvent';
 import {
     type BootPhase,
     bootAt,
@@ -14,6 +15,9 @@ import {
 } from '@/lib/system/boot';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { isLockedOutNow } from '@/hooks/useSystemState';
+import { isV02 } from '@/lib/system/v02';
+import AsciiStatic from '@/components/effects/AsciiStatic';
+import V02Bar from '@/components/effects/V02Bar';
 
 /**
  * El monitor encendiéndose.
@@ -57,6 +61,21 @@ interface Props {
 }
 
 export default function BootScreen({ onDone, from = 'off' }: Props) {
+    /*
+     * ⚠ LA IDENTIDAD SE FIJA ACÁ, y esto arregla un fallo reportado dos veces:
+     * «la animación de reiniciar queda congelada en algunos momentos».
+     *
+     * El padre pasa una flecha escrita en el JSX —una función NUEVA en cada
+     * render— y la página repinta sola por lo menos una vez por segundo, porque
+     * hay un reloj en la barra de estado. Con `onDone` en las dependencias, cada
+     * repintado desarmaba el temporizador del tramo y lo volvía a armar desde
+     * cero: un tramo más largo que un segundo NO TERMINABA NUNCA.
+     *
+     * Por eso pasaba «a veces» — la duración se sortea, y sólo se congelaba
+     * cuando el tramo salía largo. Ver `useEvent`.
+     */
+    const avisar = useEvent(onDone);
+
     const quieto = usePrefersReducedMotion();
     const [step, setStep] = useState(0);
 
@@ -83,16 +102,25 @@ export default function BootScreen({ onDone, from = 'off' }: Props) {
     // nada, sólo saber si ya se puede leer el almacenamiento.
     const locked = montado ? isLockedOutNow() : null;
 
+    /*
+     * ⚠ SE LEE IGUAL QUE EL BLOQUEO: sin suscribirse y sólo una vez montado.
+     * Nadie salta de versión con el arranque en pantalla —para eso habría que
+     * teclear un comando, y debajo del arranque no se teclea— así que
+     * suscribirse sólo serviría para repintar de más. Y leerlo antes de montar
+     * daría un dibujo en el servidor y otro en el cliente.
+     */
+    const v02 = montado ? isV02() : false;
+
     // El dado se tira UNA vez por encendido. Sorteando en cada paso, cada tramo
     // duraría lo suyo y el arranque no tendría una duración, tendría varias.
     const guion = useMemo(
-        () => (locked === null ? [] : bootScript(bootDuration(), locked, from)),
-        [locked, from]
+        () => (locked === null ? [] : bootScript(bootDuration(), locked, from, v02)),
+        [locked, from, v02]
     );
 
     useEffect(() => {
         if (quieto) {
-            onDone();
+            avisar();
             return;
         }
 
@@ -102,13 +130,13 @@ export default function BootScreen({ onDone, from = 'off' }: Props) {
         const { phase, ms } = bootAt(guion, step);
 
         if (phase === 'done') {
-            onDone();
+            avisar();
             return;
         }
 
         const id = setTimeout(() => setStep((n) => n + 1), ms);
         return () => clearTimeout(id);
-    }, [guion, locked, step, quieto, onDone]);
+    }, [guion, locked, step, quieto, avisar]);
 
     /*
      * LA APP ENTRA DESVANECIÉNDOSE cuando esto acaba.
@@ -166,6 +194,18 @@ export default function BootScreen({ onDone, from = 'off' }: Props) {
                 capa que se cierra sobre lo que haya debajo. */}
             {phase === 'off' && <div className="collapse-dying" />}
 
+            {/* Y LA CORRIENTE VOLVIENDO, que es la misma figura al revés: un
+                punto que se abre en línea y la línea en imagen. Comparte clase
+                con la puerta del arranque, así que suena sola.
+
+                ⚠ LA v0.2 ENCIENDE EL MISMO TUBO Y NO SUENA IGUAL, y por eso
+                lleva su propia marca con el mismo dibujo. El cristal es el
+                mismo —le cambiaron el programa, no el monitor— pero lo que se
+                oye al darle corriente a una máquina más vieja no es un
+                encendido limpio: es algo soltándose dentro de la caja. Ver
+                `.v02-wake` en `screens.ts`. */}
+            {phase === 'wake' && <div className={v02 ? 'v02-wake' : 'tube-on'} />}
+
             {phase === 'bars' && (
                 <div className="boot-bars">
                     {/* Con CSS y no con caracteres: los bloques no están en la
@@ -187,6 +227,31 @@ export default function BootScreen({ onDone, from = 'off' }: Props) {
             {phase === 'check' && (
                 <pre className="boot-check">{bootCheckLines().join('\n')}</pre>
             )}
+
+            {/*
+                Y LO QUE ENSEÑA LA v0.2, que es la mitad y peor.
+
+                ⚠ NO HAY CARTA DE AJUSTE, HAY ESTÁTICA. Una carta de ajuste es
+                una señal que alguien EMITE para que la calibres; la estática es
+                no tener nada enganchado. La 1.0 se presenta con la suya y su
+                tono de 1 kHz. Ésta no tiene nada que emitir, y eso es lo que
+                enseña.
+
+                ⚠ Y NO HAY RÓTULO DEL FABRICANTE NI COMPROBACIÓN DE MEMORIA. No
+                se le quitaron: no llegaron a escribirse. Nadie firmó esta
+                versión —el rótulo de la 1.0 es la broma de que nadie firmó
+                nunca nada— y una máquina que no sabe cuánta memoria tiene no la
+                cuenta en voz alta.
+            */}
+            {phase === 'static' && <AsciiStatic className="v02-static mono" />}
+
+            {/*
+                La barra de 40 columnas, la MISMA que la v0.2 usa para cargar la
+                lista: no se dibuja otra. Miente desde el primer número, pega
+                saltos hacia atrás y se pasa de cien, que es lo que hace una
+                barra cuyo total era una suposición.
+            */}
+            {phase === 'load' && <V02Bar className="v02-load" />}
         </div>
     );
 }

@@ -25,6 +25,17 @@ function corte(): string {
     return screen.getByTestId('pong-court').textContent ?? '';
 }
 
+/** Sube la paleta hasta arriba y espera a que la pelota se escape. */
+function pierde(limiteMs = 90_000) {
+    fireEvent.keyDown(window, { key: 'ArrowUp' });
+
+    for (let t = 0; t < limiteMs; t += 1000) {
+        corre(1000);
+        if (screen.queryByTestId('pong-over')) return true;
+    }
+    return false;
+}
+
 beforeEach(() => {
     jest.useFakeTimers();
     localStorage.clear();
@@ -64,13 +75,95 @@ describe('PongOverlay · cuándo aparece', () => {
 });
 
 describe('PongOverlay · salir', () => {
-    test('Escape cierra', () => {
+    test('⚠ Escape en partida PAUSA, no sale', () => {
+        /*
+         * Pedido jugando: «esc para pausar cuando un juego esta en proceso, y
+         * luego esc otra vez para salir». Es lo que hacia un juego de esa epoca,
+         * y es lo que evita el susto de irte sin querer con la pelota en el aire.
+         */
         const onClose = jest.fn();
         render(<PongOverlay open onClose={onClose} />);
 
         fireEvent.keyDown(window, { key: 'Escape' });
 
+        expect(screen.getByTestId('pong-paused')).toBeInTheDocument();
+        expect(onClose).not.toHaveBeenCalled();
+    });
+
+    test('y el segundo Escape ya sale', () => {
+        const onClose = jest.fn();
+        render(<PongOverlay open onClose={onClose} />);
+
+        fireEvent.keyDown(window, { key: 'Escape' });
+        fireEvent.keyDown(window, { key: 'Escape' });
+
+        expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    test.each([['Enter'], [' ']])('⚠ y «%s» continua la partida', (key) => {
+        // Las dos, porque en pausa uno aprieta «lo que sea» para seguir. Esperar
+        // a que alguien recuerde CUAL era la tecla es una pausa mal hecha.
+        render(<PongOverlay open onClose={jest.fn()} />);
+
+        fireEvent.keyDown(window, { key: 'Escape' });
+        fireEvent.keyDown(window, { key });
+
+        expect(screen.queryByTestId('pong-paused')).toBeNull();
+    });
+
+    test('⚠ y con el juego parado, la pelota no se mueve', () => {
+        // Una pausa que deja la partida corriendo por debajo no es una pausa.
+        render(<PongOverlay open onClose={jest.fn()} />);
+        fireEvent.keyDown(window, { key: 'Escape' });
+
+        const antes = corte();
+        corre(3_000);
+
+        expect(corte()).toBe(antes);
+    });
+
+    test('Escape cierra — el segundo, desde la pausa', () => {
+        /*
+         * ⚠ ESTE TEST CAMBIO CUANDO LLEGO LA PAUSA, y el cambio es el arreglo:
+         * el primer Escape ya no sale, PARA. Salir con la pelota en el aire por
+         * un toque de mas era el susto que la pausa evita.
+         *
+         * Lo que no cambia es que la salida sigue estando a un Escape de
+         * distancia desde cualquier sitio (REGLAS · A4).
+         */
+        const onClose = jest.fn();
+        render(<PongOverlay open onClose={onClose} />);
+
+        fireEvent.keyDown(window, { key: 'Escape' });
+        fireEvent.keyDown(window, { key: 'Escape' });
+
         expect(onClose).toHaveBeenCalled();
+    });
+
+    test('⚠ y en partida la pantalla DICE pausa, no salir', () => {
+        /*
+         * REPORTADO JUGANDO: «cuando el juego corre, el esc sea para pausar,
+         * porque actualmente sigue diciendo esc para salir».
+         *
+         * Es el mismo fallo que la pantalla de perdido, al revés: allá Escape
+         * funcionaba y no se anunciaba, y acá se anunciaba lo que ya no hace.
+         * Una pista que miente es peor que no tener pista — la de perdido hizo
+         * que se reportara como roto algo que andaba.
+         */
+        render(<PongOverlay open onClose={jest.fn()} />);
+
+        const pista = screen.getByTestId('pong-hint').textContent ?? '';
+        expect(pista).toMatch(/PAUSA|PAUSE/);
+        expect(pista).not.toMatch(/SALIR|QUIT/);
+    });
+
+    test('y con el juego parado sí ofrece la salida', () => {
+        // Porque ahí es donde el segundo Escape sale. Lo que se anuncia es lo
+        // que la tecla hace EN ESE SITIO, que es la regla entera.
+        render(<PongOverlay open onClose={jest.fn()} />);
+        fireEvent.keyDown(window, { key: 'Escape' });
+
+        expect(screen.getByTestId('pong-paused').textContent).toMatch(/SALIR|EXIT/);
     });
 
     test('cerrado, Escape ya no llama a nadie', () => {
@@ -258,17 +351,6 @@ describe('PongOverlay · el marcador en pantalla', () => {
 });
 
 describe('PongOverlay · al perder', () => {
-    /** Sube la paleta hasta arriba y espera a que la pelota se escape. */
-    function pierde(limiteMs = 90_000) {
-        fireEvent.keyDown(window, { key: 'ArrowUp' });
-
-        for (let t = 0; t < limiteMs; t += 1000) {
-            corre(1000);
-            if (screen.queryByTestId('pong-over')) return true;
-        }
-        return false;
-    }
-
     test('la partida termina cuando se escapa', () => {
         render(<PongOverlay open onClose={jest.fn()} />);
 
@@ -287,6 +369,40 @@ describe('PongOverlay · al perder', () => {
         pierde();
 
         expect(readScores().degraded.games).toBe(0);
+    });
+
+    test('⚠ y SIEMPRE se puede salir, tambien despues de perder', () => {
+        /*
+         * REPORTADO JUGANDO: «cuando pierde solo se puede empezar una nueva, no
+         * se puede salir dando esc».
+         *
+         * Es la regla A4: se puede salir de cualquier estado. Un juego que te
+         * deja elegir entre jugar otra o quedarte encerrado no es un juego, es
+         * una trampa — y este ademas lo pediste vos tecleando un comando, asi
+         * que la salida tiene que estar donde la dejaste.
+         */
+        const onClose = jest.fn();
+        render(<PongOverlay open onClose={onClose} />);
+        expect(pierde()).toBe(true);
+
+        fireEvent.keyDown(window, { key: 'Escape' });
+
+        expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    test('⚠ y la pantalla lo DICE, que es de lo que se quejaron', () => {
+        /*
+         * Escape siempre funciono. Lo que faltaba era que se viera: esta
+         * pantalla solo ofrecia otra partida, y las pistas de juego con el
+         * `[ESC] SALIR` quedan tapadas debajo.
+         *
+         * Una salida que no se ve no esta. Por eso el informe decia «solo se
+         * puede empezar una nueva» aunque el codigo dijera otra cosa.
+         */
+        render(<PongOverlay open onClose={jest.fn()} />);
+        expect(pierde()).toBe(true);
+
+        expect(screen.getByTestId('pong-over').textContent).toContain('ESC');
     });
 
     test('se puede volver a empezar', () => {
@@ -424,5 +540,156 @@ describe('PongOverlay · la avería no tiene excepciones', () => {
 
         const capa = container.querySelector('.pong-layer') as HTMLElement;
         expect(capa.style.getPropertyValue('--glitch-amp')).toBe('7px');
+    });
+});
+
+describe('PongOverlay · los dos efectos prestados', () => {
+    /**
+     * ⚠ SE COMPRUEBA QUE SE REUSA LA CLASE, NO QUE EXISTA UNA ANIMACIÓN NUEVA.
+     * Las dos capas de acá son las mismas del muro suelto —`.loose-slab` y
+     * `.wall-grain`—, ya catalogadas, ya con su CSS. Si alguien decide un día
+     * copiar el efecto en vez de prestarlo, estos tests siguen pasando y el
+     * catálogo del banco se queda con una entrada mintiendo; por eso el banco
+     * los lista por CLASE y no por sitio.
+     *
+     * Lo que sí atan es CUÁNDO sale cada uno, que es lo que se pidió.
+     */
+    // ⚠ Desde `.pong-frame` y no desde `.pong-stage`: el grano tuvo que salir de
+    // la mesa para quedar POR ENCIMA del velo de la pausa, que es lo que lo
+    // hacía invisible. El tic sigue dentro, que es donde tiene algo que invertir.
+    const capa = (c: string) => document.querySelector(`.pong-frame .${c}`);
+
+    test('el tic del pedazo sólo con el juego dibujado a caracteres', () => {
+        /*
+         * Pedido jugando: «con eso de el Tic del pedazo, cuando se renderiza,
+         * también quiero ese efecto». La caída de la tabla de glifos sortea
+         * cuándo llega, así que acá se avanza hasta pillarla y se mira lo que
+         * la pantalla PUBLICA, no el reloj.
+         */
+        const { container } = render(<PongOverlay open onClose={jest.fn()} />);
+        const capaRaiz = container.querySelector('.pong-layer')!;
+
+        // Con el vídeo sano no hay tic: sería un adorno, y esto es una avería.
+        expect(capaRaiz.getAttribute('data-render')).toBe('fluid');
+        expect(capa('loose-slab')).toBeNull();
+
+        let pillado = false;
+        for (let i = 0; i < 400 && !pillado; i += 1) {
+            corre(100);
+            pillado = capaRaiz.getAttribute('data-render') === 'quantised';
+        }
+
+        expect(pillado).toBe(true);
+        expect(capa('loose-slab')).not.toBeNull();
+    });
+
+    test('⚠ y el grano va recortado a la mesa, que por eso se veía temblar', () => {
+        /*
+         * `.wall-grain` se pinta con 20% de sobra por los cuatro lados para que
+         * al saltar no descubra un canto. La mesa no recortaba nada, así que el
+         * rectángulo asomaba y daba saltos por encima del marcador —«se ve feo y
+         * temblando»—. El recorte es lo que lo deja quieto en su sitio SIN
+         * quitarle el movimiento, que es lo que se pidió.
+         */
+        render(<PongOverlay open onClose={jest.fn()} />);
+        fireEvent.keyDown(window, { key: 'Escape' });
+
+        expect(capa('wall-grain')!.parentElement).toHaveClass('pong-grain');
+    });
+
+    test('⚠ y el grano va POR ENCIMA del velo de la pausa', () => {
+        /*
+         * REPORTADO JUGANDO, dos veces: «no lo veo en la parte de pausa del
+         * pinpong». Y estaba puesto — debajo del cartel, que es un velo al 55%.
+         * Un grano al 12% debajo de eso queda en un 5%: no se ve.
+         *
+         * El grano es suciedad del CRISTAL, y el cristal está delante de todo lo
+         * que se pinta, cartel incluido. Se comprueba por orden de hermanos, que
+         * es lo que decide quién pinta encima entre dos capas colocadas.
+         */
+        const { container } = render(<PongOverlay open onClose={jest.fn()} />);
+        fireEvent.keyDown(window, { key: 'Escape' });
+
+        const hermanos = [...container.querySelector('.pong-frame')!.children];
+        const cartel = hermanos.findIndex((e) => e.classList.contains('pong-paused'));
+        const grano = hermanos.findIndex((e) => e.classList.contains('pong-grain'));
+
+        expect(cartel).toBeGreaterThanOrEqual(0);
+        expect(grano).toBeGreaterThan(cartel);
+    });
+
+    test('⚠ y por encima del de perdido también, que es más opaco todavía', () => {
+        // El velo de perdido va al 82%. Debajo de eso no queda ni el 5%.
+        const { container } = render(<PongOverlay open onClose={jest.fn()} />);
+        expect(pierde()).toBe(true);
+
+        const hermanos = [...container.querySelector('.pong-frame')!.children];
+        const cartel = hermanos.findIndex(
+            (e) => e.getAttribute('data-testid') === 'pong-over'
+        );
+        const grano = hermanos.findIndex((e) => e.classList.contains('pong-grain'));
+
+        expect(cartel).toBeGreaterThanOrEqual(0);
+        expect(grano).toBeGreaterThan(cartel);
+    });
+
+    test('⚠ y el tic va al final de la mesa, o invierte el vacío', () => {
+        /*
+         * `backdrop-filter` actúa sobre lo que hay pintado DEBAJO. Con la capa
+         * puesta antes de la rejilla no había nada debajo todavía: el efecto
+         * corría en vacío, igual que le pasó a `filter` en la pared.
+         */
+        const { container } = render(<PongOverlay open onClose={jest.fn()} />);
+
+        let pillado = false;
+        for (let i = 0; i < 400 && !pillado; i += 1) {
+            corre(100);
+            pillado = !!container.querySelector('.pong-stage > .loose-slab');
+        }
+        expect(pillado).toBe(true);
+
+        const mesa = [...container.querySelector('.pong-stage')!.children];
+        const campo = mesa.findIndex((e) => e.classList.contains('pong-court'));
+        const tic = mesa.findIndex((e) => e.classList.contains('loose-slab'));
+
+        expect(tic).toBeGreaterThan(campo);
+    });
+
+    test('el grano hirviendo sale con el juego parado, y se va al seguir', () => {
+        // «Y cuando está en pausa quiero el grano hirviendo». Con la pelota
+        // quieta la pantalla se queda demasiado limpia, y una pantalla limpia y
+        // quieta parece apagada.
+        render(<PongOverlay open onClose={jest.fn()} />);
+        expect(capa('wall-grain')).toBeNull();
+
+        fireEvent.keyDown(window, { key: 'Escape' });
+        expect(capa('wall-grain')).not.toBeNull();
+
+        fireEvent.keyDown(window, { key: 'Enter' });
+        expect(capa('wall-grain')).toBeNull();
+    });
+
+    test('⚠ y también sobre la pantalla de perdido', () => {
+        /*
+         * PEDIDO JUGANDO: «y la misma de grano hirviendo en la parte de que se
+         * pierde, ahí también».
+         *
+         * La primera versión lo dejaba fuera razonando que perder no es una
+         * pausa. Es verdad que no lo es, pero no era eso lo que decidía: lo que
+         * decide es que las dos son una imagen PARADA, y una imagen parada y
+         * limpia parece una pantalla apagada.
+         */
+        render(<PongOverlay open onClose={jest.fn()} />);
+        expect(pierde()).toBe(true);
+
+        expect(capa('wall-grain')).not.toBeNull();
+    });
+
+    test('pero no mientras se juega: ahí lo que se mueve es la pelota', () => {
+        render(<PongOverlay open onClose={jest.fn()} />);
+
+        corre(2_000);
+
+        expect(capa('wall-grain')).toBeNull();
     });
 });

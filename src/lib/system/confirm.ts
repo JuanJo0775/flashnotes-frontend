@@ -18,8 +18,15 @@
  * trampa esperando a que alguien teclee una `y` por otra cosa.
  */
 
-/** Qué se está preguntando. Hoy sólo hay una, pero el mecanismo es general. */
-export type ConfirmId = 'reset';
+/**
+ * Qué se está preguntando.
+ *
+ * `entity-clean` es la oferta del ente: «puedo limpiar todo esto». Comparte
+ * mecanismo con `reset` —la misma letra, la misma línea— y justamente por eso
+ * ⚠ QUIEN LEA LA RESPUESTA TIENE QUE MIRAR CUÁL DE LAS DOS ERA. Confundirlas
+ * convierte un «sí, limpiá la papelera» en un borrado del progreso entero.
+ */
+export type ConfirmId = 'reset' | 'entity-clean';
 
 let pendiente: ConfirmId | null = null;
 

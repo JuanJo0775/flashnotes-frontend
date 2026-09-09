@@ -19,7 +19,13 @@ const fases = (guion: { phase: BootPhase }[]) => guion.map((t) => t.phase);
 
 describe('de dónde arranca', () => {
     it('por defecto, del apagón: es lo que hace una recarga de verdad', () => {
-        expect(fases(bootScript(BOOT_MAX_MS))).toEqual(['off', 'bars', 'logo', 'check']);
+        expect(fases(bootScript(BOOT_MAX_MS))).toEqual([
+            'off',
+            'wake',
+            'bars',
+            'logo',
+            'check',
+        ]);
     });
 
     it('tras el borrado sigue por el rótulo, sin repetir apagón ni barras', () => {
@@ -44,6 +50,7 @@ describe('de dónde arranca', () => {
         // Vale más un arranque entero que uno vacío.
         expect(fases(bootScript(BOOT_MAX_MS, false, 'done'))).toEqual([
             'off',
+            'wake',
             'bars',
             'logo',
             'check',
@@ -54,6 +61,11 @@ describe('de dónde arranca', () => {
         const entero = bootScript(BOOT_MAX_MS);
         const desdeBarras = bootScript(BOOT_MAX_MS, false, 'bars');
 
-        expect(desdeBarras).toEqual(entero.slice(1));
+        // ⚠ Se corta por el NOMBRE y no por un indice a mano: delante de las
+        // barras hay dos gestos fijos —apagon y encendido— y un `slice(1)`
+        // escrito a mano se quedo viejo la primera vez que aparecio el segundo.
+        const desde = entero.findIndex((t) => t.phase === 'bars');
+
+        expect(desdeBarras).toEqual(entero.slice(desde));
     });
 });

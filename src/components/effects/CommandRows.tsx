@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useEvent } from '@/hooks/useEvent';
 import ScrambleLine from '@/components/effects/ScrambleLine';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { ReplyRow } from '@/lib/system/commands';
@@ -30,6 +31,21 @@ interface Props {
 }
 
 export default function CommandRows({ rows, holdMs, onDone }: Props) {
+    /*
+     * ⚠ LA IDENTIDAD SE FIJA ACÁ, y esto arregla un fallo reportado dos veces:
+     * «la animación de reiniciar queda congelada en algunos momentos».
+     *
+     * El padre pasa una flecha escrita en el JSX —una función NUEVA en cada
+     * render— y la página repinta sola por lo menos una vez por segundo, porque
+     * hay un reloj en la barra de estado. Con `onDone` en las dependencias, cada
+     * repintado desarmaba el temporizador del tramo y lo volvía a armar desde
+     * cero: un tramo más largo que un segundo NO TERMINABA NUNCA.
+     *
+     * Por eso pasaba «a veces» — la duración se sortea, y sólo se congelaba
+     * cuando el tramo salía largo. Ver `useEvent`.
+     */
+    const avisar = useEvent(onDone);
+
     const reducedMotion = usePrefersReducedMotion();
     const [visibles, setVisibles] = useState(reducedMotion ? rows.length : 0);
 
@@ -50,9 +66,9 @@ export default function CommandRows({ rows, holdMs, onDone }: Props) {
     // nota en blanco es parte de cómo se siente.
     useEffect(() => {
         const salida = rows.length * ROW_MS + holdMs;
-        const id = setTimeout(onDone, salida);
+        const id = setTimeout(avisar, salida);
         return () => clearTimeout(id);
-    }, [rows.length, holdMs, onDone]);
+    }, [rows.length, holdMs, avisar]);
 
     return (
         <span className="mono">

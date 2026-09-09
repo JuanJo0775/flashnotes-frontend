@@ -35,7 +35,27 @@
 export const BOOT_MIN_MS = 2_000;
 export const BOOT_MAX_MS = 8_000;
 
-export type BootPhase = 'off' | 'bars' | 'logo' | 'check' | 'done';
+/**
+ * Los tramos de un encendido.
+ *
+ * ⚠ LOS DOS ÚLTIMOS SON DE LA v0.2 Y NO APARECEN NUNCA EN LA 1.0, ni al revés.
+ * No es una máquina con menos pantallas: es OTRA máquina, y por eso los tramos
+ * no se comparten. La 1.0 emite una carta de ajuste, se presenta y cuenta su
+ * memoria; la v0.2 no tiene carta que emitir, no hay nadie que la firme y no
+ * sabe cuánta memoria tiene. Lo único que puede enseñar es que no hay señal y
+ * una barra que se inventa el total.
+ */
+export type BootPhase =
+    | 'off'
+    | 'wake'
+    | 'bars'
+    | 'logo'
+    | 'check'
+    /** v0.2 · lo que enseña un monitor cuando no hay nada que enseñar. */
+    | 'static'
+    /** v0.2 · la barra de 40 columnas, mintiendo desde el primer número. */
+    | 'load'
+    | 'done';
 
 /**
  * El apagón con el que EMPIEZA el arranque.
@@ -49,6 +69,32 @@ export type BootPhase = 'off' | 'bars' | 'logo' | 'check' | 'done';
 export const BOOT_OFF_MS = 420;
 
 /**
+ * El compás oscuro en el que la máquina se despierta, antes de que haya imagen.
+ *
+ * ⚠ EXISTE PARA QUE EL ZUMBIDO TENGA SU SITIO. Se pidió jugando: «ese grave me
+ * gusta, que suene al entrar, y no quiero que se solape con las barras de
+ * colores». Sin este hueco el zumbido sólo puede entrar encima de la carta de
+ * ajuste, porque el navegador no deja sonar hasta el primer gesto y a partir de
+ * ahí todo pasa a la vez.
+ *
+ * Y no es un relleno: un equipo que acaba de recibir corriente zumba antes de
+ * tener imagen. Lo que se oye acá es el aparato existiendo, con la pantalla
+ * todavía negra.
+ */
+export const BOOT_WAKE_MS = 1_200;
+
+/*
+ * ⚠ `wake` ES UNA FASE DEL GUION Y NO SÓLO UN ACTO DE LA PUERTA.
+ *
+ * La puerta lo hacía por su cuenta, y así el ciclo entero sólo existía en la
+ * primera carga. Un arranque pedido desde dentro —`//reboot`— pasaba del apagón
+ * a las barras sin encenderse, o sea sin la mitad que se oye.
+ *
+ * Puesto en el guion, cualquiera que arranque desde `off` recorre el ciclo
+ * completo: se apaga, se enciende, y después hay imagen.
+ */
+
+/**
  * Cómo se reparte el tiempo entre los tramos.
  *
  * El encendido del tubo es fijo y corto: es un gesto físico, no una espera, y
@@ -59,6 +105,22 @@ const REPARTO: readonly { phase: BootPhase; peso: number }[] = [
     { phase: 'bars', peso: 0.25 },
     { phase: 'logo', peso: 0.5 },
     { phase: 'check', peso: 0.25 },
+];
+
+/**
+ * Y cómo lo reparte la v0.2, que tiene la mitad de cosas que enseñar.
+ *
+ * ⚠ LA BARRA SE LLEVA LA MAYOR PARTE, igual que el rótulo en la 1.0, y por el
+ * mismo motivo: es lo único que hay que MIRAR. La diferencia es qué se mira. En
+ * la 1.0 mirás un rótulo que dice quién hizo esto; acá mirás una barra que no
+ * sabe cuánto queda y lo dice igual, con su número pasándose de cien.
+ *
+ * La estática dura poco. Una pantalla sin señal es información —«no hay nada
+ * enganchado»— y la información se da y se pasa; sostenerla sería un efecto.
+ */
+const REPARTO_V02: readonly { phase: BootPhase; peso: number }[] = [
+    { phase: 'static', peso: 0.3 },
+    { phase: 'load', peso: 0.7 },
 ];
 
 /*
@@ -101,9 +163,17 @@ export function bootDuration(rand: () => number = Math.random): number {
 export function bootScript(
     totalMs: number,
     lockedOut = false,
-    from: BootPhase = 'off'
+    from: BootPhase = 'off',
+    v02 = false
 ): { phase: BootPhase; ms: number }[] {
     const apagon = { phase: 'off' as const, ms: BOOT_OFF_MS };
+
+    /*
+     * El encendido va pegado al apagón y FUERA DEL SORTEO, por lo mismo que él:
+     * los dos son gestos físicos, no esperas. Estirarlos con la duración que
+     * salga los convertiría en otra cosa.
+     */
+    const encendido = { phase: 'wake' as const, ms: BOOT_WAKE_MS };
 
     /*
      * ⚠ CON EL BLOQUEO PUESTO, EL ARRANQUE SE QUEDA EN LAS BARRAS.
@@ -122,9 +192,17 @@ export function bootScript(
      */
     if (lockedOut) return [{ phase: 'bars', ms: BOOT_BARS_LOCKED_MS }];
 
+    /*
+     * ⚠ EL APAGÓN Y EL ENCENDIDO SON LOS MISMOS EN LAS DOS VERSIONES, y eso es
+     * deliberado: el tubo es el mismo cristal. Lo que cambia es lo que la
+     * máquina hace DESPUÉS de tener corriente, que es donde vive la diferencia
+     * entre las dos. Darle a la v0.2 un apagón propio sería decir que también le
+     * cambiaron el monitor, y no: le cambiaron el programa.
+     */
     const completo = [
         apagon,
-        ...REPARTO.map(({ phase, peso }) => ({
+        encendido,
+        ...(v02 ? REPARTO_V02 : REPARTO).map(({ phase, peso }) => ({
             phase,
             ms: Math.round(totalMs * peso),
         })),

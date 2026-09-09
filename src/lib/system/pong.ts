@@ -145,6 +145,18 @@ export interface PongState {
     right: number;
     /** Cuántas veces la devolviste. Es el marcador del modo pared. */
     rally: number;
+    /**
+     * Cuántas veces reboto contra algo que NO es una paleta.
+     *
+     * ⚠ NO ES UN MARCADOR: es lo que deja que el sonido sepa que hubo un
+     * rebote. Devolverla ya se cuenta en `rally`, pero el techo, el suelo y la
+     * pared del modo `wall` no se contaban en ninguna parte, y un pong donde
+     * sólo suena la paleta suena a la mitad.
+     *
+     * Vive en el estado y no en el componente porque acá es donde se sabe: el
+     * rebote pasa dentro del paso de física, entre fotograma y fotograma.
+     */
+    bounces: number;
     scoreLeft: number;
     scoreRight: number;
     elapsedMs: number;
@@ -183,6 +195,7 @@ export function createGame(mode: PongMode): PongState {
         left: CENTRO_PALETA,
         right: CENTRO_PALETA,
         rally: 0,
+        bounces: 0,
         scoreLeft: 0,
         scoreRight: 0,
         elapsedMs: 0,
@@ -239,6 +252,7 @@ export function step(state: PongState, dtMs: number, inputs: Inputs): PongState 
     let { x, y, vx, vy } = state.ball;
 
     let rally = state.rally;
+    let bounces = state.bounces;
     let scoreLeft = state.scoreLeft;
     let scoreRight = state.scoreRight;
     let over = false;
@@ -267,9 +281,11 @@ export function step(state: PongState, dtMs: number, inputs: Inputs): PongState 
         if (y < 0) {
             y = 0;
             vy = -vy;
+            bounces += 1;
         } else if (y > FILA_MAX) {
             y = FILA_MAX;
             vy = -vy;
+            bounces += 1;
         }
 
         // El lado derecho: siempre paleta, en los dos modos.
@@ -295,8 +311,10 @@ export function step(state: PongState, dtMs: number, inputs: Inputs): PongState 
             if (state.mode === 'wall') {
                 // La pared devuelve sin premio: el peloteo mide lo que
                 // devolviste vos, y contar la pared regalaría medio marcador.
+                // Pero SÍ es un rebote, y como tal suena.
                 x = 0;
                 vx = -vx;
+                bounces += 1;
             } else if (golpea(left, y)) {
                 x = 0;
                 vx = -vx;
@@ -317,6 +335,7 @@ export function step(state: PongState, dtMs: number, inputs: Inputs): PongState 
         left,
         right,
         rally,
+        bounces,
         scoreLeft,
         scoreRight,
         elapsedMs: state.elapsedMs + dtMs,

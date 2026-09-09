@@ -2,6 +2,7 @@
 'use client';
 
 import { useSyncExternalStore, useState } from 'react';
+import { markV02TrashSeen } from '@/lib/system/entity';
 import { renderTrashLine } from '@/lib/system/v02TrashLine';
 import { v02Notice } from '@/lib/system/v02Messages';
 import {
@@ -48,6 +49,19 @@ export default function V02TrashView() {
         readV02Trashed,
         () => VACIO
     );
+
+    /*
+     * ⚠ QUE ESTUVISTE ACÁ.
+     *
+     * Es uno de los tres favores del ente —«andá a la 0.2 y mirá qué hay en la
+     * papelera. yo no puedo.»— y el único que la app no registraba ya por su
+     * cuenta: el silencio lo mide `idle.ts` y la nota llena tiene su pieza.
+     *
+     * Se anota al PINTAR y no en un efecto porque el linter prohíbe `setState`
+     * en efectos y esto no es estado de React: es una marca que se escribe una
+     * vez y se lee desde otro sitio. Escribirla de más no hace nada.
+     */
+    markV02TrashSeen();
 
     const [aviso, setAviso] = useState<string | null>(null);
 

@@ -12,6 +12,7 @@ import { notesApi } from '@/lib/api/notes.api';
 import TrashView from '@/components/notes/TrashView';
 import WipeScreen from '@/components/effects/WipeScreen';
 import BootScreen from '@/components/effects/BootScreen';
+import BootGate from '@/components/effects/BootGate';
 import type { BootPhase } from '@/lib/system/boot';
 import V02TrashView from '@/components/notes/V02TrashView';
 import DiagnosticPanel from '@/components/system/DiagnosticPanel';
@@ -19,6 +20,8 @@ import GlitchLayer from '@/components/effects/GlitchLayer';
 import SystemCollapse from '@/components/effects/SystemCollapse';
 import ChromaticFailure from '@/components/effects/ChromaticFailure';
 import PhantomError from '@/components/effects/PhantomError';
+import { LooseWall } from '@/components/effects/LooseWall';
+import SoundWire from '@/components/effects/SoundWire';
 import SystemLockout from '@/components/effects/SystemLockout';
 import PongOverlay from '@/components/effects/PongOverlay';
 import DeadPage from '@/components/effects/DeadPage';
@@ -26,7 +29,7 @@ import V02Skin from '@/components/effects/V02Skin';
 import V02Glitches from '@/components/effects/V02Glitches';
 import CollectionView from '@/components/notes/CollectionView';
 import { awardFrom, readRevealed } from '@/lib/system/asciiArt';
-import { markSecretFound, resetEverything } from '@/hooks/useSystemState';
+import { markSecretFound, rebootSystem, resetEverything } from '@/hooks/useSystemState';
 import { createV02Note, saveV02Note } from '@/lib/system/v02Notes';
 import { useV02Notes } from '@/hooks/useV02Notes';
 import V02Box from '@/components/notes/V02Box';
@@ -137,6 +140,47 @@ export default function Home() {
      * Quien ya hizo parte del recorrido pide otro tramo — ver `bootScript`.
      */
     const [booting, setBooting] = useState<BootPhase | null>('off');
+    /**
+     * Si todavía se espera el primer gesto.
+     *
+     * ⚠ SÓLO ANTES DEL PRIMER ARRANQUE. Los reinicios —`//reset`, el colapso—
+     * ya vienen DESPUÉS de un gesto, así que ahí el audio está desbloqueado y
+     * volver a pedir una tecla sería un peaje sin motivo.
+     */
+    const [esperandoGesto, setEsperandoGesto] = useState(true);
+
+    /*
+     * APAGAR Y ENCENDER, sin perder nada. Lo piden DOS sitios: el comando
+     * `//reboot` y el botón del panel de abajo.
+     *
+     * ⚠ ES UNA SOLA FUNCIÓN Y NO DOS IGUALES, y se pidió explícitamente que el
+     * botón hiciera «exactamente lo mismo» que el comando. Dos cierres idénticos
+     * cumplen eso el primer día y se separan el día que alguien ajuste uno: no
+     * habría error, sólo dos reinicios que ya no son el mismo.
+     *
+     * ⚠ DESDE EL APAGÓN, y no desde las barras: es lo único que hace el ciclo
+     * ENTERO —apagado, encendido, barras, rótulo, comprobación— y el único sitio
+     * donde se puede OÍR. Una recarga del navegador tiene el mismo dibujo y
+     * llega muda, porque destruye el documento y el nuevo nace sin permiso para
+     * sonar.
+     */
+    const reiniciar = useCallback(() => {
+        // ⚠ PRIMERO SE ARREGLA Y DESPUÉS SE ENSEÑA. Sin esto el reinicio era
+        // teatro: hacía el ciclo entero y devolvía la máquina igual de rota.
+        // Ver `rebootSystem` — se lleva las averías de sesión y nada más.
+        rebootSystem();
+
+        /*
+         * ⚠ Y SE LLEVA EL COLAPSO POR DELANTE. En la 1.0 el colapso se retira
+         * solo cuando termina de recuperarse; en la v0.2 NO se recupera —se
+         * queda detenida, esperando el interruptor— así que el interruptor
+         * tiene que poder quitarla. Sin esto, la única salida de esa pantalla
+         * sería recargar, que es exactamente la salida que no queremos obligar
+         * a nadie a encontrar (REGLAS · A4).
+         */
+        setCollapse(null);
+        setBooting('off');
+    }, []);
 
     // Lo mínimo que los comandos y el panel necesitan saber de las notas: nombre
     // y tamaño. No se les pasa el contenido — lo que escribís no se lee.
@@ -488,9 +532,16 @@ export default function Home() {
                 aria-hidden="true"
                 onAnimationIteration={() => setScanlineStutters(Math.random() < 0.25)}
             />
+            {/* El sonido, enchufado en un solo sitio. No pinta nada. */}
+            <SoundWire />
             <GlitchLayer />
             <ChromaticFailure />
             <PhantomError />
+            {/* Lo que él aflojó. Ver `LooseWall`: es una ventana más, salvo
+                que ésta responde. */}
+            {/* ⚠ EL FINAL REINICIA POR DENTRO, no con una recarga: así su
+                arranque SE OYE. Ver `reiniciar`. */}
+            <LooseWall onReboot={reiniciar} />
 
             {/* El fallo va sobre el contenedor y NUNCA sobre <body> ni sobre un
                 ancestro de los elementos fijos: el grano, el barrido y el flash
@@ -552,6 +603,7 @@ export default function Home() {
                                 notes={noteSummaries}
                                 onOpenDiagnostics={() => setShowDiagnostics(true)}
                                 onCollapse={() => setCollapse(registerCollapse())}
+                                onReboot={reiniciar}
                                 onPlayPong={() => setPlayingPong(true)}
                                 onKillPage={() => setDead(true)}
                                 onWipe={alBorrar}
@@ -592,6 +644,7 @@ export default function Home() {
 
                 {enCaja(
                     <StatusBar
+                    onReboot={reiniciar}
                     notesCount={totalVisible}
                     isLoading={isLoading}
                     error={error ?? historyError}
@@ -610,6 +663,15 @@ export default function Home() {
                 <SystemCollapse
                     notesCount={total}
                     level={collapse}
+                    /*
+                        EL INTERRUPTOR, para la v0.2 detenida: ahí no hay
+                        recuperación que anunciar, hay que apagar y encender. Es
+                        LA MISMA función del botón del panel y de `//reboot`, no
+                        una copia — se pidió explícitamente que el botón hiciera
+                        «exactamente lo mismo» que el comando, y esto es lo
+                        mismo otra vez.
+                    */
+                    onManualReboot={reiniciar}
                     onDone={() => {
                         setCollapse(null);
                         /*
@@ -678,7 +740,30 @@ export default function Home() {
             {/* El bloqueo lo lee él del almacenamiento: pasárselo desde acá no
                 servía, porque en el primer render del cliente todavía dice que
                 no lo hay (REGLAS · C2). */}
-            {booting !== null && (
+            {/*
+                LA PUERTA, y después el arranque. Ver `BootGate`: el navegador no
+                deja sonar hasta que hay un gesto, así que el arranque entero
+                —barras, rótulo, comprobación— transcurría mudo. Pedir la tecla
+                es la única salida, y encaja: las máquinas de esa época hacían
+                exactamente eso.
+
+                Recargar es APAGAR Y ENCENDER, en ese orden: la puerta enseña
+                primero el tubo cerrándose y después pide la tecla, y por eso al
+                pulsarla el guión sigue desde las barras.
+            */}
+            {esperandoGesto && (
+                <BootGate
+                    onReady={(desde) => {
+                        // La puerta dice desde dónde sigue el arranque: si ella ya
+                        // enseñó el apagón, el guión empieza en las barras y no
+                        // vuelve a apagar la máquina que acabas de encender.
+                        setBooting(desde);
+                        setEsperandoGesto(false);
+                    }}
+                />
+            )}
+
+            {!esperandoGesto && booting !== null && (
                 <BootScreen from={booting} onDone={() => setBooting(null)} />
             )}
 
