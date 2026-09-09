@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEvent } from '@/hooks/useEvent';
 import {
     type BootPhase,
     bootAt,
@@ -57,6 +58,21 @@ interface Props {
 }
 
 export default function BootScreen({ onDone, from = 'off' }: Props) {
+    /*
+     * ⚠ LA IDENTIDAD SE FIJA ACÁ, y esto arregla un fallo reportado dos veces:
+     * «la animación de reiniciar queda congelada en algunos momentos».
+     *
+     * El padre pasa una flecha escrita en el JSX —una función NUEVA en cada
+     * render— y la página repinta sola por lo menos una vez por segundo, porque
+     * hay un reloj en la barra de estado. Con `onDone` en las dependencias, cada
+     * repintado desarmaba el temporizador del tramo y lo volvía a armar desde
+     * cero: un tramo más largo que un segundo NO TERMINABA NUNCA.
+     *
+     * Por eso pasaba «a veces» — la duración se sortea, y sólo se congelaba
+     * cuando el tramo salía largo. Ver `useEvent`.
+     */
+    const avisar = useEvent(onDone);
+
     const quieto = usePrefersReducedMotion();
     const [step, setStep] = useState(0);
 
@@ -92,7 +108,7 @@ export default function BootScreen({ onDone, from = 'off' }: Props) {
 
     useEffect(() => {
         if (quieto) {
-            onDone();
+            avisar();
             return;
         }
 
@@ -102,13 +118,13 @@ export default function BootScreen({ onDone, from = 'off' }: Props) {
         const { phase, ms } = bootAt(guion, step);
 
         if (phase === 'done') {
-            onDone();
+            avisar();
             return;
         }
 
         const id = setTimeout(() => setStep((n) => n + 1), ms);
         return () => clearTimeout(id);
-    }, [guion, locked, step, quieto, onDone]);
+    }, [guion, locked, step, quieto, avisar]);
 
     /*
      * LA APP ENTRA DESVANECIÉNDOSE cuando esto acaba.

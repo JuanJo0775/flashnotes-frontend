@@ -171,3 +171,49 @@ describe('//help · no delata el juego', () => {
         }
     });
 });
+
+describe('⚠ el token es UNO, no una familia', () => {
+    /*
+     * REPORTADO JUGANDO: «el //attach_06 se muestra en ventana, y no quiero eso».
+     *
+     * Con `\d+` a secas, `//attach_06` —y `//attach_006`, y los que quieras—
+     * abrian el vsync-test igual que el token bueno, porque `Number('06')` es 6.
+     *
+     * No es quisquillosidad: la tabla de `//ps` escribe los PID SIN rellenar, asi
+     * que `//attach_6` es lo unico que ahi se lee. Un token «unico» que acepta
+     * infinitas escrituras deja de ser un token, y lo que se gana adivinando
+     * ceros no es un hallazgo.
+     */
+    beforeEach(() => {
+        // La puerta pide haber pasado por `//ps`.
+        corre('//ps');
+    });
+
+    test('el PID tal como lo escribe la tabla abre el juego', () => {
+        expect(corre('//attach_6').effect.kind).toBe('play-pong');
+    });
+
+    test.each([['//attach_06'], ['//attach_006'], ['//attach_0006']])(
+        '⚠ pero «%s» no es ese PID, y no abre nada',
+        (linea) => {
+            const r = corre(linea);
+
+            expect(r.effect.kind).not.toBe('play-pong');
+        }
+    );
+
+    test('⚠ y contesta lo mismo que una palabra inventada', () => {
+        /*
+         * Un «casi» seria peor que nada: confirmaria que ahi hay algo y
+         * convertiria la puerta cerrada en un cartel.
+         */
+        // Se tapa el nombre que la respuesta repite: lo que tiene que ser
+        // identico es la FORMA, no el eco de lo que tecleaste.
+        const sinNombre = (t: string) => t.replace(/: [^.]+\./, ': X.');
+
+        const inventada = corre('//qwerty').output;
+        const conCeros = corre('//attach_06').output;
+
+        expect(sinNombre(conCeros)).toBe(sinNombre(inventada));
+    });
+});

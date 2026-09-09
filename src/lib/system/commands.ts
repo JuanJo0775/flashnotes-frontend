@@ -1664,7 +1664,21 @@ const COMMANDS: readonly Command[] = [
     {
         name: '//attach_6',
         notInV02: true,
-        match: /^attach_(\d+)$/,
+        /*
+         * ⚠ SIN CEROS A LA IZQUIERDA. Con `\d+` a secas, `//attach_06` —y
+         * `//attach_006`, y los que quieras— abrían el vsync-test igual que el
+         * token bueno, porque `Number('06')` es 6. Se reportó jugando.
+         *
+         * No es quisquillosidad: la tabla de `//ps` escribe los PID SIN rellenar,
+         * así que `//attach_6` es lo único que ahí se lee. Un token «unico» que
+         * acepta infinitas escrituras deja de ser un token, y lo que se gana
+         * adivinando ceros no es un hallazgo.
+         *
+         * Lo que no case cae en «comando desconocido», que es exactamente lo que
+         * contesta una palabra inventada — y es lo correcto: un «casi» sería un
+         * cartel diciendo que ahí hay algo.
+         */
+        match: /^attach_([1-9]\d*)$/,
         hidden: true,
         summary: { es: '—', en: '—' },
         resolve: (_ctx, args, lang) => {
