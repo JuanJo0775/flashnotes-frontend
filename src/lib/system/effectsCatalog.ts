@@ -25,7 +25,26 @@
  */
 
 /** Dónde vive la animación. Es también dónde hay que ir a tocarla. */
-export type EffectSheet = 'animations' | 'glitch' | 'v02';
+export type EffectSheet = 'animations' | 'glitch' | 'terminal' | 'v02';
+
+/**
+ * Dónde vive cada hoja.
+ *
+ * ⚠ VIVE ACÁ Y NO EN LOS TESTS, y no es orden por gusto: estaba escrita a mano
+ * en DOS ficheros de test, y las dos copias se quedaron cortas a la vez. Se
+ * añadió una animación a `terminal.css` y no falló nada — el efecto vivió sin
+ * catalogar, o sea sin aparecer en la página de identidad, que es justo lo que
+ * esa página promete que no pasa.
+ *
+ * Con el mapa en el módulo, añadir una hoja obliga a declararla una vez y los
+ * dos tests la recorren solos.
+ */
+export const EFFECT_SHEETS: Record<EffectSheet, string> = {
+    animations: 'src/styles/animations.css',
+    glitch: 'src/styles/glitch.css',
+    terminal: 'src/styles/terminal.css',
+    v02: 'src/styles/v02.css',
+};
 
 export interface VisualEffect {
     /** El nombre del `@keyframes`. Su identidad, y lo que ata el test. */
@@ -264,6 +283,15 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
         cuando: 'El instante final del colapso, antes del reinicio.',
         hoja: 'glitch',
         clases: 'collapse-dying',
+    },
+    {
+        id: 'tube-on',
+        donde: 'capa',
+        nombre: 'Encendido del tubo',
+        que: 'Un punto se abre en raya y la raya en imagen, y se desvanece dejando ver lo que hay detrás.',
+        cuando: 'Al volver la corriente: el botón de reinicio, //reboot y la puerta del arranque.',
+        hoja: 'terminal',
+        clases: 'tube-on',
     },
     {
         id: 'phantom-open',

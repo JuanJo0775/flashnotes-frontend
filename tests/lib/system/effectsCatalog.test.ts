@@ -20,17 +20,15 @@
 
 import { readFileSync } from 'node:fs';
 import {
+    EFFECT_SHEETS,
     VISUAL_EFFECTS,
     VISUAL_EFFECTS_TOTAL,
     effectsOf,
     type EffectSheet,
 } from '@/lib/system/effectsCatalog';
 
-const HOJAS: Record<EffectSheet, string> = {
-    animations: 'src/styles/animations.css',
-    glitch: 'src/styles/glitch.css',
-    v02: 'src/styles/v02.css',
-};
+// El mapa vive en el modulo: dos copias a mano se quedaron cortas a la vez.
+const HOJAS = EFFECT_SHEETS;
 
 /** Los `@keyframes` que declara una hoja. */
 function animacionesDe(hoja: EffectSheet): string[] {

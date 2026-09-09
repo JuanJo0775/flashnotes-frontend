@@ -307,6 +307,20 @@ marca.
 | `.collapse-reboot` | La máquina leyendo para volver, y sigue leyendo mientras carga |
 | `.boot-check` | El bip de POST: memoria contada, todo bien |
 
+⚠ **El tic del teletipo va por LÍNEA, nunca por carácter.** Las respuestas se
+teclean letra a letra —dieciocho milisegundos cada una— y un tic por carácter
+sería una ametralladora aunque la compuerta lo recortara. Un teletipo golpea el
+papel una vez por renglón, y ése es el ritmo que hace que una respuesta se sienta
+**impresa** en lugar de aparecida.
+
+Y no toca el marcado de la respuesta, que era la tentación: envolver cada línea en
+su propio elemento habría cambiado cómo se parten las largas —la respuesta usa
+`pre-wrap` y las filas de `//help` usan `pre`— y un sonido no puede permitirse
+mover la maquetación. Se observa el texto donde ya está, con un observador acotado
+a la respuesta. Cuenta las dos formas de imprimir un renglón que tiene esta app:
+un salto de línea en el texto tecleado y una fila entera de las que `//help`
+revela de golpe.
+
 ⚠ **Y apagar y encender ARREGLA lo que arregla un reinicio.** El botón y
 `//reboot` hacían el ciclo entero y devolvían la máquina igual de rota; una
 máquina que se reinicia y sigue rota no se reinició. Ahora se lleva las averías de
@@ -623,9 +637,7 @@ Nada de esto existe fuera de desarrollo.
 
 - **El final** (§26): el crujido que sube con cada golpe, la caída, el ojo, los
   200 ms de silencio absoluto y el reinicio.
-- **El tic del teletipo.** La voz existe (`tick`) y todavía no tiene sitio: las
-  respuestas se teclean carácter a carácter, y sólo `//help` se revela por
-  líneas. Un tic por carácter sería una ametralladora, así que espera a que haya
-  un momento que de verdad imprima renglones.
+- **El condensador.** La voz existe (`capacitor`) y todavía no tiene momento: un
+  condensador soltándose dentro de la caja pide un suceso que hoy no ocurre.
 - **Las muestras.** Cero por ahora, y ésa era la idea: sintético primero, y una
   muestra CC0 sólo donde el sintético falle la prueba de oído.

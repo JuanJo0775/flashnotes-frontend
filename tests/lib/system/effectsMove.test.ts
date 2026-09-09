@@ -21,13 +21,11 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { VISUAL_EFFECTS } from '@/lib/system/effectsCatalog';
+import { EFFECT_SHEETS, VISUAL_EFFECTS } from '@/lib/system/effectsCatalog';
 
-const HOJAS = [
-    'src/styles/animations.css',
-    'src/styles/glitch.css',
-    'src/styles/v02.css',
-] as const;
+// El mapa vive en el modulo: estaba escrito a mano aca Y en el otro test, y las
+// dos copias se quedaron cortas a la vez cuando aparecio `terminal.css`.
+const HOJAS = Object.values(EFFECT_SHEETS);
 
 const CSS = HOJAS.map((f) => readFileSync(f, 'utf8')).join('\n');
 

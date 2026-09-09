@@ -168,6 +168,97 @@ describe('el glitch', () => {
     });
 });
 
+describe('el tic del teletipo', () => {
+    /*
+     * ⚠ POR LINEA Y NUNCA POR CARACTER. Las respuestas se teclean letra a letra
+     * —dieciocho milisegundos cada una— y un tic por caracter seria una
+     * ametralladora aunque la compuerta lo recortara. Un teletipo golpea el papel
+     * una vez por renglon.
+     */
+    const unTic = () => new Promise((r) => setTimeout(r, 90));
+
+    /** La respuesta, como la monta el editor: un hueco donde crece el texto. */
+    function abrirRespuesta() {
+        const el = document.createElement('span');
+        el.className = 'editor-reply-body';
+        document.body.append(el);
+        return el;
+    }
+
+    it('⚠ escribir DENTRO de una linea no suena', async () => {
+        const el = abrirRespuesta();
+        conLaSalaYaEncendida();
+        await unTic();
+        const antes = marca();
+
+        // Se teclean letras, sin cerrar ningun renglon.
+        for (const c of 'MEMORIA') {
+            el.textContent += c;
+            await unTic();
+        }
+
+        expect(fuentes(antes)).toHaveLength(0);
+        el.remove();
+    });
+
+    it('y cada renglon que se cierra da UN golpe', async () => {
+        const el = abrirRespuesta();
+        conLaSalaYaEncendida();
+        await unTic();
+        const antes = marca();
+
+        el.textContent = 'PRIMERA\n';
+        await unTic();
+        const trasUna = fuentes(antes).length;
+
+        el.textContent = 'PRIMERA\nSEGUNDA\n';
+        await unTic();
+
+        expect(trasUna).toBeGreaterThan(0);
+        expect(fuentes(antes).length).toBeGreaterThan(trasUna);
+        el.remove();
+    });
+
+    it('⚠ y una fila revelada de golpe tambien cuenta como renglon', async () => {
+        /*
+         * `//help` no se teclea: revela una FILA entera cada vez. Son las dos
+         * formas de imprimir un renglon que tiene esta app, y las dos tienen que
+         * sonar igual — si no, la lista mas larga del juego seria la unica muda.
+         */
+        const el = abrirRespuesta();
+        conLaSalaYaEncendida();
+        await unTic();
+        const antes = marca();
+
+        const fila = document.createElement('span');
+        fila.className = 'reply-row';
+        fila.textContent = 'COMANDO';
+        el.append(fila);
+        await unTic();
+
+        expect(fuentes(antes).length).toBeGreaterThan(0);
+        el.remove();
+    });
+
+    it('y cuando la respuesta se va, deja de escuchar', async () => {
+        // Un observador que sobrevive a su elemento es el fallo clasico del
+        // temporizador que se arma y no se desarma.
+        const el = abrirRespuesta();
+        conLaSalaYaEncendida();
+        await unTic();
+
+        el.remove();
+        await unTic();
+        const antes = marca();
+
+        // Ya fuera del documento: nada de lo que le pase puede sonar.
+        el.textContent = 'FANTASMA\n';
+        await unTic();
+
+        expect(fuentes(antes)).toHaveLength(0);
+    });
+});
+
 describe('ganarse una pieza de arte', () => {
     /** Lo justo para que corran los avisos del almacen. */
     const unTic = () => new Promise((r) => setTimeout(r, 80));

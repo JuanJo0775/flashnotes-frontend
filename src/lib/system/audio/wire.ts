@@ -549,6 +549,66 @@ export function startSound(): () => void {
         otra();
     };
 
+    /*
+     * EL TIC DEL TELETIPO, una vez por LÍNEA impresa.
+     *
+     * ⚠ POR LÍNEA Y NUNCA POR CARÁCTER. Las respuestas se teclean letra a letra
+     * —dieciocho milisegundos cada una— y un tic por carácter sería una
+     * ametralladora aunque la compuerta lo recortara. Un teletipo golpea el papel
+     * una vez por renglón, y ése es el ritmo que hace que una respuesta se sienta
+     * IMPRESA en lugar de aparecida.
+     *
+     * ⚠ Y NO TOCA EL MARCADO DE LA RESPUESTA, que era la tentación. Envolver cada
+     * línea en su propio elemento habría cambiado cómo se parten las largas —la
+     * respuesta usa `pre-wrap` y las filas de `//help` usan `pre`, que es otra
+     * cosa— y un sonido no puede permitirse mover la maquetación. Se observa el
+     * texto donde ya está.
+     *
+     * Cuenta las dos formas de imprimir un renglón que tiene esta app: un salto
+     * de línea en el texto tecleado, y una fila entera de las que `//help` revela
+     * de golpe. Las dos crecen de una en una.
+     */
+    let teletipo: MutationObserver | null = null;
+    let lineasAntes = 0;
+
+    const cuantasLineas = (el: Element) =>
+        (el.textContent?.split('\n').length ?? 1) - 1 + el.querySelectorAll('.reply-row').length;
+
+    const mirarTeletipo = () => {
+        const el = document.querySelector('.editor-reply-body');
+
+        if (!el) {
+            teletipo?.disconnect();
+            teletipo = null;
+            lineasAntes = 0;
+            return;
+        }
+
+        // Ya se está mirando ésta. Volver a observar dejaría dos tics por línea.
+        if (teletipo) return;
+
+        lineasAntes = cuantasLineas(el);
+
+        teletipo = new MutationObserver(() => {
+            const ahora = cuantasLineas(el);
+
+            if (ahora > lineasAntes) {
+                huboActividad();
+                play('tick');
+            }
+
+            lineasAntes = ahora;
+        });
+
+        /*
+         * ⚠ `characterData` ACÁ Y NO EN EL `body`. El texto crece letra a letra,
+         * así que hay que mirar los datos y no sólo los hijos — pero mirar el
+         * documento entero a ese detalle sería carísimo. Acotado a la respuesta,
+         * que es un elemento pequeño y que casi nunca existe, no cuesta nada.
+         */
+        teletipo.observe(el, { childList: true, subtree: true, characterData: true });
+    };
+
     const mirarPantallas = () => {
         // UNA sola pasada por el documento y no una por marca: esto corre en cada
         // mutación del `body` entero, y el colapso reescribe su manta de estática
@@ -613,6 +673,8 @@ export function startSound(): () => void {
                 visto.delete(s.mark);
             }
         }
+
+        mirarTeletipo();
     };
 
     const observadorPantallas = new MutationObserver(mirarPantallas);
@@ -634,6 +696,7 @@ export function startSound(): () => void {
         observador.disconnect();
         observadorRaiz.disconnect();
         observadorPantallas.disconnect();
+        teletipo?.disconnect();
         stopBarsTone();
     };
 }

@@ -115,6 +115,7 @@ const SUELTAS: { name: VoiceName; label: string; nota: string }[] = [
 const TITULO_HOJA: Record<EffectSheet, string> = {
     animations: 'Ambiental · lo que siempre está',
     glitch: 'Avería · el fallo, en todas sus formas',
+    terminal: 'Chasis · el aparato encendiéndose y apagándose',
     v02: 'v0.2 · la versión vieja',
 };
 

@@ -89,8 +89,7 @@ export const EVENT_SOUNDS: readonly EventSound[] = [
     {
         what: 'Una línea impresa por el teletipo, nunca un carácter',
         voice: 'tick',
-        where: 'todavía en ninguna parte',
-        pending: true,
+        where: 'el texto de la respuesta, contando renglones',
     },
     {
         what: 'Ganarse una pieza de arte: un cajón que se abre',
