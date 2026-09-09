@@ -17,6 +17,16 @@
  *     propio camino para descubrirse.
  *
  * Queda lo que es curioso y no abre nada: se lee, se sonríe, y ahí termina.
+ *
+ * ⚠ `//reboot` ES LA EXCEPCIÓN QUE CONFIRMA EL CRITERIO. Hace algo grande —el
+ * ciclo entero de apagado y encendido— y aun así cumple las tres reglas: no
+ * destruye nada, no necesita ningún comando antes, y no abre ninguna capa. Lo
+ * que ENSEÑA es el arranque, que ya viste al llegar.
+ *
+ * Lo que regala es OÍRLO. Una recarga del navegador tiene el mismo dibujo y
+ * llega muda, porque destruye el documento y el nuevo nace sin permiso para
+ * sonar. Este comando no navega a ninguna parte, así que el ciclo suena como se
+ * ve — y eso vale la pena que se encuentre.
  */
 
 import { LEAKABLE, leakableCommands } from '@/lib/system/commands';
@@ -24,7 +34,15 @@ import { LEAKABLE, leakableCommands } from '@/lib/system/commands';
 describe('qué puede filtrarse', () => {
     it('sólo los callejones sin salida', () => {
         expect([...LEAKABLE].sort()).toEqual(
-            ['//uptime', '//sudo', '//log', '//diag', '//date_off', '//history'].sort()
+            [
+                '//uptime',
+                '//sudo',
+                '//log',
+                '//diag',
+                '//date_off',
+                '//reboot',
+                '//history',
+            ].sort()
         );
     });
 

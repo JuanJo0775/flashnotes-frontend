@@ -56,6 +56,8 @@ interface NoteEditorProps {
     notes?: readonly { title: string; chars: number }[];
     onOpenDiagnostics?: () => void;
     onCollapse?: () => void;
+    /** `//reboot`: apaga y enciende sin recargar, o sea sin perder el sonido. */
+    onReboot?: () => void;
     /** Abre el `vsync-test`: sólo lo pide `//attach_6`. */
     onPlayPong?: () => void;
     /** Insististe hasta que te echó tres veces. */
@@ -77,6 +79,7 @@ export default function NoteEditor({
     notes = [],
     onOpenDiagnostics,
     onCollapse,
+    onReboot,
     onPlayPong,
     onKillPage,
     onWipe,
@@ -150,6 +153,7 @@ export default function NoteEditor({
         notes,
         onOpenDiagnostics: onOpenDiagnostics ?? noop,
         onCollapse: onCollapse ?? noop,
+        onReboot: onReboot ?? noop,
         onClearNote: clearNote,
         onPlayPong: onPlayPong ?? noop,
         // `//hi` insistido de más: la máquina te echa de la nota.

@@ -16,6 +16,7 @@ const opciones = () => ({
     notes: [{ title: 'Ideas.txt', chars: 120 }],
     onOpenDiagnostics: jest.fn(),
     onCollapse: jest.fn(),
+    onReboot: jest.fn(),
     onClearNote: jest.fn(),
     onPlayPong: jest.fn(),
     onLeaveNote: jest.fn(),
@@ -40,6 +41,26 @@ describe('useNoteCommands - qué ejecuta y qué no', () => {
         });
 
         expect(result.current.response).toContain('FLASH-NOTES v1.0');
+    });
+
+    test('⚠ //reboot apaga y enciende, y NO borra nada', async () => {
+        /*
+         * El vecino inofensivo de `//reset`, y el unico sitio donde el arranque
+         * se oye entero: una recarga del navegador destruye el documento y el
+         * nuevo nace sin permiso para sonar, asi que su apagon se ve y no se
+         * oye. Este no navega a ninguna parte.
+         */
+        const o = opciones();
+        const { result } = renderHook(() => useNoteCommands(o));
+
+        await act(async () => {
+            await result.current.run('//reboot', NOTE_ID);
+        });
+
+        expect(o.onReboot).toHaveBeenCalledTimes(1);
+        // Y ni de lejos lo otro: son el mismo gesto con consecuencias opuestas.
+        expect(o.onWipe).not.toHaveBeenCalled();
+        expect(o.onCollapse).not.toHaveBeenCalled();
     });
 
     test('lo que no es un comando no se ejecuta ni deja respuesta', async () => {

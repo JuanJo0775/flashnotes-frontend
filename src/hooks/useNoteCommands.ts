@@ -66,6 +66,15 @@ interface UseNoteCommandsOptions {
     notes: readonly { title: string; chars: number }[];
     onOpenDiagnostics: () => void;
     onCollapse: () => void;
+    /**
+     * `//reboot`: apaga y enciende, sin perder nada.
+     *
+     * ⚠ NO RECARGA LA PÁGINA, y ésa es la gracia. Una recarga de verdad destruye
+     * el documento y el nuevo nace sin permiso para sonar, así que su apagón se
+     * ve y no se oye. Acá no se navega a ninguna parte: el audio sigue
+     * desbloqueado y el ciclo entero se oye como se ve.
+     */
+    onReboot: () => void;
     onClearNote: () => void;
     /** Abre el `vsync-test`. Sólo lo dispara `//attach_6`. */
     onPlayPong: () => void;
@@ -117,6 +126,7 @@ export function useNoteCommands({
     notes,
     onOpenDiagnostics,
     onCollapse,
+    onReboot,
     onClearNote,
     onPlayPong,
     onLeaveNote,
@@ -215,6 +225,9 @@ export function useNoteCommands({
                 case 'collapse':
                     onCollapse();
                     break;
+                case 'reboot':
+                    onReboot();
+                    break;
                 case 'clear-note':
                     onClearNote();
                     break;
@@ -308,6 +321,7 @@ export function useNoteCommands({
             theme,
             onOpenDiagnostics,
             onCollapse,
+            onReboot,
             onClearNote,
             onPlayPong,
             onLeaveNote,

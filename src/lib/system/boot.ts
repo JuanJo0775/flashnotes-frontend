@@ -35,7 +35,7 @@
 export const BOOT_MIN_MS = 2_000;
 export const BOOT_MAX_MS = 8_000;
 
-export type BootPhase = 'off' | 'bars' | 'logo' | 'check' | 'done';
+export type BootPhase = 'off' | 'wake' | 'bars' | 'logo' | 'check' | 'done';
 
 /**
  * El apagón con el que EMPIEZA el arranque.
@@ -62,6 +62,17 @@ export const BOOT_OFF_MS = 420;
  * todavía negra.
  */
 export const BOOT_WAKE_MS = 1_200;
+
+/*
+ * ⚠ `wake` ES UNA FASE DEL GUION Y NO SÓLO UN ACTO DE LA PUERTA.
+ *
+ * La puerta lo hacía por su cuenta, y así el ciclo entero sólo existía en la
+ * primera carga. Un arranque pedido desde dentro —`//reboot`— pasaba del apagón
+ * a las barras sin encenderse, o sea sin la mitad que se oye.
+ *
+ * Puesto en el guion, cualquiera que arranque desde `off` recorre el ciclo
+ * completo: se apaga, se enciende, y después hay imagen.
+ */
 
 /**
  * Cómo se reparte el tiempo entre los tramos.
@@ -121,6 +132,13 @@ export function bootScript(
     const apagon = { phase: 'off' as const, ms: BOOT_OFF_MS };
 
     /*
+     * El encendido va pegado al apagón y FUERA DEL SORTEO, por lo mismo que él:
+     * los dos son gestos físicos, no esperas. Estirarlos con la duración que
+     * salga los convertiría en otra cosa.
+     */
+    const encendido = { phase: 'wake' as const, ms: BOOT_WAKE_MS };
+
+    /*
      * ⚠ CON EL BLOQUEO PUESTO, EL ARRANQUE SE QUEDA EN LAS BARRAS.
      *
      * Un equipo bloqueado no llega a arrancar: se apaga, enseña que no hay
@@ -139,6 +157,7 @@ export function bootScript(
 
     const completo = [
         apagon,
+        encendido,
         ...REPARTO.map(({ phase, peso }) => ({
             phase,
             ms: Math.round(totalMs * peso),

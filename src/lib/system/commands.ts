@@ -169,6 +169,19 @@ export type CommandEffect =
     | { kind: 'none' }
     | { kind: 'open-diagnostics' }
     | { kind: 'collapse' }
+    /**
+     * Apagar y encender, sin perder nada.
+     *
+     * ⚠ NO RECARGA LA PÁGINA, Y ÉSA ES LA GRACIA. Una recarga de verdad destruye
+     * el documento, y el nuevo nace sin permiso para sonar: el apagón se ve y no
+     * se oye, que es lo que se reportó una y otra vez. Un reinicio hecho desde
+     * dentro no navega a ninguna parte, así que el audio sigue desbloqueado y el
+     * ciclo entero —apagado, encendido, barras, rótulo, comprobación— se oye
+     * como se ve.
+     *
+     * Y no borra nada. Es el vecino inofensivo de `//reset`.
+     */
+    | { kind: 'reboot' }
     | { kind: 'clear-note' }
     | { kind: 'fetch-history' }
     | { kind: 'play-pong' }
@@ -656,6 +669,16 @@ export const LEAKABLE: readonly string[] = [
     '//log',
     '//diag',
     '//date_off',
+    /*
+     * ⚠ `//reboot` SE FILTRA AUNQUE HAGA ALGO GRANDE, y cumple las tres reglas
+     * de arriba: no destruye nada —es el vecino inofensivo de `//reset`—, no es
+     * un eslabón que necesite otro antes, y no abre ninguna capa. Lo que enseña
+     * es el arranque, que ya viste al llegar.
+     *
+     * Lo que sí regala es OÍRLO entero, que en una recarga de navegador no se
+     * puede. Vale la pena que se encuentre.
+     */
+    '//reboot',
     '//history',
 ];
 
@@ -1251,6 +1274,23 @@ const COMMANDS: readonly Command[] = [
                 `${rotulo}: ${ctx.soundEnabled ? 'ON' : 'OFF'} · ${uso} ${p}sound on | ${p}sound off`
             );
         },
+    },
+    {
+        name: '//reboot',
+        notInV02: true,
+        hidden: true,
+        summary: { es: 'apagar y encender', en: 'turn it off and on again' },
+        /*
+         * ⚠ EL ÚNICO SITIO DONDE EL ARRANQUE SE OYE ENTERO.
+         *
+         * Una recarga del navegador destruye el documento y el nuevo nace sin
+         * permiso para sonar, así que su apagón se ve y no se oye. Acá no se
+         * navega a ninguna parte: el audio sigue desbloqueado desde que
+         * escribiste el comando, y el ciclo suena como se ve.
+         *
+         * No borra nada, y por eso puede filtrarse: ver `LEAKABLE`.
+         */
+        resolve: () => ({ output: '', effect: { kind: 'reboot' } }),
     },
     {
         name: '//panic',

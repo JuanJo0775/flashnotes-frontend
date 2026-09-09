@@ -166,6 +166,11 @@ export default function BootScreen({ onDone, from = 'off' }: Props) {
                 capa que se cierra sobre lo que haya debajo. */}
             {phase === 'off' && <div className="collapse-dying" />}
 
+            {/* Y LA CORRIENTE VOLVIENDO, que es la misma figura al revés: un
+                punto que se abre en línea y la línea en imagen. Comparte clase
+                con la puerta del arranque, así que suena sola. */}
+            {phase === 'wake' && <div className="tube-on" />}
+
             {phase === 'bars' && (
                 <div className="boot-bars">
                     {/* Con CSS y no con caracteres: los bloques no están en la

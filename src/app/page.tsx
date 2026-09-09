@@ -568,6 +568,13 @@ export default function Home() {
                                 notes={noteSummaries}
                                 onOpenDiagnostics={() => setShowDiagnostics(true)}
                                 onCollapse={() => setCollapse(registerCollapse())}
+                                /*
+                                 * ⚠ DESDE EL APAGÓN, y no desde las barras: es
+                                 * lo único que hace el ciclo ENTERO, y el único
+                                 * sitio donde se puede oír. Una recarga del
+                                 * navegador tiene el mismo dibujo y llega muda.
+                                 */
+                                onReboot={() => setBooting('off')}
                                 onPlayPong={() => setPlayingPong(true)}
                                 onKillPage={() => setDead(true)}
                                 onWipe={alBorrar}

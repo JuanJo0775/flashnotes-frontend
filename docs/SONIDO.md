@@ -520,6 +520,24 @@ Recargar es apagar y encender, y ése es el orden de los hechos:
 | 6 | Comprobación | el bip de POST |
 | 7 | La app | — |
 
+### ⚠ `//reboot`, que es el único sitio donde el arranque se oye entero
+
+Una recarga del navegador **destruye el documento**, y el nuevo nace sin permiso
+para sonar. Por eso su apagón llega mudo, y por eso no hay código que lo arregle.
+
+Un reinicio pedido desde dentro no navega a ninguna parte: el audio sigue
+desbloqueado desde que escribiste el comando, así que el ciclo entero —apagado,
+encendido, barras, rótulo, comprobación— **suena como se ve**. Mismo dibujo,
+distinta suerte.
+
+No borra nada: es el vecino inofensivo de `//reset`. Y por eso puede filtrarse en
+`//help` como los demás callejones sin salida — lo que enseña es el arranque, que
+ya viste al llegar; lo que regala es oírlo.
+
+⚠ De ahí salió también que el **encendido sea una fase del guion** y no sólo un
+acto de la puerta. Vivía sólo ahí, así que un arranque pedido desde dentro pasaba
+del apagón a las barras sin encenderse — sin la mitad que se oye.
+
 ⚠ **El paso 1 se ve pero no se oye, y no hay código que lo arregle.** Pasa antes
 del primer gesto, y ningún navegador deja sonar antes de eso. Se reportó dos veces
 —«la de apagar cuando se reinicia no suena, pero cuando se reinicia luego de darle

@@ -74,12 +74,29 @@ describe('el arranque normal', () => {
         expect(document.querySelector('.boot-bars')).toBeNull();
     });
 
-    it('después las barras, el rótulo y la comprobación', () => {
+    it('⚠ y se ENCIENDE antes de que haya imagen', () => {
+        /*
+         * La misma figura del apagón al revés: un punto que se abre en línea y
+         * la línea en imagen. Vivía sólo en la puerta del arranque, así que un
+         * reinicio pedido desde dentro —`//reboot`— pasaba del apagón a las
+         * barras sin encenderse, o sea sin la mitad que se oye.
+         */
         conBloqueo(false);
         render(<BootScreen onDone={() => {}} />);
         correElGuion(1, 0);
 
         correElGuion(1);
+
+        expect(document.querySelector('.tube-on')).not.toBeNull();
+        expect(document.querySelector('.boot-bars')).toBeNull();
+    });
+
+    it('después las barras, el rótulo y la comprobación', () => {
+        conBloqueo(false);
+        render(<BootScreen onDone={() => {}} />);
+        correElGuion(1, 0);
+
+        correElGuion(2);
         expect(document.querySelector('.boot-bars')).not.toBeNull();
 
         correElGuion(1);
@@ -94,7 +111,7 @@ describe('el arranque normal', () => {
         const listo = jest.fn();
         render(<BootScreen onDone={listo} />);
 
-        correElGuion(6);
+        correElGuion(7);
 
         expect(listo).toHaveBeenCalled();
     });
