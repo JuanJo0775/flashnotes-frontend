@@ -3,23 +3,28 @@
 Escrito para que no se pierda entre sesiones. Sale de dos sitios: lo que se pidió
 jugando y lo que apareció al repasar el código.
 
-El orden está decidido: **primero se cierran los mudos de la 1.0, y después se va
-de lleno con la v0.2.**
+El orden estaba decidido: **primero se cierran los mudos de la 1.0, y después se
+va de lleno con la v0.2.** La primera mitad está cerrada —no queda ni un mudo— y
+la segunda va por su arranque, su fallo total y su avería de señal.
+
+**Lo que queda vivo de este documento son dos cosas:** las variaciones que le
+faltan a la v0.2 (§2) y el armazón compartido del pong (§2 bis). El §3 no se cierra
+nunca: es la lista de lo que no hay que volver a intentar.
 
 ---
 
 ## 1 · Los mudos de la 1.0
 
-Pantallas y momentos que hoy no suenan. Salió de repasar qué escucha
-`wire.ts` y qué queda fuera.
+Pantallas y momentos que no sonaban. Salió de repasar qué escucha `wire.ts` y qué
+quedaba fuera. **Están los siete hechos.**
 
-| Qué | Por qué se nota | Nota |
+| Qué | Por qué se notaba | Cómo quedó |
 | --- | --- | --- |
-| **El pong** (`//attach_6`) | Una pantalla entera sin un solo sonido | La pelota, los rebotes contra la pared y la paleta, el punto. La pausa ya está, falta que suene |
-| **Las ventanas de error** del bloqueo | Aparecen de golpe y en silencio | Es el sitio natural del bip feo de la bocinita |
-| **La pantalla muerta** (`//hi` insistido) | El final más brusco del juego, mudo | |
-| **El bloqueo** | Idem | |
-| **El ente hablando** | La sala no le hace sitio | `duck()` existe en `ambience.ts` y no lo llama nadie |
+| ~~**El pong**~~ (`//attach_6`) | Una pantalla entera sin un solo sonido | Los tres tonos del original —paleta, pared, punto— y el relé al parar y seguir. Más el tirón cuando el juego se dibuja con caracteres |
+| ~~**Las ventanas de error** del bloqueo~~ | Aparecían de golpe y en silencio | El bip feo de la bocinita, uno POR ventana: `.phantom-error` |
+| ~~**La pantalla muerta**~~ (`//hi` insistido) | El final más brusco del juego, mudo | El apagado del tubo: `.dead-page` |
+| ~~**El bloqueo**~~ | Idem | Barrido de 700 a 55 Hz con el impacto detrás: `.lockout-body` |
+| ~~**El ente hablando**~~ | La sala no le hacía sitio | `ducks` en `.is-entity`: no trae voz — lo que cambia es lo que DEJA de oírse |
 | ~~**Guardar / no guardar**~~ | El único aviso de que tu texto está a salvo | Hecho: un golpe de cabezal al guardar —escribir es un golpe, buscar son cuatro— y la bocinita grave y larga cuando no se guarda |
 | ~~**Quedarse sin red**~~ | `[SIN_RED]` y el reconectado | Hecho: barrido corto al caerse la línea, medio barrido cuando lo que calla es el servidor, y el relé al volver |
 
