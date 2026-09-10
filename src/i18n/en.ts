@@ -155,6 +155,7 @@ export const en: Dictionary = {
     'diag.notesCreated': 'NOTES CREATED',
     'diag.bytesWritten': 'BYTES WRITTEN',
     'diag.integrity': 'INTEGRITY',
+    'diag.edge': 'IF YOU READ THIS, THE COVER IS OPEN',
     'diag.theme': 'THEME',
     /*
      * ⚠ NO DICE «SECRETOS», Y NO ES UNA BROMA SUELTA.

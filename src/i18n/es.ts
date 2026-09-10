@@ -182,6 +182,14 @@ export const es = {
     'diag.notesCreated': 'NOTAS CREADAS',
     'diag.bytesWritten': 'BYTES ESCRITOS',
     'diag.integrity': 'INTEGRIDAD',
+    /*
+     * Lo que hay escrito en el canto del panel, y que sólo se ve en la v0.2
+     * porque es la única versión donde ese borde se sale de la pantalla.
+     *
+     * No es un aviso de la interfaz: es pintura de fábrica en un sitio que
+     * nadie tenía que ver — y por eso NO pasa por el traductor averiado.
+     */
+    'diag.edge': 'SI LEE ESTO, LA TAPA ESTÁ ABIERTA',
     'diag.theme': 'TEMA',
     /*
      * ⚠ NO DICE «SECRETOS», Y NO ES UNA BROMA SUELTA.

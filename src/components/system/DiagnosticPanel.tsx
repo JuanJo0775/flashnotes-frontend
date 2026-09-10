@@ -387,6 +387,31 @@ export default function DiagnosticPanel({
                     </button>
                 </div>
             </div>
+
+            {/*
+                LO QUE HAY ESCRITO EN EL CANTO.
+
+                ⚠ SÓLO EN LA v0.2, Y NO ES UN CAPRICHO: es la única versión
+                donde este panel se sale de su propio ancho —los marcos de
+                caracteres lo empujan veintitrés píxeles— y por eso hay un
+                borde que normalmente no se ve. El sitio existía; lo que no
+                había era nada escrito en él.
+
+                ⚠ VA EN `left: 100%`, o sea justo donde acaba lo que se ve.
+                No ensancha el panel: cabe dentro de lo que ya sobraba, así
+                que el desplazamiento sigue siendo el mismo de antes.
+
+                ⚠ Y NO ES UN SECRETO: no marca nada, no desbloquea nada y no
+                cuenta para el panel. Es pintura de fábrica en un sitio que
+                nadie tenía que ver, que es lo que la hace graciosa — por eso
+                tampoco pasa por el traductor averiado: la pintura del
+                chasis no la escribió el que dejó la interfaz a medias.
+
+                Va al final del DOM a propósito: quien use lector de
+                pantalla la oye al terminar el panel, que es lo más parecido
+                a encontrarla al llegar al borde.
+            */}
+            {system.v02 && <p className="diag-canto">{t('diag.edge')}</p>}
         </dialog>
     );
 }

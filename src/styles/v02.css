@@ -167,6 +167,35 @@
     opacity: 0.85;
 }
 
+/* ---- 2 ter · Lo que hay escrito en el canto del panel ----
+
+   El panel de diagnóstico se sale de su propio ancho en esta versión: los
+   marcos de caracteres lo empujan veintitrés píxeles, así que hay un borde
+   que sólo aparece si te desplazás. El sitio ya estaba; lo que faltaba era
+   algo escrito en él.
+
+   ⚠ `left: 100%` ES LA CLAVE: arranca justo donde acaba lo que se ve, o sea
+   dentro de lo que ya sobraba. Así no ensancha el panel ni cambia el
+   desplazamiento — se pidió expresamente dejarlo como estaba. */
+[data-v02] .diag-canto {
+    position: absolute;
+    top: 1.2rem;
+    left: 100%;
+
+    /* De arriba abajo, como lo que se imprime en el lomo de una carpeta o en
+       el canto de una placa. */
+    writing-mode: vertical-rl;
+    white-space: nowrap;
+
+    font-size: var(--text-2xs);
+    letter-spacing: 0.18em;
+    color: var(--color-meta);
+
+    /* No se puede seleccionar ni estorbar: es pintura, no interfaz. */
+    pointer-events: none;
+    user-select: none;
+}
+
 /* La cabecera y el pie tampoco encajan del todo. */
 [data-v02] .terminal-header {
     letter-spacing: 0.02em;
