@@ -474,7 +474,27 @@ export default function NoteEditor({
     const overContentLimit = content.length > LIMITS.CONTENT_MAX;
 
     return (
-        <div className="flex flex-col h-full">
+        /*
+            LA HOJA ENTRANDO EN EL CARRO.
+
+            ⚠ ABRIR UNA NOTA NO TENÍA NINGUNA TRANSICIÓN: la lista desaparecía y el
+            editor estaba ahí, en el mismo fotograma. Es el cambio de pantalla
+            más frecuente de toda la app.
+
+            ⚠ Y ES EL MISMO GESTO DE LAS FILAS, no uno nuevo: `row-feed` es el
+            rodillo empujando el papel a su sitio en tres escalones. Una fila
+            entra así y una hoja entera también — es la misma máquina metiendo
+            papel, y darle un movimiento propio sería inventar un segundo idioma
+            para decir lo mismo (REGLAS · B5).
+
+            ⚠ Y NO ESTORBA AL ESCRIBIR (REGLAS · A2): son 90 ms de `transform`, y
+            el área de texto se puede enfocar y teclear desde el primer
+            fotograma. Lo que se mueve es la página, no la máquina de escribir.
+
+            Al volver a la lista no hace falta nada: la lista entra con sus
+            propias filas, que es la otra mitad del mismo gesto.
+        */
+        <div className="flex flex-col h-full row-feed">
             <ConfirmDialog
                 open={showTrashConfirm}
                 title={t('dialog.trashTitle')}

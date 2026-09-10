@@ -125,7 +125,10 @@ no la tiene — nunca se vería irse. El lateral está delante mientras escribí
 y `aria-hidden` — para quien usa lector, esa nota ya no existe.
 
 No se mueve nada en:
-- **Abrir y cerrar una nota** — sin transición.
+- ~~**Abrir y cerrar una nota**~~ · **hecho**: la hoja entra en el carro con el
+  MISMO gesto de las filas — una fila entra así y una hoja entera también, es la
+  misma máquina metiendo papel. Al volver a la lista no hace falta nada: la
+  lista entra con sus propias filas, que es la otra mitad del gesto.
 - ~~**La colección**~~ · **hecha**: la que destapó el último `//art` llega
   **sintonizándose** —aplastada a una línea y abriéndose, como una imagen
   entrando en un tubo— y las que ya tenías no se mueven.
@@ -142,9 +145,24 @@ No se mueve nada en:
   `★ SIN REVELAR` — sin enseñar cuál es, que es lo que hace que `//art` siga
   sirviendo para algo. Y hay **estrella por abrirlas todas** (`art-all-open`),
   que no es tenerlas todas: abrir es lo único que se hace una por una.
-- **La papelera** — igual.
+- ~~**La papelera**~~ · **hecha**, y ahí la salida se ve más que en ningún sitio:
+  cuando recuperás o borrás del todo estás MIRANDO la tarjeta.
 
-⚠ Y lo que falta **no** son animaciones bonitas: son mecánicas. Una fila que se
+  ⚠ Los dos gestos usan la misma salida a propósito. Recuperar y borrar son
+  opuestos, pero lo que se VE es lo mismo — la tarjeta se va y el hueco se
+  cierra—; lo que dice cuál fue es el SONIDO: el cajón se abre cuando algo
+  vuelve a tus manos y se cierra cuando algo se va para siempre. **El ojo ve que
+  se fue; el oído dice a dónde.**
+
+  ⚠ Y el mecanismo de las filas fantasma vive en `useSalientes`, no copiado en
+  cada vista: dos copias se separan el día que alguien ajusta una, y la que se
+  queda vieja es la que nadie está mirando.
+
+✅ **§2.3 CERRADO.** Y con un solo par de gestos —el papel entrando y el papel
+saliendo— más la pieza sintonizándose: tres animaciones nuevas para cuatro
+huecos, porque lo que hacía falta era un idioma, no una animación por sitio.
+
+⚠ Y lo que faltaba **no** eran animaciones bonitas: eran mecánicas. Una fila que se
 borra tiene que irse como se va el papel de un teletipo. El vocabulario ya está
 construido.
 

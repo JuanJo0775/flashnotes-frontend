@@ -160,7 +160,7 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
         donde: 'pantalla',
         nombre: 'Papel entrando',
         que: 'Cada fila de la lista baja a su sitio en tres escalones, escalonada como una tirada de papel.',
-        cuando: 'Al llegar la lista y al aparecer una nota nueva. No es un fundido: es un rodillo.',
+        cuando: 'Al llegar la lista, al abrir una nota y al entrar en la papelera. No es un fundido: es un rodillo.',
         hoja: 'animations',
         clases: 'row-feed',
     },

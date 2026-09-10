@@ -1,7 +1,8 @@
 // src/components/notes/TrashView.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
+import { SALIDA_MS, useSalientes } from '@/hooks/useSalientes';
 import { useTrash } from '@/hooks/useTrash';
 import MetaTag from '@/components/ui/MetaTag';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -34,6 +35,22 @@ export default function TrashView({ onCountChange }: TrashViewProps) {
     const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(
         null
     );
+
+    /*
+     * LAS QUE SE ESTÁN YENDO.
+     *
+     * ⚠ ACÁ LA SALIDA SE VE MÁS QUE EN NINGÚN SITIO. En la lista de notas tirás
+     * desde el editor y volvés a una lista que ya no la tiene, así que no hay
+     * nada que enseñar; en la papelera estás MIRANDO la tarjeta cuando la
+     * recuperás o la borrás del todo.
+     *
+     * ⚠ Y LOS DOS GESTOS USAN LA MISMA SALIDA A PROPÓSITO. Recuperar y borrar
+     * son opuestos, pero lo que se VE es lo mismo: la tarjeta se va y el hueco
+     * se cierra. Lo que dice cuál de los dos fue es el SONIDO — el cajón se abre
+     * cuando algo vuelve a tus manos y se cierra cuando algo se va para siempre.
+     * El ojo ve que se fue; el oído dice a dónde.
+     */
+    const saliendo = useSalientes(trashedNotes, SALIDA_MS);
 
     const handleRestore = async (id: string) => {
         setBusyId(id);
@@ -117,13 +134,23 @@ export default function TrashView({ onCountChange }: TrashViewProps) {
                 </p>
             ) : (
                 <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {trashedNotes.map((note) => {
+                    {trashedNotes.map((note, i) => {
                         const busy = busyId === note._id;
 
                         return (
                             <li
                                 key={note._id}
-                                className="border border-line bg-tertiary p-4 flex flex-col gap-3"
+                                /*
+                                    EL PAPEL ENTRANDO, igual que en el lateral.
+
+                                    ⚠ Y ACÁ LA SALIDA SE VE MÁS QUE EN NINGÚN
+                                    SITIO: cuando recuperás o borrás del todo
+                                    estás MIRANDO esta lista, no como en la de
+                                    notas —donde tirás desde el editor y volvés a
+                                    una lista que ya no la tiene—.
+                                */
+                                className="border border-line bg-tertiary p-4 flex flex-col gap-3 row-feed"
+                                style={{ '--fila': i } as CSSProperties}
                             >
                                 <p className="mono text-base font-medium truncate">
                                     {note.title || t('common.untitled')}
@@ -180,6 +207,27 @@ export default function TrashView({ onCountChange }: TrashViewProps) {
                             </li>
                         );
                     })}
+
+                    {/*
+                        Y LAS QUE SE ESTÁN YENDO, detrás de las de verdad.
+
+                        ⚠ `aria-hidden` y sin nada que se pueda pulsar: para quien
+                        usa lector de pantalla esta nota ya no está en la
+                        papelera, y dejar sus dos botones sería ofrecerle
+                        recuperar algo que ya se recuperó. Lo que se está viendo
+                        es el hueco cerrándose, y eso no se lee: se mira.
+                    */}
+                    {saliendo.map((note) => (
+                        <li
+                            key={`saliendo-${note._id}`}
+                            aria-hidden="true"
+                            className="border border-line bg-tertiary p-4 flex flex-col gap-3 row-pull"
+                        >
+                            <p className="mono text-base font-medium truncate">
+                                {note.title || t('common.untitled')}
+                            </p>
+                        </li>
+                    ))}
                 </ul>
             )}
         </div>

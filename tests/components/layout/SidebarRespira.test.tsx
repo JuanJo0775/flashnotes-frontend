@@ -15,7 +15,8 @@
  * instante, sin que nada contara que se fue.
  */
 
-import { act, render } from '@testing-library/react';
+import { act, render, renderHook } from '@testing-library/react';
+import { useSalientes } from '@/hooks/useSalientes';
 import Sidebar from '@/components/layout/Sidebar';
 import type { Note } from '@/types/note.types';
 
@@ -121,5 +122,47 @@ describe('⚠ el papel saliendo', () => {
         expect(fantasma.closest('[aria-hidden="true"]')).not.toBeNull();
         expect(fantasma.tagName).not.toBe('BUTTON');
         expect(fantasma.querySelector('button')).toBeNull();
+    });
+});
+
+describe('⚠ y el mecanismo es UNO, no una copia por vista', () => {
+    /*
+     * El lateral y la papelera hacen exactamente lo mismo: seguir pintando una
+     * fila un rato después de que deje de existir, para poder enseñarla irse.
+     * Estuvo escrito dos veces —una en cada vista— y dos copias de un mecanismo
+     * se separan el día que alguien ajusta una (REGLAS · B5); la que se queda
+     * vieja es siempre la que nadie está mirando.
+     *
+     * Este test no mira una pantalla: mira que el hook exista y se comporte, que
+     * es lo que impide que vuelva a duplicarse sin que nadie se entere.
+     */
+    it('lo que desaparece se sigue devolviendo, y después no', () => {
+        const { result, rerender } = renderHook(
+            ({ items }: { items: { _id: string }[] }) => useSalientes(items, 180),
+            { initialProps: { items: [{ _id: 'a' }, { _id: 'b' }] } }
+        );
+
+        expect(result.current).toHaveLength(0);
+
+        rerender({ items: [{ _id: 'a' }] });
+        expect(result.current.map((i) => i._id)).toEqual(['b']);
+
+        act(() => {
+            jest.advanceTimersByTime(400);
+        });
+        expect(result.current).toHaveLength(0);
+    });
+
+    it('y lo que sólo cambia de sitio NO cuenta como ido', () => {
+        // Reordenar una lista no es perder nada: si contara, cualquier cambio de
+        // orden dejaría fantasmas por toda la pantalla.
+        const { result, rerender } = renderHook(
+            ({ items }: { items: { _id: string }[] }) => useSalientes(items, 180),
+            { initialProps: { items: [{ _id: 'a' }, { _id: 'b' }] } }
+        );
+
+        rerender({ items: [{ _id: 'b' }, { _id: 'a' }] });
+
+        expect(result.current).toHaveLength(0);
     });
 });
