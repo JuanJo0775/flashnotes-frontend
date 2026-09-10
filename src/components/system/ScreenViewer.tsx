@@ -131,8 +131,20 @@ function Contenido({ pantalla, reiniciar }: { pantalla: SystemScreen; reiniciar:
             /*
              * Se reproduce sola y NO toca el almacén: un catálogo que te
              * regala las dieciséis piezas al consultarlo deja de serlo.
+             *
+             * ⚠ Y VA CON LA MAQUETA DETRÁS, por la misma razón que la avería de
+             * señal: este momento no pinta nada propio, le BAJA EL NIVEL a lo que
+             * haya debajo. Sobre un escenario vacío no hay nada que bajar, y eso
+             * no se lee como «falta el fondo»: se lee como que está roto. Es el
+             * mismo tropiezo que documenta `necesitaFondo` en el catálogo de
+             * efectos.
              */
-            return <CollectionCeremony demo />;
+            return (
+                <>
+                    <Maqueta />
+                    <CollectionCeremony demo />
+                </>
+            );
         case 'v02':
             // La piel de la v0.2 es un atributo en el documento; lo pone el
             // efecto de abajo y lo quita al cerrar.
