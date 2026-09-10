@@ -38,6 +38,12 @@ export const es = {
     // La casilla de una pieza que YA es tuya y todavía no fuiste a mirar.
     // No dice cuál es ni la enseña: dice que hay algo esperándote ahí.
     'collection.waiting': '★ SIN REVELAR',
+    // Lo que la versión vieja pone donde no puede leer una pieza. No dice que
+    // no exista —existe, y la v1.0 la enseña— dice que ELLA no sabe leerla.
+    'collection.unreadable': '[ NO SE PUEDE LEER ]',
+    // Y la que se cortó a media carga: sin esto se lee como una pieza que es
+    // así de pequeña, no como una lectura que se paró.
+    'collection.partial': '[ LECTURA PARCIAL ]',
     // Y la estrella de haberlas abierto TODAS, que no es tenerlas todas.
     'collection.allOpen': '★ COLECCIÓN COMPLETA',
     'collection.empty': 'Todavía no hay ninguna. El sistema guarda algunas cosas de antes.',

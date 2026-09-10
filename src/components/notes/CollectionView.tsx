@@ -3,7 +3,11 @@
 
 import { useEffect, useState, type CSSProperties } from 'react';
 
-import { useLang, useT } from '@/i18n';
+import { useLang } from '@/i18n';
+import { useV02T } from '@/i18n/useV02T';
+import { useSystemState } from '@/hooks/useSystemState';
+import { v02ArtMode, type V02ArtMode } from '@/lib/system/v02';
+import { damageArt, halfLoaded } from '@/lib/system/artCorruption';
 import {
     ART,
     ART_TOTAL,
@@ -34,9 +38,36 @@ import {
  * tenés sin preguntar. Así, encontrar una deja una pregunta abierta hasta que vas
  * a mirar.
  */
+/**
+ * El dibujo, tal como lo lee la versión vieja.
+ *
+ * ⚠ EL DAÑO SE PASA DOS VECES, y no es un descuido: `artOf` ya devuelve la
+ * pieza comida cuando su nombre está por ganar, y ése es el daño de la v1.0.
+ * Encima va el de la versión vieja, con otra semilla — que es literalmente lo
+ * que se quiere contar: acá abajo se lee PEOR.
+ */
+function v02Art(art: string, modo: V02ArtMode, id: string): string {
+    if (modo === 'corrupta') return damageArt(art, `v02:${id}`);
+    if (modo === 'parcial') return halfLoaded(art, `v02:${id}`);
+
+    return art;
+}
+
 export default function CollectionView() {
-    const t = useT();
+    /*
+     * ⚠ EL TRADUCTOR AVERIADO, NO EL NORMAL. Ésta era la ÚNICA vista que no
+     * se enteraba de estar en la versión de antes: el lateral, la lista, la
+     * papelera y la pantalla de carga sacan sus rótulos por `useV02T` —una de
+     * cada cuatro etiquetas sale sin traducir, a medio hacer o mal traducida—
+     * y ésta los sacaba impecables. Una pantalla perfecta dentro de una
+     * versión rota no se lee como una pantalla que se salvó: se lee como una
+     * sección a medio hacer.
+     *
+     * Fuera de la v0.2 es exactamente `useT()`, así que la v1.0 no cambia.
+     */
+    const t = useV02T();
     const lang = useLang();
+    const { v02 } = useSystemState();
 
     // Se lee en el render y no se guarda en estado: esta vista se monta al abrir
     // la pestaña, y en ese momento lo revelado ya está decidido.
@@ -159,6 +190,17 @@ export default function CollectionView() {
                         está mirando. Lo que se escalona es lo que llega.
                     */
                     const esNueva = nuevas.has(piece.id);
+                    /*
+                        CÓMO LE SALE ESTA PIEZA A LA VERSIÓN VIEJA.
+
+                        Cuatro maneras y no una: se lee bien, se lee comida,
+                        se corta a media carga, o no se abre. Con un solo
+                        fallo la pantalla se leía como una función apagada;
+                        lo que la hace parecer un formato que no encaja es
+                        que cada pieza falle a SU manera. Ver `v02ArtMode`.
+                    */
+                    const modo = v02 ? v02ArtMode(piece.id) : 'ok';
+                    const ilegible = modo === 'ilegible';
                     const turno = esNueva
                         ? ART.filter((p) => nuevas.has(p.id)).indexOf(piece)
                         : 0;
@@ -189,16 +231,59 @@ export default function CollectionView() {
                                 dibujo entero mientras el catálogo lo tapaba: dos
                                 sitios contando cosas distintas de la misma
                                 pieza. */}
-                            <pre className="collection-art">{artOf(piece)}</pre>
+                            {/*
+                                ⚠ Y LA VERSIÓN VIEJA NO SABE LEERLAS TODAS.
+
+                                La colección la inventó la v1.0: son piezas
+                                guardadas en un formato que esta versión no
+                                conoce, y que las leyera TODAS perfectamente
+                                era lo raro. Una de cada cuatro —siempre las
+                                mismas, decididas por la pieza y no por el
+                                repintado— sale como lo que es acá abajo: un
+                                sector que no se puede leer.
+
+                                ⚠ NO SE PIERDE NADA Y SE COMPRUEBA SOLO: la
+                                pieza sigue entera y basta con volver a la
+                                v1.0 para verla. Se rompe la pintura, no tus
+                                datos — la primera regla de esta versión.
+                            */}
+                            {ilegible ? (
+                                <p
+                                    className="collection-art collection-name mono text-2xs"
+                                    data-testid="collection-unreadable"
+                                >
+                                    {t('collection.unreadable')}
+                                </p>
+                            ) : (
+                                <pre className="collection-art">
+                                    {v02Art(artOf(piece), modo, piece.id)}
+                                </pre>
+                            )}
+
+                            {/* Y la que se cortó lo dice, porque si no se lee
+                                como una pieza que es así de pequeña. */}
+                            {modo === 'parcial' && (
+                                <p
+                                    className="collection-name mono text-2xs"
+                                    data-testid="collection-partial"
+                                >
+                                    {t('collection.partial')}
+                                </p>
+                            )}
                             {/* ⚠ Y EL PIE SALE DE `captionOf`, POR LO MISMO.
                                 Acá se enseñaba el pie de TODO lo revelado, así
                                 que un solo `//art` decía qué era cada pieza y
                                 `//art_<n>` se quedaba sin nada que dar. Tenerla
                                 no es haberla mirado, y haberla mirado no es
                                 saber qué es. */}
-                            <p className="collection-name mono text-2xs">
-                                {captionOf(piece, lang)}
-                            </p>
+                            {/* Y sin dibujo no hay pie: lo que no se lee no
+                                se lee entero, y lo que se cortó ya dijo lo
+                                suyo. */}
+                            {modo === 'ok' && (
+                                <p className="collection-name mono text-2xs">
+                                    {captionOf(piece, lang)}
+                                </p>
+                            )}
                         </li>
                     );
                 })}

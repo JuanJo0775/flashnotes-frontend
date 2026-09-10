@@ -32,7 +32,7 @@ function ensuciar() {
     startDrift(Date.now() - 10_000);
     hitWall();
     hitWall();
-    record({ method: 'GET', path: '/api/notes', status: 200, ms: 12 });
+    record({ method: 'GET', path: '/api/notes', status: 200, durationMs: 12 });
     rememberDrawn(ART[0]);
 }
 

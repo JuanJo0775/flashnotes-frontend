@@ -211,6 +211,32 @@ const DANADOS = 0.16;
  * entrar y salir de la v0.2 ni el nombre ni el dibujo están enteros. Ver el
  * morse no es entenderlo.
  */
+/** El salto de línea, con nombre: escrito a pelo dentro de un `join` se lee mal. */
+const SALTO = '\n';
+
+/**
+ * LA PIEZA QUE SE CORTÓ A MEDIA CARGA.
+ *
+ * Se queda por una línea cualquiera y lo que falta no se pinta. No hay puntos
+ * suspensivos ni «continuará»: una lectura que se corta no avisa, se corta —
+ * y el hueco que deja es lo que lo cuenta.
+ *
+ * ⚠ NUNCA MENOS DE DOS LÍNEAS. Cortada en la primera no se distingue de una
+ * pieza que no cargó, y ése es otro de los estados: lo que hace a éste es
+ * ver que ESTABA SALIENDO.
+ *
+ * ⚠ Y NUNCA TODAS: si cupiera el dibujo entero, sería una pieza sana con otro
+ * nombre.
+ */
+export function halfLoaded(art: string, semilla: string): string {
+    const filas = art.split(SALTO);
+    if (filas.length < 4) return filas.slice(0, 2).join(SALTO);
+
+    const cuantas = 2 + Math.floor(ruido(`${semilla}:carga`) * (filas.length - 3));
+
+    return filas.slice(0, cuantas).join(SALTO);
+}
+
 export function damageArt(art: string, semilla: string): string {
     const rejilla = art.split('\n').map((f) => [...f]);
     let i = 0;

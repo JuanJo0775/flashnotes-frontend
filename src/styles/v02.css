@@ -120,6 +120,53 @@
     letter-spacing: 0.04em;
 }
 
+/* ---- 2 bis · La colección, que esta versión dejó a medias ----
+
+   ⚠ SE PIDIÓ JUGANDO, y el reporte era exacto: «en la v0.2 se ve rara la
+   sección de colecciones, está a medio hacer». Lo estaba, pero no como
+   parecía: era la ÚNICA vista que no se enteraba de estar acá abajo. Sus
+   rótulos salían impecables —todo lo demás pasa por el traductor averiado— y
+   sus tarjetas eran las de la v1.0 con el marco de guiones puesto encima.
+
+   Una pantalla perfecta dentro de una versión rota no se lee como una
+   pantalla que se salvó: se lee como una sección sin terminar. */
+
+/* Las tarjetas tampoco las alineó nadie, igual que los archivos. Fijo por
+   posición y no al azar: un desajuste se queda quieto; un temblor se lee como
+   que la pantalla vibra. */
+[data-v02] .collection-card {
+    transform: translateY(1px);
+}
+
+[data-v02] li:nth-child(3n) .collection-card {
+    transform: translate(2px, -1px);
+}
+
+[data-v02] li:nth-child(5n) .collection-card {
+    transform: translate(-2px, 1px);
+    letter-spacing: 0.03em;
+}
+
+/* El número de la casilla, con el espaciado de una impresora que no medía
+   igual. */
+[data-v02] .collection-num {
+    letter-spacing: 0.12em;
+}
+
+/* Y la rejilla, más apretada: acá las pantallas eran más chicas y nadie
+   pensaba en el aire. */
+[data-v02] .collection-grid {
+    gap: 0.5rem;
+}
+
+/* Lo que no se pudo leer y lo que se cortó a media carga: se dicen con el
+   mismo tono apagado, porque las dos son la misma frase — esta versión no
+   entiende del todo el formato de la que vino después. */
+[data-v02] .collection-name {
+    letter-spacing: 0.06em;
+    opacity: 0.85;
+}
+
 /* La cabecera y el pie tampoco encajan del todo. */
 [data-v02] .terminal-header {
     letter-spacing: 0.02em;

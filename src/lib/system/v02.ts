@@ -304,6 +304,70 @@ export function ruido(clave: string): number {
     return (h >>> 0) / 4294967296;
 }
 
+/**
+ * CÓMO LE SALE CADA PIEZA DEL CATÁLOGO A LA VERSIÓN VIEJA.
+ *
+ * ⚠ QUÉ CUENTA ESTO, QUE ES LO IMPORTANTE. La colección la inventó la v1.0:
+ * son dieciséis piezas guardadas en un formato que esta versión no conoce.
+ * Que las leyera TODAS perfectamente era lo raro — y era lo que pasaba: la
+ * colección era la única vista que no se enteraba de estar en la versión de
+ * antes, con sus rótulos impecables en una pantalla donde todo lo demás sale
+ * a medio traducir.
+ *
+ * ⚠ Y SON CUATRO MANERAS, NO UNA. Con un solo fallo —«no se puede leer» en
+ * todas las que fallan— la pantalla se lee como una función apagada. Lo que
+ * hace que parezca un formato que no encaja es que cada pieza falle a SU
+ * manera: una sale comida, otra se corta a media carga, otra ni se abre.
+ *
+ *   · `ok`        se lee bien. Es la mayoría: si fallara casi todo, la
+ *                 colección dejaría de servir para nada acá abajo.
+ *   · `corrupta`  se lee, pero con trozos comidos — el mismo daño que ya
+ *                 llevan las piezas a medio recuperar, pasado DOS VECES:
+ *                 la versión vieja las lee peor.
+ *   · `parcial`   se corta a media carga y se queda a la mitad.
+ *   · `ilegible`  no se abre siquiera.
+ *
+ * ⚠ SIEMPRE LAS MISMAS, decididas por la pieza. La 7 sale comida SIEMPRE y la
+ * 8 se lee SIEMPRE: es un formato que no encaja, no una avería que va y
+ * viene. Si cambiara en cada repintado sería un cartel parpadeando — el mismo
+ * criterio que gobierna las etiquetas rotas.
+ *
+ * ⚠ Y NO SE PIERDE NADA, NUNCA. Acá no se toca el almacén: la pieza sigue
+ * entera y la v1.0 la enseña igual que siempre. Es lo mismo que promete el
+ * resto de esta versión —se rompe la pintura, no tus datos— y encima se
+ * comprueba solo: basta con volver.
+ */
+export type V02ArtMode = 'ok' | 'corrupta' | 'parcial' | 'ilegible';
+
+/**
+ * Los tramos del dado, en orden.
+ *
+ * ⚠ ESTÁN ELEGIDOS MIRANDO LAS DIECISÉIS PIEZAS DE VERDAD, no en abstracto, y
+ * esto hay que entenderlo antes de tocarlos: los dados NO son aleatorios. Cada
+ * pieza tiene un identificador fijo, así que su número es fijo — y los dieciséis
+ * números que existen se apelotonan (cinco por debajo de 0,21 y nada entre 0,21
+ * y 0,49).
+ *
+ * El primer reparto era «bonito» —22 %, 14 %, 12 %— y dejaba DOS de los cuatro
+ * modos sin tocarle a ninguna pieza: la variedad existía en el código y no en la
+ * pantalla. Con estos tramos salen dos comidas, dos a medio cargar y una que no
+ * abre, de dieciséis. Hay un test que lo comprueba contra el catálogo, y es el
+ * que hay que mirar si alguien añade una pieza o cambia un identificador.
+ */
+const MODOS: readonly { modo: V02ArtMode; hasta: number }[] = [
+    { modo: 'corrupta', hasta: 0.035 },
+    { modo: 'parcial', hasta: 0.18 },
+    { modo: 'ilegible', hasta: 0.25 },
+    { modo: 'ok', hasta: 1 },
+];
+
+/** Cómo le sale esta pieza a la versión vieja. */
+export function v02ArtMode(id: string): V02ArtMode {
+    const dado = ruido(`art:${id}`);
+
+    return MODOS.find((m) => dado < m.hasta)?.modo ?? 'ok';
+}
+
 export interface LabelSources {
     /** El texto bien, en el idioma que toca. */
     ok: string;

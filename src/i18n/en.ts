@@ -27,6 +27,8 @@ export const en: Dictionary = {
     'nav.collection': 'Collection',
     'collection.title': 'Collection',
     'collection.waiting': '★ UNREVEALED',
+    'collection.unreadable': '[ CANNOT READ ]',
+    'collection.partial': '[ PARTIAL READ ]',
     'collection.allOpen': '★ COLLECTION COMPLETE',
     'collection.empty': 'None yet. The system keeps a few things from before.',
     'nav.viewsLabel': 'Views',
