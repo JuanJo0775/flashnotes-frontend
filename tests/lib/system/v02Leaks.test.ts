@@ -42,9 +42,29 @@ describe('lo que sueltan las ventanas de error', () => {
 
         const sueltos = hiddenCommandNames();
 
-        for (const nombre of ['//hi', '//date_off', '//art', '//reset']) {
+        for (const nombre of ['//hi', '//date_off', '//reset']) {
             expect(sueltos).not.toContain(nombre);
         }
+    });
+
+    it('⚠ pero los de la colección sí, porque ahí SÍ existen', async () => {
+        /*
+         * `//art` estaba en la lista de arriba y salió de ella el día que la
+         * colección pasó a existir en la v0.2 — a medio escribir, que es otra
+         * cosa. Es el mismo caso que `//reboot`: la pestaña de la colección se
+         * VE en esa versión, así que un comando que conteste «comando
+         * desconocido» son dos versiones de la misma máquina discutiendo.
+         *
+         * Lo que la fuga no puede hacer es mandar a alguien a teclear algo que
+         * va a fallar, y acá no falla: contesta, y contesta mal a propósito.
+         */
+        const { hiddenCommandNames, v02 } = await load();
+        v02.enterV02('NIDO');
+
+        const sueltos = hiddenCommandNames();
+
+        expect(sueltos).toContain('//art');
+        expect(sueltos).toContain('//keep');
     });
 
     it('en la v0.2 sí puede nombrar los suyos', async () => {

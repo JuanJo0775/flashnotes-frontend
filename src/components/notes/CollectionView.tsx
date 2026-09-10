@@ -6,8 +6,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { useLang } from '@/i18n';
 import { useV02T } from '@/i18n/useV02T';
 import { useSystemState } from '@/hooks/useSystemState';
-import { v02ArtMode, type V02ArtMode } from '@/lib/system/v02';
-import { damageArt, halfLoaded } from '@/lib/system/artCorruption';
+import { v02Reading } from '@/lib/system/v02';
 import {
     ART,
     ART_TOTAL,
@@ -38,21 +37,6 @@ import {
  * tenés sin preguntar. Así, encontrar una deja una pregunta abierta hasta que vas
  * a mirar.
  */
-/**
- * El dibujo, tal como lo lee la versión vieja.
- *
- * ⚠ EL DAÑO SE PASA DOS VECES, y no es un descuido: `artOf` ya devuelve la
- * pieza comida cuando su nombre está por ganar, y ése es el daño de la v1.0.
- * Encima va el de la versión vieja, con otra semilla — que es literalmente lo
- * que se quiere contar: acá abajo se lee PEOR.
- */
-function v02Art(art: string, modo: V02ArtMode, id: string): string {
-    if (modo === 'corrupta') return damageArt(art, `v02:${id}`);
-    if (modo === 'parcial') return halfLoaded(art, `v02:${id}`);
-
-    return art;
-}
-
 export default function CollectionView() {
     /*
      * ⚠ EL TRADUCTOR AVERIADO, NO EL NORMAL. Ésta era la ÚNICA vista que no
@@ -199,8 +183,10 @@ export default function CollectionView() {
                         lo que la hace parecer un formato que no encaja es
                         que cada pieza falle a SU manera. Ver `v02ArtMode`.
                     */
-                    const modo = v02 ? v02ArtMode(piece.id) : 'ok';
-                    const ilegible = modo === 'ilegible';
+                    const lectura = v02
+                        ? v02Reading(artOf(piece), piece.id)
+                        : { modo: 'ok' as const, art: artOf(piece) };
+                    const ilegible = lectura.modo === 'ilegible';
                     const turno = esNueva
                         ? ART.filter((p) => nuevas.has(p.id)).indexOf(piece)
                         : 0;
@@ -255,14 +241,12 @@ export default function CollectionView() {
                                     {t('collection.unreadable')}
                                 </p>
                             ) : (
-                                <pre className="collection-art">
-                                    {v02Art(artOf(piece), modo, piece.id)}
-                                </pre>
+                                <pre className="collection-art">{lectura.art}</pre>
                             )}
 
                             {/* Y la que se cortó lo dice, porque si no se lee
                                 como una pieza que es así de pequeña. */}
-                            {modo === 'parcial' && (
+                            {lectura.modo === 'parcial' && (
                                 <p
                                     className="collection-name mono text-2xs"
                                     data-testid="collection-partial"
@@ -279,7 +263,7 @@ export default function CollectionView() {
                             {/* Y sin dibujo no hay pie: lo que no se lee no
                                 se lee entero, y lo que se cortó ya dijo lo
                                 suyo. */}
-                            {modo === 'ok' && (
+                            {lectura.modo === 'ok' && (
                                 <p className="collection-name mono text-2xs">
                                     {captionOf(piece, lang)}
                                 </p>

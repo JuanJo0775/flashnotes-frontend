@@ -1725,10 +1725,18 @@ export function artSlots(pieces: readonly Note[]): ArtSlot[] {
     return huecos;
 }
 
-/** Cómo queda la pieza al guardarla en una nota. */
-export function asNote(piece: ArtPiece, lang: Lang): string {
+/**
+ * Cómo queda la pieza al guardarla en una nota.
+ *
+ * ⚠ EL DIBUJO SE PUEDE PASAR DE FUERA, y hace falta: en la versión vieja lo que
+ * se guarda es lo que ESA versión pudo leer —comido o cortado— y no la copia
+ * entera. Si `//keep` guardara la buena mientras la pestaña la enseña comida, la
+ * única parte del camino que funcionaría bien sería justo la que deja rastro.
+ * Sin el parámetro se guarda lo de siempre.
+ */
+export function asNote(piece: ArtPiece, lang: Lang, dibujo?: string): string {
     const pie = captionKnown(piece) ? piece.caption[lang] : UNNAMED[lang];
     // Y el dibujo va como toque: guardar una pieza a medio recuperar guarda
     // lo que hay, no una copia entera que todavía no te ganaste.
-    return [artOf(piece), '', `-- ${pie}`].join('\n');
+    return [dibujo ?? artOf(piece), '', `-- ${pie}`].join('\n');
 }

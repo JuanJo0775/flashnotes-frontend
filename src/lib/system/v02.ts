@@ -1,5 +1,7 @@
 // src/lib/system/v02.ts
 
+import { damageArt, halfLoaded } from '@/lib/system/artCorruption';
+
 /**
  * La v0.2 · una versión anterior que nadie borró.
  *
@@ -366,6 +368,33 @@ export function v02ArtMode(id: string): V02ArtMode {
     const dado = ruido(`art:${id}`);
 
     return MODOS.find((m) => dado < m.hasta)?.modo ?? 'ok';
+}
+
+/**
+ * Y EL DIBUJO, TAL COMO LO LEE ESTA VERSIÓN.
+ *
+ * ⚠ VIVE ACÁ Y NO EN LA VISTA porque lo miran TRES sitios: la pestaña de la
+ * colección, `//art_<n>` cuando dibuja y `//keep` cuando guarda. Con una copia
+ * en cada uno, la pieza que la pestaña enseña comida se guardaría entera — y
+ * eso ya no es una versión vieja, es un fallo (REGLAS · B5).
+ *
+ * ⚠ EL DAÑO SE PASA DOS VECES, y no es un descuido: lo que entra puede venir ya
+ * comido por `artOf` —las piezas con el nombre por ganar—, y ése es el daño de
+ * la v1.0. Encima va el de esta versión, con otra semilla, que es literalmente
+ * lo que se quiere contar: acá abajo se lee PEOR.
+ *
+ * ⚠ Y LA ILEGIBLE NO DEVUELVE DIBUJO. Devolver el entero «por si acaso» es lo
+ * que hace que un estado no exista: quien la pida tiene que decirlo con
+ * palabras, y cada sitio lo dice a su manera.
+ */
+export function v02Reading(art: string, id: string): { modo: V02ArtMode; art: string } {
+    const modo = v02ArtMode(id);
+
+    if (modo === 'corrupta') return { modo, art: damageArt(art, `v02:${id}`) };
+    if (modo === 'parcial') return { modo, art: halfLoaded(art, `v02:${id}`) };
+    if (modo === 'ilegible') return { modo, art: '' };
+
+    return { modo, art };
 }
 
 export interface LabelSources {

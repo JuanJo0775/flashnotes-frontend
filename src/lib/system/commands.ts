@@ -28,6 +28,9 @@ import {
     didV02RoundTrip,
     tripWord,
     v02Label,
+    // La lectura de la versión vieja: la misma que usa la pestaña de la
+    // colección, para que lo que se dibuja y lo que se guarda coincidan.
+    v02Reading,
 } from '@/lib/system/v02';
 import {
     clearLie,
@@ -646,6 +649,23 @@ const T = {
      * puede verificar mirando tu propio reloj, y con la referencia perdida ya
      * no hay con qué verificar nada. Eso es lo que dice.
      */
+    /*
+     * LO QUE CONTESTA LA VERSIÓN VIEJA cuando le pedís una pieza que no sabe
+     * leer.
+     *
+     * ⚠ NO DICE QUE NO EXISTA. Existe, es tuya, y la v1.0 la enseña entera: lo
+     * que falla es esta versión leyendo un formato que llegó después. La
+     * diferencia importa — «no existe» se lee como que la perdiste.
+     */
+    artUnreadable: {
+        es: 'SECTOR ILEGIBLE.\n\nESTA VERSIÓN NO ENTIENDE ESE FORMATO.',
+        en: 'UNREADABLE SECTOR.\n\nTHIS VERSION DOES NOT UNDERSTAND THAT FORMAT.',
+    },
+    /* Y lo que avisa cuando lo que guarda no está entero. */
+    keepPartial: {
+        es: 'GUARDADO COMO SE PUDO LEER.',
+        en: 'SAVED AS IT COULD BE READ.',
+    },
     noReference: {
         es: 'SIN REFERENCIA.',
         en: 'NO REFERENCE.',
@@ -1643,7 +1663,6 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//art',
-        notInV02: true,
         hidden: true,
         summary: { es: 'lo que quedó dibujado', en: 'what was left drawn' },
         secretId: 'art',
@@ -1739,7 +1758,6 @@ const COMMANDS: readonly Command[] = [
          * mismo trato que `//attach_*` con los PID.
          */
         name: '//art_1',
-        notInV02: true,
         match: /^art_(\d+)$/,
         hidden: true,
         summary: { es: '—', en: '—' },
@@ -1756,6 +1774,26 @@ const COMMANDS: readonly Command[] = [
                     denied: true,
                 };
             }
+
+            /*
+             * ⚠ Y EN LA VERSIÓN VIEJA, COMO SE PUEDA.
+             *
+             * La colección la inventó la v1.0: acá abajo el dibujo puede salir
+             * comido, cortado a media carga o no salir. Es la MISMA lectura que
+             * hace la pestaña —`v02Reading`— porque si no, lo que la pestaña
+             * enseña comido saldría entero acá y al revés.
+             */
+            const lectura = isV02()
+                ? v02Reading(artOf(piece), piece.id)
+                : { modo: 'ok' as const, art: artOf(piece) };
+
+            /*
+             * ⚠ LA QUE NO SE PUEDE LEER NO CUENTA COMO ABIERTA, y tampoco queda
+             * a mano de `//keep`. Abrir una pieza es VERLA; marcarla desde una
+             * versión que no la sabe pintar regalaría la estrella de abrirlas
+             * todas sin haber visto ninguna.
+             */
+            if (lectura.modo === 'ilegible') return texto(T.artUnreadable[lang]);
 
             // Se recuerda cuál fue, para que `//keep` pueda encadenarse.
             rememberDrawn(piece);
@@ -1774,7 +1812,7 @@ const COMMANDS: readonly Command[] = [
                     [
                         // Con el nombre por ganar, el dibujo TAMPOCO está
                         // entero: ver el morse no es entenderlo. Ver `artOf`.
-                        artOf(piece),
+                        lectura.art,
                         '',
                         `-- ${captionKnown(piece) ? piece.caption[lang] : UNNAMED[lang]}`,
                         '',
@@ -1797,7 +1835,6 @@ const COMMANDS: readonly Command[] = [
     },
     {
         name: '//keep',
-        notInV02: true,
         hidden: true,
         summary: { es: 'quedarse la última', en: 'keep the last one' },
         resolve: (_ctx, _args, lang) => {
@@ -1822,11 +1859,26 @@ const COMMANDS: readonly Command[] = [
              * Va por la misma vía que `//recover`, que ya devolvía texto a la nota
              * abierta.
              */
+            /*
+             * ⚠ Y EN LA VERSIÓN VIEJA SE GUARDA COMO SE PUDO LEER.
+             *
+             * Se pidió jugando, y es lo correcto: si la pestaña la enseña
+             * comida y `//art_<n>` la dibuja comida, guardarla entera sería la
+             * única parte del camino que funciona bien. Lo que queda en la nota
+             * es lo que esta versión vio — y ahí se queda, porque es TEXTO: la
+             * pieza sigue entera en la colección, y la v1.0 la enseña igual.
+             */
+            const comoSeLeyo = isV02()
+                ? asNote(ultima, lang, v02Reading(artOf(ultima), ultima.id).art)
+                : asNote(ultima, lang);
+
             return {
-                output: T.keepDone[lang],
+                output: isV02()
+                    ? `${T.keepDone[lang]}\n${T.keepPartial[lang]}`
+                    : T.keepDone[lang],
                 effect: {
                     kind: 'write-note',
-                    text: asNote(ultima, lang),
+                    text: comoSeLeyo,
                     // Y con su ficha de catálogo: `POLILLA · 1/16`, no «Nueva
                     // nota». Dice qué pieza es y cuántas hay.
                     title: noteTitle(ultima, lang),

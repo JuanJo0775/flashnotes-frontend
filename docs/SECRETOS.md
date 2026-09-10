@@ -3497,6 +3497,16 @@ inventada.
 
 **Sobreviven sólo los básicos:** `//help`, `//ls`, `//clear`, `//version`.
 
+**Y tres que no son básicos y están igual: `//art`, `//art_<n>` y `//keep`.**
+No es una excepción a la regla, es la regla aplicada: **la pestaña de la
+colección SE VE en esa versión** —siempre se vio— y un sitio que se puede
+abrir con unos comandos que contestan «comando desconocido» son dos versiones
+de la misma máquina discutiendo. Es palabra por palabra el argumento que ya
+dejó dentro a `//reboot`.
+
+Lo que pasa es que ahí la colección está **empezada, no terminada**: lee lo que
+puede y guarda lo que leyó (§24.4 bis).
+
 **Y dos que sólo existen ahí:**
 
 | Comando | Qué hace |
@@ -3511,6 +3521,63 @@ una nota vacía**.
 `//todo` es el que mejor cuenta la pieza: lo que lista como pendiente —guardar
 solo, que borrar no sea para siempre, más comandos— es **lo que la v1.0 acabó
 teniendo**. La v0.2 no sabe que va a llegar a ser algo.
+
+## 24.4 bis · La colección, leída por la versión que no la inventó
+
+**Se reportó jugando:** «en la v0.2 se ve rara la sección de colecciones, está
+a medio hacer». Lo estaba, y no como parecía: **era la única vista que no se
+enteraba de estar ahí abajo.** El lateral, la lista, la papelera y la pantalla
+de carga sacan sus rótulos por el traductor averiado; ésta los sacaba
+impecables. Una pantalla perfecta dentro de una versión rota no se lee como una
+pantalla que se salvó: se lee como una sección sin terminar.
+
+Y hay algo más de fondo: **la colección la inventó la v1.0.** Son dieciséis
+piezas guardadas en un formato que esta versión no conoce, así que leerlas
+todas perfectamente era lo raro. Ahora cada una le sale a su manera:
+
+| | Qué se ve |
+| --- | --- |
+| **se lee** | entera, como en la v1.0. Es la mayoría — si fallara casi todo, la pestaña no serviría de nada acá |
+| **comida** | el mismo daño de las piezas a medio recuperar, **pasado dos veces**: acá abajo se lee peor |
+| **a medio cargar** | se corta por una línea cualquiera y lo que falta no se pinta |
+| **ilegible** | no se abre: `[ NO SE PUEDE LEER ]` |
+
+⚠ **Cuatro maneras y no una.** Con un solo fallo la pantalla se lee como una
+función apagada; lo que la hace parecer un formato que no encaja es que cada
+pieza falle **a su manera**.
+
+⚠ **Siempre las mismas**, decididas por la pieza y no por el repintado. La 7
+sale comida siempre y la 8 se lee siempre: es un formato que no encaja, no una
+avería que va y viene — el mismo criterio que gobierna las etiquetas rotas.
+
+⚠ **Y los tramos están elegidos mirando las dieciséis piezas de verdad.** Los
+dados no son aleatorios: cada pieza tiene un identificador fijo, así que su
+número es fijo, y los dieciséis que existen se apelotonan. El primer reparto
+era «bonito» —22 %, 14 %, 12 %— y dejaba **dos de los cuatro modos sin tocarle
+a ninguna pieza**: la variedad existía en el código y no en la pantalla. Hay un
+test que lo comprueba contra el catálogo, y es el que hay que mirar si alguien
+añade una pieza.
+
+### `//art_<n>` y `//keep`, ahí abajo
+
+`//art_<n>` dibuja **lo que esta versión pudo leer**, y con la ilegible contesta
+que no puede — **sin decir que no exista**, que es distinto: existe, es tuya, y
+la v1.0 la enseña entera. Esa no cuenta como abierta: **abrir una pieza es**
+**verla**, y marcarla desde una versión que no la sabe pintar regalaría la
+estrella de abrirlas todas sin haber visto ninguna.
+
+`//keep` **guarda lo que se leyó**, comido o cortado, y lo avisa: `GUARDADO COMO
+SE PUDO LEER.` Si la pestaña la enseña comida y el comando la dibuja comida,
+guardarla entera sería la única parte del camino que funciona bien — justo la
+que deja rastro en tu archivo. **Y ahí se queda**, porque es texto: la pieza
+sigue entera en la colección.
+
+⚠ **Los tres caminos leen por la misma función** (`v02Reading`), y hay un test
+que lo ata. Con una copia de la regla en cada sitio, lo que la pestaña enseña
+comido saldría entero al guardarlo.
+
+⚠ **Y NO SE PIERDE NADA, NUNCA.** Acá no se toca el almacén: basta con volver a
+la v1.0 para ver la pieza entera. Se rompe la pintura, no tus datos.
 
 ## 24.5 · Las etiquetas mal escritas
 
