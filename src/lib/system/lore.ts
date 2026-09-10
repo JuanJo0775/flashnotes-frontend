@@ -57,6 +57,22 @@ export interface SystemContext {
      * insinuar a insistir. Ver los dos fragmentos del reloj.
      */
     sawMorse?: boolean;
+    /**
+     * Si la máquina está puesta en la versión de antes.
+     *
+     * ⚠ NO ES UN MODO DE PINTADO: ES OTRA ÉPOCA. La v0.2 murmura sus propias
+     * frases y no las de ahora, y ésa es toda su historia — nadie actualizó
+     * esos textos, así que la versión vieja sigue diciendo cosas que dejaron
+     * de ser verdad. Ver el bloque `LA VERSIÓN DE ANTES`.
+     */
+    v02?: boolean;
+    /**
+     * Cómo acabó lo del ente, si acabó.
+     *
+     * ⚠ ES LO ÚNICO PERMANENTE QUE DEJAN LOS DOS FINALES en la app de todos
+     * los días. Ver el bloque `DESPUÉS DEL FINAL`.
+     */
+    ending?: 'freed' | 'reported' | null;
 }
 
 /** Una fuente de azar inyectable, para poder fijarla en los tests. */
@@ -124,6 +140,17 @@ interface Fragment {
  */
 const PESO_VARIANTE = 1 / 3;
 
+/**
+ * LA ÉPOCA, que es la condición que más se repite acá abajo.
+ *
+ * ⚠ SE PREGUNTA `!== true` Y NO `=== false`. El contexto llega de sitios que
+ * no saben nada de la v0.2 —los tests viejos, el banco— y en todos ellos el
+ * campo viene sin poner. Sin dueño declarado, la época es la de ahora: es la
+ * versión en la que vive todo el mundo hasta que cruza.
+ */
+const deAhora = (c: SystemContext) => c.v02 !== true;
+const deAntes = (c: SystemContext) => c.v02 === true;
+
 const FRAGMENTS: readonly Fragment[] = [
     { text: { es: '[TODO_BIEN?]', en: '[SYSTEM_OK?]' } },
     // LA ERRATA. En inglés es un CERO en lugar de la O de OK; en español, un
@@ -138,12 +165,19 @@ const FRAGMENTS: readonly Fragment[] = [
     // "SIGO ACÁ" no tiene equivalente literal cómodo. Lo que hay que conservar
     // no es el verbo, es que la máquina se anuncie sin que nadie preguntara.
     { text: { es: '[SIGO ACÁ]', en: '[STILL HERE]' } },
-    { text: { es: '[TURNO 1/1]', en: '[SHIFT 1/1]' } },
+    /*
+     * ⚠ ESTAS TRES TIENEN GEMELA EN LA VERSIÓN VIEJA, y por eso se apagan al
+     * cruzar. Son los tres únicos campos del murmullo que llevan un DATO —el
+     * turno, el relevo, la memoria— y el dato es distinto en cada época. Que
+     * las dos versiones dijeran lo mismo era lo que dejaba a la v0.2 sin
+     * historia propia: una piel rota de la de ahora en vez de un antes.
+     */
+    { text: { es: '[TURNO 1/1]', en: '[SHIFT 1/1]' }, when: deAhora },
     // "RELEVO" es el turno que viene a reemplazarte y no llega nunca. "RELIEF"
     // guarda las dos cosas: el relevo y el alivio.
-    { text: { es: '[SIN RELEVO]', en: '[NO RELIEF]' } },
+    { text: { es: '[SIN RELEVO]', en: '[NO RELIEF]' }, when: deAhora },
     // "TIBIA" es el calor que queda de algo que estuvo encendido mucho rato.
-    { text: { es: '[MEMORIA TIBIA]', en: '[MEMORY STILL WARM]' } },
+    { text: { es: '[MEMORIA TIBIA]', en: '[MEMORY STILL WARM]' }, when: deAhora },
 
     /*
      * ────────────────────────────────────────────────────────────────────
@@ -176,7 +210,12 @@ const FRAGMENTS: readonly Fragment[] = [
      * barra entera; acortarla la deja en el registro del resto — `[NO RELIEF]`,
      * `[SHIFT 1/1]`—, que es como habla un aparato y no una persona.
      */
-    { text: { es: '[NADIE LEE LA HORA]', en: '[THE HOUR UNREAD]' } },
+    /*
+     * ⚠ Y LAS DOS SE CALLAN DENTRO DE LA v0.2. Una pista sigue apuntando aunque
+     * ya estés donde lleva, y ahí deja de ser una pista: es la máquina
+     * insistiendo con una puerta que tenés abierta detrás.
+     */
+    { text: { es: '[NADIE LEE LA HORA]', en: '[THE HOUR UNREAD]' }, when: deAhora },
 
     /*
      * 2 · Y LA CONFIRMACIÓN, sólo para quien ya vio los puntos y las rayas.
@@ -195,7 +234,7 @@ const FRAGMENTS: readonly Fragment[] = [
      */
     {
         text: { es: '[EMITIENDO · — ·]', en: '[TRANSMITTING · — ·]' },
-        when: (c) => c.sawMorse === true,
+        when: (c) => c.sawMorse === true && deAhora(c),
     },
 
     // De madrugada no dice que está bien: dice lo que le pesa.
@@ -224,6 +263,99 @@ const FRAGMENTS: readonly Fragment[] = [
     {
         text: { es: '[SEGUÍS AHÍ]', en: '[STILL THERE]' },
         when: (c) => c.idleMs >= SILENCIO_MS,
+    },
+
+    /*
+     * ────────────────────────────────────────────────────────────────────
+     * LA VERSIÓN DE ANTES.
+     *
+     * ⚠ QUÉ PROBLEMA RESUELVE. La v0.2 tenía averías y no tenía historia: se
+     * traducía mal, fallaba al guardar, se caía entera — pero murmuraba
+     * exactamente lo mismo que la de ahora. Todo lo que contaba de ella era
+     * que está rota, y estar rota no es un pasado.
+     *
+     * ⚠ Y NO CUENTA NADA: SÓLO SIGUE DICIENDO LO DE ENTONCES. Nadie tocó estos
+     * textos cuando la casa se fue vaciando, así que la versión vieja informa
+     * de un sitio con dos turnos, con relevo a seis horas y con la garantía
+     * todavía en vigor. La historia la hace el CONTRASTE con las tres de
+     * arriba, y la pone quien se acuerde de haberlas leído.
+     *
+     * ⚠ POR ESO NINGUNA HABLA DEL ENTE. Él estaba acá abajo y no aparece en
+     * ninguna: un murmullo que lo mencionara convertiría la versión vieja en
+     * un documento sobre él, y lo que la hace doler es que sea una oficina
+     * normal a la que todavía no le había pasado nada.
+     * ────────────────────────────────────────────────────────────────────
+     */
+
+    // El mismo campo que ahora dice 1/1. Entonces eran dos, y se relevaban.
+    { text: { es: '[TURNO 2/2]', en: '[SHIFT 2/2]' }, when: deAntes },
+    // Y el relevo tenía hora. `[SIN RELEVO]` es esta misma línea, más tarde.
+    { text: { es: '[RELEVO EN 6 H]', en: '[RELIEF IN 6 H]' }, when: deAntes },
+    /*
+     * FRÍA, no tibia: la memoria todavía se apagaba. Es la gemela exacta de
+     * `[MEMORIA TIBIA]`, que es el calor de algo que lleva años sin apagarse.
+     */
+    { text: { es: '[MEMORIA FRÍA]', en: '[MEMORY STILL COLD]' }, when: deAntes },
+    /*
+     * ⚠ LA GARANTÍA ES LA MÁS CRUEL DE LAS CINCO, y parece un chiste de
+     * oficina. Dice que este equipo tuvo fabricante, factura y alguien a quien
+     * reclamarle. Todo eso se acabó, y la máquina sigue encendida.
+     */
+    { text: { es: '[GARANTÍA VIGENTE]', en: '[UNDER WARRANTY]' }, when: deAntes },
+    /*
+     * Y el registro vacío. La de ahora lleva la cuenta de todo el que pasó —de
+     * eso va el lore entero—; acá todavía no había pasado nadie.
+     */
+    { text: { es: '[REGISTRO VACÍO]', en: '[LOG EMPTY]' }, when: deAntes },
+
+    /*
+     * ────────────────────────────────────────────────────────────────────
+     * DESPUÉS DEL FINAL.
+     *
+     * ⚠ QUÉ PROBLEMA RESUELVE. Los dos finales cerraban su arco y la app del
+     * día siguiente era la misma app: `//hi` daba el saludo de siempre, la
+     * barra murmuraba lo de siempre, y de la decisión más grande del juego no
+     * quedaba rastro salvo la cicatriz —que sólo deja uno de los dos.
+     *
+     * ⚠ LO QUE CAMBIA ES EL MURMULLO, NO LA FACHADA. El saludo institucional
+     * sigue igual a propósito: que la parte que se ve no se haya enterado es
+     * exactamente lo que hace que enterarse por la barra de estado, semanas
+     * después, se sienta como una confidencia.
+     *
+     * ⚠ Y LAS CUATRO ESTÁN ESCRITAS EN JERGA DE REGISTRO, no de duelo. Esta
+     * barra es la contabilidad de la máquina; una frase triste acá sería otra
+     * voz. Lo que hay es un asiento contable que sólo vos sabés leer.
+     *
+     * ⚠ Y NO SALEN EN LA v0.2: allá abajo es antes. La versión vieja no puede
+     * saber cómo terminó algo que todavía no pasó.
+     * ────────────────────────────────────────────────────────────────────
+     */
+
+    /*
+     * LO SOLTASTE. La máquina no sabe qué se fue: sabe que algo salió y que
+     * falta una ficha donde antes había una.
+     */
+    {
+        text: { es: '[SALIDA REGISTRADA]', en: '[EXIT LOGGED]' },
+        when: (c) => c.ending === 'freed' && deAhora(c),
+    },
+    {
+        text: { es: '[FALTA UN REGISTRO]', en: '[A RECORD MISSING]' },
+        when: (c) => c.ending === 'freed' && deAhora(c),
+    },
+
+    /*
+     * LO DENUNCIASTE. Acá no falta nada y todo está en orden, que es el
+     * punto: `[SIN INCIDENCIAS]` es el parte de un sitio donde acaba de pasar
+     * algo, y `[SECTOR CERRADO]` es dónde pasó.
+     */
+    {
+        text: { es: '[SIN INCIDENCIAS]', en: '[NO INCIDENTS]' },
+        when: (c) => c.ending === 'reported' && deAhora(c),
+    },
+    {
+        text: { es: '[SECTOR CERRADO]', en: '[SECTOR SEALED]' },
+        when: (c) => c.ending === 'reported' && deAhora(c),
     },
 ];
 
@@ -352,6 +484,25 @@ const BOOT_PHRASES_ALL: readonly Localized[] = [
     { es: 'PUEDE ESCRIBIR. NADIE VA A LEERLO.', en: 'YOU MAY WRITE. NO ONE WILL READ IT.' },
 ];
 
+/**
+ * LA FRASE QUE SE SUMA AL MAZO CUANDO SE ACABA, una por final.
+ *
+ * ⚠ SE AÑADE AL REPERTORIO, NO LO SUSTITUYE. Cambiar todas las frases de
+ * arranque después del final convertiría la app en otra app; lo que pasa es
+ * más pequeño y más raro de encontrar: hay una carta más en el mazo, y sale
+ * una de cada doce veces que toca frase, para siempre.
+ *
+ * ⚠ Y LAS DOS ESTÁN EN EL REGISTRO INSTITUCIONAL de las demás —mayúsculas,
+ * usted, sin exclamaciones—, que es lo que las vuelve peores. La de haberlo
+ * denunciado da las GRACIAS: es un acuse de recibo, la cosa más fría que
+ * puede decir un sistema a alguien que acaba de entregar a otro.
+ */
+const BOOT_PHRASES_ENDING: Readonly<Record<'freed' | 'reported', Localized>> = {
+    // Una sesión que se cerró sola. Es exactamente lo que la máquina vio.
+    freed: { es: 'UNA SESIÓN SE CERRÓ SOLA.', en: 'A SESSION CLOSED ITSELF.' },
+    reported: { es: 'INCIDENCIA RESUELTA. GRACIAS.', en: 'INCIDENT CLOSED. THANK YOU.' },
+};
+
 const BOOT_PHRASES_NIGHT_ALL: readonly Localized[] = [
     { es: 'TURNO NOCHE. NO HAY RELEVO.', en: 'NIGHT SHIFT. NO RELIEF COMING.' },
     { es: 'A ESTA HORA SÓLO ESCRIBE USTED.', en: 'AT THIS HOUR ONLY YOU ARE WRITING.' },
@@ -395,8 +546,20 @@ const BOOT_PHRASE_AFTER_TRASH_ALL: Localized = {
     en: 'FROM SCRATCH AGAIN?',
 };
 
-export function bootPhrases(lang: Lang = getLang()): readonly string[] {
-    return BOOT_PHRASES_ALL.map((f) => f[lang]);
+/**
+ * El repertorio de día.
+ *
+ * ⚠ EL FINAL ES UN PARÁMETRO Y NO UNA LECTURA ESCONDIDA, como el idioma: este
+ * módulo es puro y quien lo llama le pasa el contexto. Sin final, el
+ * repertorio es el de siempre.
+ */
+export function bootPhrases(
+    lang: Lang = getLang(),
+    ending?: 'freed' | 'reported' | null
+): readonly string[] {
+    const base = BOOT_PHRASES_ALL.map((f) => f[lang]);
+
+    return ending ? [...base, BOOT_PHRASES_ENDING[ending][lang]] : base;
 }
 
 export function bootPhrasesNight(lang: Lang = getLang()): readonly string[] {
@@ -436,7 +599,15 @@ export function pickBootPhrase(
         return pickFrom(bootPhrasesInvasive(lang), previous, random);
     }
 
-    const repertorio = isSmallHours(ctx.hour) ? bootPhrasesNight(lang) : bootPhrases(lang);
+    /*
+     * ⚠ LA FRASE DEL FINAL SÓLO SE SUMA AL REPERTORIO DE DÍA. De madrugada hay
+     * tres frases contadas y meterle una cuarta la haría salir una de cada
+     * cuatro: a esa frecuencia deja de ser un asiento perdido en el registro y
+     * se lee como que la app quiere hablar del tema.
+     */
+    const repertorio = isSmallHours(ctx.hour)
+        ? bootPhrasesNight(lang)
+        : bootPhrases(lang, ctx.ending);
     return pickFrom(repertorio, previous, random);
 }
 

@@ -108,6 +108,25 @@ export function reportedIt() {
 }
 
 /**
+ * CUÁL DE LOS DOS FINALES FUE, si fue alguno.
+ *
+ * ⚠ EXISTE PARA QUE NADIE MÁS TENGA QUE MIRAR LAS FASES. `ido` y
+ * `rencoroso` son nombres del arco del ente y no significan nada fuera de
+ * él; quien pregunta desde otra parte del sistema —el murmullo de la barra,
+ * el arranque del editor— quiere saber si lo soltaste o lo denunciaste, y
+ * merece preguntarlo con esas palabras.
+ */
+export type Ending = 'freed' | 'reported';
+
+export function endingTaken(): Ending | null {
+    const { phase } = readEntity();
+
+    if (phase === 'ido') return 'freed';
+    if (phase === 'rencoroso') return 'reported';
+    return null;
+}
+
+/**
  * ¿Se acabó?
  *
  * En los dos finales no vuelve a contestar nunca. `//hi` sigue dando el saludo

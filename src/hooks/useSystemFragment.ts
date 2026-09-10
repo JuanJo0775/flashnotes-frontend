@@ -6,6 +6,7 @@ import { BRAG, isBragging, subscribeHints } from '@/lib/system/artHints';
 import { getLang } from '@/i18n';
 import { useSyncExternalStore } from 'react';
 import { pickFragment } from '@/lib/system/lore';
+import { endingTaken } from '@/lib/system/entityEnding';
 import { foundSecrets, getSystemState } from '@/hooks/useSystemState';
 
 /**
@@ -84,6 +85,18 @@ export function showFragment() {
              * pista, y quien no lo ha visto todavía no la entendería.
              */
             sawMorse: foundSecrets().has('morse'),
+            /*
+             * ⚠ LA ÉPOCA Y EL FINAL, que son las dos cosas que hacen que esta
+             * barra no diga siempre lo mismo en toda la vida de la app.
+             *
+             * La versión vieja murmura lo suyo —dos turnos, relevo a seis
+             * horas, garantía en vigor— y la de ahora suma dos asientos más
+             * en cuanto lo del ente termina, según cómo termine. Las dos
+             * listas viven en `lore.ts`; acá sólo se dice desde dónde se
+             * pregunta.
+             */
+            v02: system.v02,
+            ending: endingTaken(),
         },
         previous
     );

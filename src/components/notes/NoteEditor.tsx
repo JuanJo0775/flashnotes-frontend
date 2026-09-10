@@ -18,6 +18,7 @@ import LinePrompts from '@/components/notes/LinePrompts';
 import { isCommandLine, isExecutable } from '@/lib/system/commands';
 import { useNoteCommands } from '@/hooks/useNoteCommands';
 import { pickBootPhrase } from '@/lib/system/lore';
+import { endingTaken } from '@/lib/system/entityEnding';
 import { getSystemState, useSystemState } from '@/hooks/useSystemState';
 import { idleMs } from '@/lib/system/idle';
 import { isV02, saveOutcome } from '@/lib/system/v02';
@@ -131,6 +132,13 @@ export default function NoteEditor({
             sessionMs: Date.now() - system.sessionStart,
             idleMs: idleMs(),
             msSinceTrash,
+            /*
+             * ⚠ Y CÓMO ACABÓ LO DEL ENTE, que suma una frase al mazo y no lo
+             * sustituye: sale una de cada doce veces que toca frase rara, y
+             * ya no deja de estar. Es lo único que los dos finales dejan en
+             * la app de todos los días junto con el murmullo de la barra.
+             */
+            ending: endingTaken(),
         };
 
         const recienTirada = msSinceTrash !== null && msSinceTrash < 60_000;

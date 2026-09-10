@@ -175,6 +175,35 @@ huecos, porque lo que hacía falta era un idioma, no una animación por sitio.
 borra tiene que irse como se va el papel de un teletipo. El vocabulario ya está
 construido.
 
+### 2.1 bis · Y uno que no salió auditando, sino mirando la pestaña
+
+~~**El icono era el de Next**~~ · **hecho**: 26 KB de logo ajeno en una app con
+catálogo de color, catálogo de iconos y un test que ata cada glifo a su
+documento. **La pestaña es lo único del producto que se ve sin abrirlo**, y
+llevaba el nombre de otro.
+
+La marca es `[▌]`: los **corchetes** de todos los iconos del sistema y el
+**cursor de bloque**, que es lo único que se mueve de forma continua en toda la
+interfaz. Juntos dicen lo que la app es — una terminal esperando a que
+escribas. Sin letra dentro: a 16 px una letra es una mancha.
+
+⚠ **Siete rectángulos sobre una rejilla de 32, todas las medidas pares.** A la
+mitad —16 px, el tamaño de una pestaña— cada borde cae en un píxel entero y no
+hay nada que suavizar. Un trazo impar lo pinta el navegador con antialias y la
+marca sale gris en el único sitio donde de verdad se la ve.
+
+⚠ **Y hay dos archivos para un solo dibujo, sin dibujarlo dos veces.** El
+`.svg` es el bueno —nítido a cualquier tamaño y se da vuelta con el tema—;
+Safari no lo admite y sin `.ico` deja la pestaña **en blanco**, que es peor que
+el logo de Next porque parece que la página está rota. La geometría vive en
+`mark.ts`, el `.svg` sale de ahí, `scripts/marca.mjs` lo rasteriza al `.ico`, y
+un test comprueba que **en el centro de cada rectángulo del código haya tinta
+en el archivo del disco**.
+
+⚠ Y está en el banco (`LA MARCA`), pintada **de la tabla y no del archivo**: si
+enseñara la imagen del disco, la única página que existe para detectar que los
+dos se separaron sería la que lo tapa.
+
 ### 2.4 · Huecos de lore
 
 - ~~**Nadie apagó nunca esta máquina.**~~ · **hecho**: `TURNO_3.txt`, una hoja de
@@ -182,10 +211,36 @@ construido.
   v0.2. Casi todo tachado y una cosa sin tachar, y una última línea que es una
   instrucción de mantenimiento: «si el lunes no viene nadie, dejarlo encendido.
   se recupera solo.» **No explica nada** — ver SECRETOS §25 bis.
-- **Después del final no pasa nada permanente.** Los dos finales cierran su
-  arco y la app del día siguiente es la misma app.
-- **La v0.2 no tiene historia propia**, sólo averías. Ahora que el ente llega
-  ahí, es el sitio natural para contarla: es la versión donde él era más joven.
+- ~~**Después del final no pasa nada permanente.**~~ · **hecho**: la barra suma
+  **dos asientos** para siempre, distintos según cómo terminó —`[SALIDA
+  REGISTRADA]` y `[FALTA UN REGISTRO]` si lo soltaste; `[SIN INCIDENCIAS]` y
+  `[SECTOR CERRADO]` si lo denunciaste— y el arranque suma **una carta al
+  mazo**: `UNA SESIÓN SE CERRÓ SOLA.` o `INCIDENCIA RESUELTA. GRACIAS.`
+
+  ⚠ **Lo que cambia es el murmullo, no la fachada.** `//hi` sigue dando el
+  saludo institucional de siempre a propósito: que la parte que se ve no se
+  haya enterado es lo que hace que enterarse por la barra, semanas después,
+  se sienta como una confidencia.
+
+  ⚠ Y están en **jerga de registro, no de duelo**. Esta barra es la
+  contabilidad de la máquina; una frase triste ahí sería otra voz. La de
+  haberlo denunciado **da las gracias**, que es la cosa más fría que puede
+  decirle un sistema a alguien que acaba de entregar a otro.
+- ~~**La v0.2 no tiene historia propia**~~ · **hecho, y sin contar nada**: los
+  tres únicos campos del murmullo que llevan un DATO tienen valor de entonces
+  —`[TURNO 2/2]`, `[RELEVO EN 6 H]`, `[MEMORIA FRÍA]`— más `[GARANTÍA
+  VIGENTE]` y `[REGISTRO VACÍO]`. **Nadie actualizó esos textos**: la versión
+  vieja sigue informando de un sitio con dos turnos y relevo a seis horas.
+
+  ⚠ **La historia la hace el contraste**, no la frase. Ninguna de las cinco
+  cuenta nada; lo cuenta haber leído antes `[TURNO 1/1]` y `[SIN RELEVO]`.
+
+  ⚠ Y **ninguna nombra al ente**, aunque él estuviera ahí abajo. Un murmullo
+  que hablara de él convertiría la versión vieja en un documento sobre él; lo
+  que la hace doler es que sea una oficina normal a la que todavía no le
+  había pasado nada.
+
+✅ **§2.4 CERRADO.**
 
 ### 2.5 · Y la que más se notaría
 
@@ -209,15 +264,23 @@ momento, no un cartel.**
    ANOTA —igual que ya anotaba tirar— y el suscriptor lee el almacén. No hizo
    falta inventar ninguna marca.
 5. ~~La sala de la v0.2~~ · **hecha**
-6. Los tres defectos de 2.1, que son de una tarde entre los tres
+6. ~~Los tres defectos de 2.1~~ · **hechos**
+7. ~~Los dos huecos de lore de 2.4~~ · **hechos**: la v0.2 murmura lo de
+   entonces, y los dos finales dejan asiento para siempre.
 
-### Y una idea más grande, si se quiere subir la apuesta
+**Queda una sola cosa de toda la auditoría: lo VISUAL de la ceremonia de la
+colección (§2.5).** El sonido ya está; lo que falta es que la pieza dieciséis
+no se vea igual que la primera.
 
-**El rastro de quien se fue.** Una nota vieja que no escribiste tú, con fecha
-anterior a tu sesión, que aparece **una sola vez** y sólo si ya estuviste en la
-v0.2. No explica nada: es un turno a medias, una lista de tareas de alguien que
-no volvió.
+### ~~Y una idea más grande~~ · CONSTRUIDA
 
-Convierte «la máquina está sola» de frase en **prueba**, y engancha con todo lo
-que ya está construido sin inventar un mecanismo nuevo — las notas fantasma ya
-existen (`ghostFile.ts`, `entityNotes.ts`).
+**El rastro de quien se fue** es `TURNO_3.txt` (`shiftNote.ts`): una hoja de
+turno a medias en el fondo de la papelera, una sola vez, y sólo después de
+haber cruzado a la v0.2. Casi todo tachado y una cosa sin tachar; la última
+línea es una instrucción de mantenimiento —«si el lunes no viene nadie,
+dejarlo encendido. se recupera solo.»— y la máquina lleva desde entonces
+haciéndole caso.
+
+Convirtió «la máquina está sola» de frase en **prueba**, y no hizo falta
+inventar ningún mecanismo: las notas fantasma ya existían (`ghostFile.ts`,
+`entityNotes.ts`).

@@ -329,13 +329,22 @@ otra palabra que suena igual de máquina en su idioma.
 | `[TODO_BIEN?]` | `[SYSTEM_OK?]` | siempre | 1 |
 | `[T0DO_B1EN]` | `[SYSTEM_0K]` | siempre | **⅓** |
 | `[SIGO ACÁ]` | `[STILL HERE]` | siempre | 1 |
-| `[TURNO 1/1]` | `[SHIFT 1/1]` | siempre | 1 |
-| `[SIN RELEVO]` | `[NO RELIEF]` | siempre | 1 |
-| `[MEMORIA TIBIA]` | `[MEMORY STILL WARM]` | siempre | 1 |
+| `[TURNO 1/1]` | `[SHIFT 1/1]` | **sólo en la v1.0** | 1 |
+| `[SIN RELEVO]` | `[NO RELIEF]` | **sólo en la v1.0** | 1 |
+| `[MEMORIA TIBIA]` | `[MEMORY STILL WARM]` | **sólo en la v1.0** | 1 |
 | `[TURNO_PESADO]` | `[SYSTEM_TIRED]` | 02:00–05:00, hora del dispositivo | 1 |
 | `[NADIE MÁS CONECTADO]` | `[NO ONE ELSE ONLINE]` | 02:00–05:00 | 1 |
 | `[TURNO LARGO]` | `[LONG SHIFT]` | sesión ≥ 45 min | 1 |
 | `[SEGUÍS AHÍ]` | `[STILL THERE]` | **sin tocar nada ≥ 10 min** | 1 |
+| `[TURNO 2/2]` | `[SHIFT 2/2]` | **sólo en la v0.2** | 1 |
+| `[RELEVO EN 6 H]` | `[RELIEF IN 6 H]` | **sólo en la v0.2** | 1 |
+| `[MEMORIA FRÍA]` | `[MEMORY STILL COLD]` | **sólo en la v0.2** | 1 |
+| `[GARANTÍA VIGENTE]` | `[UNDER WARRANTY]` | **sólo en la v0.2** | 1 |
+| `[REGISTRO VACÍO]` | `[LOG EMPTY]` | **sólo en la v0.2** | 1 |
+| `[SALIDA REGISTRADA]` | `[EXIT LOGGED]` | v1.0, **si lo soltaste** | 1 |
+| `[FALTA UN REGISTRO]` | `[A RECORD MISSING]` | v1.0, **si lo soltaste** | 1 |
+| `[SIN INCIDENCIAS]` | `[NO INCIDENTS]` | v1.0, **si lo denunciaste** | 1 |
+| `[SECTOR CERRADO]` | `[SECTOR SEALED]` | v1.0, **si lo denunciaste** | 1 |
 
 **Estar disponible y salir a menudo son dos preguntas distintas**, y hacen falta
 las dos. `when` dice si un fragmento PUEDE salir —de madrugada, con la sesión
@@ -357,6 +366,89 @@ Son dos cosas y ahora son dos funciones: **el alarde** es el acuse de que te
 llevaste algo y ocurre siempre; **el destello de la pestaña** te dice dónde
 mirar, y enseñarlo dos veces sería un tutorial. Un premio que no se anuncia no es
 un premio: es un cambio en un contador que nadie está mirando.
+
+### El murmullo tiene época
+
+**La v0.2 tenía averías y no tenía historia.** Se traducía mal, fallaba al
+guardar, se caía entera — y murmuraba **exactamente lo mismo** que la versión
+de ahora. Todo lo que contaba de ella era que está rota, y estar rota no es un
+pasado.
+
+Ahora dice lo que decía **entonces**, y nadie actualizó esos textos:
+
+| La de ahora | La de antes |
+| --- | --- |
+| `[TURNO 1/1]` | `[TURNO 2/2]` |
+| `[SIN RELEVO]` | `[RELEVO EN 6 H]` |
+| `[MEMORIA TIBIA]` | `[MEMORIA FRÍA]` |
+
+**Son los tres únicos campos del murmullo que llevan un dato** —el turno, el
+relevo, la memoria— y el dato es distinto en cada época. La historia no la
+cuenta ninguna de las seis: la hace el **contraste**, y la pone quien se
+acuerde de haber leído las otras.
+
+Y dos más que sólo existen allá abajo: **`[GARANTÍA VIGENTE]`**, que dice que
+este equipo tuvo fabricante, factura y alguien a quien reclamarle —todo eso se
+acabó y la máquina sigue encendida—, y **`[REGISTRO VACÍO]`**, que es la
+contraria de todo el lore: la de ahora lleva la cuenta de todo el que pasó,
+y acá todavía no había pasado nadie.
+
+⚠ **Ninguna de las cinco nombra al ente.** Él estaba ahí abajo, y por eso
+mismo no aparece: un murmullo que hablara de él convertiría la versión vieja en
+un documento sobre él. Lo que la hace doler es que sea **una oficina normal a
+la que todavía no le había pasado nada**.
+
+⚠ **Y las dos pistas del reloj se callan al cruzar.** Una pista sigue apuntando
+aunque ya estés donde lleva, y ahí deja de ser una pista: es la máquina
+insistiendo con una puerta que tenés abierta detrás.
+
+### Después del final
+
+**Los dos finales cerraban su arco y la app del día siguiente era la misma
+app.** `//hi` daba el saludo de siempre, la barra murmuraba lo de siempre, y de
+la decisión más grande del juego no quedaba rastro salvo la cicatriz — que
+sólo deja uno de los dos (§26).
+
+Ahora la barra suma **dos asientos**, según cómo terminó:
+
+| Lo soltaste | Lo denunciaste |
+| --- | --- |
+| `[SALIDA REGISTRADA]` | `[SIN INCIDENCIAS]` |
+| `[FALTA UN REGISTRO]` | `[SECTOR CERRADO]` |
+
+La máquina no sabe qué se fue: sabe que **algo salió** y que **falta una ficha**
+donde antes había una. Del otro lado no falta nada y todo está en orden, que es
+el punto: `[SIN INCIDENCIAS]` es el parte de un sitio donde **acaba de pasar
+algo**.
+
+⚠ **Están escritas en jerga de registro, no de duelo.** Esta barra es la
+contabilidad de la máquina; una frase triste ahí sería otra voz. Lo que hay es
+un asiento contable que sólo vos sabés leer.
+
+⚠ **Lo que cambia es el murmullo, no la fachada.** El saludo institucional
+sigue igual a propósito: que la parte que se ve no se haya enterado es
+exactamente lo que hace que enterarse por la barra de estado, semanas después,
+se sienta como una confidencia.
+
+⚠ **Y no salen en la v0.2**: allá abajo es antes. La versión vieja no puede
+saber cómo terminó algo que todavía no pasó.
+
+**Y el arranque suma una carta al mazo, una por final** — la frase que teclea
+el editor en una nota vacía (§3):
+
+| Lo soltaste | Lo denunciaste |
+| --- | --- |
+| `UNA SESIÓN SE CERRÓ SOLA.` | `INCIDENCIA RESUELTA. GRACIAS.` |
+
+Se **añade** al repertorio, no lo sustituye: cambiar todas las frases después
+del final convertiría la app en otra app. Sale una de cada doce veces que toca
+frase, para siempre. Las dos están en el registro institucional de las demás
+—mayúsculas, usted, sin exclamaciones—, que es lo que las vuelve peores: la de
+haberlo denunciado **da las gracias**.
+
+⚠ **De madrugada no se suma.** Ahí el repertorio son tres frases contadas y una
+cuarta saldría una de cada cuatro: a esa frecuencia deja de ser un asiento
+perdido en el registro y se lee como que la app quiere hablar del tema.
 
 ### La errata
 
@@ -492,6 +584,20 @@ no sabe quién sos, y de golpe una habla como alguien.
 Son raras a propósito. Si salieran seguido dejarían de sorprender y encima
 empezarían a leerse como que la app quiere darte conversación, que es exactamente
 lo contrario del tono.
+
+### Y una carta más cuando lo del ente se acaba
+
+El repertorio de día pasa de once frases a **doce**, para siempre, y la número
+doce depende de cómo terminó:
+
+| Lo soltaste | Lo denunciaste |
+| --- | --- |
+| `UNA SESIÓN SE CERRÓ SOLA.` | `INCIDENCIA RESUELTA. GRACIAS.` |
+
+Se **añade** al mazo, no lo sustituye: cambiar todas las frases después del
+final convertiría la app en otra app. **De madrugada no se suma** —ahí son tres
+frases contadas y una cuarta saldría una de cada cuatro—, y el detalle entero
+está en §2 · *Después del final*.
 
 > Las frases van en mayúsculas y tratan de **usted**. Ese usted es deliberado:
 > una máquina institucional que no te tutea porque no sabe quién sos.
@@ -3332,6 +3438,31 @@ Con el sorteo la mayoría caían en `minor` y no se veían, y un tirón que no s
 no cuenta como avería. **Ésa es la diferencia entre las dos versiones:** en la
 v1.0 el fallo es algo que provocás; en la v0.2 es el estado normal de la casa.
 
+## 24.5 bis · El murmullo de entonces
+
+**Todo lo que la v0.2 contaba de sí misma era que está rota**, y estar rota no
+es un pasado. Ahora la barra de estado dice **lo que decía entonces**, porque
+nadie actualizó esos textos:
+
+| La de ahora | La de antes |
+| --- | --- |
+| `[TURNO 1/1]` | `[TURNO 2/2]` |
+| `[SIN RELEVO]` | `[RELEVO EN 6 H]` |
+| `[MEMORIA TIBIA]` | `[MEMORIA FRÍA]` |
+
+Más `[GARANTÍA VIGENTE]` y `[REGISTRO VACÍO]`, que sólo existen aquí abajo.
+
+**Son los tres únicos campos del murmullo que llevan un dato** —el turno, el
+relevo, la memoria— y el dato es distinto en cada época. **Ninguna de las cinco
+cuenta nada**: la historia la hace el contraste, y la pone quien se acuerde de
+haber leído las otras.
+
+⚠ **Y ninguna nombra al ente**, aunque él estuviera justo aquí. Lo que hace
+doler a esta versión es que sea **una oficina normal a la que todavía no le
+había pasado nada**.
+
+El detalle entero, con los dos idiomas, está en §2 · *El murmullo tiene época*.
+
 ## 24.6 bis · Y cómo falla el aparato
 
 La avería de señal de la v1.0 es **de señal**: canales de color separados, tirón,
@@ -4156,6 +4287,23 @@ volver a tirar, y sólo vos sabés por qué pasa.
 
 Sólo la deja el final en que se fue. Reportarlo **arregla el fallo de verdad**:
 ahí no queda marca, y eso hace ese final más limpio y más frío.
+
+### Y lo que queda en la app de todos los días
+
+La cicatriz era **lo único** que dejaban los dos finales, y sólo la deja uno.
+Ahora los dos dejan algo más: la barra de estado suma **dos asientos** y el
+arranque **una frase**, distintos según cómo terminó, y ya no dejan de estar.
+
+| Lo soltaste | Lo denunciaste |
+| --- | --- |
+| `[SALIDA REGISTRADA]` · `[FALTA UN REGISTRO]` | `[SIN INCIDENCIAS]` · `[SECTOR CERRADO]` |
+| `UNA SESIÓN SE CERRÓ SOLA.` | `INCIDENCIA RESUELTA. GRACIAS.` |
+
+⚠ **La fachada no se entera.** `//hi` sigue dando el saludo institucional de
+siempre, como si nada; lo que cambia es el murmullo. Que la parte que se ve no
+se haya enterado es lo que hace que enterarse por la barra de estado, semanas
+después, se sienta como una confidencia. El detalle está en §2 · *Después del
+final*.
 
 ### Sus ventanas
 
