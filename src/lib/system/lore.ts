@@ -73,12 +73,22 @@ export interface SystemContext {
      * los días. Ver el bloque `DESPUÉS DEL FINAL`.
      */
     ending?: 'freed' | 'reported' | null;
+    /**
+     * Cuánto llevabas sin venir, medido al arrancar.
+     *
+     * ⚠ ES LO ÚNICO DE ESTE CONTEXTO QUE MIRA MÁS ALLÁ DE LA SESIÓN. Todo lo
+     * demás —la hora, el rato abierto, lo quieto que estás— pasa hoy; esto es
+     * lo que la máquina sabe de tu ausencia, y lo sabe porque lleva registro de
+     * todo el que pasa. Ver `awayAtBoot`.
+     */
+    awayMs?: number;
 }
 
 /** Una fuente de azar inyectable, para poder fijarla en los tests. */
 export type Random = () => number;
 
 const MINUTO = 60_000;
+const HORA = 60 * MINUTO;
 const TURNO_LARGO_MS = 45 * MINUTO;
 /**
  * Cuánto hay que estar quieto para que la máquina pregunte si seguís.
@@ -89,6 +99,20 @@ const TURNO_LARGO_MS = 45 * MINUTO;
  */
 const SILENCIO_MS = 10 * MINUTO;
 const RECIEN_TIRADA_MS = 60_000;
+
+/**
+ * Cuánto hay que faltar para que la máquina lo note.
+ *
+ * ⚠ TRES DÍAS, Y NO UNO. Con un día lo dice cualquiera que abra la app los
+ * lunes y los miércoles, y entonces no es una ausencia: es el horario normal de
+ * alguien. Con tres, quien lo lee es quien de verdad la dejó parada — y ésa es
+ * la única persona a la que la frase le dice algo.
+ *
+ * ⚠ Y NO HAY UN ESCALÓN MÁS ALTO. Se pensó en uno de dos semanas y sobra: la
+ * máquina no lleva la cuenta de CUÁNTO faltaste, lleva la de que faltaste. Un
+ * segundo umbral la volvería una app que te riñe más cuanto más tardás.
+ */
+const AUSENCIA_LARGA_MS = 3 * 24 * HORA;
 
 /**
  * La franja en que el sistema se ve cansado: 02:00, 03:00 y 04:00.
@@ -263,6 +287,30 @@ const FRAGMENTS: readonly Fragment[] = [
     {
         text: { es: '[SEGUÍS AHÍ]', en: '[STILL THERE]' },
         when: (c) => c.idleMs >= SILENCIO_MS,
+    },
+
+    /*
+     * ────────────────────────────────────────────────────────────────────
+     * Y QUE VOLVISTE.
+     *
+     * ⚠ QUÉ PROBLEMA RESUELVE. El ente medía tu ausencia y era EL ÚNICO que se
+     * enteraba: la máquina —que lleva el registro de todo el que pasó, que es
+     * de lo que va el lore entero— no decía nada cuando volvías después de una
+     * semana. La cosa que mejor sabe hacer, callada.
+     *
+     * ⚠ ES CONTABILIDAD, NO REPROCHE, y ahí se juega todo. «[VOLVISTE]» la
+     * convierte en alguien que te esperaba; «[TURNO REANUDADO]» es un registro
+     * que se retoma donde se quedó — y quien lo lee ya sabe cuánto tiempo estuvo
+     * sin abrirlo. El dato lo pone la persona, no la máquina.
+     *
+     * ⚠ Y NO DICE CUÁNTO. Un número —«[8 DÍAS]»— es la app contándote tu propia
+     * vida, y además envejece mal: a los cuatro meses da risa. Sin número, la
+     * frase vale igual a los tres días que al año.
+     * ────────────────────────────────────────────────────────────────────
+     */
+    {
+        text: { es: '[TURNO REANUDADO]', en: '[SHIFT RESUMED]' },
+        when: (c) => (c.awayMs ?? 0) >= AUSENCIA_LARGA_MS && deAhora(c),
     },
 
     /*

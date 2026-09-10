@@ -74,12 +74,12 @@ nadie. Con `[RELEVO EN 6 H]` encaja: tres turnos de ocho horas.
 
 ---
 
-## 2 · Roto, y pendiente
+## 2 · Roto, y arreglado después
 
-### 2.1 · El reinicio no es una recarga, y promete serlo
+### ~~2.1 · El reinicio no es una recarga~~ · HECHO
 
 `rebootSystem` dice, en su propio comentario: *«lo que se limpia es lo que una
-recarga se lleva, ni más ni menos»*. Hoy no es verdad para tres cosas.
+recarga se lleva, ni más ni menos»*. No era verdad para tres cosas.
 
 | Qué | Dónde | Por qué importa |
 | --- | --- | --- |
@@ -94,23 +94,37 @@ aplique la regla al pie de la letra borra trabajo ajeno. Es una excepción, no u
 olvido.
 
 **El reloj suelto era el quinto de esta lista**, y lo encontró el usuario
-jugando. Ya está arreglado (`aa1f38a`).
+jugando (`aa1f38a`).
 
-### 2.2 · Una clave de idioma muerta, y su valor copiado a mano
+**Hecho** (`068eae7`), y con lo que de verdad importaba: **una sola lista para
+los dos sitios que reinician**. Era el problema de fondo — el reinicio y el
+borrado total limpiaban cada uno lo suyo y se separaron en silencio; con dos
+listas, la sexta se vuelve a escapar. De paso el borrado total gana lo que le
+faltaba: sin esto la pared se quedaba con los golpes de antes.
+
+La excepción de `dropped` está escrita en el código y **probada**, para que
+nadie complete la lista sin leer el comentario y se lleve por delante texto de
+alguien.
+
+### ~~2.2 · Una clave de idioma muerta~~ · HECHO
 
 `sidebar.noTime` (`'--:--:--'`) está traducida en los dos idiomas y **no la lee
 nadie**: el reloj usa `CLOCK_PLACEHOLDER`, una constante con el mismo texto
 escrito otra vez en `useClock.ts`.
 
-Dos copias de la misma cadena, una viva y una muerta — que es exactamente lo que
-la casa prohíbe (REGLAS · B5). Se arregla en dos líneas: o el reloj usa la clave,
-o la clave se va.
+Dos copias de la misma cadena, una viva y una muerta — que es exactamente lo
+que la casa prohíbe (REGLAS · B5).
+
+**Se fue la clave y se quedó la constante**, porque esto no es un texto: es una
+MEDIDA. Ocho caracteres que tienen que coincidir con `HH:MM:SS`, y eso no
+cambia de idioma — traducirlo sólo abría la puerta a que alguien lo hiciera de
+siete.
 
 ---
 
 ## 3 · Huecos, no defectos
 
-### 3.1 · El reloj se suelta en silencio
+### ~~3.1 · El reloj se suelta en silencio~~ · HECHO
 
 `//date_off` y `//date_on` cambian **un estado permanente de la máquina** y sólo
 suenan como cualquier otra respuesta: el teletipo contando renglones.
@@ -118,32 +132,46 @@ suenan como cualquier otra respuesta: el teletipo contando renglones.
 Compárese con lo que sí tiene voz: el tema cambiando (`relay`), la versión vieja
 despertando (`v02-wake`), la señal cayéndose (`sweep`), la red (`net-*`).
 
-**Propuesta, sin inventar voz nueva:** el `relay` — el mismo golpe de contacto
-que suena al cambiar de tema. Una referencia horaria que se suelta y se vuelve a
-fijar es literalmente un enganche. Dos marcas nuevas en la tabla de pantallas y
-nada más.
+**Hecho con el `relay`**, el mismo golpe de contacto del tema: una referencia
+horaria que se suelta y se vuelve a fijar es literalmente un enganche, y la
+casa no inventa voces — las reparte. Suena igual en los dos sentidos porque el
+aparato hace lo mismo; lo que cambia es lo que pasa después.
 
-### 3.2 · La hoja del turno entra sin que nadie se entere
+⚠ **Y hubo que publicar el estado para que sonara.** El reloj suelto vivía en
+su módulo y nadie lo anunciaba; el enchufe del audio mira el almacén, así que
+lo que no pasa por ahí no suena (REGLAS · B2). Ahora `//date_off` y `//date_on`
+pasan por `setClockLoose`, que lo publica.
+
+### ~~3.2 · La hoja del turno entra sin que nadie se entere~~ · HECHO
 
 `TURNO_3.txt` aparece al fondo de la papelera y ya. Las otras tres inyecciones
 —el fantasma, el resto de la pieza, la nota del ente— **también** aparecen
 calladas, así que es coherente… pero es el único rastro físico de la gente que se
 fue, y llega igual que un archivo cualquiera.
 
-**Idea barata:** que la papelera la traiga con la entrada escalonada que ya
-existe (`row-feed`) **una fila más tarde que las demás**. No es un anuncio: es
-que esa hoja tarde un poco más en llegar, como algo que estaba más al fondo.
+**Hecho:** la papelera la trae con la entrada escalonada que ya existe
+(`row-feed`) **dos filas más tarde que las demás**. No es un anuncio: es que esa
+hoja tarde un poco más en llegar, como algo que estaba más al fondo del cajón.
 
-### 3.3 · Volver después de días no cambia nada
+### ~~3.3 · Volver después de días no cambia nada~~ · HECHO
 
 El ente mide tu ausencia (`ausenciaDeArranque`) y **es el único que se entera**.
 La máquina, que lleva el registro de todo el que pasó, no dice nada cuando
 vuelves después de una semana.
 
-El murmullo ya tiene la forma para esto —`when: (c) => …`— y el contexto ya
-viaja. Una frase de vuelta, sólo con una ausencia larga, sería una línea de
-tabla. **Ojo con el tono:** tiene que ser contabilidad, no reproche —
-`[TURNO REANUDADO]` y no `[VOLVISTE]`.
+**Hecho:** `[TURNO REANUDADO]`, a partir de **tres días** sin abrirla. Tres y no
+uno — con un día lo dice cualquiera que abra la app los lunes y los miércoles, y
+entonces no es una ausencia sino el horario de alguien.
+
+⚠ **Contabilidad y no reproche**, que era el riesgo: «volviste» la convierte en
+alguien que te esperaba. Y **no dice cuánto**: un número envejece mal y es la
+app contándote tu propia vida. El dato lo pone quien lee.
+
+---
+
+✅ **AUDITORÍA HONDA CERRADA.** Lo único que queda de las dos auditorías es lo
+que ya estaba en `IDEAS.md` desde antes: los **marcos a medio dibujar** de la
+v0.2 (E2) y la pieza de la cinta, que sigue sin camino decidido.
 
 ---
 

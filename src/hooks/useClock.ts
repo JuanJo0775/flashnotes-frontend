@@ -34,6 +34,16 @@ import { backwardsTime } from '@/lib/system/v02Chrome';
  * cliente pintara la hora, el servidor y el cliente dirían cosas distintas y
  * React tiraría el árbol entero (ver REGLAS · C1). Mide ocho caracteres, los
  * mismos que `HH:MM:SS`, para que el pie no dé un salto al arrancar.
+ *
+ * ⚠ Y NO ES UNA CLAVE DE IDIOMA, aunque lo fue: `sidebar.noTime` existía en los
+ * dos diccionarios con este mismo texto y NO LA LEÍA NADIE — dos copias de la
+ * misma cadena, una viva y una muerta, que es justo lo que la casa prohíbe
+ * (REGLAS · B5). Salió en una auditoría.
+ *
+ * Se quedó la constante y se fue la clave porque esto no es un texto: es una
+ * MEDIDA. Ocho caracteres que tienen que coincidir con `HH:MM:SS`, y eso no
+ * cambia de idioma — traducirlo sólo abría la puerta a que alguien lo hiciera
+ * de siete.
  */
 export const CLOCK_PLACEHOLDER = '--:--:--';
 

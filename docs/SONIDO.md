@@ -126,7 +126,7 @@ del altavoz de la máquina, se oye con la oreja.
 | --- | --- | --- | --- |
 | `key` | `keys` | aire | La tecla. Tres capas: chasquido, cuerpo y fondo |
 | `tick` | `keys` | aire | El tic del teletipo, por línea y nunca por carácter |
-| `relay` | `glitch` | aire | El relé. DOS chasquidos: la armadura rebota |
+| `relay` | `glitch` | aire | El relé. DOS chasquidos: la armadura rebota. Tema, reloj suelto y pausa del pong |
 | `drawer` | `confirm` | aire | La entrega de una pieza. Un cajón que se abre |
 | `beep` | `confirm` | bocinita | La onda cuadrada cruda. La única que suena barata a propósito |
 | `confirm` | `confirm` | bocinita | Dos notas. Una familia, no treinta y tres melodías |
@@ -272,6 +272,7 @@ hipótesis: `awardFrom` ya se llama desde nueve sitios distintos.
 | El tubo encendiéndose, apagándose y la carga | la tabla `screens.ts`, por marcas que la app ya pinta | no |
 | Barrido y colapso | los atributos que la app ya pone en el documento | no |
 | El tema cambiando | el mismo atributo `data-theme` | no |
+| El reloj soltándose y volviendo | el almacén, que ahora lo publica | no |
 | Tirar y borrar una nota | dos cuentas que el almacén ya publicaba | no |
 | Guardar, no guardar y la línea | marcas de la barra de estado, por la misma tabla | no |
 

@@ -22,7 +22,7 @@ import { leaveV02, isV02, toggleV02, forgetV02Trip } from '@/lib/system/v02';
 import { clearDropped } from '@/lib/system/dropped';
 import { clearV02Notes } from '@/lib/system/v02Notes';
 import { forgetWord } from '@/lib/system/morse';
-import { stopDrift } from '@/lib/system/timeDrift';
+import { isDrifting, startDrift, stopDrift } from '@/lib/system/timeDrift';
 import { clearWall } from '@/lib/system/looseWall';
 import { clear as clearLog } from '@/lib/system/requestLog';
 import { forgetJustRevealed, rememberDrawn } from '@/lib/system/asciiArt';
@@ -311,6 +311,8 @@ export interface SystemState {
      * (REGLAS · B2), y la barra de estado ya se quedó pillada una vez por eso.
      */
     v02: boolean;
+    /** Si `//date_off` soltó el reloj. Lo mira el sonido. */
+    clockLoose: boolean;
 }
 
 /** Lo que hay que hacer tras un clic en el rótulo. */
@@ -451,6 +453,7 @@ let state: SystemState = {
     lockedOut: lockoutUntil !== null,
     labelClicks: clickCount,
     v02: isV02(),
+    clockLoose: isDrifting(),
 };
 
 const listeners = new Set<() => void>();
@@ -470,6 +473,16 @@ function publish() {
         lockedOut: lockoutUntil !== null,
         labelClicks: clickCount,
         v02: isV02(),
+        /*
+         * ⚠ Y EL RELOJ SUELTO, que vive en su propio módulo y no en éste.
+         *
+         * Se publica para que el sonido pueda enterarse: el enchufe del audio
+         * mira este almacén, y sin esto `//date_off` era lo único que cambia un
+         * estado permanente de la máquina SIN VOZ. Es una lectura de módulo,
+         * sin almacenamiento, así que el servidor y el cliente coinciden en el
+         * primer render (REGLAS · C1).
+         */
+        clockLoose: isDrifting(),
     };
 
     const unchanged =
@@ -482,7 +495,8 @@ function publish() {
         next.chromaticFailure === state.chromaticFailure &&
         next.v02 === state.v02 &&
         next.lockedOut === state.lockedOut &&
-        next.labelClicks === state.labelClicks;
+        next.labelClicks === state.labelClicks &&
+        next.clockLoose === state.clockLoose;
 
     if (unchanged) return;
 
@@ -844,6 +858,22 @@ function loQueSeLlevaUnaRecarga() {
     rememberDrawn(null);
 }
 
+/**
+ * SUELTA EL RELOJ, O LO VUELVE A FIJAR, Y LO PUBLICA.
+ *
+ * ⚠ EXISTE PARA QUE EL SONIDO SE ENTERE. `//date_off` llamaba a `startDrift`
+ * derecho, y eso cambia un estado permanente de la máquina sin que nada lo
+ * anuncie: el enchufe del audio mira este almacén, así que lo que no pasa por
+ * acá no suena. Es la regla de la casa (REGLAS · B2): los cambios de estado se
+ * publican.
+ */
+export function setClockLoose(loose: boolean) {
+    if (loose) startDrift(Date.now());
+    else stopDrift();
+
+    publish();
+}
+
 export function rebootSystem() {
     integrity = 100;
     themeClicks = 0;
@@ -1105,6 +1135,8 @@ const SERVER_SNAPSHOT: SystemState = {
     // El servidor nunca está en la v0.2: la bandera vive en el navegador, así
     // que el primer render del cliente tiene que coincidir con esto.
     v02: false,
+    // Arranca fijo: soltarlo es un comando, y eso ocurre mucho después de montar.
+    clockLoose: false,
 };
 
 /**

@@ -7,7 +7,7 @@ import { formatLog } from '@/lib/system/requestLog';
 import { idleMs } from '@/lib/system/idle';
 import { readEntity } from '@/lib/system/entity';
 import { readFound } from '@/lib/system/asciiArt';
-import { startDrift, stopDrift } from '@/lib/system/timeDrift';
+
 
 import { formatFileSize, formatTime } from '@/lib/utils/formatters';
 import {
@@ -28,6 +28,7 @@ import {
     kickCount,
     isLockedOutNow,
     resetEverything,
+    setClockLoose,
     setEffectsEnabled,
 } from '@/hooks/useSystemState';
 import { useTheme } from '@/hooks/useTheme';
@@ -313,10 +314,16 @@ export function useNoteCommands({
                     onWriteNote(result.effect.text);
                     break;
                 case 'time-drift':
-                    // Los dos sentidos por la misma puerta: soltarlo y
-                    // volver a fijarlo son el mismo interruptor.
-                    if (result.effect.on) startDrift(Date.now());
-                    else stopDrift();
+                    /*
+                     * Los dos sentidos por la misma puerta: soltarlo y volver
+                     * a fijarlo son el mismo interruptor.
+                     *
+                     * ⚠ Y PASA POR EL ALMACÉN, no por el módulo del reloj. Lo
+                     * que no se publica no suena: el enchufe del audio mira el
+                     * almacén, y así el relé cierra en el mismo instante en que
+                     * la referencia se suelta.
+                     */
+                    setClockLoose(result.effect.on);
                     break;
                 case 'set-effects':
                     setEffectsEnabled(result.effect.enabled);

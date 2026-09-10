@@ -317,6 +317,7 @@ export function startSound(): () => void {
     let tiradaAntes = getSystemState().noteTrashedAt;
     let vueltaAntes = getSystemState().noteRestoredAt;
     let definitivosAntes = getSystemState().permanentDeletes;
+    let relojAntes = getSystemState().clockLoose;
 
     const quitarSistema = subscribeSystem(() => {
         const ahora = getSystemState();
@@ -330,6 +331,27 @@ export function startSound(): () => void {
         }
 
         secretosAntes = new Set(secretos);
+
+        /*
+         * EL RELOJ SOLTÁNDOSE, Y VOLVIENDO: un relé cerrando.
+         *
+         * ⚠ ERA EL ÚNICO ESTADO PERMANENTE DE LA MÁQUINA QUE CAMBIABA EN
+         * SILENCIO. El tema tiene su relé, la versión vieja su condensador, la
+         * señal su bip, la red sus tres avisos — y `//date_off` soltaba la
+         * referencia horaria de toda la app sin que sonara nada. Salió en una
+         * auditoría.
+         *
+         * ⚠ Y ES EL MISMO RELÉ DEL TEMA, no una voz nueva. Un enganche que se
+         * suelta y se vuelve a poner es literalmente lo que hace un relé, y la
+         * casa no inventa voces: las reparte. Suena igual en los dos sentidos
+         * porque el aparato hace lo mismo — lo que cambia es lo que pasa
+         * después.
+         */
+        if (ahora.clockLoose !== relojAntes) {
+            relojAntes = ahora.clockLoose;
+            huboActividad();
+            play('relay');
+        }
 
         // La señal cayéndose es lo más fuerte que hace la máquina sola.
         if (ahora.chromaticFailure && !fallandoAntes) {

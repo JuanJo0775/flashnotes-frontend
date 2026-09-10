@@ -95,9 +95,19 @@ export const EVENT_SOUNDS: readonly EventSound[] = [
         where: 'el almacén del sistema, el contador del rótulo, y los contadores del pong',
     },
     {
-        what: 'El tema cambiando, y parar o seguir el juego',
+        /*
+         * ⚠ TRES SITIOS Y UNA SOLA FILA, que es la regla del banco: una voz
+         * usada en varios sitios junta sus porqués en vez de repetirse.
+         *
+         * El reloj entró el último y por una auditoría: `//date_off` soltaba la
+         * referencia horaria de toda la app —el estado permanente más grande
+         * que se puede cambiar con un comando— y era lo único que lo hacía en
+         * silencio. Un enganche que se suelta y se vuelve a poner es
+         * literalmente lo que hace un relé.
+         */
+        what: 'El tema cambiando, el reloj soltándose y volviendo, y parar o seguir el juego',
         voice: 'relay',
-        where: 'el atributo `data-theme`, y `data-paused` del pong',
+        where: 'el atributo `data-theme`, `data-paused` del pong, y el reloj suelto en el almacén',
     },
     {
         what: 'Una línea impresa por el teletipo, nunca un carácter',

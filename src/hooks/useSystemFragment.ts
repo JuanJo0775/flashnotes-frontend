@@ -7,6 +7,7 @@ import { getLang } from '@/i18n';
 import { useSyncExternalStore } from 'react';
 import { pickFragment } from '@/lib/system/lore';
 import { endingTaken } from '@/lib/system/entityEnding';
+import { awayAtBoot } from '@/lib/system/entity';
 import { foundSecrets, getSystemState } from '@/hooks/useSystemState';
 
 /**
@@ -97,6 +98,13 @@ export function showFragment() {
              */
             v02: system.v02,
             ending: endingTaken(),
+            /*
+             * ⚠ Y CUÁNTO LLEVABAS SIN VENIR, medido UNA VEZ por carga. Se pide
+             * por `awayAtBoot` y no por `awayMs` a secas porque el primero que
+             * pregunta fija el número y marca que estás acá: leerlo suelto acá
+             * daría cero en cuanto cualquier otro lo hubiera pedido antes.
+             */
+            awayMs: awayAtBoot(),
         },
         previous
     );

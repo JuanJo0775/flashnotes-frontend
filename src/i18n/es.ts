@@ -77,7 +77,6 @@ export const es = {
     // obligatoria; `one` es opcional y la elige `Intl.PluralRules`.
     'sidebar.files.one': 'archivo',
     'sidebar.files.other': 'archivos',
-    'sidebar.noTime': '--:--:--',
     'sidebar.clockLabel': 'Hora del sistema',
 
     // ── listado de notas ─────────────────────────────────────────────────────

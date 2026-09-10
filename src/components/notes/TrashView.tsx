@@ -3,6 +3,7 @@
 
 import { useState, type CSSProperties } from 'react';
 import { SALIDA_MS, useSalientes } from '@/hooks/useSalientes';
+import { SHIFT_ID } from '@/lib/system/shiftNote';
 import { useTrash } from '@/hooks/useTrash';
 import MetaTag from '@/components/ui/MetaTag';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -150,7 +151,22 @@ export default function TrashView({ onCountChange }: TrashViewProps) {
                                     una lista que ya no la tiene—.
                                 */
                                 className="border border-line bg-tertiary p-4 flex flex-col gap-3 row-feed"
-                                style={{ '--fila': i } as CSSProperties}
+                                /*
+                                    ⚠ Y LA HOJA DEL TURNO LLEGA MÁS TARDE QUE
+                                    TODAS.
+
+                                    Es lo más viejo que hay en la casa —la
+                                    escribió alguien un jueves, antes de que
+                                    existiera tu sesión— y llegaba en la misma
+                                    tirada que tus notas de ayer. Dos filas de
+                                    retraso no la anuncian: la ponen más al
+                                    fondo del cajón, que es de donde sale.
+                                */
+                                style={
+                                    {
+                                        '--fila': note._id === SHIFT_ID ? i + 2 : i,
+                                    } as CSSProperties
+                                }
                             >
                                 <p className="mono text-base font-medium truncate">
                                     {note.title || t('common.untitled')}

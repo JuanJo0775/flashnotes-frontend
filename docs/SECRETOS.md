@@ -336,6 +336,8 @@ otra palabra que suena igual de máquina en su idioma.
 | `[NADIE MÁS CONECTADO]` | `[NO ONE ELSE ONLINE]` | 02:00–05:00 | 1 |
 | `[TURNO LARGO]` | `[LONG SHIFT]` | sesión ≥ 45 min | 1 |
 | `[SEGUÍS AHÍ]` | `[STILL THERE]` | **sin tocar nada ≥ 10 min** | 1 |
+| `[TURNO REANUDADO]` | `[SHIFT RESUMED]` | v1.0, **volviendo tras ≥ 3 días** | 1 |
+| `[TURNO REANUDADO]` | `[SHIFT RESUMED]` | v1.0, **volviendo tras ≥ 3 días** | 1 |
 | `[TURNO 2/3]` | `[SHIFT 2/3]` | **sólo en la v0.2** | 1 |
 | `[RELEVO EN 6 H]` | `[RELIEF IN 6 H]` | **sólo en la v0.2** | 1 |
 | `[MEMORIA FRÍA]` | `[MEMORY STILL COLD]` | **sólo en la v0.2** | 1 |
@@ -366,6 +368,48 @@ Son dos cosas y ahora son dos funciones: **el alarde** es el acuse de que te
 llevaste algo y ocurre siempre; **el destello de la pestaña** te dice dónde
 mirar, y enseñarlo dos veces sería un tutorial. Un premio que no se anuncia no es
 un premio: es un cambio en un contador que nadie está mirando.
+
+### Que volviste
+
+**El ente medía tu ausencia y era el único que se enteraba.** La máquina —que
+lleva el registro de todo el que pasó, que es de lo que va el lore entero— no
+decía nada cuando volvías después de una semana: la cosa que mejor sabe hacer,
+callada.
+
+A partir de **tres días** sin abrirla, la barra puede decir `[TURNO REANUDADO]`.
+
+⚠ **Tres días y no uno.** Con un día lo dice cualquiera que abra la app los
+lunes y los miércoles, y entonces no es una ausencia: es el horario normal de
+alguien.
+
+⚠ **Es contabilidad, no reproche**, y ahí se juega todo. «Volviste» la
+convierte en alguien que te esperaba; «turno reanudado» es un registro que se
+retoma donde se quedó.
+
+⚠ **Y no dice cuánto.** Un número —`[8 DÍAS]`— es la app contándote tu propia
+vida, y encima envejece mal: a los cuatro meses da risa. Sin número, la frase
+vale igual a los tres días que al año. **El dato lo pone quien lee.**
+
+### Que volviste
+
+**El ente medía tu ausencia y era el único que se enteraba.** La máquina —que
+lleva el registro de todo el que pasó, que es de lo que va el lore entero— no
+decía nada cuando volvías después de una semana: la cosa que mejor sabe hacer,
+callada.
+
+A partir de **tres días** sin abrirla, la barra puede decir `[TURNO REANUDADO]`.
+
+⚠ **Tres días y no uno.** Con un día lo dice cualquiera que abra la app los
+lunes y los miércoles, y entonces no es una ausencia: es el horario normal de
+alguien.
+
+⚠ **Es contabilidad, no reproche**, y ahí se juega todo. «Volviste» la
+convierte en alguien que te esperaba; «turno reanudado» es un registro que se
+retoma donde se quedó.
+
+⚠ **Y no dice cuánto.** Un número —`[8 DÍAS]`— es la app contándote tu propia
+vida, y encima envejece mal: a los cuatro meses da risa. Sin número, la frase
+vale igual a los tres días que al año. **El dato lo pone quien lee.**
 
 ### El murmullo tiene época
 
