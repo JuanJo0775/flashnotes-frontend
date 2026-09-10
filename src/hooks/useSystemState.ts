@@ -23,6 +23,9 @@ import { clearDropped } from '@/lib/system/dropped';
 import { clearV02Notes } from '@/lib/system/v02Notes';
 import { forgetWord } from '@/lib/system/morse';
 import { stopDrift } from '@/lib/system/timeDrift';
+import { clearWall } from '@/lib/system/looseWall';
+import { clear as clearLog } from '@/lib/system/requestLog';
+import { forgetJustRevealed, rememberDrawn } from '@/lib/system/asciiArt';
 
 export { ESCALATION_WINDOW_MS, LOCKOUT_AT, LOCKOUT_MS };
 export type { CollapseLevel };
@@ -803,6 +806,44 @@ export function registerChat(now: number = Date.now()): number {
  * reiniciar sería la salida fácil justo en el único estado que la niega. Acá se
  * relee la misma marca guardada que se lee al arrancar.
  */
+/**
+ * LO QUE UNA RECARGA SE LLEVA, Y VIVE FUERA DE ESTE MÓDULO.
+ *
+ * ⚠ UNA SOLA LISTA PARA LOS DOS SITIOS QUE REINICIAN, y por eso existe: el
+ * reinicio y el borrado total limpiaban cada uno lo suyo, y se separaron en
+ * silencio. Una auditoría los comparó contra el estado de módulo que hay en
+ * el proyecto y encontró CUATRO cosas que sobrevivían al reinicio y que una
+ * recarga se lleva — el reloj suelto fue la quinta, y ésa la encontró alguien
+ * jugando. Con dos listas, la siguiente se vuelve a escapar.
+ *
+ * ⚠ Y LA PEOR ERA LA PARED. `looseWall` dice en su propio comentario que los
+ * golpes NO pueden sobrevivir a una recarga —«lo que se derrumba tiene que
+ * derrumbarse mientras mirás»— y sobrevivían al reinicio: se podía dejar el
+ * cuadro a un golpe de caerse, reiniciar, y encontrarlo igual de suelto. La
+ * función para limpiarlo existía desde el principio, decía «lo llaman el
+ * reinicio y los tests», y el reinicio no la llamaba.
+ */
+function loQueSeLlevaUnaRecarga() {
+    // El reloj suelto de `//date_off`.
+    stopDrift();
+
+    // Los golpes a la pared: el cuadro vuelve a estar en su sitio.
+    clearWall();
+
+    // Y el registro de peticiones, que después de reiniciar enseñaba
+    // peticiones de antes de reiniciar.
+    clearLog();
+
+    /*
+     * Lo que la colección tiene en la mano: qué piezas acaba de destapar
+     * `//art` —que si no, vuelven a sintonizarse después del reinicio, y una
+     * novedad que se repite es un adorno— y cuál fue la última dibujada, que
+     * es la que `//keep` guardaría.
+     */
+    forgetJustRevealed();
+    rememberDrawn(null);
+}
+
 export function rebootSystem() {
     integrity = 100;
     themeClicks = 0;
@@ -824,15 +865,24 @@ export function rebootSystem() {
     chromaticFailure = readLockout()?.chroma === true;
 
     /*
-     * ⚠ Y EL RELOJ VUELVE A SU SITIO. Se pidió jugando, y era exactamente lo
-     * que esta función promete tres párrafos más arriba: limpiar lo que se
-     * lleva una recarga, ni más ni menos. El desvarío de `//date_off` vive en
-     * una variable de módulo —o sea que una recarga lo borra— y sin esto
-     * sobrevivía al reinicio: la máquina hacía el espectáculo entero y volvía
-     * sin saber en qué año está, que es el mismo teatro que se arregló con la
-     * avería cromática.
+     * ⚠ Y TODO LO QUE VIVE FUERA DE ESTE MÓDULO: el reloj suelto, los golpes
+     * a la pared, el registro de peticiones y lo que la colección tiene en la
+     * mano. Ver `loQueSeLlevaUnaRecarga`: es la lista que esta función lleva
+     * prometiendo tres párrafos más arriba.
      */
-    stopDrift();
+    loQueSeLlevaUnaRecarga();
+
+    /*
+     * ⚠ Y UNA COSA QUE NO SE LIMPIA, A PROPÓSITO: lo que la v0.2 no llegó a
+     * guardar (`dropped`). Una recarga sí se lo lleva, así que por la letra de
+     * la regla tocaría borrarlo — y sería borrar TEXTO DEL USUARIO que está
+     * esperando a `//recover`. La primera regla del proyecto gana a ésta.
+     *
+     * Se escribe acá porque la excepción no se ve: quien aplique la regla al
+     * pie de la letra sin leer esto añade una línea y se lleva por delante el
+     * trabajo de alguien. El borrado total sí lo limpia, y ahí es correcto:
+     * lo pediste.
+     */
 
     publish();
 }
@@ -851,6 +901,11 @@ export function resetEverything() {
     kicks = 0;
     collapseCount = null;
     lastRecoveryAt = null;
+
+    // La misma lista que el reinicio: un borrado total es, como mínimo, un
+    // reinicio. Sin esto, la pared se quedaba con los golpes de antes y el
+    // día que alguien volviera a aflojarla la encontraría medio caída.
+    loQueSeLlevaUnaRecarga();
 
     clearLockout();
     clearArt();

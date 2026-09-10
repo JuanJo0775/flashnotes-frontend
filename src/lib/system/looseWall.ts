@@ -58,7 +58,15 @@ export function wallDown(): boolean {
     return golpes >= HITS_TO_FALL;
 }
 
-/** Vuelve a estar entera. Lo llaman el reinicio y los tests. */
+/**
+ * Vuelve a estar entera.
+ *
+ * ⚠ DECÍA «LO LLAMAN EL REINICIO Y LOS TESTS» Y ERA MENTIRA: la llamaban el
+ * final del ente y los tests, y el reinicio no. Se podía dejar el cuadro a un
+ * golpe de caerse, reiniciar, y encontrarlo igual de suelto — justo lo que el
+ * comentario de `golpes`, cinco líneas más arriba, promete que no pasa. Ahora
+ * la llama `loQueSeLlevaUnaRecarga`.
+ */
 export function clearWall() {
     golpes = 0;
 }
