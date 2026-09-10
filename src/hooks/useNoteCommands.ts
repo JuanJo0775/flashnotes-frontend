@@ -7,7 +7,7 @@ import { formatLog } from '@/lib/system/requestLog';
 import { idleMs } from '@/lib/system/idle';
 import { readEntity } from '@/lib/system/entity';
 import { readFound } from '@/lib/system/asciiArt';
-import { startDrift } from '@/lib/system/timeDrift';
+import { startDrift, stopDrift } from '@/lib/system/timeDrift';
 
 import { formatFileSize, formatTime } from '@/lib/utils/formatters';
 import {
@@ -313,7 +313,10 @@ export function useNoteCommands({
                     onWriteNote(result.effect.text);
                     break;
                 case 'time-drift':
-                    startDrift(Date.now());
+                    // Los dos sentidos por la misma puerta: soltarlo y
+                    // volver a fijarlo son el mismo interruptor.
+                    if (result.effect.on) startDrift(Date.now());
+                    else stopDrift();
                     break;
                 case 'set-effects':
                     setEffectsEnabled(result.effect.enabled);

@@ -823,6 +823,17 @@ export function rebootSystem() {
     // La misma regla que al arrancar: rota sólo si el bloqueo dice que lo está.
     chromaticFailure = readLockout()?.chroma === true;
 
+    /*
+     * ⚠ Y EL RELOJ VUELVE A SU SITIO. Se pidió jugando, y era exactamente lo
+     * que esta función promete tres párrafos más arriba: limpiar lo que se
+     * lleva una recarga, ni más ni menos. El desvarío de `//date_off` vive en
+     * una variable de módulo —o sea que una recarga lo borra— y sin esto
+     * sobrevivía al reinicio: la máquina hacía el espectáculo entero y volvía
+     * sin saber en qué año está, que es el mismo teatro que se arregló con la
+     * avería cromática.
+     */
+    stopDrift();
+
     publish();
 }
 

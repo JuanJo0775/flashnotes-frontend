@@ -245,16 +245,24 @@ dos se separaron sería la que lo tapa.
 ### ~~2.5 · Y la que más se notaría~~ · HECHA
 
 ~~**Ceremonia al completar la colección.**~~ · **hecha, y con lo que ya estaba**:
-a los 360 ms de caer la dieciséis, la sala se calla, el nivel de la imagen baja
-y el barrido del tubo cruza **una sola vez**, más grueso, más claro y mucho más
-lento. Segundo y medio, y el acuse cae dentro del hueco.
+a los 360 ms de caer la dieciséis —después del cajón— la sala se calla y el
+nivel de la imagen baja y se queda abajo **segundo y medio**, con el acuse
+cayendo dentro del hueco.
 
 ⚠ **Ni un fotograma nuevo**, que era literalmente lo que pedía esta sección —«lo
-que ya está construido y no se usa ahí»—: la técnica de `level-drop` para el
-nivel y el barrido de siempre para la línea. Lo único que cambia es el ritmo.
+que ya está construido y no se usa ahí»—: es la técnica de `level-drop`,
+sostenida en vez de un instante.
 
-⚠ Y **el barrido de siempre se aparta mientras dura**: lo que destaca es lo
-ÚNICO que se mueve, la misma regla que gobierna la pieza recién sintonizada.
+⚠ **Y la primera versión llevaba una línea de barrido propia, que tumbó un test
+de hace meses.** Una pasada única, más gruesa y más lenta, con la de siempre
+apartada mientras duraba — exactamente la «versión especial» del barrido que
+`scanlineAlways` ya había echado del arranque y del colapso: *el barrido es el
+refresco del tubo, y un tubo no refresca distinto según lo que esté pintando*.
+
+Lo bueno del choque: el de siempre sigue bajando intacto sobre una pantalla
+apagada un punto, así que **acaba siendo lo único que se mueve** — que era justo
+lo que la línea nueva quería conseguir. **No hacía falta dibujarla, y el test lo
+sabía antes que yo.**
 
 ⚠ **Un momento, no un cartel.** Sin texto, sin medalla y sin nada que cerrar.
 

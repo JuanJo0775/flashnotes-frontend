@@ -2168,8 +2168,64 @@ en cada repintado, la pantalla temblaría de números y se leería como parpadeo
 > el reloj se volvía loco a la vista y la fecha seguía impasible, justo donde más
 > se nota que el sistema perdió la referencia. Ahora cuelga del latido del reloj.
 
-**Sólo lo arregla recargar**, como el fallo cromático. Y es sólo pintura: el
-`updatedAt` que guarda el backend no se toca. Se rompe el reloj, no tus datos.
+Y es sólo pintura: el `updatedAt` que guarda el backend no se toca. Se rompe el
+reloj, no tus datos.
+
+## `//date` también delira
+
+**Era el único sitio que no**, y se pidió jugando. La app entera pinta años que
+no son —el reloj del pie, la fecha de cada nota, la cabecera— y el comando que
+existe para DECIR la hora contestaba con una hora perfectamente correcta: **el
+único instrumento fiable de la casa era, justamente, el que mide lo que se
+rompió.**
+
+```
+LOCAL     2026.08.26 04:59 (UTC-05)
+SISTEMA   2026.09.16 04:58 UTC
+SIN REFERENCIA.
+```
+
+⚠ **Sale la fecha entera y no sólo la hora.** Lo que se perdió es el AÑO —lo
+dice el propio mensaje del comando— y con `HH:MM` a secas el desvarío pasa por
+un reloj mal puesto.
+
+⚠ **Las dos lecturas no son del mismo instante, y se contradicen.** Primero
+mira tu reloj y después el suyo; con la referencia suelta, un instante de
+diferencia son once años. **Un aparato que no se pone de acuerdo consigo mismo
+asusta más que uno que da una hora rara.**
+
+⚠ **Y se queda sin la única frase verificable.** «El sistema nunca se mudó» se
+puede comprobar mirando tu propio reloj (§6); con la referencia perdida no hay
+con qué comprobar nada, y eso es exactamente lo que dice: `SIN REFERENCIA.`
+
+## Y la vuelta: `//date_on`
+
+**Hay que adivinarlo.** El mensaje de `//date_off` no lo nombra, y eso sigue
+siendo a propósito: decir «escribí esto para arreglarlo» convierte la avería en
+un aviso —sabés que es temporal y deja de sentirse como que el sistema perdió
+algo—. La salida existe y está **a un paso del comando que acabás de escribir**.
+
+```
+REFERENCIA HORARIA FIJADA.
+
+VUELVO A SABER QUÉ DÍA ES.
+```
+
+Con el reloj ya en su sitio no se ofende ni te corrige: lo constata —`LA
+REFERENCIA YA ESTABA FIJA.`
+
+⚠ **No ocupa hueco en `//help`** (§19). Misma regla que echó de ahí a
+`//whoareu`: un comando escondido es algo que la máquina TIENE y no anuncia, y
+su tachado es un hueco que se destapa al usarlo. Éste es **el reverso de uno
+que ya está en la lista**, y darle tachado propio sería anunciar dos veces el
+mismo secreto. Tampoco cuenta como hallazgo: no descubre nada.
+
+⚠ **Y el reinicio se lo lleva.** `rebootSystem` limpia exactamente lo que se
+lleva una recarga, ni más ni menos, y el desvarío vive en una variable de
+módulo. Sobreviviéndole al reinicio, la máquina hacía el espectáculo entero
+—apagado, barras, rótulo, comprobación— y volvía sin saber en qué año está: el
+mismo teatro que ya se arregló con la avería cromática. **Una máquina que se
+reinicia y sigue rota no se reinició.**
 
 ---
 
@@ -2708,7 +2764,7 @@ letras se cruza con lo que sueltan las ventanas de error.
 | --- | --- |
 | **Anunciados** | `//help` `//version` `//date` `//ls` `//df` `//clear` |
 | **Escondidos** | `//whoami` `//sudo` `//uptime` `//ps` `//log` `//history` `//diag` `//chaos` `//panic` `//hi` `//sigo` `//date_off` `//art` `//art_<n>` `//keep` `//reset` `//attach_<n>` |
-| **Ni en la lista** | `//whoareu` `//howareu` — funcionan, pero no ocupan hueco |
+| **Ni en la lista** | `//whoareu` `//howareu` `//date_on` — funcionan, pero no ocupan hueco |
 | **Sólo en la v0.2** | `//todo` `//recover` — ver §24.4 |
 
 > `//hi` estuvo en la lista de anunciados hasta que se pidió esconderlo, y esta
@@ -2726,6 +2782,11 @@ acaba echándote.
 
 Por lo mismo tampoco los sueltan las ventanas de error: una fuga que soltara una
 variante estaría enseñando el repertorio.
+
+⚠ **Y `//date_on` tampoco ocupa hueco, por otra razón.** No es una manera de
+decir algo: es **el reverso de `//date_off`, que ya tiene el suyo**. Darle
+tachado propio anunciaría dos veces el mismo secreto, y además regalaría la
+salida de una avería que se calla cómo se arregla (§17).
 
 ⚠ **Y `//sigo` sí ocupa el suyo.** Estaba resuelto a mano dentro de `run`, así
 que no aparecía en la ayuda ni al descubrirlo. Ahora tiene su tachado como los
@@ -3208,26 +3269,35 @@ las quince anteriores— pasa esto durante **segundo y medio**:
 | | |
 | --- | --- |
 | **La sala se calla** | el cuarto desaparece y el acuse queda solo en el hueco |
-| **El nivel baja** | la imagen entera se apaga un punto, sin fotogramas: entra y sale de golpe |
-| **Y el barrido cruza una vez** | la misma línea del tubo, más gruesa, más clara y mucho más lenta |
+| **El nivel baja** | la imagen entera se apaga un punto y se queda así, sin fotogramas: entra y sale de golpe |
 
-⚠ **Ni una animación nueva.** Las dos piezas ya existían: la técnica de
-`level-drop` para bajar el nivel y el barrido de siempre para cruzar. Lo que
-cambia es el ritmo — **hacía falta un idioma, no una animación por sitio**.
+⚠ **Ni una animación nueva**, que era lo que pedía la auditoría: «lo que ya está
+construido y no se usa ahí». Es la técnica de `level-drop` —bajarle el nivel a
+lo que haya debajo— sostenida segundo y medio en vez de un instante.
 
-⚠ **Mientras dura, el barrido de siempre se aparta.** Es la regla de la
-colección otra vez: lo que destaca es lo ÚNICO que se mueve. Con las dos líneas
-en pantalla, la lenta se lee como que el barrido se averió — y de averías esta
-app va sobrada.
+⚠ **Y NO hay una línea de barrido propia, que era la primera idea.** Se escribió
+—una pasada única, más gruesa, más clara y más lenta, con la de siempre apartada
+mientras duraba— y **la tumbó un test que llevaba ahí desde antes**
+(`scanlineAlways`), el mismo que ya había echado a una versión «especial» del
+barrido para el arranque y el colapso:
+
+> **El barrido es el refresco del tubo, y un tubo no refresca distinto según lo
+> que esté pintando.** Con dos versiones, la línea que se ve en un momento no es
+> la misma que se ve escribiendo — y eso se nota aunque no se sepa decir por qué.
+
+Así que el de siempre sigue bajando, intacto, mientras todo lo demás se apaga un
+punto: **acaba siendo lo único que se mueve en la pantalla**, que era justo lo
+que la línea nueva quería conseguir. No hacía falta dibujarla.
 
 ⚠ **Un momento, no un cartel.** No hay texto, no hay medalla y no hay nada que
 cerrar. Se ve una vez en la vida de una partida, y quien lo vio no puede
 enseñárselo a nadie.
 
-**Con `prefers-reduced-motion` queda el momento y se va la línea**, que es lo
-único que se mueve: la sala se calla igual y el nivel baja igual (REGLAS · A3).
-Con los efectos apagados no pasa nada — `>chaos off` tiene que poder callar al
-sistema del todo.
+**Con `prefers-reduced-motion` se ve exactamente lo mismo**, y no porque la
+regla se ignore: es que **acá no se mueve nada**. El nivel entra y sale de
+golpe, como todos los cambios de estado de esta app, así que el momento cumple
+A3 por construcción y no por una excepción. Con los efectos apagados no pasa
+nada — `>chaos off` tiene que poder callar al sistema del todo.
 
 **Los tres tiempos —espera, hueco y acuse— viven en `ceremonia.ts`**, que es el
 único sitio del sistema donde el sonido y la imagen comparten números: son el

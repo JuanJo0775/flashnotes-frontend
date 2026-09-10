@@ -106,7 +106,12 @@ describe('//date_off · suelta el reloj', () => {
     test('pide el desvarío', async () => {
         const { run } = await load();
 
-        expect(run('//date_off', ctx(0))!.effect).toEqual({ kind: 'time-drift' });
+        // `on` distingue soltarlo de volver a fijarlo: el mismo
+        // interruptor en los dos sentidos, desde que existe `//date_on`.
+        expect(run('//date_off', ctx(0))!.effect).toEqual({
+            kind: 'time-drift',
+            on: true,
+        });
     });
 
     test('NO dice cómo arreglarlo', async () => {

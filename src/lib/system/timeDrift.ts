@@ -13,9 +13,16 @@
  * tenés escrito corre peligro. Se rompe el reloj, no tus datos — que es la
  * primera regla del proyecto.
  *
- * NO TIENE MARCHA ATRÁS desde la app: sólo lo apaga recargar la página, igual
- * que el fallo cromático. `stopDrift` existe para los tests, no hay comando que
- * lo llame.
+ * SÍ TIENE MARCHA ATRÁS, y son dos:
+ *
+ *   · `//date_on`, que hay que ADIVINAR. El mensaje de `//date_off` no lo
+ *     nombra a propósito —decir «escribí esto para arreglarlo» convierte la
+ *     avería en un aviso— pero el nombre está a un paso del que ya usaste.
+ *
+ *   · Y EL REINICIO. Esto vive en una variable de módulo justamente porque
+ *     una recarga se lo lleva, y `rebootSystem` limpia exactamente lo que se
+ *     lleva una recarga: si el reloj sobreviviera al reinicio, habría dos
+ *     reinicios distintos y tocaría aprender cuál sirve para qué.
  *
  * ARRANCA APAGADO, Y ESO ES LOAD-BEARING: `formatters` lo consulta al pintar, y
  * el servidor y el cliente tienen que coincidir en el primer render o React tira
@@ -54,7 +61,13 @@ export function startDrift(now: number) {
     if (startedAt === null) startedAt = now;
 }
 
-/** Sólo para los tests y el arranque del módulo. */
+/**
+ * Y lo apaga.
+ *
+ * ⚠ NO GUARDA EL DESFASE PARA SEGUIR DESPUÉS. Volver a soltarlo empieza de
+ * cero, que es lo que hace un reloj al que le pusiste la hora: no se acuerda
+ * de lo perdido.
+ */
 export function stopDrift() {
     startedAt = null;
 }
@@ -102,6 +115,19 @@ export function driftedMs(realMs: number): number {
     const magnitud = ruido(paso + 0.5) * 2 - 1;
 
     return Math.round(realMs + magnitud * escala);
+}
+
+/**
+ * La lectura de un salto después.
+ *
+ * ⚠ EXISTE PARA QUE LA MÁQUINA PUEDA CONTRADECIRSE A SÍ MISMA. `//date` da dos
+ * horas —la tuya y la suya— y no las lee en el mismo instante: primero mira tu
+ * reloj y después el suyo. Con la referencia suelta, un instante de diferencia
+ * son once años, así que las dos líneas del comando se pelean. Un aparato que
+ * no se pone de acuerdo consigo mismo asusta más que uno que da una hora rara.
+ */
+export function driftedNextMs(realMs: number): number {
+    return driftedMs(realMs + SALTO_MS);
 }
 
 /** La fecha que hay que pintar. Azúcar sobre `driftedMs`. */

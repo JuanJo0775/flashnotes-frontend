@@ -88,6 +88,12 @@ const SIN_FAVORES: FavorWorld = {
     filledNote: false,
 };
 import { allDropped } from '@/lib/system/dropped';
+
+/*
+ * El reloj suelto. Lo consulta `//date` para delirar con el resto de la app, y
+ * `//date_on` para saber si hay algo que arreglar.
+ */
+import { driftedMs, driftedNextMs, isDrifting } from '@/lib/system/timeDrift';
 import type { Lang } from '@/config/lang';
 import type { Localized, LocalizedPlural, Vars } from '@/i18n';
 
@@ -193,7 +199,7 @@ export type CommandEffect =
     | { kind: 'fetch-history' }
     | { kind: 'play-pong' }
     | { kind: 'leave-note' }
-    | { kind: 'time-drift' }
+    | { kind: 'time-drift'; on: boolean }
     /**
      * Texto que va a la NOTA ABIERTA.
      *
@@ -615,6 +621,34 @@ const T = {
             'YA NO SÉ EN QUÉ AÑO ESTAMOS.',
         en: 'TIME REFERENCE RELEASED.\n\n' +
             'I NO LONGER KNOW WHAT YEAR IT IS.',
+    },
+    /*
+     * Y LA VUELTA, que hay que adivinar.
+     *
+     * ⚠ RESPONDE EN EL MISMO REGISTRO QUE LA IDA. «Liberada» / «fijada» son la
+     * misma palabra técnica en los dos sentidos, y la segunda línea es el
+     * espejo exacto de la otra: allá deja de saber en qué año estamos, acá
+     * vuelve a saber qué día es. Una frase de alivio —«todo arreglado»— sería
+     * la app felicitándose, y esta máquina no se felicita.
+     */
+    clockPinned: {
+        es: 'REFERENCIA HORARIA FIJADA.\n\n' + 'VUELVO A SABER QUÉ DÍA ES.',
+        en: 'TIME REFERENCE PINNED.\n\n' + 'I KNOW WHAT DAY IT IS AGAIN.',
+    },
+    // Y si no estaba suelto. Ni se ofende ni te corrige: lo constata.
+    clockWasFine: {
+        es: 'LA REFERENCIA YA ESTABA FIJA.',
+        en: 'THE REFERENCE WAS ALREADY PINNED.',
+    },
+    /*
+     * Lo que `//date` dice en lugar de la frase del huso mientras el reloj está
+     * suelto. La del huso —«nunca me mudé»— es la única línea de lore que se
+     * puede verificar mirando tu propio reloj, y con la referencia perdida ya
+     * no hay con qué verificar nada. Eso es lo que dice.
+     */
+    noReference: {
+        es: 'SIN REFERENCIA.',
+        en: 'NO REFERENCE.',
     },
     // El hallazgo. La máquina no explica qué es: lo admite.
     attaching: {
@@ -1572,7 +1606,39 @@ const COMMANDS: readonly Command[] = [
         },
         resolve: (_ctx, _args, lang) => ({
             output: T.clockReleased[lang],
-            effect: { kind: 'time-drift' },
+            effect: { kind: 'time-drift', on: true },
+        }),
+    },
+    {
+        /*
+         * LA VUELTA DEL RELOJ.
+         *
+         * ⚠ NO OCUPA HUECO EN `//help`, y es la misma regla que echó de ahí a
+         * `//whoareu`: un comando escondido es algo que la máquina TIENE y no
+         * anuncia, y su tachado es un hueco que se destapa al usarlo. Éste no
+         * es un hallazgo nuevo — es el reverso de uno que ya está en la lista,
+         * y darle tachado propio sería anunciar dos veces el mismo secreto.
+         *
+         * ⚠ Y NO LO NOMBRA NADIE. El mensaje de `//date_off` calla cómo
+         * arreglarlo a propósito: decir «recargue para que vuelva» convierte la
+         * avería en una instrucción. La salida existe y hay que dar con ella —
+         * y está a un paso del comando que acabás de escribir.
+         *
+         * ⚠ SIN `secretId`: no descubre nada. Contar como secreto haría que
+         * alguien que teclea `//date_on` con el reloj en su sitio desbloqueara
+         * un hallazgo que no ha visto.
+         */
+        name: '//date_on',
+        notInV02: true,
+        hidden: true,
+        unlisted: true,
+        summary: {
+            es: 'volver a fijar el reloj',
+            en: 'pin the system clock back',
+        },
+        resolve: (_ctx, _args, lang) => ({
+            output: isDrifting() ? T.clockPinned[lang] : T.clockWasFine[lang],
+            effect: { kind: 'time-drift', on: false },
         }),
     },
     {
@@ -2420,11 +2486,50 @@ export function describeOffset(offsetMinutes: number, lang: Lang = getLang()): s
     return `${etiqueta} · ${T.neverMoved[lang]}`;
 }
 
+/** `AAAA.MM.DD HH:MM`, que es como se ve un año que no es. */
+function sello(d: Date, utc = false): string {
+    const año = utc ? d.getUTCFullYear() : d.getFullYear();
+    const mes = pad((utc ? d.getUTCMonth() : d.getMonth()) + 1);
+    const dia = pad(utc ? d.getUTCDate() : d.getDate());
+    const hora = pad(utc ? d.getUTCHours() : d.getHours());
+    const minuto = pad(utc ? d.getUTCMinutes() : d.getMinutes());
+
+    return `${año}.${mes}.${dia} ${hora}:${minuto}`;
+}
+
 function formatDate(now: Date, lang: Lang): string {
-    const local = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    const utc = `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}`;
     const desfase = describeOffset(now.getTimezoneOffset(), lang);
     const [etiqueta, frase] = desfase.split(' · ');
+
+    /*
+     * ⚠ CON EL RELOJ SUELTO, ESTE COMANDO TAMBIÉN DELIRA — y hasta que se
+     * pidió jugando era el ÚNICO sitio que no. `//date_off` suelta la
+     * referencia y la app entera empieza a pintar años que no son: el reloj
+     * del pie, la fecha de cada nota, la cabecera. Y el comando que existe
+     * para DECIR la hora seguía contestando con una hora perfectamente
+     * correcta: el único instrumento fiable de la casa era, justamente, el
+     * que mide lo que se rompió.
+     *
+     * ⚠ SALE LA FECHA ENTERA Y NO SÓLO LA HORA. Lo que se perdió es el AÑO —
+     * lo dice el propio mensaje del comando— y con `HH:MM` a secas el
+     * desvarío pasa por un reloj mal puesto.
+     *
+     * ⚠ Y LAS DOS LECTURAS NO SON DEL MISMO INSTANTE: primero mira tu reloj y
+     * después el suyo, así que se contradicen. Ver `driftedNextMs`.
+     */
+    if (isDrifting()) {
+        const tuyo = new Date(driftedMs(now.getTime()));
+        const suyo = new Date(driftedNextMs(now.getTime()));
+
+        return [
+            `LOCAL     ${sello(tuyo)} (${etiqueta})`,
+            `${T.systemLabel[lang].padEnd(9)} ${sello(suyo, true)} UTC`,
+            T.noReference[lang],
+        ].join('\n');
+    }
+
+    const local = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const utc = `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}`;
 
     return [
         `LOCAL     ${local} (${etiqueta})`,
