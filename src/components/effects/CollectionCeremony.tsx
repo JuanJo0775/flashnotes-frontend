@@ -4,43 +4,48 @@
 import { useEffect, useState } from 'react';
 import { ART_TOTAL, readFound } from '@/lib/system/asciiArt';
 import { subscribeHints } from '@/lib/system/artHints';
-import {
-    CEREMONIA_ESPERA_MS,
-    CEREMONIA_MS,
-} from '@/lib/system/ceremonia';
+import { CEREMONIA_ESPERA_MS, CEREMONIA_MS } from '@/lib/system/ceremonia';
 import { useSystemState } from '@/hooks/useSystemState';
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 /**
  * LA DIECISÉIS.
  *
  * ⚠ QUÉ PROBLEMA RESUELVE. Poner la última pieza no se veía. El contador decía
  * `16/16` y ya: el único logro largo del juego —dieciséis piezas por dieciséis
- * caminos distintos, el pong, el reloj, la v0.2, el ente— terminaba en un
- * número que cambia. Por el lado del sonido ya estaba resuelto: la sala se cae
- * y el acuse queda solo en el silencio. Faltaba lo que se ve.
+ * caminos distintos, el pong, el reloj, la v0.2, el ente— terminaba en un número
+ * que cambia. Por el lado del sonido ya estaba resuelto: la sala se cae y el
+ * acuse queda solo en el silencio. Faltaba lo que se ve.
  *
- * ⚠ Y NO TRAE NI UNA ANIMACIÓN NUEVA. Es lo que pedía la auditoría —«merece lo
- * que ya está construido y no se usa ahí»— y además es lo correcto: el
- * repertorio de esta casa ya tiene las dos cosas que hacen falta.
+ * LO QUE PASA: el nivel de la imagen BAJA, y se queda abajo segundo y medio. Sin
+ * fotogramas —entra y sale de golpe, como todos los cambios de estado de esta
+ * app— y sin nada más. Es la misma técnica de `level-drop`, y es exactamente lo
+ * que el sonido hace al callar la sala: la máquina haciendo sitio.
  *
- *   · EL NIVEL BAJA. Una capa con `backdrop-filter` sobre todo lo pintado, sin
- *     fotogramas: instantánea, como todos los cambios de estado de esta app. Es
- *     la misma técnica de `level-drop`, y es exactamente lo que el sonido hace
- *     al callar la sala — la máquina haciendo sitio.
+ * ⚠ Y NO HAY UNA LÍNEA DE BARRIDO PROPIA, QUE ERA LA PRIMERA IDEA. Se escribió
+ * —una pasada única, más gruesa, más clara y más lenta— y la tumbó un test que
+ * lleva ahí desde antes: `scanlineAlways`. Hubo una versión «especial» del
+ * barrido para el arranque, el colapso y el borrado, y se quitó por esto:
  *
- *   · Y EL BARRIDO CRUZA UNA VEZ. La misma línea del tubo, los mismos
- *     fotogramas, más lenta, más gruesa y más clara. Mientras dura, la de
- *     siempre se aparta: **lo que destaca es lo ÚNICO que se mueve** — la regla
- *     que ya gobierna la pieza recién sintonizada en la colección.
+ *   EL BARRIDO ES EL REFRESCO DEL TUBO, Y UN TUBO NO REFRESCA DISTINTO SEGÚN LO
+ *   QUE ESTÉ PINTANDO. Con dos versiones, la línea que se ve en un momento no es
+ *   la misma que se ve escribiendo — y eso se nota aunque no se sepa decir por
+ *   qué.
  *
- * Un momento, no un cartel: no hay texto, no hay medalla y no hay nada que
- * cerrar. Se ve una vez en la vida de una partida y quien lo vio no puede
- * enseñárselo a nadie.
+ * Así que el barrido de siempre sigue bajando, intacto, mientras todo lo demás
+ * se apaga un punto: acaba siendo lo único que se mueve en la pantalla, que era
+ * justo lo que la línea nueva quería conseguir. No hacía falta dibujarla.
  *
  * ⚠ CUELGA DEL ALMACÉN, NO DE LOS DIECISÉIS SITIOS QUE REGALAN ARTE. Igual que
  * el sonido: `awardFrom` se llama desde media app, y poner esto en cada sitio
  * era el futuro que se evita. Acá se compara la cuenta.
+ *
+ * ⚠ NO HACE FALTA MIRAR `prefers-reduced-motion`, y por una vez es cierto: acá
+ * no se mueve nada. La regla manda sobre cualquier efecto (REGLAS · A3) y este
+ * momento la cumple por construcción, no por una excepción — quien la tiene
+ * puesta ve exactamente lo mismo que todo el mundo.
+ *
+ * Un momento, no un cartel: no hay texto, no hay medalla y no hay nada que
+ * cerrar. Se ve una vez en la vida de una partida.
  */
 
 interface Props {
@@ -53,12 +58,9 @@ interface Props {
     demo?: boolean;
 }
 
-/** La clase que el documento lleva mientras dura. Aparta el barrido de siempre. */
-const MARCA = 'is-ceremonia';
-
 export default function CollectionCeremony({ demo = false }: Props) {
     const { effectsEnabled } = useSystemState();
-    const quieto = usePrefersReducedMotion();
+
     /*
      * ⚠ EN EL BANCO ARRANCA ENCENDIDA, y se decide acá y no en un efecto: poner
      * el estado desde dentro de un efecto provoca un segundo render encadenado
@@ -96,7 +98,10 @@ export default function CollectionCeremony({ demo = false }: Props) {
              */
             if (ahora >= ART_TOTAL && antes < ART_TOTAL) {
                 arranque = setTimeout(() => setActiva(true), CEREMONIA_ESPERA_MS);
-                final = setTimeout(() => setActiva(false), CEREMONIA_ESPERA_MS + CEREMONIA_MS);
+                final = setTimeout(
+                    () => setActiva(false),
+                    CEREMONIA_ESPERA_MS + CEREMONIA_MS
+                );
             }
 
             antes = ahora;
@@ -109,46 +114,7 @@ export default function CollectionCeremony({ demo = false }: Props) {
         };
     }, [demo, effectsEnabled]);
 
-    /*
-     * Y la marca en el documento, que es lo que aparta el barrido de siempre.
-     * Va acá y no en el efecto de arriba para que se limpie sola si el
-     * componente se desmonta a mitad — con la clase colgada, la app se quedaría
-     * sin su línea para siempre.
-     */
-    useEffect(() => {
-        if (!activa) return;
-
-        document.body.classList.add(MARCA);
-        return () => document.body.classList.remove(MARCA);
-    }, [activa]);
-
     if (!activa) return null;
 
-    return (
-        <>
-            {/* El nivel bajando. Sin fotogramas: entra y sale de golpe. */}
-            <div className="ceremonia-nivel" aria-hidden="true" data-testid="ceremonia" />
-
-            {/*
-                Y la línea, que es la única parte que se MUEVE — así que es la
-                única que se salta con `prefers-reduced-motion` (REGLAS · A3).
-                Quien lo tiene puesto no se queda sin momento: la sala se calla
-                igual y el nivel baja igual.
-            */}
-            {!quieto && (
-                <div
-                    className="scanline-effect is-ceremonia"
-                    aria-hidden="true"
-                    data-testid="ceremonia-barrido"
-                    /*
-                     * ⚠ LA DURACIÓN VIENE DEL MÓDULO, no de la hoja de estilo.
-                     * Es el MISMO hueco que el del silencio, y escrita en dos
-                     * sitios se separaría el día que alguien ajuste uno: la
-                     * línea seguiría bajando con la sala ya encendida.
-                     */
-                    style={{ animationDuration: `${CEREMONIA_MS}ms` }}
-                />
-            )}
-        </>
-    );
+    return <div className="ceremonia-nivel" aria-hidden="true" data-testid="ceremonia" />;
 }

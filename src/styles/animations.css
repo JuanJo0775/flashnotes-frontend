@@ -91,13 +91,26 @@
    LA DIECISÉIS · el momento de la colección completa
 
    ⚠ NI UN FOTOGRAMA NUEVO, y no es ahorro: es lo que pedía la auditoría —«lo
-   que ya está construido y no se usa ahí»—. Las dos piezas de este momento ya
-   existían: la técnica de `level-drop` para bajar el nivel, y el barrido del
-   tubo para cruzar la pantalla. Acá sólo van más despacio.
+   que ya está construido y no se usa ahí»—. Lo único que pasa es que el nivel
+   de la imagen baja y se queda abajo segundo y medio, con la misma técnica de
+   `level-drop`. Es lo que el sonido hace al callar la sala: hacer sitio.
 
-   ⚠ Y LAS DURACIONES NO SE ESCRIBEN ACÁ. Vienen de `ceremonia.ts` por estilo
-   en línea, porque el sonido las comparte: el hueco de silencio y el de la
-   imagen son el mismo hueco. Dos números iguales en dos ficheros lejanos se
+   ⚠ Y NO HAY UNA LÍNEA DE BARRIDO PROPIA, QUE ERA LA PRIMERA IDEA. Se escribió
+   —una pasada única, más gruesa, más clara y más lenta— y la tumbó el test que
+   vigila el barrido, que lleva ahí desde antes y ya había echado a una versión
+   «especial» para el arranque y el colapso:
+
+     EL BARRIDO ES EL REFRESCO DEL TUBO, Y UN TUBO NO REFRESCA DISTINTO SEGÚN
+     LO QUE ESTÉ PINTANDO.
+
+   Así que el de siempre sigue bajando, intacto, mientras todo lo demás se
+   apaga un punto: acaba siendo lo único que se mueve en la pantalla, que era
+   justo lo que la línea nueva quería conseguir. No hacía falta dibujarla.
+
+   ⚠ Y ACÁ NO HAY NINGUNA DURACIÓN: esto se enciende y se apaga, y lo que dura
+   es el rato que `CollectionCeremony` lo deja puesto. Los milisegundos viven en
+   `ceremonia.ts` porque el sonido los comparte —el hueco de silencio y el de la
+   imagen son el mismo hueco— y dos números iguales en dos ficheros lejanos se
    separan el día que alguien ajusta uno.
    ───────────────────────────────────────────────────────────────────────── */
 
@@ -118,30 +131,6 @@
        código haría lo contrario en la mitad de las pantallas. El brillo baja
        igual en los dos. */
     backdrop-filter: brightness(0.72) contrast(1.06);
-}
-
-/* Y el barrido, una sola vez: la MISMA línea del tubo —los mismos
-   fotogramas— más gruesa, más clara y mucho más lenta. */
-.scanline-effect.is-ceremonia {
-    /* Por encima del nivel: es lo único que no se apaga. */
-    z-index: 10006;
-    height: 4px;
-    background: linear-gradient(
-        to bottom,
-        transparent,
-        color-mix(in srgb, var(--color-ink) 55%, transparent),
-        transparent
-    );
-    animation-iteration-count: 1;
-}
-
-/* Mientras dura, la de siempre se aparta.
-
-   ⚠ ES LA REGLA DE LA COLECCIÓN, otra vez: lo que destaca es lo ÚNICO que se
-   mueve. Con las dos líneas en pantalla, la lenta se lee como que el barrido
-   se averió — y de averías esta app va sobrada. */
-body.is-ceremonia .scanline-effect:not(.is-ceremonia) {
-    opacity: 0;
 }
 
 /* --- Puntos suspensivos de carga --- */

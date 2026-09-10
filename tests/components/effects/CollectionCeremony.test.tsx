@@ -79,7 +79,7 @@ describe('la dieciséis · cuándo se ve', () => {
         expect(container.querySelector('.ceremonia-nivel')).toBeNull();
     });
 
-    test('al caer la última, el nivel baja y el barrido cruza', async () => {
+    test('al caer la última, el nivel baja', async () => {
         const { Ceremonia, arte, render, act, CEREMONIA_ESPERA_MS } = await load();
         const ultima = await casiTodas(arte);
 
@@ -90,7 +90,6 @@ describe('la dieciséis · cuándo se ve', () => {
         });
 
         expect(container.querySelector('.ceremonia-nivel')).not.toBeNull();
-        expect(container.querySelector('.scanline-effect.is-ceremonia')).not.toBeNull();
     });
 
     test('⚠ y no antes de la espera: primero suena el cajón', async () => {
@@ -155,11 +154,12 @@ describe('la dieciséis · a quién respeta', () => {
         expect(container.querySelector('.ceremonia-nivel')).toBeNull();
     });
 
-    test('⚠ con prefers-reduced-motion queda el momento, no la línea', async () => {
+    test('⚠ con prefers-reduced-motion se ve exactamente lo mismo', async () => {
         /*
-         * La regla manda sobre cualquier efecto (REGLAS · A3), y aun así quien
-         * la tiene puesta no se queda sin nada: lo único que se salta es lo que
-         * SE MUEVE. El nivel baja igual y la sala se calla igual.
+         * Y no es que la regla se ignore: es que acá NO SE MUEVE NADA. El nivel
+         * entra y sale de golpe, como todos los cambios de estado de esta app,
+         * así que este momento cumple A3 por construcción y no por una
+         * excepción — quien la tiene puesta ve lo mismo que todo el mundo.
          */
         const { Ceremonia, arte, render, act, CEREMONIA_ESPERA_MS } = await load(true);
         const ultima = await casiTodas(arte);
@@ -171,42 +171,37 @@ describe('la dieciséis · a quién respeta', () => {
         });
 
         expect(container.querySelector('.ceremonia-nivel')).not.toBeNull();
-        expect(container.querySelector('.scanline-effect.is-ceremonia')).toBeNull();
     });
 });
 
-describe('la dieciséis · el barrido de siempre', () => {
-    test('se aparta mientras dura, y vuelve al terminar', async () => {
-        const { Ceremonia, arte, render, act, CEREMONIA_ESPERA_MS, CEREMONIA_MS } =
-            await load();
-        const ultima = await casiTodas(arte);
-
-        render(<Ceremonia />);
-        act(() => {
-            arte.awardPiece(ultima);
-            jest.advanceTimersByTime(CEREMONIA_ESPERA_MS + 20);
-        });
-        expect(document.body).toHaveClass('is-ceremonia');
-
-        act(() => {
-            jest.advanceTimersByTime(CEREMONIA_MS + 100);
-        });
-        expect(document.body).not.toHaveClass('is-ceremonia');
-    });
-
-    test('⚠ y la marca no se queda colgada si el componente se va', async () => {
-        // Con la clase puesta para siempre, la app se quedaría sin su barrido.
+describe('la dieciséis · el barrido no se toca', () => {
+    test('⚠ no dibuja una línea propia ni le pone clases a la de siempre', async () => {
+        /*
+         * LA PRIMERA VERSIÓN DE ESTE MOMENTO LLEVABA UNA: una pasada única, más
+         * gruesa, más clara y más lenta, con la de siempre apartada mientras
+         * duraba. La tumbó `scanlineAlways`, que lleva ahí desde antes y ya
+         * había echado a una versión «especial» del barrido para el arranque y
+         * el colapso:
+         *
+         *   EL BARRIDO ES EL REFRESCO DEL TUBO, Y UN TUBO NO REFRESCA DISTINTO
+         *   SEGÚN LO QUE ESTÉ PINTANDO.
+         *
+         * Este test es el recordatorio del lado del componente: el de siempre
+         * sigue bajando, intacto, y acaba siendo lo único que se mueve en una
+         * pantalla apagada un punto — que era justo lo que la línea nueva
+         * quería conseguir.
+         */
         const { Ceremonia, arte, render, act, CEREMONIA_ESPERA_MS } = await load();
         const ultima = await casiTodas(arte);
 
-        const { unmount } = render(<Ceremonia />);
+        const { container } = render(<Ceremonia />);
         act(() => {
             arte.awardPiece(ultima);
             jest.advanceTimersByTime(CEREMONIA_ESPERA_MS + 20);
         });
 
-        unmount();
-        expect(document.body).not.toHaveClass('is-ceremonia');
+        expect(container.querySelector('.scanline-effect')).toBeNull();
+        expect(document.body.className).toBe('');
     });
 });
 
