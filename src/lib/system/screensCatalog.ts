@@ -50,6 +50,24 @@ export interface SystemScreen {
      * demostración y no el suceso: si dice que recarga, es que recarga.
      */
     inerte?: string;
+    /**
+     * Si no se pinta sola: necesita la app debajo para que se vea algo.
+     *
+     * ⚠ SALIÓ DE UNA AUDITORÍA, Y ERAN TRES DE DOCE. La avería de señal, la
+     * piel de la v0.2 y el momento de la dieciséis no dibujan una pantalla:
+     * le hacen algo a la que YA HAY —le separan los canales, le ponen marcos,
+     * le bajan el nivel—. Sobre un escenario vacío no se ve absolutamente
+     * nada, y un cuadro negro no se lee como «falta el fondo»: se lee como que
+     * la pantalla está rota.
+     *
+     * ⚠ Y ADEMÁS DECIDE DÓNDE SE MONTA. Las que se pintan solas van portadas a
+     * `body`, porque su CSS las espera ahí; éstas van DENTRO del visor. Es lo
+     * que las hacía invisibles: portadas a `body` se quedaban en `z-index: 2`
+     * —el de `.container-terminal`— y el diálogo del visor, que vive dentro de
+     * un `<main>` con contexto de apilamiento propio, les pintaba encima su
+     * fondo opaco. El visor las tenía, las montaba, y no se veían.
+     */
+    sobreMaqueta?: boolean;
 }
 
 export const SYSTEM_SCREENS: readonly SystemScreen[] = [
@@ -140,6 +158,7 @@ export const SYSTEM_SCREENS: readonly SystemScreen[] = [
         que: 'La separación de canales sobre TODO: bordes, fondos, botones y medidores.',
         cuando: 'Ensañándose con el interruptor de tema: diez pulsaciones seguidas y rápidas.',
         como: 'clase',
+        sobreMaqueta: true,
     },
     {
         id: 'coleccion',
@@ -148,6 +167,7 @@ export const SYSTEM_SCREENS: readonly SystemScreen[] = [
         que: 'El nivel de la imagen baja y se queda abajo segundo y medio, mientras la sala se calla.',
         cuando: 'Al ganar la última pieza de la colección. Una vez en la vida de una partida.',
         como: 'directo',
+        sobreMaqueta: true,
         inerte: 'acá se reproduce sin ganar nada · la de verdad espera a que caiga la dieciséis',
     },
     {
@@ -157,6 +177,7 @@ export const SYSTEM_SCREENS: readonly SystemScreen[] = [
         que: 'La piel de la v0.2, con sus marcos de caracteres y sus esquinas.',
         cuando: 'Cuando conseguís volver a la versión anterior.',
         como: 'atributo',
+        sobreMaqueta: true,
     },
 ];
 

@@ -250,7 +250,28 @@ export default function ScreenViewer({
                 El portal las devuelve a `body`, que es donde su CSS las espera.
                 Se salta el diálogo a propósito: dentro de él se apagarían solas.
             */}
+            {/*
+                ⚠ Y LAS QUE NECESITAN LA MAQUETA NO SE PORTAN: se montan ACÁ
+                DENTRO. Portadas a `body` se quedaban debajo del fondo opaco de
+                este mismo diálogo —`.container-terminal` vive en `z-index: 2` y
+                el diálogo, dentro de un `<main>` con contexto propio, pinta
+                encima— así que el visor las montaba y no se veía nada.
+
+                Salió en una auditoría, y eran TRES de doce: la avería de señal,
+                la piel de la v0.2 y la dieciséis. Ninguna necesita el portal:
+                el portal existe porque el arranque y el barrido apagan a sus
+                hermanas con `body > *`, y éstas no apagan a nadie.
+            */}
+            {!terminada && pantalla.sobreMaqueta && (
+                <Contenido
+                    key={pase}
+                    pantalla={pantalla}
+                    reiniciar={() => setTerminada(true)}
+                />
+            )}
+
             {!terminada &&
+                !pantalla.sobreMaqueta &&
                 createPortal(
                     /*
                      * ⚠ SIN ENVOLTORIO, y por el mismo motivo que existe el
