@@ -22,6 +22,8 @@ import {
 } from '@/lib/system/screensCatalog';
 import { COLOR_TOKENS, FONT_TOKENS, SYSTEM_ICONS, TEXT_TOKENS } from '@/lib/system/identity';
 import { MARK_GRID, MARK_RECTS } from '@/lib/system/mark';
+import { v02Reading, type V02ArtMode } from '@/lib/system/v02';
+import { renderArtCard } from '@/lib/system/v02Card';
 import MetaTag from '@/components/ui/MetaTag';
 import ProgressBar from '@/components/ui/ProgressBar';
 import {
@@ -257,6 +259,29 @@ function Marca({ lado }: { lado: number }) {
         </svg>
     );
 }
+
+/**
+ * UNA PIEZA POR CADA MANERA DE LEERLA QUE TIENE LA VERSIÓN VIEJA.
+ *
+ * ⚠ SE ELIGEN DEL CATÁLOGO DE VERDAD, no a dedo: se busca la primera pieza a la
+ * que le toca cada modo. Escribir los identificadores a mano dejaría esta
+ * página enseñando un reparto que dejó de ser cierto al añadir una pieza — que
+ * es exactamente lo que este banco existe para que no pase.
+ */
+const ORDEN: V02ArtMode[] = ['ok', 'corrupta', 'parcial', 'ilegible'];
+
+const DICE: Record<V02ArtMode, string> = {
+    ok: 'se lee entera',
+    corrupta: 'comida: el daño, dos veces',
+    parcial: 'se cortó a media carga',
+    ilegible: '[ NO SE PUEDE LEER ]',
+};
+
+const MODOS_v02 = ORDEN.map((modo) => ({
+    modo,
+    dice: DICE[modo],
+    pieza: ART.find((p) => v02Reading(p.art, p.id).modo === modo) ?? ART[0],
+}));
 
 function Seccion({
     titulo,
@@ -647,6 +672,61 @@ export default function Banco() {
                             </figure>
                         ))}
                     </div>
+                </Seccion>
+
+                <hr className="rule-dashed" />
+
+                <Seccion
+                    titulo="ARTE · COMO LO LEE LA v0.2"
+                    nota="la colección la inventó la v1.0 · allá abajo no todo se puede leer"
+                >
+                    {/*
+                        ⚠ POR QUÉ ESTO ESTÁ EN EL BANCO. La página promete
+                        «todo lo que existe, con su nombre», y estas cuatro
+                        maneras de leer una pieza no se pueden ver juntas
+                        jugando: hay que estar en la versión vieja Y tener la
+                        pieza que a cada modo le toca. Acá se ven de una vez.
+
+                        Y se pintan con las funciones de verdad, no con una
+                        imitación: el mismo cuadro y la misma lectura que la
+                        pestaña.
+                    */}
+                    <div
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(26rem, 1fr))',
+                            gap: '1.25rem',
+                        }}
+                    >
+                        {MODOS_v02.map(({ modo, pieza, dice }) => (
+                            <figure key={modo} style={{ margin: 0 }}>
+                                <pre
+                                    className="mono"
+                                    style={{
+                                        fontSize: '0.7rem',
+                                        lineHeight: 1.25,
+                                        margin: 0,
+                                    }}
+                                >
+                                    {renderArtCard({
+                                        title: modo.toUpperCase(),
+                                        art: v02Reading(pieza.art, pieza.id).art,
+                                        foot: dice,
+                                        clave: modo,
+                                    }).join(String.fromCharCode(10))}
+                                </pre>
+                            </figure>
+                        ))}
+                    </div>
+                    <p className="comment">
+                        siempre las mismas piezas: el dado sale del identificador, así que la
+                        que no se lee no se lee NUNCA — es un formato que no encaja, no una
+                        avería que va y viene
+                    </p>
+                    <p className="comment">
+                        y uno de cada cinco cuadros se quedó sin cerrar: falta una esquina, y
+                        la línea mide lo mismo igual
+                    </p>
                 </Seccion>
 
                 <hr className="rule-dashed" />

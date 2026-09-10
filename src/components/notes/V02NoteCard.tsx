@@ -26,6 +26,9 @@ export default function V02NoteCard({ note, onSelect }: Props) {
         title: note.title,
         content: note.content,
         meta: formatFileSize(note.content.length).toUpperCase(),
+        // Y con que se decide si a ESTE cuadro le falta una esquina. El
+        // identificador de la nota: el mismo archivo sale igual siempre.
+        clave: note._id,
     });
 
     return (

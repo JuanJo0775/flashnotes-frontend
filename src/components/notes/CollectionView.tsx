@@ -70,7 +70,7 @@ function CasillaVieja({
     turno?: number;
     marca?: string;
 }) {
-    const filas = renderArtCard({ title: ficha, art, foot: pie });
+    const filas = renderArtCard({ title: ficha, art, foot: pie, clave: ficha });
 
     return (
         <li

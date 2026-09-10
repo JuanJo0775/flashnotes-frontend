@@ -84,14 +84,20 @@ dentro de `trashV02Note`, con `TRASH_FAIL_ODDS` a mano.
 misma regla es lo que la casa prohíbe (REGLAS · B5) — pendiente de limpiar, ver la
 auditoría §2.1.
 
-## E2 · Interfaces a medio dibujar · **a medias, y a propósito**
+## ~~E2 · Interfaces a medio dibujar~~ · HECHO
 
 `halfBaked()` está repartido por **las etiquetas**: una de cada cuatro sale sin
 traducir, a medio hacer (`TITULO_417`) o mal traducida, siempre igual para la
 misma clave. Desde que el ente llega a la v0.2, sus frases pasan por ahí también.
 
-Queda lo de **los marcos**: cuadros sin cerrar, dígitos donde iba una palabra. Es
-lo único de esta sección que sigue sin construirse.
+Y **los marcos** también, que era lo último que quedaba: **uno de cada cinco
+cuadros se queda sin cerrar** — le falta una esquina, siempre la misma para el
+mismo cuadro, y la línea sigue midiendo lo mismo porque el `+` se cambia por un
+espacio y no se quita.
+
+Se quita una esquina y no se rompe un lado a propósito: un hueco en mitad de un
+lado se lee como un fallo de pintado, y una esquina sin rematar se lee como
+alguien que dibujó el cuadro a mano y no cerró. Ver [SECRETOS §24.5](SECRETOS.md).
 
 ## ~~E3 · Los comandos no están todos~~ · HECHO
 

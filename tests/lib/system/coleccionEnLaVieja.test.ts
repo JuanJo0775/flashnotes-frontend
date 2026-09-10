@@ -132,3 +132,66 @@ describe('el cuadro dibujado de la casilla', () => {
         expect(vacio.length).toBeGreaterThan(3);
     });
 });
+
+describe('los cuadros que nadie remató', () => {
+    /*
+     * Lo último que quedaba de «interfaces a medio dibujar» (IDEAS · E2). Las
+     * ETIQUETAS de esta versión ya salían a medias; los MARCOS estaban
+     * impecables — cuadros perfectos dibujados por la misma gente que no llegó
+     * a escribir los textos.
+     */
+    const cuadros = ART.map((p, i) =>
+        renderArtCard({
+            title: `${i + 1}/16`,
+            art: 'aa',
+            foot: 'X',
+            clave: `${i + 1}/16`,
+        })
+    );
+
+    const esquinas = (c: string[]) =>
+        [c[0][0], c[0][c[0].length - 1], c[c.length - 1][0], c[c.length - 1][c[0].length - 1]];
+
+    test('⚠ a alguno le falta una esquina', () => {
+        const sueltos = cuadros.filter((c) => esquinas(c).some((e) => e !== '+'));
+
+        expect(sueltos.length).toBeGreaterThan(0);
+    });
+
+    test('y a la mayoría no', () => {
+        // Más y la pantalla deja de leerse como una versión sin terminar para
+        // leerse como una avería.
+        const enteros = cuadros.filter((c) => esquinas(c).every((e) => e === '+'));
+
+        expect(enteros.length).toBeGreaterThan(cuadros.length / 2);
+    });
+
+    test('⚠ pero nunca le falta más de una', () => {
+        // Un cuadro al que le faltan dos esquinas ya no es un cuadro sin
+        // rematar: es una avería.
+        for (const c of cuadros) {
+            expect(esquinas(c).filter((e) => e !== '+').length).toBeLessThanOrEqual(1);
+        }
+    });
+
+    test('⚠ y la línea sigue midiendo lo mismo', () => {
+        // En una rejilla de caracteres, una fila más corta descuadra el dibujo
+        // entero: el `+` se cambia por un espacio, no se quita.
+        for (const c of cuadros) {
+            for (const linea of c) expect(linea).toHaveLength(CARD_COLS);
+        }
+    });
+
+    test('el mismo cuadro sale igual siempre', () => {
+        const uno = renderArtCard({ title: '3/16', art: 'aa', foot: 'X', clave: '3/16' });
+        const otro = renderArtCard({ title: '3/16', art: 'aa', foot: 'X', clave: '3/16' });
+
+        expect(uno).toEqual(otro);
+    });
+
+    test('y sin clave no se toca nada', () => {
+        const entero = renderArtCard({ title: '3/16', art: 'aa', foot: 'X' });
+
+        expect(esquinas(entero)).toEqual(['+', '+', '+', '+']);
+    });
+});

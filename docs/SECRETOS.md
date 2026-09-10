@@ -3586,6 +3586,24 @@ todas perfectamente era lo raro. Ahora cada una le sale a su manera:
 | **a medio cargar** | se corta por una línea cualquiera y lo que falta no se pinta |
 | **ilegible** | no se abre: `[ NO SE PUEDE LEER ]` |
 
+**Y las casillas son cuadros DIBUJADOS**, no tarjetas con borde:
+
+```
++- 7/16 ---------------------------------+
+|    .-"""-.::: ::::: :                  |
+|   (       ) ::::::: :                  |
+|                                        |
+| [ SIN ABRIR ]                          |
++----------------------------------------+
+```
+
+Es el mismo cuadro que ya usan las NOTAS de esta versión —mismo ancho, mismo
+trazo— porque las dos rejillas se ven en la misma pantalla y dos anchos
+distintos se leen como dos programas. **Se pidió dos veces**, y la segunda con
+la razón exacta: «se ve muy parecida a la de la 1.0». Lo estaba — tenía el marco
+de guiones puesto ENCIMA de la misma tarjeta, y eso es la pantalla de ahora
+disfrazada.
+
 ⚠ **Cuatro maneras y no una.** Con un solo fallo la pantalla se lee como una
 función apagada; lo que la hace parecer un formato que no encaja es que cada
 pieza falle **a su manera**.
@@ -3647,6 +3665,34 @@ en vez de como una versión vieja.
 > sería ilegible, no vieja.
 
 **Constante:** `BROKEN_LABEL_ODDS = 0.26` · **Código:** `v02.ts` · `v02Label()`
+
+### Y los cuadros que nadie remató
+
+**Las etiquetas salían a medias y los marcos estaban impecables** — cuadros
+perfectos dibujados por la misma gente que no llegó a escribir los textos. Era
+lo último que quedaba de «interfaces a medio dibujar».
+
+**Uno de cada cinco cuadros se quedó sin cerrar:** le falta UNA esquina.
+
+```
+ - 3/16 ---------------------------------+
+|                                        |
++----------------------------------------+
+```
+
+⚠ **Se quita una esquina, no se rompe un lado.** Un hueco en mitad de un lado se
+lee como un fallo de pintado —parece que se perdió un carácter— y una esquina
+sin rematar se lee como lo que es: **alguien dibujó el cuadro a mano y no
+cerró**.
+
+⚠ **Y la línea sigue midiendo lo mismo**: el `+` se cambia por un espacio, no se
+quita. En una rejilla de caracteres una fila más corta descuadra el dibujo
+entero, y eso lo fija un test desde el primer día.
+
+⚠ **Nunca más de una por cuadro.** Con dos ya no es un cuadro sin rematar: es
+una avería.
+
+**Constante:** `SIN_CERRAR_ODDS = 0.2` · **Código:** `v02Card.ts` · `sinCerrar()`
 
 ## 24.6 · Los tirones de color, solos
 

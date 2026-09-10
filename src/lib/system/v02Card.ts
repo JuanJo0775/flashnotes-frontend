@@ -18,6 +18,8 @@
  * — ver REGLAS · C8. Con `+ - |` no hay nada que medir.
  */
 
+import { ruido } from '@/lib/system/v02';
+
 /** Lo ancho que se dibuja, en caracteres. */
 export const CARD_COLS = 46;
 
@@ -29,12 +31,71 @@ export interface CardNote {
     content: string;
     /** Lo que se pinta en el pie: tamaño, edad… */
     meta: string;
+    /** Con qué se decide si este cuadro quedó sin cerrar. Ver `sinCerrar`. */
+    clave?: string;
 }
 
 /** Recorta a lo ancho, sin partir a mitad de un carácter visible. */
 function corta(texto: string, ancho: number): string {
     if (texto.length <= ancho) return texto;
     return `${texto.slice(0, Math.max(0, ancho - 1))}>`;
+}
+
+/**
+ * DE CADA CUÁNTO UN CUADRO SE QUEDA SIN CERRAR.
+ *
+ * Uno de cada cinco. Menos y no se ve nunca; más y la pantalla deja de leerse
+ * como una versión sin terminar para leerse como una avería — que es la línea
+ * que separa a esta versión de un fallo, y se cruza con una cifra.
+ */
+const SIN_CERRAR_ODDS = 0.2;
+
+/**
+ * UN CUADRO AL QUE LE FALTA UNA ESQUINA.
+ *
+ * ⚠ ERA LO ÚLTIMO QUE QUEDABA DE «interfaces a medio dibujar» (IDEAS · E2). Las
+ * ETIQUETAS de esta versión ya salían a medias —sin traducir, con el nombre de
+ * la variable, mal traducidas— pero los MARCOS estaban impecables: cuadros
+ * perfectos dibujados por la misma gente que no llegó a escribir los textos.
+ *
+ * ⚠ SE QUITA UNA ESQUINA, NO SE ROMPE UN LADO. Un hueco en mitad de un lado se
+ * lee como un fallo de pintado —parece que se perdió un carácter— y una esquina
+ * sin rematar se lee como lo que es: alguien dibujó el cuadro a mano y no cerró.
+ *
+ * ⚠ Y LA LÍNEA SIGUE MIDIENDO LO MISMO: el `+` se cambia por un espacio, no se
+ * quita. En una rejilla de caracteres una fila más corta descuadra el dibujo
+ * entero, y eso lo fija un test desde el primer día.
+ *
+ * ⚠ DETERMINISTA POR CLAVE, como todo lo roto de esta versión: la misma tarjeta
+ * está sin cerrar SIEMPRE. Si cambiara en cada repintado sería un cartel
+ * parpadeando. Y sin clave no se toca nada — así los tests que no hablan de
+ * esto ven el cuadro entero.
+ */
+function sinCerrar(lineas: string[], clave: string): string[] {
+    if (clave === '') return lineas;
+
+    const dado = ruido(`marco:${clave}`);
+    if (dado >= SIN_CERRAR_ODDS) return lineas;
+
+    /*
+     * Cuál de las cuatro, con el MISMO dado: una tarjeta tiene UNA esquina
+     * suelta, no cuatro posibles. Es el mismo reparto que usan las etiquetas
+     * rotas para elegir su avería.
+     */
+    const cual = Math.floor((dado / SIN_CERRAR_ODDS) * 4) % 4;
+    const ultima = lineas.length - 1;
+
+    const abre = (linea: string) => ` ${linea.slice(1)}`;
+    const cierra = (linea: string) => `${linea.slice(0, -1)} `;
+
+    const copia = [...lineas];
+
+    if (cual === 0) copia[0] = abre(copia[0]);
+    else if (cual === 1) copia[0] = cierra(copia[0]);
+    else if (cual === 2) copia[ultima] = abre(copia[ultima]);
+    else copia[ultima] = cierra(copia[ultima]);
+
+    return copia;
 }
 
 /** Una fila del cuadro: `| contenido        |`. */
@@ -65,6 +126,8 @@ export function renderArtCard(pieza: {
     art: string;
     /** El pie: el nombre, o por qué no hay nombre. */
     foot: string;
+    /** Con qué se decide si este cuadro quedó sin cerrar. Ver `sinCerrar`. */
+    clave?: string;
 }): string[] {
     const interior = CARD_COLS - 4;
     const lineas: string[] = [];
@@ -89,7 +152,7 @@ export function renderArtCard(pieza: {
 
     lineas.push(`+${'-'.repeat(CARD_COLS - 2)}+`);
 
-    return lineas;
+    return sinCerrar(lineas, pieza.clave ?? '');
 }
 
 /**
@@ -122,5 +185,5 @@ export function renderCard(note: CardNote): string[] {
 
     lineas.push(`+${'-'.repeat(CARD_COLS - 2)}+`);
 
-    return lineas;
+    return sinCerrar(lineas, note.clave ?? '');
 }
