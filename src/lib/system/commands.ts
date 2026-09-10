@@ -1684,22 +1684,35 @@ const COMMANDS: readonly Command[] = [
             // catálogo se ve que tenés la seis, y qué es la seis sólo se sabe
             // acá. Sin esto, este comando sería una forma de volver a ver algo
             // que el catálogo ya te había contado.
-            markOpened(piece.id);
+            const lasAbriTodas = markOpened(piece.id);
 
             // EL DIBUJO SÍ, EL PIE NO SIEMPRE. El manipulador se gana con ver
             // el morse, y su dibujo es la PISTA de lo que todavía no sacaste:
             // soltar acá el nombre sería dar la pista ya resuelta.
-            return texto(
-                [
-                    // Con el nombre por ganar, el dibujo TAMPOCO está entero:
-                    // ver el morse no es entenderlo. Ver `artOf`.
-                    artOf(piece),
-                    '',
-                    `-- ${captionKnown(piece) ? piece.caption[lang] : UNNAMED[lang]}`,
-                    '',
-                    T.artKeepHint[lang],
-                ].join('\n')
-            );
+            return {
+                ...texto(
+                    [
+                        // Con el nombre por ganar, el dibujo TAMPOCO está
+                        // entero: ver el morse no es entenderlo. Ver `artOf`.
+                        artOf(piece),
+                        '',
+                        `-- ${captionKnown(piece) ? piece.caption[lang] : UNNAMED[lang]}`,
+                        '',
+                        T.artKeepHint[lang],
+                    ].join('\n')
+                ),
+                /*
+                 * ⚠ Y SI ÉSA ERA LA ÚLTIMA POR ABRIR, la estrella. Abrirlas
+                 * todas no es tenerlas todas: ganar es tropezarse con una,
+                 * revelar es ir a mirar, y abrir es lo único que hay que hacer
+                 * UNA POR UNA.
+                 *
+                 * Se marca desde acá y no desde `asciiArt` porque aquel módulo
+                 * no importa de `hooks`; el camino de los secretos pasa por el
+                 * `secretId` del resultado, como el de todos los demás.
+                 */
+                ...(lasAbriTodas ? { secretId: 'art-all-open' as const } : {}),
+            };
         },
     },
     {

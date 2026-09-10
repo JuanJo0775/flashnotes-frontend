@@ -35,6 +35,11 @@ export const es = {
     'nav.trash': 'Papelera',
     'nav.collection': 'Colección',
     'collection.title': 'Colección',
+    // La casilla de una pieza que YA es tuya y todavía no fuiste a mirar.
+    // No dice cuál es ni la enseña: dice que hay algo esperándote ahí.
+    'collection.waiting': '★ SIN REVELAR',
+    // Y la estrella de haberlas abierto TODAS, que no es tenerlas todas.
+    'collection.allOpen': '★ COLECCIÓN COMPLETA',
     'collection.empty': 'Todavía no hay ninguna. El sistema guarda algunas cosas de antes.',
     'nav.viewsLabel': 'Vistas',
     'nav.dateLabel': 'FECHA',

@@ -1210,11 +1210,11 @@ export function readOpened(): Set<string> {
  * Sólo si la tenés: abrir lo que no se ganó no significaría nada, y dejaría el
  * catálogo diciendo el nombre de algo que no está.
  */
-export function markOpened(id: string) {
-    if (!readFound().has(id)) return;
+export function markOpened(id: string): boolean {
+    if (!readFound().has(id)) return false;
 
     const abiertas = readOpened();
-    if (abiertas.has(id)) return;
+    if (abiertas.has(id)) return false;
 
     abiertas.add(id);
 
@@ -1223,6 +1223,24 @@ export function markOpened(id: string) {
     } catch {
         // Sin sitio, el pie se vuelve a esconder al recargar. Molesto, no grave.
     }
+
+    /*
+     * ⚠ DEVUELVE SI ÉSA ERA LA ÚLTIMA, y no marca el secreto acá.
+     *
+     * Abrirlas todas no es lo mismo que tenerlas todas: ganar una pieza es
+     * tropezarse con ella y revelarla es ir a mirar, pero abrir es lo único que
+     * hay que hacer UNA POR UNA — y quien las abrió todas es el único que sabe
+     * cómo se llaman las dieciséis, porque el nombre sólo aparece al abrir.
+     *
+     * ⚠ Este módulo no importa de `hooks` —la dependencia va en una sola
+     * dirección— así que quien avisa es quien ya sabe hacerlo: el comando
+     * devuelve su `secretId` y `run` lo marca, que es el camino por el que pasan
+     * todos los demás.
+     *
+     * ⚠ Y se cuenta DESPUÉS de guardar: con la cuenta vieja la última no
+     * contaría y el logro pediría diecisiete.
+     */
+    return abiertas.size >= ART.length;
 }
 
 /**

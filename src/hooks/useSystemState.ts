@@ -162,6 +162,17 @@ export const SECRET_IDS = [
     // usarlo, que es lo contrario de lo que hace falta con el único comando que
     // destruye algo tuyo.
     'collection',
+    /*
+     * ⚠ ABRIRLAS TODAS, QUE NO ES TENERLAS TODAS. Ganar una pieza es tropezarse
+     * con ella; revelarla es ir a mirar; abrirla con `//art_<n>` es lo único que
+     * hay que hacer UNA POR UNA, y por eso es lo que se premia.
+     *
+     * Se pidió jugando: «también debe ser una especie de logro; se deben abrir
+     * todas para que ganes una estrellita». Y encaja con lo que ya hacía la
+     * casa: el nombre de cada pieza sólo aparece al abrirla, así que quien las
+     * abrió todas es el único que sabe cómo se llaman las dieciséis.
+     */
+    'art-all-open',
     'morse',
     'v02',
     'v02-recover',

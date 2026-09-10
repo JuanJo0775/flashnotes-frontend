@@ -136,6 +136,12 @@ No se mueve nada en:
 
   ⚠ Y la novedad **se gasta al verla**: la pantalla se la lleva al montarse.
   Algo que pasa cada vez que abrís la pestaña no es una novedad, es un adorno.
+
+  ⚠ Y de ahí salió lo que faltaba de verdad, preguntando: la casilla de una
+  pieza **ganada y sin revelar** se veía igual que una que no tenés. Ahora dice
+  `★ SIN REVELAR` — sin enseñar cuál es, que es lo que hace que `//art` siga
+  sirviendo para algo. Y hay **estrella por abrirlas todas** (`art-all-open`),
+  que no es tenerlas todas: abrir es lo único que se hace una por una.
 - **La papelera** — igual.
 
 ⚠ Y lo que falta **no** son animaciones bonitas: son mecánicas. Una fila que se

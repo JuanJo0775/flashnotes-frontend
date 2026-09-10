@@ -11,6 +11,8 @@ import {
     captionOf,
     forgetJustRevealed,
     justRevealed,
+    readFound,
+    readOpened,
     readRevealed,
 } from '@/lib/system/asciiArt';
 
@@ -57,6 +59,21 @@ export default function CollectionView() {
         forgetJustRevealed();
     }, []);
 
+    /*
+     * LO QUE YA ES TUYO AUNQUE NO LO HAYAS MIRADO.
+     *
+     * ⚠ SE PIDIÓ JUGANDO, y venía de una confusión razonable: «si ejemplo ganaste
+     * la 2/16 no te sale sólo 2/16, sino algo como que hay arte en camino».
+     * Ganar no revela —eso sigue pidiendo `//art`, y es lo que hace que el
+     * comando sirva para algo— pero la casilla puede decir que ahí hay algo TUYO
+     * sin enseñar qué es. La diferencia entre «no tengo la 2» y «tengo la 2 y no
+     * la miré» es información que ya te ganaste.
+     *
+     * Y las abiertas, para la estrella de abajo.
+     */
+    const ganadas = readFound();
+    const abiertas = readOpened();
+
     return (
         <section className="collection-view" aria-label={t('collection.title')}>
             {/* ⚠ EL MISMO RÓTULO QUE NOTAS Y PAPELERA, con sus clases y todo.
@@ -73,6 +90,24 @@ export default function CollectionView() {
                     {vistas.size}/{ART_TOTAL}
                 </span>
             </h2>
+
+            {/*
+                LA ESTRELLA DE HABERLAS ABIERTO TODAS.
+
+                ⚠ ABRIRLAS TODAS NO ES TENERLAS TODAS, y por eso es esto y no la
+                cuenta de arriba: ganar una pieza es tropezarse con ella,
+                revelarla es ir a mirar, y abrirla con `//art_<n>` es lo único
+                que hay que hacer UNA POR UNA. Quien las abrió todas es el único
+                que sabe cómo se llaman las dieciséis.
+            */}
+            {abiertas.size >= ART_TOTAL && (
+                <p
+                    className="collection-all-open mono text-xs"
+                    data-testid="collection-all-open"
+                >
+                    {t('collection.allOpen')}
+                </p>
+            )}
 
             {vistas.size === 0 && (
                 <p className="collection-empty mono text-sm dim">
@@ -96,6 +131,23 @@ export default function CollectionView() {
                                     o una silueta dirían QUÉ falta, y lo que tiene
                                     que decir es CUÁNTO. */}
                                 <span className="collection-slot mono">{ficha}</span>
+
+                                {/*
+                                    ⚠ Y SI YA ES TUYA, LO DICE. No cuál es, no
+                                    su dibujo: que está esperándote. Sin esto,
+                                    una pieza ganada y otra que no tenés se ven
+                                    exactamente igual, y el premio se queda
+                                    escondido detrás de un comando que no sabés
+                                    que hay que teclear.
+                                */}
+                                {ganadas.has(piece.id) && (
+                                    <span
+                                        className="collection-waiting mono text-2xs"
+                                        data-testid="collection-waiting"
+                                    >
+                                        {t('collection.waiting')}
+                                    </span>
+                                )}
                             </li>
                         );
                     }

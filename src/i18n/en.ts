@@ -26,6 +26,8 @@ export const en: Dictionary = {
     'nav.trash': 'Trash',
     'nav.collection': 'Collection',
     'collection.title': 'Collection',
+    'collection.waiting': '★ UNREVEALED',
+    'collection.allOpen': '★ COLLECTION COMPLETE',
     'collection.empty': 'None yet. The system keeps a few things from before.',
     'nav.viewsLabel': 'Views',
     'nav.dateLabel': 'DATE',

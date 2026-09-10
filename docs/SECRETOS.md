@@ -179,7 +179,7 @@ capa más profunda y sólo tienen sentido después de las demás.
 | §24 | [La v0.2 · la versión de antes](#24--la-v02-la-versión-de-antes) |
 | §25 | [El monitor se enciende](#25--el-monitor-se-enciende) |
 | §26 | [El ente](#26--el-ente) |
-| — | [Los 33 secretos que cuenta el panel](#los-33-secretos-que-cuenta-el-panel) |
+| — | [Los 34 secretos que cuenta el panel](#los-34-secretos-que-cuenta-el-panel) |
 | — | [Accesibilidad, en una tabla](#accesibilidad-en-una-tabla) |
 | — | [Dónde vive cada cosa](#dónde-vive-cada-cosa) |
 | — | [Apéndice · las claves de `localStorage`](#apéndice--las-claves-de-localstorage) |
@@ -854,7 +854,7 @@ NOTAS CREADAS           12
 BYTES ESCRITOS          8.4kb
 INTEGRIDAD              100%
 TEMA                    CLARO
-MMMM?                   [█░░░░░░░░░░░░░] 6/33 · SE FIJA
+MMMM?                   [█░░░░░░░░░░░░░] 6/34 · SE FIJA
 PIEZAS                  [██░░░░░░░░░░░░] 2/16 · LINDO
 VSYNC-TEST              42  (7 partidas)
 VSYNC-TEST DEGRADADO    SIN DATOS
@@ -908,7 +908,7 @@ si no, el número subía con la avería y la barra se quedaba donde estaba.
 
 ### `SECRETOS` no es un dato: es una invitación
 
-Cuenta **sólo lo que provocaste vos** (§ [Los 33 secretos](#los-33-secretos-que-cuenta-el-panel)).
+Cuenta **sólo lo que provocaste vos** (§ [Los 34 secretos](#los-34-secretos-que-cuenta-el-panel)).
 Lo ambiental te pasa, no lo encontrás. El total sale de la longitud del registro,
 nunca de un número escrito a mano. Y no puede verse en `0/N`: para leer esa fila
 ya tuviste que encontrar el panel, así que lo primero que ves es `1/N`.
@@ -925,7 +925,7 @@ ya tuviste que encontrar el panel, así que lo primero que ves es `1/N`.
 > El título de esta sección la llama `SECRETOS` porque habla de la LECTURA, no
 > de la etiqueta.
 
-`6/33` es un dato. **Una barra y un rango son una invitación:** se ve de un
+`6/34` es un dato. **Una barra y un rango son una invitación:** se ve de un
 vistazo que falta mucho, y el nombre del escalón siguiente da curiosidad sin
 decir de qué va.
 
@@ -3138,6 +3138,20 @@ Sin ninguna revelada la vista dice *«Todavía no hay ninguna. El sistema guarda
 algunas cosas de antes.»* — y la pestaña, si tenés piezas sin mirar, está asomada
 pero cerrada (§18).
 
+⚠ **Y la casilla de una pieza que YA es tuya lo dice.** No cuál es, no su
+dibujo: `★ SIN REVELAR`. Se pidió jugando, y venía de una confusión razonable
+—«si ganaste la 2/16 no te sale sólo 2/16, sino algo como que hay arte en
+camino»—. Ganar sigue sin revelar, que es lo que hace que `//art` sirva para
+algo; pero la diferencia entre «no tengo la 2» y «tengo la 2 y no la miré» es
+información que ya te ganaste, y esconderla dejaba el premio detrás de un comando
+que no sabías que había que teclear.
+
+⚠ **Y hay una estrella por ABRIRLAS TODAS**, que no es tenerlas todas: `★
+COLECCIÓN COMPLETA`, y su secreto (`art-all-open`, el 34). Ganar una pieza es
+tropezarse con ella, revelarla es ir a mirar, y abrirla con `//art_<n>` es lo
+único que hay que hacer **una por una** — quien las abrió todas es el único que
+sabe cómo se llaman las dieciséis.
+
 ⚠ **Y la que acaba de destaparse LLEGA distinta.** Las que ya tenías están
 puestas; la del último `//art` entra **sintonizándose** —aplastada a una línea y
 abriéndose, el mismo gesto del tubo encendiéndose, en pequeño—. La rejilla entera
@@ -4118,9 +4132,9 @@ más barato que volver a mudarla.
 Con el ojo cableado, **el cuaderno (`everything`) es alcanzable por primera vez
 desde el rediseño de la colección**.
 
-# Los 33 secretos que cuenta el panel
+# Los 34 secretos que cuenta el panel
 
-Lo que va en `SECRETOS n/33` (§7). **Sólo entra lo que provocás vos**: lo
+Lo que va en `SECRETOS n/34` (§7). **Sólo entra lo que provocás vos**: lo
 ambiental —el glitch, los fragmentos de la barra, el barrido trabado, el arranque
 en vídeo inverso, el encendido del monitor— te pasa, no lo encontrás, y contarlo
 inflaría el denominador con cosas que nadie puede buscar.
@@ -4164,6 +4178,7 @@ así que no puede dejar el contador en `34/33`.
 | 31 | `entity-refused` | Decirle que **no** cuando ofrece «limpiar todo esto» (§26) | `commands.ts` |
 | 32 | `entity-gift` | Volver al día siguiente y cumplir lo que pide la nota que te dejó (§26) | `commands.ts` |
 | 33 | `entity-reported` | Reportar el fallo que te pasó, en vez de aprovecharlo (§26) | `commands.ts` |
+| 34 | `art-all-open` | **Abrir las dieciséis** con `//art_<n>`, una por una (§23) | `commands.ts` |
 
 **La mitad de estos identificadores se marcan en un archivo distinto del que los
 declara**, y así es exactamente como se desincronizan: la lista está en

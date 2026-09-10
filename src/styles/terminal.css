@@ -869,6 +869,36 @@
 
 /* El número del hueco, grande y solo: es lo único que hay ahí, y lo que dice no
    es QUÉ falta sino CUÁNTO. */
+/*
+ * EL INDICIO DE LA CASILLA: hay algo tuyo esperando ahí.
+ *
+ * ⚠ NO ENSEÑA LA PIEZA, Y ESO ES LO QUE LO HACE FUNCIONAR. Ganar no revela —eso
+ * sigue pidiendo `//art`, que es lo que hace que el comando sirva para algo—
+ * pero la diferencia entre «no tengo la 2» y «tengo la 2 y no la miré» es
+ * información que ya te ganaste, y esconderla dejaba el premio detrás de un
+ * comando que no sabías que había que teclear.
+ */
+.collection-waiting {
+    display: block;
+    margin-top: calc(var(--spacing) * 1.5);
+    color: var(--color-accent, var(--color-body));
+    letter-spacing: 0.08em;
+    opacity: 0.75;
+}
+
+/*
+ * Y LA ESTRELLA DE HABERLAS ABIERTO TODAS.
+ *
+ * ⚠ Abrirlas todas no es tenerlas todas: ganar es tropezarse con una, revelar
+ * es ir a mirar, y abrir con `//art_<n>` es lo único que hay que hacer UNA POR
+ * UNA. Por eso es una línea aparte y no un número más en la cuenta de arriba.
+ */
+.collection-all-open {
+    margin: calc(var(--spacing) * 2) 0 0;
+    color: var(--color-accent, var(--color-body));
+    letter-spacing: 0.1em;
+}
+
 .collection-slot {
     font-size: 1.1rem;
     letter-spacing: 0.1em;
