@@ -276,7 +276,7 @@ const FRAGMENTS: readonly Fragment[] = [
      *
      * ⚠ Y NO CUENTA NADA: SÓLO SIGUE DICIENDO LO DE ENTONCES. Nadie tocó estos
      * textos cuando la casa se fue vaciando, así que la versión vieja informa
-     * de un sitio con dos turnos, con relevo a seis horas y con la garantía
+     * de un sitio con tres turnos, con relevo a seis horas y con la garantía
      * todavía en vigor. La historia la hace el CONTRASTE con las tres de
      * arriba, y la pone quien se acuerde de haberlas leído.
      *
@@ -287,8 +287,16 @@ const FRAGMENTS: readonly Fragment[] = [
      * ────────────────────────────────────────────────────────────────────
      */
 
-    // El mismo campo que ahora dice 1/1. Entonces eran dos, y se relevaban.
-    { text: { es: '[TURNO 2/2]', en: '[SHIFT 2/2]' }, when: deAntes },
+    /*
+     * El mismo campo que ahora dice 1/1. Entonces eran TRES y se relevaban.
+     *
+     * ⚠ TRES Y NO DOS, Y LO CAZÓ UNA AUDITORÍA LEYENDO DOS COSAS JUNTAS. Decía
+     * `2/2`, y la hoja que se encuentra en la papelera se llama `TURNO_3.txt`:
+     * en un sitio de dos turnos no puede haber un tercero. Con tres, las dos
+     * piezas encajan y encima cuentan algo — el turno 3 es el de noche, el que
+     * escribió la hoja, y el que después no cubrió nadie.
+     */
+    { text: { es: '[TURNO 2/3]', en: '[SHIFT 2/3]' }, when: deAntes },
     // Y el relevo tenía hora. `[SIN RELEVO]` es esta misma línea, más tarde.
     { text: { es: '[RELEVO EN 6 H]', en: '[RELIEF IN 6 H]' }, when: deAntes },
     /*

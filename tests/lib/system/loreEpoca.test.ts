@@ -6,14 +6,14 @@
  * Dos huecos de lore que se cerraron juntos porque son la misma máquina:
  *
  *   · LA v0.2 NO TENÍA HISTORIA, sólo averías. Ahora dice lo que decía
- *     entonces —dos turnos, relevo a seis horas, la garantía en vigor— y nadie
+ *     entonces —tres turnos, relevo a seis horas, la garantía en vigor— y nadie
  *     actualizó esos textos. La historia la hace el contraste con las tres
  *     frases gemelas de la versión de ahora.
  *
  *   · DESPUÉS DEL FINAL NO PASABA NADA PERMANENTE. Ahora la barra suma dos
  *     asientos según cómo terminó, y el arranque una frase, para siempre.
  *
- * ⚠ LO QUE SE PRUEBA ES QUE LAS ÉPOCAS NO SE MEZCLAN. Un `[TURNO 2/2]` en la
+ * ⚠ LO QUE SE PRUEBA ES QUE LAS ÉPOCAS NO SE MEZCLAN. Un `[TURNO 2/3]` en la
  * versión de ahora, o un `[SECTOR CERRADO]` en la vieja, no son un fallo de
  * pintado: son una contradicción en lo único que esta app cuenta.
  */
@@ -36,7 +36,7 @@ const ctx = (over: Partial<SystemContext> = {}): SystemContext => ({
 
 /** Las tres que dicen un dato distinto en cada época, emparejadas. */
 const GEMELAS = [
-    { ahora: '[TURNO 1/1]', antes: '[TURNO 2/2]' },
+    { ahora: '[TURNO 1/1]', antes: '[TURNO 2/3]' },
     { ahora: '[SIN RELEVO]', antes: '[RELEVO EN 6 H]' },
     { ahora: '[MEMORIA TIBIA]', antes: '[MEMORIA FRÍA]' },
 ];
@@ -58,7 +58,7 @@ describe('la versión de antes', () => {
     test('y también en inglés, que no es una traducción sino el otro repertorio', () => {
         const vieja = availableFragments(ctx({ v02: true }), 'en');
 
-        expect(vieja).toContain('[SHIFT 2/2]');
+        expect(vieja).toContain('[SHIFT 2/3]');
         expect(vieja).toContain('[MEMORY STILL COLD]');
         expect(vieja).not.toContain('[MEMORY STILL WARM]');
     });
@@ -84,7 +84,7 @@ describe('la versión de antes', () => {
         );
 
         expect(soloDeAntes).toEqual([
-            '[TURNO 2/2]',
+            '[TURNO 2/3]',
             '[RELEVO EN 6 H]',
             '[MEMORIA FRÍA]',
             '[GARANTÍA VIGENTE]',

@@ -89,7 +89,7 @@ export function showFragment() {
              * ⚠ LA ÉPOCA Y EL FINAL, que son las dos cosas que hacen que esta
              * barra no diga siempre lo mismo en toda la vida de la app.
              *
-             * La versión vieja murmura lo suyo —dos turnos, relevo a seis
+             * La versión vieja murmura lo suyo —tres turnos, relevo a seis
              * horas, garantía en vigor— y la de ahora suma dos asientos más
              * en cuanto lo del ente termina, según cómo termine. Las dos
              * listas viven en `lore.ts`; acá sólo se dice desde dónde se

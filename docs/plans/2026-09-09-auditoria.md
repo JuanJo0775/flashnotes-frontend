@@ -228,9 +228,9 @@ dos se separaron sería la que lo tapa.
   decirle un sistema a alguien que acaba de entregar a otro.
 - ~~**La v0.2 no tiene historia propia**~~ · **hecho, y sin contar nada**: los
   tres únicos campos del murmullo que llevan un DATO tienen valor de entonces
-  —`[TURNO 2/2]`, `[RELEVO EN 6 H]`, `[MEMORIA FRÍA]`— más `[GARANTÍA
+  —`[TURNO 2/3]`, `[RELEVO EN 6 H]`, `[MEMORIA FRÍA]`— más `[GARANTÍA
   VIGENTE]` y `[REGISTRO VACÍO]`. **Nadie actualizó esos textos**: la versión
-  vieja sigue informando de un sitio con dos turnos y relevo a seis horas.
+  vieja sigue informando de un sitio con tres turnos y relevo a seis horas.
 
   ⚠ **La historia la hace el contraste**, no la frase. Ninguna de las cinco
   cuenta nada; lo cuenta haber leído antes `[TURNO 1/1]` y `[SIN RELEVO]`.

@@ -336,7 +336,7 @@ otra palabra que suena igual de máquina en su idioma.
 | `[NADIE MÁS CONECTADO]` | `[NO ONE ELSE ONLINE]` | 02:00–05:00 | 1 |
 | `[TURNO LARGO]` | `[LONG SHIFT]` | sesión ≥ 45 min | 1 |
 | `[SEGUÍS AHÍ]` | `[STILL THERE]` | **sin tocar nada ≥ 10 min** | 1 |
-| `[TURNO 2/2]` | `[SHIFT 2/2]` | **sólo en la v0.2** | 1 |
+| `[TURNO 2/3]` | `[SHIFT 2/3]` | **sólo en la v0.2** | 1 |
 | `[RELEVO EN 6 H]` | `[RELIEF IN 6 H]` | **sólo en la v0.2** | 1 |
 | `[MEMORIA FRÍA]` | `[MEMORY STILL COLD]` | **sólo en la v0.2** | 1 |
 | `[GARANTÍA VIGENTE]` | `[UNDER WARRANTY]` | **sólo en la v0.2** | 1 |
@@ -378,7 +378,7 @@ Ahora dice lo que decía **entonces**, y nadie actualizó esos textos:
 
 | La de ahora | La de antes |
 | --- | --- |
-| `[TURNO 1/1]` | `[TURNO 2/2]` |
+| `[TURNO 1/1]` | `[TURNO 2/3]` |
 | `[SIN RELEVO]` | `[RELEVO EN 6 H]` |
 | `[MEMORIA TIBIA]` | `[MEMORIA FRÍA]` |
 
@@ -3556,7 +3556,7 @@ nadie actualizó esos textos:
 
 | La de ahora | La de antes |
 | --- | --- |
-| `[TURNO 1/1]` | `[TURNO 2/2]` |
+| `[TURNO 1/1]` | `[TURNO 2/3]` |
 | `[SIN RELEVO]` | `[RELEVO EN 6 H]` |
 | `[MEMORIA TIBIA]` | `[MEMORIA FRÍA]` |
 
