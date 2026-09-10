@@ -61,11 +61,20 @@ lo exige, porque una pista que dice «morse» es un tutorial con acento.
 
 ### 2.1 · Defectos pequeños y reales
 
-| Qué | Cómo se vio | Coste |
-| --- | --- | --- |
-| **La fase `pidiendo` no se alcanza** | nadie llama a `setPhase('pidiendo')`; los favores funcionan desde `hablando` y esa fase no tiene repertorio | medio |
-| **`trashFails()` es código muerto** | la papelera de la v0.2 falla con `TRASH_FAIL_ODDS` metido a mano dentro de `trashV02Note`. Dos fuentes para una regla (REGLAS · B5) | bajo |
-| **`IDEAS.md` miente** | lista como pendientes la papelera que falla, la avería que no se decide y los comandos que faltan en la v0.2 — las tres están hechas | bajo |
+✅ **§2.1 CERRADO.** Los tres, y el primero resultó ser más grave de lo que
+parecía:
+
+| Qué | Cómo quedó |
+| --- | --- |
+| ~~**La fase `pidiendo` no se alcanza**~~ | la pone el primer favor — y **comparte el repertorio de `hablando`**, sin el cual se habría quedado MUDO |
+| ~~**`trashFails()` es código muerto**~~ | la papelera de la v0.2 lo llama, en vez de comparar la probabilidad a mano |
+| ~~**`IDEAS.md` miente**~~ | seis secciones tachadas, y una que anunciaba «Queda:» sin nada debajo |
+
+⚠ **Y lo de `pidiendo` no era cosmético.** La fase existía en el tipo y en las
+puertas de los favores, pero no tenía fila en el repertorio: el día que alguien la
+pusiera, `entityReply` habría devuelto `null` y **todas sus preguntas pasarían a
+«comando desconocido»**. Estaba justo lo suficientemente construida para romper el
+juego cuando se usara.
 
 ### 2.2 · Huecos de sonido
 

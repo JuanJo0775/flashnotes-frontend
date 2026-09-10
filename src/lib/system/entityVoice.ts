@@ -646,6 +646,33 @@ const REPERTORIO: Partial<
         why: WHY_BURLON,
         bye: BYE_BURLON,
     },
+    /*
+     * ⚠ `pidiendo` HABLA IGUAL QUE `hablando`, Y COMPARTE SU REPERTORIO.
+     *
+     * No es un atajo: es lo que esa fase ES. Lo que cambia cuando empieza a
+     * pedirte cosas no es su voz —sigue siendo él, sigue contestando lo mismo—
+     * sino que ADEMÁS quiere algo. Escribirle un repertorio propio sería
+     * inventar un segundo personaje para el mismo momento.
+     *
+     * ⚠ Y HACE FALTA QUE ESTÉ. La fase existía en el tipo y en las puertas de
+     * los favores, pero nadie la ponía nunca — y si alguien la hubiera puesto,
+     * él habría DEJADO DE CONTESTAR: sin fila en esta tabla, `entityReply`
+     * devuelve `null` y todas sus preguntas pasan a «comando desconocido».
+     * Salió en una auditoría, y el arreglo son estas dos líneas.
+     */
+    pidiendo: {
+        hi: HI_HABLANDO,
+        who: WHO_HABLANDO,
+        how: HOW_HABLANDO,
+        what: WHAT_HABLANDO,
+        why: WHY_HABLANDO,
+        where: WHERE_HABLANDO,
+        name: NAME_HABLANDO,
+        alone: ALONE_HABLANDO,
+        free: FREE_HABLANDO,
+        alive: ALIVE_HABLANDO,
+        bye: BYE_HABLANDO,
+    },
     hablando: {
         hi: HI_HABLANDO,
         who: WHO_HABLANDO,

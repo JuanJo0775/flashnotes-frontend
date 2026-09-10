@@ -17,7 +17,7 @@
  */
 
 import type { Note } from '@/types/note.types';
-import { TRASH_FAIL_ODDS } from '@/lib/system/v02';
+import { trashFails } from '@/lib/system/v02';
 import { restoreOutcome, type RestoreOutcome } from '@/lib/system/v02Restore';
 
 const STORAGE_KEY = 'flashnotes:v02notes';
@@ -185,7 +185,16 @@ export function trashV02Note(id: string, random: () => number = Math.random): bo
     const i = notas.findIndex((n) => n._id === id);
     if (i < 0) return false;
 
-    if (random() < TRASH_FAIL_ODDS) return false;
+    /*
+     * ⚠ SE PREGUNTA A `trashFails` Y NO SE COMPARA LA PROBABILIDAD ACÁ. Estaba
+     * escrito a mano con la constante suelta, así que la función que existía
+     * para decidir esto —probada, documentada— no la llamaba NADIE: dos fuentes
+     * para la misma regla, que es lo que la casa prohíbe (REGLAS · B5).
+     *
+     * Salió en una auditoría, y lo que la hace peligrosa no es tener código de
+     * más: es que el día que alguien ajuste el dado toque uno de los dos.
+     */
+    if (trashFails(random)) return false;
 
     const siguientes = [...notas];
     const [tirada] = siguientes.splice(i, 1);

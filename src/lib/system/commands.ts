@@ -944,6 +944,20 @@ function askEntity(
         if (favorDone(favor, ctx.favors ?? SIN_FAVORES)) {
             markFavor(favor);
         } else {
+            /*
+             * ⚠ Y ACÁ PASA A `pidiendo`, que hasta la auditoría era una fase
+             * que existía y no alcanzaba nadie.
+             *
+             * No cambia lo que contesta —comparte el repertorio de `hablando`,
+             * porque sigue siendo él— y no cambia cuándo pide, que lo decide
+             * `favorDue`. Lo que cambia es que el estado DICE en qué punto del
+             * arco estás, y eso lo miran los favores para no volver a empezar y
+             * `willingNow` para el final.
+             *
+             * Sin esto, el arco entero pasaba de `hablando` al final sin nombrar
+             * nunca el tramo en el que te pide cosas.
+             */
+            setPhase('pidiendo');
             countExchange();
             return favorLine(favor, lang);
         }

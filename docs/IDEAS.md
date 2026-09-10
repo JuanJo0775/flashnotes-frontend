@@ -6,21 +6,31 @@ aquí sin haberse hecho o sin haberse descartado por escrito.**
 Lo ya construido vive en [`SECRETOS.md`](SECRETOS.md); las reglas que gobiernan
 cómo construirlo, en [`REGLAS.md`](REGLAS.md).
 
+⚠ **ESTE DOCUMENTO SE QUEDÓ VIEJO UNA VEZ, y hay que decirlo acá porque es el
+único sitio donde se nota.** En la auditoría del 2026-09-09 listaba como
+pendientes seis cosas que estaban construidas —el rediseño del arte entero, la
+puerta de la v0.2, la papelera que falla, los comandos que le faltan a esa
+versión, la avería que no se decide y las dos pistas del morse—. Un backlog que
+envejece no se ve viejo: se lee como si fuera cierto, y se trabaja dos veces o no
+se trabaja nada.
+
+**El trabajo vivo de hoy está en
+[`plans/2026-09-09-auditoria.md`](plans/2026-09-09-auditoria.md).** Acá quedan las
+ideas que siguen sin construirse.
+
 ---
 
-# ⭑ Las piezas · lo que viene ahora
+# ~~⭑ Las piezas~~ · CONSTRUIDO
 
-**Diseñado entero y sin construir.** Está en su propio documento porque no es una
-idea suelta: es un rediseño de cómo se consiguen las ocho piezas, y cambia tres
-comandos.
+Decía «diseñado entero y sin construir» y estaba entero: `//art` es el catálogo
+con las que faltan revueltas, `//art_<n>` dibuja, `//keep` guarda como nota, y
+**dieciséis piezas por dieciséis caminos distintos**. Ver
+[SECRETOS §18 y §23](SECRETOS.md), y la ficha de diseño en
+[`specs/2026-09-02-arte.md`](specs/2026-09-02-arte.md).
 
-→ [`specs/2026-09-02-arte.md`](specs/2026-09-02-arte.md)
-
-En una frase: **el arte deja de regalarse**. `//art` pasa a ser un catálogo con
-las que faltan revueltas, `//art_<n>` dibuja, `//keep` guarda como nota, y cada
-pieza se gana por un camino distinto — el ente, la v0.2, el pong, los secretos.
-
-Quedan cinco decisiones sin tomar, listadas en la sección F de ese documento.
+Lo último que se le añadió: la casilla de una pieza ganada y sin revelar lo dice
+(`★ SIN REVELAR`), la recién destapada llega sintonizándose, y hay estrella por
+**abrirlas todas** — que no es tenerlas todas.
 
 ---
 
@@ -28,9 +38,11 @@ Quedan cinco decisiones sin tomar, listadas en la sección F de ese documento.
 
 El reloj y los tres clics ya están (ver [SECRETOS §20](SECRETOS.md)). Queda:
 
-## A4 · Que la palabra abra algo
+## ~~A4 · Que la palabra abra algo~~ · HECHO
 
-Teclearla no hace nada todavía. Es la puerta de la v0.2 — sección E.
+Teclear la palabra del morse **entra en la v0.2**: el comando devuelve la palabra
+en su efecto y `registerV02Toggle` cambia de versión y lo publica. Es la puerta
+entera de la segunda mitad del juego.
 
 ## ~~A5 · Una pista de que hay algo que descifrar~~ · HECHO
 
@@ -46,10 +58,15 @@ nombra la solución, y hay un test que lo exige.
 
 ---
 
-# B · Los comandos escondidos, lo que falta
+# ~~B · Los comandos escondidos~~ · HECHO
 
-B1 (tachados animados), B2 (se desbloquean al usarlos) y B3 (`//hi` escondido) ya
-están, en su sitio dentro de la lista. Queda:
+B1 (tachados animados), B2 (se desbloquean al usarlos) y B3 (`//hi` escondido)
+están. **Y debajo no quedaba nada**: la sección decía «Queda:» y ahí se acababa,
+que es la forma más silenciosa de mentir que tiene un documento.
+
+Lo último que se le añadió: `//sigo` estrena su hueco tachado, y `//whoareu` y
+`//howareu` dejan de ocupar uno — son formas de hablarle al ente, no comandos que
+la máquina esconda (SECRETOS §19 y §26).
 
 # E · La v0.2, lo que falta
 
@@ -67,11 +84,14 @@ dentro de `trashV02Note`, con `TRASH_FAIL_ODDS` a mano.
 misma regla es lo que la casa prohíbe (REGLAS · B5) — pendiente de limpiar, ver la
 auditoría §2.1.
 
-## E2 · Interfaces a medio dibujar
+## E2 · Interfaces a medio dibujar · **a medias, y a propósito**
 
-`halfBaked()` ya existe: devuelve `TITULO_417` en vez de un texto. Falta
-repartirlo por la interfaz — marcos sin cerrar, etiquetas con el nombre de la
-variable, dígitos donde iba una palabra.
+`halfBaked()` está repartido por **las etiquetas**: una de cada cuatro sale sin
+traducir, a medio hacer (`TITULO_417`) o mal traducida, siempre igual para la
+misma clave. Desde que el ente llega a la v0.2, sus frases pasan por ahí también.
+
+Queda lo de **los marcos**: cuadros sin cerrar, dígitos donde iba una palabra. Es
+lo único de esta sección que sigue sin construirse.
 
 ## ~~E3 · Los comandos no están todos~~ · HECHO
 
