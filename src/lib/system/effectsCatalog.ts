@@ -174,6 +174,15 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
         clases: 'row-pull',
     },
     {
+        id: 'art-tune',
+        donde: 'pantalla',
+        nombre: 'Pieza sintonizándose',
+        que: 'El dibujo llega aplastado a una línea y se abre, como una imagen entrando en un tubo.',
+        cuando: 'Sólo en las que destapó el último `//art`. Las que ya tenías no se mueven: lo que destaca es lo ÚNICO que se mueve.',
+        hoja: 'animations',
+        clases: 'art-tune',
+    },
+    {
         id: 'loading-dots',
         donde: 'pantalla',
         relleno: 'texto',

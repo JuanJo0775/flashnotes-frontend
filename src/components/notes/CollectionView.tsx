@@ -1,12 +1,16 @@
 // src/components/notes/CollectionView.tsx
 'use client';
 
+import { useEffect, useState, type CSSProperties } from 'react';
+
 import { useLang, useT } from '@/i18n';
 import {
     ART,
     ART_TOTAL,
     artOf,
     captionOf,
+    forgetJustRevealed,
+    justRevealed,
     readRevealed,
 } from '@/lib/system/asciiArt';
 
@@ -35,6 +39,23 @@ export default function CollectionView() {
     // Se lee en el render y no se guarda en estado: esta vista se monta al abrir
     // la pestaña, y en ese momento lo revelado ya está decidido.
     const vistas = readRevealed();
+
+    /*
+     * Y CUÁLES ACABA DE DESTAPAR EL ÚLTIMO `//art`.
+     *
+     * ⚠ SE COPIAN AL MONTAR Y SE GASTAN. La lista vive en memoria hasta el
+     * siguiente `//art`, así que leyéndola a secas una pieza seguía
+     * sintonizándose CADA VEZ que abrías la pestaña — y algo que pasa siempre no
+     * es una novedad, es un adorno.
+     *
+     * Se copia en el primer render —`useState` con función, que corre una sola
+     * vez— y el efecto se la lleva. La pantalla las enseñó: ya no son nuevas.
+     */
+    const [nuevas] = useState(() => new Set(justRevealed()));
+
+    useEffect(() => {
+        forgetJustRevealed();
+    }, []);
 
     return (
         <section className="collection-view" aria-label={t('collection.title')}>
@@ -79,8 +100,28 @@ export default function CollectionView() {
                         );
                     }
 
+                    /*
+                        ⚠ EL ÍNDICE ES ENTRE LAS NUEVAS, no en la rejilla. Si
+                        fuera el de la cuadrícula, una pieza nueva en la casilla
+                        catorce esperaría a que pasaran catorce turnos que nadie
+                        está mirando. Lo que se escalona es lo que llega.
+                    */
+                    const esNueva = nuevas.has(piece.id);
+                    const turno = esNueva
+                        ? ART.filter((p) => nuevas.has(p.id)).indexOf(piece)
+                        : 0;
+
                     return (
-                        <li key={piece.id} className="collection-card">
+                        <li
+                            key={piece.id}
+                            className={`collection-card${esNueva ? ' art-tune' : ''}`}
+                            style={
+                                esNueva
+                                    ? ({ '--pieza': turno } as CSSProperties)
+                                    : undefined
+                            }
+                            data-testid={esNueva ? 'collection-new' : undefined}
+                        >
                             {/* El número, arriba y a la vista: es lo que convierte
                                 «tengo una pieza» en «tengo la 6». */}
                             <span className="collection-num mono text-2xs dim">

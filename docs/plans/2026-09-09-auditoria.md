@@ -126,8 +126,16 @@ y `aria-hidden` — para quien usa lector, esa nota ya no existe.
 
 No se mueve nada en:
 - **Abrir y cerrar una nota** — sin transición.
-- **La colección** — una pieza recién ganada se ve igual que una de hace tres
-  días.
+- ~~**La colección**~~ · **hecha**: la que destapó el último `//art` llega
+  **sintonizándose** —aplastada a una línea y abriéndose, como una imagen
+  entrando en un tubo— y las que ya tenías no se mueven.
+
+  ⚠ Y la rejilla entera NO se anima, que era la tentación: con todo
+  moviéndose, lo nuevo deja de distinguirse otra vez, sólo que con más ruido.
+  **Lo que hace que algo destaque es ser lo ÚNICO que se mueve.**
+
+  ⚠ Y la novedad **se gasta al verla**: la pantalla se la lleva al montarse.
+  Algo que pasa cada vez que abrís la pestaña no es una novedad, es un adorno.
 - **La papelera** — igual.
 
 ⚠ Y lo que falta **no** son animaciones bonitas: son mecánicas. Una fila que se

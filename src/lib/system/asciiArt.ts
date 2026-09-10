@@ -1153,6 +1153,7 @@ function store(found: Set<string>) {
 
 /** Sólo para los tests: el almacenamiento es el estado. */
 export function clearFound() {
+    recienReveladas = new Set();
     ultima = null;
     try {
         localStorage.removeItem(STORAGE_KEY);
@@ -1237,6 +1238,22 @@ export function revealArt() {
     const found = readFound();
     if (found.size === 0) return;
 
+    /*
+     * ⚠ SE ANOTA CUÁLES SON NUEVAS, y va en memoria a propósito.
+     *
+     * Sin esto, abrir la colección después de teclear `//art` enseñaba las tres
+     * piezas nuevas exactamente igual que las de hace tres días: el trabajo de
+     * haberlas ganado se perdía en una rejilla donde todas pesan lo mismo.
+     *
+     * En memoria y no en `localStorage` porque «recién revelada» es una cosa de
+     * ESTE momento. Guardarlo entre sesiones haría que una pieza siguiera
+     * pareciendo nueva tres días después, que es justo lo contrario de lo que la
+     * palabra significa — y además ensuciaría el almacén con un dato que no es
+     * del jugador, es de la pantalla.
+     */
+    const antes = readRevealed();
+    recienReveladas = new Set([...found].filter((id) => !antes.has(id)));
+
     try {
         localStorage.setItem(SEEN_KEY, JSON.stringify([...found]));
     } catch {
@@ -1247,6 +1264,30 @@ export function revealArt() {
     // Y SE CALLAN LAS PISTAS. Existen para traerte hasta acá; seguir empujando
     // después de haber llegado no es una pista, es un pesado.
     clearHints();
+}
+
+/**
+ * Las que destapó el último `//art`.
+ *
+ * Vacío si no hubo ninguna, o si la colección ya estaba entera. Lo lee la
+ * pestaña para que lo recién ganado no se confunda con lo de siempre.
+ */
+let recienReveladas = new Set<string>();
+
+/** Cuáles acaba de destapar el último `//art`. */
+export function justRevealed(): ReadonlySet<string> {
+    return recienReveladas;
+}
+
+/**
+ * Y la pantalla se las lleva: ya las enseñó.
+ *
+ * ⚠ SIN ESTO, «RECIÉN REVELADA» NO SE APAGA NUNCA hasta el siguiente `//art`, y
+ * una pieza seguía sintonizándose cada vez que abrías la pestaña — que es justo
+ * lo contrario de lo que la palabra significa. La novedad se gasta al verla.
+ */
+export function forgetJustRevealed() {
+    recienReveladas = new Set();
 }
 
 /**

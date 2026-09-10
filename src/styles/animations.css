@@ -192,3 +192,53 @@
         display: none;
     }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   LA PIEZA REVELÁNDOSE · sólo la que acaba de destaparse
+
+   ⚠ EL PROBLEMA NO ERA QUE LA REJILLA ESTUVIERA QUIETA: era que una pieza
+   recién ganada se veía EXACTAMENTE IGUAL que una de hace tres días. El
+   trabajo de haberla conseguido se perdía en una cuadrícula donde todas pesan
+   lo mismo.
+
+   ⚠ Y NO SE ANIMA LA REJILLA ENTERA. Se probó mentalmente y es peor: con todo
+   moviéndose, lo nuevo deja de distinguirse otra vez — sólo que ahora con más
+   ruido. Lo que hace que algo destaque no es que se mueva, es que sea LO ÚNICO
+   que se mueve.
+
+   El dibujo llega como llega una imagen a un tubo: aplastado a una línea y
+   abriéndose. Es el mismo gesto del encendido (`tube-on`), en pequeño y sin
+   tapar nada — la pieza no aparece, se SINTONIZA.
+   ───────────────────────────────────────────────────────────────────────── */
+@keyframes art-tune {
+    0% {
+        transform: scaleY(0.04);
+        opacity: 0.7;
+    }
+    40% {
+        transform: scaleY(0.04);
+        opacity: 1;
+    }
+    70% {
+        transform: scaleY(1.06);
+    }
+    100% {
+        transform: scaleY(1);
+    }
+}
+
+.art-tune {
+    animation: art-tune 420ms steps(5, end) both;
+    /* Desde el centro, como el tubo: una imagen que se abre no crece desde
+       arriba, se abre hacia los dos lados. */
+    transform-origin: center;
+    animation-delay: calc(min(var(--pieza, 0), 6) * 120ms);
+}
+
+/* ⚠ Con movimiento reducido la pieza está y ya (REGLAS · A3). Lo que no puede
+   pasar es que no se vea: lo que se gana, se ve. */
+@media (prefers-reduced-motion: reduce) {
+    .art-tune {
+        animation: none;
+    }
+}

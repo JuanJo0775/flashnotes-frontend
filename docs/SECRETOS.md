@@ -3138,6 +3138,15 @@ Sin ninguna revelada la vista dice *«Todavía no hay ninguna. El sistema guarda
 algunas cosas de antes.»* — y la pestaña, si tenés piezas sin mirar, está asomada
 pero cerrada (§18).
 
+⚠ **Y la que acaba de destaparse LLEGA distinta.** Las que ya tenías están
+puestas; la del último `//art` entra **sintonizándose** —aplastada a una línea y
+abriéndose, el mismo gesto del tubo encendiéndose, en pequeño—. La rejilla entera
+no se mueve a propósito: con todo moviéndose lo nuevo deja de distinguirse, y lo
+que hace que algo destaque es ser **lo único** que se mueve.
+
+La novedad se gasta al verla: a la segunda visita esa pieza ya está puesta como
+las demás. Algo que pasa cada vez que abrís la pestaña no es una novedad.
+
 **Revelar no es abrir.** Una pieza revelada enseña acá su dibujo, pero debajo
 dice `[ SIN ABRIR ]` hasta que la abras con `//art_<n>`: **el dibujo es lo que
 hace que esto sea una colección; el nombre es el premio del tercer estado**
