@@ -7,6 +7,12 @@ import { greetingFor, chatReplyFor, KILL_AFTER_KICKS } from '@/lib/system/greeti
 import { awardFrom, revealArt, markOpened, catalogRows, pieceByNumber, rememberDrawn, canKeep, lastDrawn, asNote, noteTitle, captionKnown, artOf, UNNAMED, UNOPENED } from '@/lib/system/asciiArt';
 import { isUnlocked, markUsed } from '@/lib/system/commandUnlock';
 import { markV02RoundTrip } from '@/lib/system/v02';
+import {
+    censor,
+    isCensored,
+    meetingLine,
+    reachesInV02,
+} from '@/lib/system/entityV02';
 import { rememberHint, sawHint } from '@/lib/system/helpHint';
 import { isPrank } from '@/lib/system/wipe';
 import {
@@ -34,6 +40,7 @@ import {
     markDodged,
     markLieStanding,
     markLieSwallowed,
+    markV02Met,
     phaseAfter,
     readEntity,
     setAsk,
@@ -807,6 +814,18 @@ function askEntity(
     const pregunta = entityQuestionOf(linea);
     if (pregunta === null) return null;
 
+    /*
+     * ⚠ POR LA RENDIJA DE LA v0.2 SÓLO CABEN LAS CORTAS.
+     *
+     * Ahí está más atado: llegan el saludo, quién, cómo, el porqué y la
+     * despedida, y nada más. Las hondas piden que se suelte, y en esa versión no
+     * se suelta — cada vez que lo intenta, se le corta.
+     *
+     * Va ANTES de despertarlo y de contar el intercambio: una pregunta que no
+     * llega no es una conversación, así que tampoco puede mover su reloj.
+     */
+    if (isV02() && !reachesInV02(pregunta)) return null;
+
     const mundo: EntityWorld = {
         /*
          * Los dos sitios que esta etapa reconoce. El morse se suma en la etapa
@@ -992,6 +1011,26 @@ function askEntity(
     if (!isV02()) return dicho;
 
     /*
+     * ⚠ LO PRIMERO QUE DICE AHÍ NO ES UNA RESPUESTA: ES UNA PREGUNTA.
+     *
+     * Preguntaste una cosa y te devuelve otra, porque lo que está pasando le
+     * importa más que lo que quieras saber: estás en una versión que no debería
+     * poder abrirse, hablándole por un canal que no debería llevarlo a él.
+     *
+     * Una sola vez. Un asombro que se repite deja de ser asombro y pasa a ser un
+     * cartel. Y pasa por el destrozo de siempre, como todo lo de esta versión —
+     * él no tiene un canal mejor para asombrarse.
+     */
+    if (readEntity().v02Met !== true) {
+        const primero = meetingLine(fase, lang);
+
+        if (primero !== null) {
+            markV02Met();
+            return v02Label(`ente:v02:${fase}`, { ok: primero, raw: primero });
+        }
+    }
+
+    /*
      * ⚠ DESDE LA v0.2 SALE ROTO.
      *
      * Un canal más viejo es un canal peor, y el destrozo YA EXISTE: `v02Label`
@@ -1004,10 +1043,28 @@ function askEntity(
      * las tres averías es quedarse sin traducir, y ahí es él llegando en el
      * idioma en que lo escribieron.
      */
-    return v02Label(`ente:${fase}:${cuantos}`, {
+    const roto = v02Label(`ente:${fase}:${cuantos}`, {
         ok: dicho,
         raw: entityReply(pregunta, fase, cuantos, 'en') ?? dicho,
     });
+
+    /*
+     * ⚠ Y LO QUE CONSIGUE DECIR, SE LE CORTA.
+     *
+     * La frase empieza bien y a media idea se convierte en letras revueltas. No
+     * es el canal roto —para eso ya está el destrozo de arriba—: es una mordaza.
+     * Llegas a saber de qué estaba hablando y no llegas a saber qué decía, que
+     * es lo que hace que quieras volver a la otra versión a preguntárselo.
+     *
+     * ⚠ SÓLO SI LA FRASE LLEGÓ ENTERA. Encima de una que ya salió a medio hacer
+     * —`ENTE:HABLANDO:0_304`— la mordaza no cuenta nada: revolver lo que ya era
+     * ruido no se lee como censura, se lee como más ruido. Una avería por
+     * frase, y cada una con su significado.
+     */
+    if (roto !== dicho) return roto;
+
+    const clave = `ente:${fase}:${cuantos}`;
+    return isCensored(clave) ? censor(dicho, clave) : dicho;
 }
 
 const COMMANDS: readonly Command[] = [

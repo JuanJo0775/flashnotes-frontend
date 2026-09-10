@@ -80,13 +80,57 @@ it('la misma conversación, desde la v0.2, no sale igual', async () => {
     expect(dentro).not.toEqual(fuera);
 });
 
-it('pero se le sigue entendiendo casi siempre', async () => {
-    // Si saliera todo roto sería ilegible, no viejo. La mayoría llega bien.
+it('⚠ pero casi nunca se lo lleva ENTERO', async () => {
+    /*
+     * Si saliera todo ilegible sería una avería, no una versión vieja.
+     *
+     * ⚠ Y LO QUE HAY QUE CONTAR NO SON LAS FRASES INTACTAS. Este test las
+     * contaba, y dejó de valer en cuanto la v0.2 tuvo más de una avería: una
+     * respuesta que llega en inglés o a gritos con «(SIC)» está tocada y se
+     * entiende PERFECTAMENTE, y una censurada cuenta media idea. Exigir que la
+     * mayoría llegue idéntica era exigir que casi no se rompiera nada.
+     *
+     * De las tres averías, sólo una se lleva el mensaje entero: la de «a medio
+     * hacer», que devuelve el nombre de la variable con su número —
+     * `ENTE:HABLANDO:0_304`— porque ese texto no llegó a escribirse. Ésa es la
+     * que tiene que ser minoría, y es lo único que este test tiene que
+     * sostener.
+     */
+    const dentro = await conversacion(true);
+    const A_MEDIO_HACER = /^ENTE:[A-Z0-9:_]+$/;
+
+    const perdidas = dentro.filter((l) => A_MEDIO_HACER.test(l)).length;
+
+    expect(perdidas).toBeLessThan(dentro.length / 2);
+});
+
+it('y alguna llega tal cual, o el canal estaría roto y no viejo', async () => {
+    // Una versión vieja rompe una de cada cuatro etiquetas. Una que las rompa
+    // todas no es vieja: está averiada, que es otra historia y no ésta.
     const fuera = await conversacion(false);
     const dentro = await conversacion(true);
 
-    const intactas = dentro.filter((l, i) => l === fuera[i]).length;
-    expect(intactas).toBeGreaterThan(dentro.length / 2);
+    // La primera de la v0.2 no cuenta: ahí él toma la palabra en vez de
+    // contestar, y eso no es el canal rompiendo nada.
+    const intactas = dentro.slice(1).filter((l, i) => l === fuera[i + 1]).length;
+
+    expect(intactas).toBeGreaterThan(0);
+});
+
+it('⚠ y lo primero que dice ahí es que no entiende cómo llegaste', async () => {
+    /*
+     * Se pidió jugando: «que él te diga cómo llegaste». Es el único sitio de
+     * todo el repertorio donde toma la palabra — preguntaste una cosa y te
+     * devuelve otra, porque lo que está pasando le importa más.
+     *
+     * Va acá y no en el fichero de los límites porque lo que se comprueba es lo
+     * que VE quien teclea: que la primera respuesta desde la v0.2 no sea la
+     * respuesta.
+     */
+    const dentro = await conversacion(true);
+
+    expect(dentro[0]).toMatch(/cómo llegaste|CÓMO LLEGASTE|how did you get here/i);
+    expect(dentro[1]).not.toMatch(/cómo llegaste/i);
 });
 
 it('despertarlo cuenta como secreto', async () => {

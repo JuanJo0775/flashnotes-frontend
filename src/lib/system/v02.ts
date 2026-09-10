@@ -281,8 +281,14 @@ const BROKEN_LABEL_ODDS = 0.26;
  *
  * Lo cazó un test que exige que la MAYORÍA de las etiquetas salgan bien: si
  * fallaran todas sería ilegible, no vieja.
+ *
+ * ⚠ SE EXPORTA PARA QUE LA MORDAZA DEL ENTE USE ESTE MISMO DADO. Lo que hace que
+ * la v0.2 se lea como una versión y no como una avería es que todo lo roto sea
+ * SIEMPRE igual para la misma clave; con dos dados distintos, una mitad de la
+ * pantalla sería reproducible y la otra no, y eso se nota aunque no se sepa por
+ * qué (REGLAS · B5).
  */
-function ruido(clave: string): number {
+export function ruido(clave: string): number {
     let h = 2166136261;
     for (let i = 0; i < clave.length; i += 1) {
         h ^= clave.charCodeAt(i);

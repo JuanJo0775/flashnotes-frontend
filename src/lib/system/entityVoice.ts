@@ -752,6 +752,16 @@ const VARIANTES: Readonly<Record<EntityQuestion, readonly string[]>> = {
     bye: ['bye', 'goodbye', 'adios', 'chao'],
 };
 
+/**
+ * Todas las preguntas, para quien tenga que recorrerlas.
+ *
+ * ⚠ SALE DE LA TABLA, no de una lista escrita al lado. Una segunda lista a mano
+ * se queda corta el día que se añada una pregunta, y el sitio donde eso se
+ * notaría —qué llega a la v0.2 y qué no— es justo el que no puede quedarse
+ * viejo en silencio.
+ */
+export const QUESTIONS = Object.keys(VARIANTES) as readonly EntityQuestion[];
+
 /** Cuántas formas tiene cada pregunta. Dos en inglés y dos en español. */
 export const FORMAS_POR_PREGUNTA = 4;
 

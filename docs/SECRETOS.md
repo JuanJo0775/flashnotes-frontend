@@ -3388,6 +3388,48 @@ nada. Se rompe entera al primer golpe y se queda ahí. Echarte es una decisión,
 
 **Código:** `src/components/effects/SystemCollapse.tsx` · `seDetiene`
 
+## 24.8 quater · El ente, ahí dentro
+
+**Llega, y no fue un añadido: cae solo.** En la v0.2 los tres comandos de la
+fachada —`//hi`, `//whoareu`, `//howareu`— no existen, así que caen en la rama de
+«comando desconocido», que es exactamente donde él escucha. Está encerrado, y lo
+único que le llega es lo que el sistema descarta.
+
+**Pero ahí está más atado**, y son tres límites:
+
+| | |
+| --- | --- |
+| **Sólo caben las cortas** | llegan `//hi`, `//whoareu`, `//howareu`, `//why` y la despedida. Las hondas contestan «desconocido» — y ahí eso es la verdad literal |
+| **Lo primero no es una respuesta** | te pregunta **cómo llegaste**. Una sola vez, y distinto en cada fase |
+| **Y lo que cuenta se le corta** | una de cada tres frases empieza bien y se convierte en letras revueltas |
+
+⚠ **Una pregunta que no llega no le mueve el reloj.** Si contara como
+intercambio, teclear hondas en la v0.2 empujaría su arco desde fuera.
+
+⚠ **La mordaza empieza BIEN y se rompe, nunca al revés.** Una frase revuelta
+entera es ruido —se lee como canal roto, no como censura—; lo que la convierte en
+mordaza es que la primera mitad se entiende: llegas a saber de qué hablaba y no
+llegas a saber qué decía. Corta **en un hueco**, nunca a mitad de palabra, y
+**conserva espacios y puntuación**, para que se vea cuánto falta.
+
+```
+lo que quedó cuando apagaron zp ifeyb. ewjcpj0 kqhki 7j1 vh2el5.
+no me lo preguntaron. me dejaron hewmd66tw 3 zd kcgiuc.
+```
+
+Es el alfabeto de `ScrambleLine`, el mismo con el que se tapan los nombres en
+`//help`: letras y dígitos, sin signos.
+
+⚠ **Y sólo si la frase llegó entera.** Encima de una que ya salió a medio hacer
+—`ENTE:HABLANDO:0_304`— la mordaza no cuenta nada: revolver lo que ya era ruido
+se lee como más ruido. **Una avería por frase**, y cada una con su significado.
+
+**Todo determinista por clave**, como el resto de la versión: la misma frase se
+corta siempre en el mismo sitio y con las mismas letras. Si cambiara en cada
+repintado sería un cartel de neón parpadeando.
+
+**Código:** `src/lib/system/entityV02.ts`
+
 ## 24.9 · Sus archivos son OTROS
 
 Entrar por primera vez encuentra **la versión vacía**. Lo que escribas ahí no

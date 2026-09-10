@@ -127,6 +127,13 @@ export interface EntitySnapshot {
     gaveCommand?: boolean;
     /** Lo ejecutaste: hay una parte de la pantalla floja. */
     loose?: boolean;
+    /**
+     * Ya te encontró dentro de la v0.2, y ya se asombró.
+     *
+     * Pasa una sola vez: un asombro que se repite deja de ser asombro y pasa a
+     * ser un cartel. Ver `entityV02.ts`.
+     */
+    v02Met?: boolean;
 }
 
 const DORMIDO: EntitySnapshot = { phase: 'dormido', exchanges: 0 };
@@ -159,6 +166,7 @@ export function readEntity(): EntitySnapshot {
             didFullNote,
             gaveCommand,
             loose,
+            v02Met,
         } = leido as Partial<EntitySnapshot>;
 
         // Una fase que el código ya no conoce se ignora: renombrar una no puede
@@ -192,6 +200,7 @@ export function readEntity(): EntitySnapshot {
             ...(didFullNote ? { didFullNote: true } : {}),
             ...(gaveCommand ? { gaveCommand: true } : {}),
             ...(loose ? { loose: true } : {}),
+            ...(v02Met ? { v02Met: true } : {}),
         };
     } catch {
         return { ...DORMIDO };
@@ -390,6 +399,11 @@ export function markGave() {
 /** Lo ejecutaste: hay algo suelto en la pantalla. */
 export function markLoose() {
     store({ ...readEntity(), loose: true });
+}
+
+/** Ya te encontró en la versión vieja: la próxima ya no se asombra. */
+export function markV02Met() {
+    store({ ...readEntity(), v02Met: true });
 }
 
 /**
