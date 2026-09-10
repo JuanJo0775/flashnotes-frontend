@@ -81,7 +81,7 @@ describe('se apagan cuando ya no hacen falta', () => {
         expect(isBragging(T0)).toBe(false);
     });
 
-    it('y ganar otra pieza después ya no enciende nada', () => {
+    it('⚠ y ganar otra pieza después YA NO SEÑALA la pestaña…', () => {
         // Ésta es la que de verdad importa: la regla vive en `awardPiece`, así
         // que hay que probarla POR AHÍ y no llamando a `hintEarned` a mano.
         awardPiece('moth');
@@ -90,7 +90,27 @@ describe('se apagan cuando ya no hacen falta', () => {
         awardPiece('crt');
 
         expect(isGlimpsing()).toBe(false);
-        expect(isBragging()).toBe(false);
+    });
+
+    it('⚠ …pero SÍ alardea, que es el acuse de que te llevaste algo', () => {
+        /*
+         * REPORTADO JUGANDO: «cuando sale la broma del reset y sale el `:)` se
+         * nos debe desbloquear un arte, y eso no pasó».
+         *
+         * SÍ pasaba —la pieza entraba, se comprobó ejecutando el camino entero—
+         * pero no se veía NADA: el alarde estaba dentro de `hintEarned`, y esa
+         * función sólo corre la primera vez. A partir de ahí cada premio llegaba
+         * en silencio.
+         *
+         * Un premio que no se anuncia no es un premio: es un cambio en un
+         * contador que nadie está mirando.
+         */
+        awardPiece('moth');
+        revealArt();
+
+        awardPiece('crt');
+
+        expect(isBragging()).toBe(true);
     });
 
     it('pero ganar la primera SÍ las enciende, sin llamar a nadie', () => {

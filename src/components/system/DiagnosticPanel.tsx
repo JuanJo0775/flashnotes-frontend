@@ -60,6 +60,14 @@ function Reading({ label, children }: { label: string; children: React.ReactNode
     );
 }
 
+/**
+ * Un almacén que no avisa nunca.
+ *
+ * ⚠ TIENE QUE SER LA MISMA FUNCIÓN SIEMPRE. Ver el uso, abajo: escrita dentro
+ * del render, React la lee como un almacén distinto en cada pintada.
+ */
+const SIN_AVISOS = () => () => {};
+
 export default function DiagnosticPanel({
     open,
     onClose,
@@ -151,12 +159,23 @@ export default function DiagnosticPanel({
      * devuelve el valor del SERVIDOR en el primer render y el de verdad después,
      * sin desajuste. La suscripción es vacía porque el catálogo no avisa de
      * nada: este panel se repinta por su propio estado, y con eso relee.
+     *
+     * ⚠ Y LA SUSCRIPCIÓN VA FUERA DEL COMPONENTE. Escrita como `() => () => {}`
+     * dentro del render es una función NUEVA en cada pintada: React se
+     * desuscribe y se vuelve a suscribir cada vez, que es trabajo tirado. Una
+     * constante de módulo es la misma para siempre, que es lo que el hook pide.
+     *
+     * ⚠ NO SE SABE SI ESTO ARREGLA EL AVISO DE HIDRATACIÓN QUE SE VIO UNA VEZ.
+     * Apareció en la consola del servidor —el cliente pintaba esta barra llena
+     * contra la vacía del servidor— y no se pudo reproducir en cuatro intentos:
+     * pestaña limpia, pestaña con piezas guardadas, con este cambio deshecho, y
+     * en el primer hidratado tras arrancar el servidor. O sea que su disparador
+     * es un estado que no se tiene.
+     *
+     * Se deja escrito para que quien lo vuelva a ver no empiece de cero, y para
+     * no cobrarse un arreglo que no está demostrado.
      */
-    const piezas = useSyncExternalStore(
-        () => () => {},
-        () => readFound().size,
-        () => 0
-    );
+    const piezas = useSyncExternalStore(SIN_AVISOS, () => readFound().size, () => 0);
     // El ritmo de escritura lo calienta, y las averías también: forzar la
     // máquina cuesta, y el núcleo es donde se lee ese coste.
     const temp = strainedCore(coreTemperature(charsPerMinute), desgaste);

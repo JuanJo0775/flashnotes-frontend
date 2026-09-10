@@ -24,7 +24,7 @@
 import type { Note } from '@/types/note.types';
 import type { Lang } from '@/config/lang';
 import { didV02RoundTrip } from '@/lib/system/v02';
-import { artChanged, clearHints, hintEarned } from '@/lib/system/artHints';
+import { hintEarned, bragEarned, clearHints } from '@/lib/system/artHints';
 import { damageArt } from '@/lib/system/artCorruption';
 import { eyeIsBarred } from '@/lib/system/entity';
 
@@ -1309,19 +1309,25 @@ export function awardPiece(id: string): ArtPiece | null {
      * leer de éste: la dependencia va en una sola dirección y no hay ciclo.
      */
     /*
-     * SE AVISA SIEMPRE, y UNA sola vez.
+     * SE AVISA SIEMPRE, y UNA sola vez cada cosa.
      *
-     * ⚠ Ganar una pieza pasa muchas veces; encender las pistas, una sola. Sin
-     * el aviso de abajo, todo lo que quisiera enterarse de un premio —el sonido
-     * del cajón, por ejemplo— sólo se enteraba del PRIMERO, y a partir del
-     * segundo los dibujos llegaban en silencio.
+     * ⚠ Ganar una pieza pasa muchas veces; encender la PISTA de dónde mirar,
+     * una sola. Sin el aviso, todo lo que quisiera enterarse de un premio —el
+     * sonido del cajón, por ejemplo— sólo se enteraba del PRIMERO, y a partir
+     * del segundo los dibujos llegaban en silencio.
      *
-     * ⚠ Y VA EN UN `else`, no suelto: `hintEarned` YA avisa por su cuenta.
-     * Llamando a los dos, la primera pieza despertaba a los suscritos dos veces
-     * por un solo suceso — lo cazo un test que contaba los avisos.
+     * ⚠ Y EL ALARDE VA SIEMPRE, que es lo que se corrigió: se reportó jugando
+     * que la broma del `//reset` no desbloqueaba nada. Desbloqueaba —la pieza
+     * entraba— pero no se veía NADA, porque el alarde estaba dentro de
+     * `hintEarned` y aquélla sólo corre la primera vez. Un premio que no se
+     * anuncia es un cambio en un contador que nadie mira.
+     *
+     * ⚠ Y CADA RAMA AVISA UNA VEZ, no suelto: las tres funciones despiertan a
+     * los suscritos por su cuenta. Llamando a dos, un solo suceso despertaba dos
+     * veces — lo cazó un test que contaba los avisos.
      */
     if (readRevealed().size === 0) hintEarned();
-    else artChanged();
+    else bragEarned();
 
     return piece;
 }

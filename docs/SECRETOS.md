@@ -347,6 +347,17 @@ segundos al ganar una pieza y **pisa** lo que hubiera, porque es una de las tres
 pistas que llevan al catálogo (§18) — en el sorteo podría no salir nunca, justo
 cuando más falta hace.
 
+⚠ **Y sale CADA VEZ que ganás una, no sólo la primera.** Estuvo pegado al
+destello de la pestaña —la pista de dónde mirar, que sí pasa una sola vez— y se
+reportó jugando: «cuando sale la broma del reset y sale el `:)` se nos debe
+desbloquear un arte, y eso no pasó». **Sí pasaba**: la pieza entraba, se
+comprobó ejecutando el camino entero. Lo que no pasaba era que se viera.
+
+Son dos cosas y ahora son dos funciones: **el alarde** es el acuse de que te
+llevaste algo y ocurre siempre; **el destello de la pestaña** te dice dónde
+mirar, y enseñarlo dos veces sería un tutorial. Un premio que no se anuncia no es
+un premio: es un cambio en un contador que nadie está mirando.
+
 ### La errata
 
 `[T0DO_B1EN]` lleva un **cero** por la O y un **uno** por la I; el inglés
@@ -2590,13 +2601,31 @@ letras se cruza con lo que sueltan las ventanas de error.
 | | |
 | --- | --- |
 | **Anunciados** | `//help` `//version` `//date` `//ls` `//df` `//clear` |
-| **Escondidos** | `//whoami` `//sudo` `//uptime` `//ps` `//log` `//history` `//diag` `//chaos` `//panic` `//hi` `//whoareu` `//howareu` `//date_off` `//art` `//art_<n>` `//keep` `//reset` `//attach_<n>` |
+| **Escondidos** | `//whoami` `//sudo` `//uptime` `//ps` `//log` `//history` `//diag` `//chaos` `//panic` `//hi` `//sigo` `//date_off` `//art` `//art_<n>` `//keep` `//reset` `//attach_<n>` |
+| **Ni en la lista** | `//whoareu` `//howareu` — funcionan, pero no ocupan hueco |
 | **Sólo en la v0.2** | `//todo` `//recover` — ver §24.4 |
 
 > `//hi` estuvo en la lista de anunciados hasta que se pidió esconderlo, y esta
 > tabla se quedó diciendo que salía. Ahora hay un test que la compara con el
 > registro de comandos: una tabla escrita a mano sobre algo que cambia se
 > desfasa, y lo hace en silencio.
+
+⚠ **`//whoareu` y `//howareu` no ocupan hueco ni tachado, y es a propósito.** Un
+comando escondido es algo que la máquina TIENE y no anuncia: su tachado es un
+hueco que se destapa al usarlo. Esos dos no son eso — son dos maneras de decirle
+algo a alguien, como `//quien` o `//como_estas`, y las variantes del ente **no se
+anuncian en ninguna parte: se prueban** (§26). El único del ente que sí ocupa
+hueco es **`//hi`**, porque el saludo es una puerta: la fachada contesta, y
+acaba echándote.
+
+Por lo mismo tampoco los sueltan las ventanas de error: una fuga que soltara una
+variante estaría enseñando el repertorio.
+
+⚠ **Y `//sigo` sí ocupa el suyo.** Estaba resuelto a mano dentro de `run`, así
+que no aparecía en la ayuda ni al descubrirlo. Ahora tiene su tachado como los
+demás — y **se niega a existir sin la nota**: sin ella la palabra no significa
+nada, teclearla por casualidad no da nada, y ni siquiera destapa su hueco. Es el
+mismo `denied` de `//attach_*`.
 
 `//art_<n>` y `//attach_<n>` **emparejan por patrón** y no por nombre exacto —un
 número dentro de un token único—, así que en el registro figuran con un nombre de

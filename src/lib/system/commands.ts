@@ -378,6 +378,27 @@ interface Command {
      */
     hidden?: boolean;
     /**
+     * NO OCUPA SITIO EN `//help`, ni siquiera tachado.
+     *
+     * ⚠ ES PARA LAS FORMAS DE HABLARLE AL ENTE, y la diferencia con `hidden` es
+     * de qué clase de cosa son. Un comando escondido es algo que la máquina
+     * TIENE y no anuncia: ocupa su hueco tachado, y descubrirlo es destapar ese
+     * hueco. `//whoareu` y `//howareu` no son eso — son dos maneras de decirle
+     * algo a alguien, como `//quien` o `//como_estas`, y ésas nunca estuvieron
+     * en la lista.
+     *
+     * Se pidió al leer la ayuda: «el whoareu y howareu no deben estar, son
+     * variaciones para hablar con el ente; el único del ente que aparecería es
+     * el hi». Y es lo correcto: el saludo SÍ es una puerta —la fachada contesta
+     * y acaba echándote— y por eso ése sigue ocupando su hueco.
+     *
+     * ⚠ Y TAMPOCO SE FILTRA por las ventanas de error. La fuga existe para
+     * señalar comandos que se pueden encontrar; una que suelte una variante de
+     * pregunta estaría enseñando el repertorio del ente, que es justo lo que no
+     * se anuncia en ninguna parte: se prueba.
+     */
+    unlisted?: boolean;
+    /**
      * En la v0.2 este comando NO EXISTE TODAVÍA.
      *
      * Contesta «comando desconocido», igual que una palabra inventada — porque
@@ -1100,8 +1121,8 @@ const COMMANDS: readonly Command[] = [
             // Un comando escondido pasa a listarse cuando lo USÁS. Ver no es
             // descubrir: leer su nombre en una ventana de error no basta, hay
             // que teclearlo.
-            const enEstaVersion = COMMANDS.filter((c) =>
-                isV02() ? !c.notInV02 : !c.onlyV02
+            const enEstaVersion = COMMANDS.filter(
+                (c) => (isV02() ? !c.notInV02 : !c.onlyV02) && !c.unlisted
             );
             const visible = (c: Command) => !c.hidden || isUnlocked(c.name);
             const tachados = enEstaVersion.filter((c) => !visible(c));
@@ -1373,6 +1394,49 @@ const COMMANDS: readonly Command[] = [
         resolve: () => ({ output: '', effect: { kind: 'reboot' } }),
     },
     {
+        /*
+         * LA PALABRA DE LA NOTA DEL DÍA SIGUIENTE.
+         *
+         * ⚠ ES UN COMANDO Y NO UNA COMPARACIÓN SUELTA, y eso se corrigió al
+         * mirar la ayuda: estaba resuelto a mano dentro de `run`, así que no
+         * ocupaba hueco en `//help` y no había forma de que apareciera al
+         * descubrirlo. Ahora tiene su tachado como los demás — se destapa
+         * usándolo, que es la regla de la casa.
+         *
+         * ⚠ Y SE NIEGA A EXISTIR SIN LA NOTA. Sin ella la palabra no significa
+         * nada: teclearla por casualidad no puede dar nada, porque el regalo es
+         * por haber vuelto y haberle hecho caso. `denied` es exactamente eso —
+         * lo mismo que hace `//attach_*` mientras no hayas pasado por `//ps`—, y
+         * además impide que se destape su hueco a ciegas.
+         *
+         * El nombre sale de `GIFT_WORD`, que es de donde lo saca también la nota
+         * que te lo pide. Escribirlo dos veces sería pedir que se separen.
+         */
+        name: `${COMMAND_PREFIX}${GIFT_WORD}`,
+        notInV02: true,
+        hidden: true,
+        summary: { es: 'hacerle caso', en: 'do as it asked' },
+        resolve: (_ctx, _args, lang) => {
+            if (readEntity().leftVuelta !== true) {
+                return {
+                    output: unknownCommand(GIFT_WORD, lang),
+                    effect: SIN_EFECTO,
+                    denied: true,
+                };
+            }
+
+            /*
+             * ⚠ Lo que suelta ACERCA, no entrega: la pista del `_`. Un favor que
+             * desbloquea algo es una misión, y entonces él pasa a ser un menú.
+             */
+            return {
+                output: TRIAL_REPLY.gift[lang],
+                effect: SIN_EFECTO,
+                secretId: 'entity-gift',
+            };
+        },
+    },
+    {
         name: '//panic',
         notInV02: true,
         hidden: true,
@@ -1431,6 +1495,9 @@ const COMMANDS: readonly Command[] = [
         secretId: 'chat',
         notInV02: true,
         hidden: true,
+        // Ver `unlisted`: es una forma de hablarle, no un comando que la máquina
+        // esconda. El único del ente que ocupa hueco en la ayuda es `//hi`.
+        unlisted: true,
         summary: { es: 'preguntarle quién es', en: 'ask who it is' },
         // El espejo de `//whoami`: allá no puede saber quién sos vos —la cookie
         // es httpOnly— y acá sí sabe quién es ella. La máquina se conoce mejor a
@@ -1453,6 +1520,7 @@ const COMMANDS: readonly Command[] = [
         secretId: 'chat',
         notInV02: true,
         hidden: true,
+        unlisted: true,
         summary: { es: 'preguntarle cómo está', en: 'ask how it is doing' },
         resolve: (ctx, _args, lang) => {
             const dicho = askEntity('howareu', ctx, lang);
@@ -1861,7 +1929,7 @@ export function hiddenCommandNames(): readonly string[] {
     const enV02 = isV02();
 
     return COMMANDS.filter(
-        (c) => c.hidden && (enV02 ? !c.notInV02 : !c.onlyV02)
+        (c) => c.hidden && !c.unlisted && (enV02 ? !c.notInV02 : !c.onlyV02)
     ).map((c) => c.name);
 }
 
@@ -2171,25 +2239,6 @@ export function run(
                     secretId: 'entity-reported',
                 };
             }
-        }
-
-        /*
-         * LAS INSTRUCCIONES DE LA NOTA DEL DÍA SIGUIENTE.
-         *
-         * La palabra va ESCRITA en la nota, así que no hay nada que adivinar:
-         * lo que se premia es haber vuelto y haberle hecho caso. Y sin la nota
-         * de por medio la palabra no existe — teclearla por casualidad no puede
-         * dar nada, porque el regalo es por haber vuelto.
-         *
-         * ⚠ Lo que suelta ACERCA, no entrega: la pista del `_`. Un favor que
-         * desbloquea algo es una misión, y entonces él pasa a ser un menú.
-         */
-        if (readEntity().leftVuelta === true && corto === GIFT_WORD) {
-            return {
-                output: TRIAL_REPLY.gift[lang],
-                effect: SIN_EFECTO,
-                secretId: 'entity-gift',
-            };
         }
 
         const dicho = askEntity(corto, ctx, lang);

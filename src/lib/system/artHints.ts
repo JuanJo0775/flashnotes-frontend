@@ -82,6 +82,31 @@ export function hintEarned(ahora: number = Date.now()) {
 }
 
 /**
+ * TE LLEVASTE UNA PIEZA: la barra lo dice, y nada más.
+ *
+ * ⚠ ESTO ESTABA PEGADO A `hintEarned` Y SE REPORTÓ JUGANDO: «cuando sale la
+ * broma del reset y sale el `:)` se nos debe desbloquear un arte, y eso no
+ * pasó». La pieza SÍ entraba —se comprobó ejecutando el camino entero— pero no
+ * se veía NADA: el alarde vivía dentro de la función que enciende las pistas, y
+ * esa función sólo corre la primera vez.
+ *
+ * O sea que a partir de la primera pieza abierta, ganar una llegaba en silencio.
+ * Un premio que no se anuncia no es un premio: es un cambio en un contador que
+ * nadie está mirando.
+ *
+ * Son dos cosas distintas y ahora son dos funciones:
+ *
+ *  · EL ALARDE — «hay algo que me gusta» — pasa CADA VEZ que ganás una. Es el
+ *    acuse de recibo de que te llevaste algo.
+ *  · LA PISTA A LA PESTAÑA — el destello que te dice DÓNDE mirar — pasa una
+ *    sola vez, porque enseñar dos veces dónde está la colección es un tutorial.
+ */
+export function bragEarned(ahora: number = Date.now()) {
+    alardeHasta = ahora + BRAG_MS;
+    avisar();
+}
+
+/**
  * La colección cambió: avisa a quien esté mirando, y nada más.
  *
  * ⚠ NO ENCIENDE NINGUNA PISTA, y por eso es otra función. `hintEarned` decide
