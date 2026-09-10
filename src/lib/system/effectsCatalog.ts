@@ -154,6 +154,26 @@ export const VISUAL_EFFECTS: readonly VisualEffect[] = [
         clases: 'scanline-effect',
     },
     {
+        id: 'row-feed',
+        // Mueve el elemento EN EL QUE ESTá —anima su `transform`—, no pinta una
+        // capa propia. El test lo comprueba leyendo los fotogramas.
+        donde: 'pantalla',
+        nombre: 'Papel entrando',
+        que: 'Cada fila de la lista baja a su sitio en tres escalones, escalonada como una tirada de papel.',
+        cuando: 'Al llegar la lista y al aparecer una nota nueva. No es un fundido: es un rodillo.',
+        hoja: 'animations',
+        clases: 'row-feed',
+    },
+    {
+        id: 'row-pull',
+        donde: 'pantalla',
+        nombre: 'Papel saliendo',
+        que: 'La fila se va hacia arriba y su hueco se cierra detrás, como una hoja que se tira del rodillo.',
+        cuando: 'Al tirar una nota a la papelera, en el lateral — que es la lista que está delante mientras escribís.',
+        hoja: 'animations',
+        clases: 'row-pull',
+    },
+    {
         id: 'loading-dots',
         donde: 'pantalla',
         relleno: 'texto',

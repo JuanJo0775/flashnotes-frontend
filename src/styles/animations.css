@@ -99,3 +99,96 @@
     content: '.';
     animation: loading-dots 1.4s steps(3, end) infinite;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   EL PAPEL ENTRANDO · las filas de la lista, cuando llegan
+
+   ⚠ SALIÓ DE UNA AUDITORÍA, y el hallazgo era este: la app es espectacular
+   cuando se rompe y está INERTE cuando funciona. Veintiuna animaciones de
+   avería contra cuatro normales — y la lista de notas, que es la pantalla
+   donde más tiempo pasa cualquiera, no se movía ni al entrar ni al salir.
+
+   ⚠ Y LO QUE FALTABA NO ERAN ANIMACIONES BONITAS: ERAN MECÁNICAS. Esto no es
+   un fundido de entrada; es papel avanzando en un teletipo. Por eso NO hay
+   opacidad: lo que se imprime no aparece de a poco, aparece impreso y el
+   rodillo lo empuja a su sitio.
+
+   Por pasos y no continuo, como todo lo que se mueve acá: un desplazamiento
+   suave se lee como una transición de interfaz, y tres escalones se leen como
+   un mecanismo. Son 90 ms — lo justo para verlo y no para esperarlo.
+   ───────────────────────────────────────────────────────────────────────── */
+@keyframes row-feed {
+    from {
+        transform: translateY(-0.45em);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+.row-feed {
+    /*
+     * ⚠ EL ESCALONADO SE TOPA A LA OCTAVA FILA. Con veinte notas, la última
+     * esperaría casi un segundo a empezar a moverse — y una lista que tarda un
+     * segundo en asentarse deja de sentirse rápida, que es justo lo contrario
+     * de lo que esto viene a hacer. Ocho escalones ya leen como una tirada de
+     * papel; los demás llegan con la última.
+     */
+    animation: row-feed 90ms steps(3, end) both;
+    animation-delay: calc(min(var(--fila, 0), 8) * 45ms);
+}
+
+/* ⚠ Y CON MOVIMIENTO REDUCIDO NO SE MUEVE NADA (REGLAS · A3). La lista llega
+   entera y quieta: quien pide menos movimiento no se pierde ninguna nota. */
+@media (prefers-reduced-motion: reduce) {
+    .row-feed {
+        animation: none;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Y EL PAPEL SALIENDO · la fila que ya no está
+
+   ⚠ ES LA MITAD QUE DE VERDAD SE VE. La lista grande no llega a enseñar nada
+   —tirás la nota desde el editor y volvés a una lista donde ya no está— pero
+   este lateral está delante MIENTRAS escribís: la fila desaparecía de golpe,
+   en el mismo instante, sin que nada contara que se fue.
+
+   ⚠ Y SE VA HACIA ARRIBA, arrastrando su propio hueco. No es un fundido ni un
+   deslizamiento a un lado: es la hoja tirando del renglón hacia fuera y el
+   papel cerrándose detrás. Por eso la altura se va con ella — si la fila se
+   desvaneciera dejando el hueco, la lista quedaría con un agujero y eso no lo
+   hace ningún papel.
+
+   Dura 180 ms: el doble que la entrada, porque irse cuesta más que llegar y
+   porque acá hay algo que mirar — el sitio cerrándose.
+   ───────────────────────────────────────────────────────────────────────── */
+@keyframes row-pull {
+    0% {
+        transform: translateY(0);
+        max-height: 3rem;
+    }
+    45% {
+        transform: translateY(-0.5em);
+        max-height: 3rem;
+    }
+    100% {
+        transform: translateY(-1.2em);
+        max-height: 0;
+    }
+}
+
+.row-pull {
+    animation: row-pull 180ms steps(4, end) both;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+/* ⚠ Con movimiento reducido la fila se va y ya (REGLAS · A3). Lo que no puede
+   pasar es que se quede: el hueco tiene que cerrarse igual. */
+@media (prefers-reduced-motion: reduce) {
+    .row-pull {
+        animation: none;
+        display: none;
+    }
+}

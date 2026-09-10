@@ -3,9 +3,20 @@
 
 import { useV02T } from '@/i18n/useV02T';
 import SystemClock from '@/components/layout/SystemClock';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Note } from '@/types/note.types';
 import { formatFileSize } from '@/lib/utils/formatters';
 import { useT } from '@/i18n';
+
+/**
+ * Cuánto se sigue pintando una fila que ya no está.
+ *
+ * ⚠ TIENE QUE DURAR LO QUE LA ANIMACIÓN, ni más ni menos. Menos la corta a
+ * media salida; más deja un hueco fantasma ocupando sitio en una lista donde ya
+ * no hay nada — y eso se ve como un fallo de maquetado, no como una hoja
+ * saliendo. Ver `.row-pull` en `animations.css`.
+ */
+const SALIDA_MS = 180;
 
 interface SidebarProps {
     notes: Note[];
@@ -28,6 +39,37 @@ export default function Sidebar({
     onNewNote,
     onLoadMore,
 }: SidebarProps) {
+    /*
+     * LAS QUE SE ESTÁN YENDO.
+     *
+     * ⚠ UNA FILA NO PUEDE ANIMAR SU SALIDA SI YA NO ESTÁ. Cuando tirás una nota
+     * desaparece de `notes` en el mismo instante, así que React la desmonta y no
+     * queda nada que mover. Para enseñar que se va hay que seguir pintándola un
+     * rato después de que deje de existir.
+     *
+     * Se guarda la lista anterior y se compara: lo que estaba y ya no, se pinta
+     * 180 ms más con la clase de salida y después se suelta. Nada de esto toca
+     * los datos — son filas fantasma, sin puntero y sin foco.
+     */
+    const [saliendo, setSaliendo] = useState<Note[]>([]);
+    const anteriores = useRef<Note[]>(notes);
+
+    useEffect(() => {
+        const ahora = new Set(notes.map((n) => n._id));
+        const idas = anteriores.current.filter((n) => !ahora.has(n._id));
+        anteriores.current = notes;
+
+        if (idas.length === 0) return;
+
+        setSaliendo((previas) => [...previas, ...idas]);
+
+        const id = setTimeout(() => {
+            const idasIds = new Set(idas.map((n) => n._id));
+            setSaliendo((previas) => previas.filter((n) => !idasIds.has(n._id)));
+        }, SALIDA_MS);
+
+        return () => clearTimeout(id);
+    }, [notes]);
     const t = useT();
     // El traductor degradado va aparte: `useT()` trae además `t.plural`, que el
     // envoltorio de la v0.2 no necesita replicar — un plural mal traducido no
@@ -50,7 +92,7 @@ export default function Sidebar({
                     </p>
                 ) : (
                     <ul className="flex flex-col">
-                        {notes.map((note) => {
+                        {notes.map((note, i) => {
                             const isActive = selectedNote?._id === note._id;
 
                             return (
@@ -58,7 +100,20 @@ export default function Sidebar({
                                     <button
                                         type="button"
                                         onClick={() => onSelectNote(note)}
-                                        className="file-row"
+                                        /*
+                                            EL PAPEL ENTRANDO. Ver `row-feed`:
+                                            la fila baja a su sitio en tres
+                                            escalones, y cada una un pelo
+                                            después de la anterior — una tirada
+                                            de papel, no un fundido.
+
+                                            ⚠ VA ACÁ Y NO EN LA LISTA GRANDE
+                                            porque este lateral se ve MIENTRAS
+                                            escribís: es la única lista que
+                                            está delante cuando algo cambia.
+                                        */
+                                        className="file-row row-feed"
+                                        style={{ '--fila': i } as CSSProperties}
                                         aria-current={isActive}
                                     >
                                         {/* Nombre · guía de puntos · estado.
@@ -75,6 +130,29 @@ export default function Sidebar({
                                 </li>
                             );
                         })}
+
+                        {/*
+                            LAS QUE SE ESTÁN YENDO, detrás de las de verdad.
+
+                            ⚠ `aria-hidden` Y SIN BOTÓN: para quien usa lector de
+                            pantalla esta nota ya no existe, y volver a
+                            anunciarla —o dejar algo que pueda enfocarse— sería
+                            decirle que sigue ahí. Lo que se está viendo es el
+                            hueco cerrándose, y eso no se lee: se mira.
+                        */}
+                        {saliendo.map((note) => (
+                            <li key={`saliendo-${note._id}`} aria-hidden="true">
+                                <div className="file-row row-pull">
+                                    <span className="file-row-name">
+                                        {note.title || t('common.untitled')}
+                                    </span>
+                                    <span className="file-row-leader" />
+                                    <span className="file-row-status">
+                                        {formatFileSize(note.content.length)}
+                                    </span>
+                                </div>
+                            </li>
+                        ))}
                     </ul>
                 )}
 

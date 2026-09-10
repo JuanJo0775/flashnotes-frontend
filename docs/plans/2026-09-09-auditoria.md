@@ -109,11 +109,22 @@ catálogo lo dice solo:
  2 de la v0.2 · 1 del tubo
 ```
 
-No se mueve nada en:
+~~**La lista de notas**~~ · **hecha**, y en el sitio que de verdad se ve:
 
-- **La lista de notas** — ni al entrar, ni al salir, ni al borrar. Es la
-  pantalla donde más tiempo pasa cualquiera. Comprobado: no hay `animation` ni
-  `transition` sobre `.file-row` en ninguna hoja.
+| | |
+| --- | --- |
+| **El papel entrando** | cada fila baja a su sitio en tres escalones, escalonada como una tirada de papel |
+| **El papel saliendo** | la fila se va hacia arriba y su hueco se cierra detrás |
+
+⚠ **VA EN EL LATERAL Y NO EN LA LISTA GRANDE**, y eso hay que entenderlo para no
+moverlo de sitio: tirás una nota DESDE EL EDITOR y al volver la lista grande ya
+no la tiene — nunca se vería irse. El lateral está delante mientras escribías.
+
+⚠ Y una fila no puede animar su salida si ya no está: hay que seguir pintándola
+180 ms después de que deje de existir, como fila fantasma, sin puntero, sin foco
+y `aria-hidden` — para quien usa lector, esa nota ya no existe.
+
+No se mueve nada en:
 - **Abrir y cerrar una nota** — sin transición.
 - **La colección** — una pieza recién ganada se ve igual que una de hace tres
   días.
@@ -149,7 +160,8 @@ momento, no un cartel.**
 2. ~~La ceremonia de la colección~~ · **hecha por el lado del sonido**: el cuarto
    se cae y el acuse queda solo. Lo que falta ahí es lo VISUAL — hoy la pieza
    dieciséis se ve igual que la primera.
-3. Que la lista respire — entrar, salir, borrarse
+3. ~~Que la lista respire~~ · **hecho** (el lateral: entrada escalonada y salida
+   con el hueco cerrándose)
 4. ~~El sonido de lo cotidiano~~ · **hecho**, con recuperar incluido: la app lo
    ANOTA —igual que ya anotaba tirar— y el suscriptor lee el almacén. No hizo
    falta inventar ninguna marca.
