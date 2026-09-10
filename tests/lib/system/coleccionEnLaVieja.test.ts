@@ -19,6 +19,7 @@
 import { ART } from '@/lib/system/asciiArt';
 import { halfLoaded } from '@/lib/system/artCorruption';
 import { v02ArtMode, type V02ArtMode } from '@/lib/system/v02';
+import { CARD_COLS, renderArtCard } from '@/lib/system/v02Card';
 
 /** Cómo le sale cada una de las dieciséis a la versión vieja. */
 const REPARTO = ART.reduce<Record<string, string[]>>((acc, pieza) => {
@@ -90,5 +91,44 @@ describe('la que se corta a media carga', () => {
         const cortado = halfLoaded(dibujo, 'x');
 
         expect(dibujo.startsWith(cortado)).toBe(true);
+    });
+});
+
+describe('el cuadro dibujado de la casilla', () => {
+    const cuadro = renderArtCard({ title: '7/16', art: 'aa\n\nbb', foot: 'POLILLA' });
+
+    test('⚠ todas las líneas miden exactamente lo mismo', () => {
+        /*
+         * En una rejilla de caracteres, una fila más corta descuadra el dibujo
+         * aunque los glifos alineen. Es la misma regla que fija la tarjeta de
+         * nota de esta versión.
+         */
+        for (const linea of cuadro) expect(linea).toHaveLength(CARD_COLS);
+    });
+
+    test('lleva el número metido en la línea de arriba', () => {
+        expect(cuadro[0]).toContain('7/16');
+        expect(cuadro[0].startsWith('+-')).toBe(true);
+    });
+
+    test('⚠ y los renglones en blanco del dibujo NO se quitan', () => {
+        // Son el aire de la pieza: quitarlos —que es lo que hace la tarjeta de
+        // una nota— la apelmaza y deja de parecerse a lo que es.
+        expect(cuadro.filter((l) => l.trim() === '|' + ' '.repeat(CARD_COLS - 2) + '|').length)
+            .toBeGreaterThan(0);
+    });
+
+    test('el pie va abajo, separado del dibujo', () => {
+        expect(cuadro[cuadro.length - 2]).toContain('POLILLA');
+        expect(cuadro[cuadro.length - 1]).toBe(`+${'-'.repeat(CARD_COLS - 2)}+`);
+    });
+
+    test('y con la pieza ilegible sigue siendo un cuadro', () => {
+        // Sin dibujo dentro, pero cuadro: un hueco sin marco se lee como que la
+        // casilla no existe.
+        const vacio = renderArtCard({ title: '7/16', art: '', foot: '[ NO SE PUEDE LEER ]' });
+
+        for (const linea of vacio) expect(linea).toHaveLength(CARD_COLS);
+        expect(vacio.length).toBeGreaterThan(3);
     });
 });

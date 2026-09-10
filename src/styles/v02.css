@@ -350,6 +350,18 @@
     color: var(--color-primary);
 }
 
+/* Las casillas de la colección, que son cuadros dibujados como las notas.
+
+   Sin borde ninguno: el marco esta en el texto. Mismo cuerpo y mismo interlineado
+   que la tarjeta de nota, porque las dos rejillas se ven en la misma pantalla y
+   dos medidas distintas se leen como dos programas. */
+.v02-slot pre {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.25;
+    white-space: pre;
+}
+
 .v02-grid {
     display: flex;
     flex-wrap: wrap;

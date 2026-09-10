@@ -7,6 +7,7 @@ import { useLang } from '@/i18n';
 import { useV02T } from '@/i18n/useV02T';
 import { useSystemState } from '@/hooks/useSystemState';
 import { v02Reading } from '@/lib/system/v02';
+import { renderArtCard } from '@/lib/system/v02Card';
 import {
     ART,
     ART_TOTAL,
@@ -37,6 +38,54 @@ import {
  * tenés sin preguntar. Así, encontrar una deja una pregunta abierta hasta que vas
  * a mirar.
  */
+/**
+ * UNA CASILLA DE LA COLECCIÓN, EN LA VERSIÓN VIEJA: un cuadro dibujado.
+ *
+ * ⚠ SE PIDIÓ DOS VECES, y la segunda con la razón exacta: «se ve muy parecida
+ * a la de la 1.0». Lo estaba. Tenía el marco de guiones puesto ENCIMA de la
+ * misma tarjeta —bordes de CSS, esquinas de adorno— y eso es la pantalla de
+ * ahora disfrazada, no la de antes.
+ *
+ * Acá abajo las tarjetas no son cajas con borde: son DIBUJOS, con sus `+` en
+ * las esquinas y sus `|` en los lados. Es el mismo cuadro que ya usan las notas
+ * de esta versión —mismo ancho, mismo trazo— porque las dos rejillas se ven en
+ * la misma pantalla y dos anchos distintos se leen como dos programas.
+ *
+ * ⚠ EL CUADRO ES UN DIBUJO, ASÍ QUE VA `aria-hidden`, y al lado va lo que hay
+ * que oír: el número y el estado. Cuarenta y seis guiones leídos uno a uno no
+ * son una casilla — es la misma decisión que ya tomó la tarjeta de nota.
+ */
+function CasillaVieja({
+    ficha,
+    art,
+    pie,
+    nueva = false,
+    turno = 0,
+    marca,
+}: {
+    ficha: string;
+    art: string;
+    pie: string;
+    nueva?: boolean;
+    turno?: number;
+    marca?: string;
+}) {
+    const filas = renderArtCard({ title: ficha, art, foot: pie });
+
+    return (
+        <li
+            className={`v02-slot${nueva ? ' art-tune' : ''}`}
+            style={nueva ? ({ '--pieza': turno } as CSSProperties) : undefined}
+            data-testid={marca}
+        >
+            <pre aria-hidden="true">{filas.join('\n')}</pre>
+            <span className="sr-only">
+                {ficha}{pie ? ` · ${pie}` : ''}
+            </span>
+        </li>
+    );
+}
+
 export default function CollectionView() {
     /*
      * ⚠ EL TRADUCTOR AVERIADO, NO EL NORMAL. Ésta era la ÚNICA vista que no
@@ -130,12 +179,26 @@ export default function CollectionView() {
                 </p>
             )}
 
-            <ul className="collection-grid">
+            {/* La rejilla de la versión vieja es la MISMA que la de sus
+                notas: cuadros dibujados sueltos, no una cuadrícula. */}
+            <ul className={v02 ? 'v02-grid' : 'collection-grid'}>
                 {ART.map((piece, i) => {
                     const numero = i + 1;
                     const ficha = `${numero}/${ART_TOTAL}`;
 
                     if (!vistas.has(piece.id)) {
+                        // Y en la versión vieja, el hueco también es un cuadro.
+                        if (v02)
+                            return (
+                                <CasillaVieja
+                                    key={piece.id}
+                                    ficha={ficha}
+                                    art=""
+                                    pie={ganadas.has(piece.id) ? t('collection.waiting') : ''}
+                                    marca="collection-slot-empty"
+                                />
+                            );
+
                         return (
                             <li
                                 key={piece.id}
@@ -190,6 +253,37 @@ export default function CollectionView() {
                     const turno = esNueva
                         ? ART.filter((p) => nuevas.has(p.id)).indexOf(piece)
                         : 0;
+
+                    /*
+                        Y EL PIE DEL CUADRO DICE EN QUÉ ESTADO ESTÁ: el nombre
+                        si se pudo leer, y si no, por qué no.
+                    */
+                    const pie = ilegible
+                        ? t('collection.unreadable')
+                        : lectura.modo === 'parcial'
+                          ? t('collection.partial')
+                          : captionOf(piece, lang);
+
+                    if (v02)
+                        return (
+                            <CasillaVieja
+                                key={piece.id}
+                                ficha={ficha}
+                                art={lectura.art}
+                                pie={pie}
+                                nueva={esNueva}
+                                turno={turno}
+                                marca={
+                                    ilegible
+                                        ? 'collection-unreadable'
+                                        : lectura.modo === 'parcial'
+                                          ? 'collection-partial'
+                                          : esNueva
+                                            ? 'collection-new'
+                                            : undefined
+                                }
+                            />
+                        );
 
                     return (
                         <li

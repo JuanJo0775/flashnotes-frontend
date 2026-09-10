@@ -43,6 +43,56 @@ function fila(texto: string, interior: number): string {
 }
 
 /**
+ * Y EL CUADRO DE UNA PIEZA DE LA COLECCIÓN.
+ *
+ * ⚠ POR QUÉ NO SIRVE `renderCard`, que ya dibuja cuadros: aquélla es para una
+ * NOTA —tres líneas de texto y los renglones en blanco fuera, porque en una nota
+ * no dicen nada— y acá los renglones en blanco son PARTE DEL DIBUJO. Pasar el
+ * arte por ella lo dejaba apretado contra sí mismo y recortado a tres líneas.
+ *
+ * ⚠ MISMO ANCHO QUE LAS NOTAS, y eso no es ahorro: las dos rejillas se ven en la
+ * misma versión, y dos anchos distintos se leen como dos programas. Cuarenta y
+ * seis columnas dan justo para las cuarenta del dibujo con su aire.
+ *
+ * ⚠ Y EL DIBUJO NO SE TOCA. Lo que entra ya viene leído por la versión vieja
+ * —comido, cortado o vacío—; acá sólo se le pone el marco alrededor. Una función
+ * que dibuja marcos no decide además qué se ve dentro.
+ */
+export function renderArtCard(pieza: {
+    /** El número de casilla, `07/16`. Va metido en la línea de arriba. */
+    title: string;
+    /** El dibujo, tal como toque enseñarlo. Puede venir vacío. */
+    art: string;
+    /** El pie: el nombre, o por qué no hay nombre. */
+    foot: string;
+}): string[] {
+    const interior = CARD_COLS - 4;
+    const lineas: string[] = [];
+
+    const titulo = ` ${corta(pieza.title, interior - 2)} `;
+    lineas.push(`+-${titulo}${'-'.repeat(Math.max(0, interior - titulo.length))}-+`);
+
+    /*
+     * ⚠ LOS RENGLONES EN BLANCO SE QUEDAN. Son el aire del dibujo: quitarlos
+     * —que es lo que hace la tarjeta de una nota— apelmaza la pieza y deja de
+     * parecerse a lo que es.
+     */
+    const cuerpo = pieza.art.length > 0 ? pieza.art.split('\n') : [];
+    for (const linea of cuerpo) lineas.push(fila(linea, interior));
+
+    /*
+     * Y un renglón vacío antes del pie, siempre. Sin él, el nombre queda pegado
+     * a la última línea del dibujo y parece formar parte de él.
+     */
+    lineas.push(fila('', interior));
+    lineas.push(fila(pieza.foot, interior));
+
+    lineas.push(`+${'-'.repeat(CARD_COLS - 2)}+`);
+
+    return lineas;
+}
+
+/**
  * El cuadro entero.
  *
  * Las líneas miden todas exactamente `CARD_COLS`, y un test lo fija: en una
