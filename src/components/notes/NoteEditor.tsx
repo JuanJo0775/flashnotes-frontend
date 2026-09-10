@@ -564,9 +564,32 @@ export default function NoteEditor({
                                  * minúscula sería atar el sonido a una
                                  * convención de estilo.
                                  */
-                                className={`editor-reply-body${
-                                    commands.fromEntity ? ' is-entity' : ''
-                                }`}
+                                className={[
+                                    'editor-reply-body',
+                                    commands.fromEntity ? 'is-entity' : '',
+                                    /*
+                                        ⚠ Y CUÁL DE LOS DOS FINALES FUE, si fue
+                                        uno. La misma idea: la pantalla marca lo
+                                        que pasa y el sonido lo reconoce. Sin
+                                        esto, soltarlo y entregarlo sonaban
+                                        igual que cualquier otra respuesta.
+
+                                        ⚠ Y VAN ESCRITAS ENTERAS, no armadas con
+                                        una plantilla. Hay un test que exige que
+                                        cada marca del sonido aparezca en el
+                                        código de algún componente: con
+                                        `entity-${'{'}...{'}'}` la marca no existe en
+                                        ninguna parte hasta que corre, y ese
+                                        test —que está para cazar promesas
+                                        muertas— no podía verla. Lo cazó.
+                                    */
+                                    commands.ending === 'freed' ? 'entity-freed' : '',
+                                    commands.ending === 'reported'
+                                        ? 'entity-reported'
+                                        : '',
+                                ]
+                                    .filter(Boolean)
+                                    .join(' ')}
                                 onClick={() => {
                                     commands.dismiss();
                                     contentRef.current?.focus();

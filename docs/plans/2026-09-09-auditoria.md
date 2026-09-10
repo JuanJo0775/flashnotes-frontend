@@ -79,6 +79,16 @@ Lo que suena está cubierto de sobra. **Lo que falta es todo lo cotidiano:**
 | ~~**Completar la colección 16/16**~~ | el cuarto se cae y el acuse queda solo en el hueco |
 | ~~**El cuarto de la v0.2**~~ | menos caja y más motor: el aire al 40 %, los armónicos altos hasta ×1,9 |
 
+⚠ **Y después de cerrarlo apareció uno más, preguntando si de verdad no quedaba
+nada:** los **dos finales del ente** sonaban como `//ls`. No estaban mudos —el
+teletipo escribe la respuesta— pero el final de un arco de cuatro etapas, la
+única decisión irreversible que tomás sobre alguien, sonaba igual que listar
+archivos. Hechos: el condensador y la sala agachándose al soltarlo; dos pitidos
+planos y el cuarto indiferente al entregarlo. Ver SONIDO.
+
+**La lección, que vale para el §2.3:** una lista de huecos escrita de un tirón mira
+lo que se usa todos los días y se salta lo que pasa una vez. Las dos puntas.
+
 ✅ **§2.2 CERRADO.** Y se cumplió lo que decía esta línea: **ninguno pidió una voz
 nueva**. El cajón ya existía y ya decía lo que hacía falta —sólo hubo que
 enseñarle a cerrarse—, el impacto ya estaba, y el silencio también. Un catálogo

@@ -265,6 +265,19 @@ export interface CommandResult {
      */
     fromEntity?: true;
     /**
+     * Y si esta respuesta ES uno de los dos finales.
+     *
+     * ⚠ LOS DOS MOMENTOS MÁS GRANDES DEL JUEGO SONABAN COMO `//ls`. Es el final
+     * de un arco de cuatro etapas y la única decisión irreversible que tomás
+     * sobre alguien — y hasta acá lo único que se oía era el teletipo escribiendo
+     * la respuesta, igual que en cualquier otro comando.
+     *
+     * Se dice desde acá por lo mismo que `fromEntity`: quien sabe lo que acaba
+     * de pasar es quien lo resolvió. La pantalla lo pinta como una marca y el
+     * sonido la reconoce, sin que ninguno de los dos tenga que saber del otro.
+     */
+    ending?: 'freed' | 'reported';
+    /**
      * El comando se NEGÓ A EXISTIR, y por eso no cuenta como usado.
      *
      * Lo pone `//attach_*` mientras no hayas pasado por `//ps`. Sin esto,
@@ -2223,7 +2236,11 @@ export function run(
         if (commandGiven() && !entityGone()) {
             if (corto === UNBIND) {
                 unbind();
-                return { output: TRIAL_REPLY.unbound[lang], effect: SIN_EFECTO };
+                return {
+                    output: TRIAL_REPLY.unbound[lang],
+                    effect: SIN_EFECTO,
+                    ending: 'freed' as const,
+                };
             }
 
             /*
@@ -2236,6 +2253,7 @@ export function run(
                 return {
                     output: TRIAL_REPLY.reported[lang],
                     effect: SIN_EFECTO,
+                    ending: 'reported' as const,
                     secretId: 'entity-reported',
                 };
             }

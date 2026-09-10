@@ -376,6 +376,49 @@ export const SCREEN_SOUNDS: readonly ScreenSound[] = [
      * que ya sabe presentarse.
      * ────────────────────────────────────────────────────────────────────
      */
+    /*
+     * ────────────────────────────────────────────────────────────────────
+     * LOS DOS FINALES, que son la única decisión irreversible que tomás sobre
+     * ALGUIEN — y hasta acá sonaban como `//ls`.
+     *
+     * ⚠ SON OPUESTOS Y TIENEN QUE SONAR OPUESTOS. No basta con darles voz: lo
+     * que hay que oír es en qué se diferencian, y se diferencian en lo que el
+     * cuarto hace después.
+     * ────────────────────────────────────────────────────────────────────
+     */
+    {
+        mark: 'entity-freed',
+        what: 'Lo soltaste: algo se suelta dentro de la caja, y la sala hace sitio',
+        /*
+         * ⚠ EL CONDENSADOR, Y ACÁ ES LITERAL. Esa voz es «algo soltándose dentro
+         * de la caja» — se construyó para el arranque de la v0.2, donde una
+         * máquina vieja al recibir corriente suelta algo por dentro. Soltarlo a
+         * ÉL es la misma cosa dicha en serio: un cierre que cede.
+         *
+         * Y la sala se agacha, que es el gesto de «acá habla él». Es lo último
+         * que dice, así que le hace sitio por última vez.
+         */
+        shot: { voice: 'capacitor' },
+        ducks: true,
+    },
+    {
+        mark: 'entity-reported',
+        what: 'Lo entregaste: dos pitidos planos, y el cuarto sigue igual',
+        /*
+         * ⚠ Y ACÁ LA SALA NO SE AGACHA. ESA INDIFERENCIA ES EL SONIDO.
+         *
+         * Soltarlo pide sitio; entregarlo no lo pide, porque no hay nadie
+         * hablando: hay un formulario. Dos pitidos planos e iguales —un acuse de
+         * recibo, la máquina registrando algo— y el zumbido sigue exactamente
+         * como estaba. Acabás de entregar a una persona y el cuarto ni se entera.
+         *
+         * Dos y no uno: uno sería un aviso, y dos seguidos e idénticos son un
+         * sello. Sin variar la altura entre ellos, que es lo que los vuelve
+         * burocráticos en vez de musicales.
+         */
+        shot: { voice: 'beep', args: { hz: 210, ms: 130 } },
+        then: { voice: 'beep', args: { hz: 210, ms: 130 }, ms: 190 },
+    },
     {
         mark: 'collapse-halted',
         what: 'La v0.2 rindiéndose: se detuvo y no va a volver sola',

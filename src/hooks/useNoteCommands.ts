@@ -106,6 +106,8 @@ interface UseNoteCommandsReturn {
      * atar el sonido a una convención de estilo.
      */
     fromEntity: boolean;
+    /** Cuál de los dos finales acaba de contestar, si fue uno. */
+    ending: 'freed' | 'reported' | null;
     /** Ejecuta el contenido si es un comando. Devuelve si lo era. */
     run: (content: string, noteId: string) => Promise<boolean>;
     dismiss: () => void;
@@ -153,6 +155,7 @@ export function useNoteCommands({
      * suscriptor — ver el encabezado de `wire.ts`.
      */
     const [fromEntity, setFromEntity] = useState(false);
+    const [ending, setEnding] = useState<'freed' | 'reported' | null>(null);
     const [rows, setRows] = useState<ReplyRow[] | null>(null);
     const theme = useTheme();
 
@@ -235,6 +238,7 @@ export function useNoteCommands({
 
             setResponse(escribeEnLaNota ? null : result.output || null);
             setFromEntity(result.fromEntity === true);
+            setEnding(result.ending ?? null);
             setRows(escribeEnLaNota ? null : result.rows ?? null);
 
             switch (result.effect.kind) {
@@ -356,5 +360,5 @@ export function useNoteCommands({
         setRows(null);
     }, []);
 
-    return { response, rows, fromEntity, run, dismiss };
+    return { response, rows, fromEntity, ending, run, dismiss };
 }

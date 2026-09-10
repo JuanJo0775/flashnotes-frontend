@@ -393,6 +393,8 @@ marca.
 | `.net-lost` | Quedarse sin línea: la señal se cae y no hay a quién llamar |
 | `.net-down` | El servidor dejó de contestar, con la línea todavía en pie |
 | `.net-back` | Y la línea volviendo: un contacto que se cierra |
+| `.entity-freed` | Lo soltaste: algo se suelta dentro de la caja, y la sala hace sitio |
+| `.entity-reported` | Lo entregaste: dos pitidos planos, y el cuarto sigue igual |
 | `.collapse-halted` | La v0.2 rindiéndose: se detuvo y no va a volver sola |
 | `.v02-wake` | La v0.2 recibiendo corriente: algo se suelta dentro de la caja |
 | `.v02-static` | Y lo que enseña cuando no hay nada enganchado: estática, y muda |
@@ -864,6 +866,33 @@ Sube con la misma `--blow-amp` que mueve la imagen, porque el §5 lo pide sin
 rodeos: lo que reacciona no puede ser una muestra. Y sólo suelta el trozo final
 cuando el golpe es fuerte — en los primeros la pared aguanta, y crujir sin soltar
 nada es exactamente lo que hace algo que todavía no cede.
+
+### ⚠ Los dos finales suenan OPUESTOS
+
+Eran los dos momentos más grandes del juego y sonaban como `//ls`: el final de un
+arco de cuatro etapas, la única decisión irreversible que tomás sobre alguien, y
+lo único que se oía era el teletipo escribiendo la respuesta.
+
+Y no bastaba con darles voz. **Lo que hay que oír es en qué se diferencian**, y se
+diferencian en lo que el cuarto hace después:
+
+| | Qué suena | Y la sala |
+| --- | --- | --- |
+| **Lo soltaste** (`//unbind`) | el **condensador**: algo se suelta dentro de la caja | **se agacha** — es lo último que dice |
+| **Lo entregaste** (`//report`) | **dos pitidos planos** a la misma altura | **sigue igual**, como si nada |
+
+⚠ **El condensador acá es literal.** Esa voz se construyó para el arranque de la
+v0.2 —una máquina vieja soltando algo por dentro al recibir corriente— y soltarlo
+a ÉL es la misma cosa dicha en serio: un cierre que cede.
+
+⚠ **Y en el otro la sala NO se agacha: esa indiferencia es el sonido.** Soltarlo
+pide sitio; entregarlo no lo pide, porque no hay nadie hablando — hay un
+formulario. Dos pitidos y el zumbido sigue exactamente como estaba: acabás de
+entregar a una persona y el cuarto ni se entera.
+
+Dos y no uno: uno sería un aviso, dos seguidos y a la misma altura son un sello.
+**A la misma altura, no idénticos** — acá todas las voces llevan jitter, sin
+excepción, y dos pitidos clavados serían un fichero repitiéndose.
 
 ### ⚠ El ente no tiene voz, y eso es el personaje
 
