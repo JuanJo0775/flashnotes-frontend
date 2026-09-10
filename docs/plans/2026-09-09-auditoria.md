@@ -242,22 +242,33 @@ dos se separaron sería la que lo tapa.
 
 ✅ **§2.4 CERRADO.**
 
-### 2.5 · Y la que más se notaría
+### ~~2.5 · Y la que más se notaría~~ · HECHA
 
-**Ceremonia al completar la colección.** Hoy pones la pieza dieciséis y no pasa
-nada: el contador dice `16/16` y ya. Es el único logro largo del juego —
-dieciséis piezas por dieciséis caminos distintos— y merece lo que ya está
-construido y no se usa ahí: el cajón, un barrido, la sala agachándose. **Un
-momento, no un cartel.**
+~~**Ceremonia al completar la colección.**~~ · **hecha, y con lo que ya estaba**:
+a los 360 ms de caer la dieciséis, la sala se calla, el nivel de la imagen baja
+y el barrido del tubo cruza **una sola vez**, más grueso, más claro y mucho más
+lento. Segundo y medio, y el acuse cae dentro del hueco.
+
+⚠ **Ni un fotograma nuevo**, que era literalmente lo que pedía esta sección —«lo
+que ya está construido y no se usa ahí»—: la técnica de `level-drop` para el
+nivel y el barrido de siempre para la línea. Lo único que cambia es el ritmo.
+
+⚠ Y **el barrido de siempre se aparta mientras dura**: lo que destaca es lo
+ÚNICO que se mueve, la misma regla que gobierna la pieza recién sintonizada.
+
+⚠ **Un momento, no un cartel.** Sin texto, sin medalla y sin nada que cerrar.
+
+Está en el banco como pantalla (**LA DIECISÉIS**) y documentada en SECRETOS §23.
+
+✅ **§2.5 CERRADA — y con ella la auditoría entera.**
 
 ---
 
 ## 3 · El orden propuesto
 
 1. ~~La pista del morse~~ · **hecho**
-2. ~~La ceremonia de la colección~~ · **hecha por el lado del sonido**: el cuarto
-   se cae y el acuse queda solo. Lo que falta ahí es lo VISUAL — hoy la pieza
-   dieciséis se ve igual que la primera.
+2. ~~La ceremonia de la colección~~ · **hecha entera**: el cuarto se cae, el
+   acuse queda solo, el nivel de la imagen baja y el barrido cruza una vez.
 3. ~~Que la lista respire~~ · **hecho** (el lateral: entrada escalonada y salida
    con el hueco cerrándose)
 4. ~~El sonido de lo cotidiano~~ · **hecho**, con recuperar incluido: la app lo
@@ -268,9 +279,11 @@ momento, no un cartel.**
 7. ~~Los dos huecos de lore de 2.4~~ · **hechos**: la v0.2 murmura lo de
    entonces, y los dos finales dejan asiento para siempre.
 
-**Queda una sola cosa de toda la auditoría: lo VISUAL de la ceremonia de la
-colección (§2.5).** El sonido ya está; lo que falta es que la pieza dieciséis
-no se vea igual que la primera.
+8. ~~Lo visual de la ceremonia de la colección~~ · **hecho**
+
+✅ **AUDITORÍA CERRADA.** Las cinco secciones, y ninguna con un fotograma nuevo
+que no hiciera falta: lo que se añadió fue vocabulario donde no lo había y
+ritmo donde el vocabulario ya estaba.
 
 ### ~~Y una idea más grande~~ · CONSTRUIDA
 

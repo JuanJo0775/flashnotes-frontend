@@ -142,6 +142,15 @@ export const SYSTEM_SCREENS: readonly SystemScreen[] = [
         como: 'clase',
     },
     {
+        id: 'coleccion',
+        componente: 'CollectionCeremony',
+        nombre: 'La dieciséis',
+        que: 'El nivel baja, la sala se calla y el barrido cruza una sola vez, más lento y más claro.',
+        cuando: 'Al ganar la última pieza de la colección. Una vez en la vida de una partida.',
+        como: 'directo',
+        inerte: 'acá se reproduce sin ganar nada · la de verdad espera a que caiga la dieciséis',
+    },
+    {
         id: 'v02',
         componente: 'V02Skin',
         nombre: 'La versión vieja',

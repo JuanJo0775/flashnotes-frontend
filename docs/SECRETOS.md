@@ -3196,6 +3196,46 @@ Colección                                                    3/16
 └──────────┘  └──────────┘  └──────────┘  └──────────┘
 ```
 
+## La dieciséis
+
+**Poner la última pieza no se veía.** El contador decía `16/16` y ya: el único
+logro largo del juego —dieciséis piezas por dieciséis caminos distintos, el
+pong, el reloj, la v0.2, el ente— terminaba en un número que cambia.
+
+Ahora, a los 360 ms de que caiga —después del cajón, que suena igual que en
+las quince anteriores— pasa esto durante **segundo y medio**:
+
+| | |
+| --- | --- |
+| **La sala se calla** | el cuarto desaparece y el acuse queda solo en el hueco |
+| **El nivel baja** | la imagen entera se apaga un punto, sin fotogramas: entra y sale de golpe |
+| **Y el barrido cruza una vez** | la misma línea del tubo, más gruesa, más clara y mucho más lenta |
+
+⚠ **Ni una animación nueva.** Las dos piezas ya existían: la técnica de
+`level-drop` para bajar el nivel y el barrido de siempre para cruzar. Lo que
+cambia es el ritmo — **hacía falta un idioma, no una animación por sitio**.
+
+⚠ **Mientras dura, el barrido de siempre se aparta.** Es la regla de la
+colección otra vez: lo que destaca es lo ÚNICO que se mueve. Con las dos líneas
+en pantalla, la lenta se lee como que el barrido se averió — y de averías esta
+app va sobrada.
+
+⚠ **Un momento, no un cartel.** No hay texto, no hay medalla y no hay nada que
+cerrar. Se ve una vez en la vida de una partida, y quien lo vio no puede
+enseñárselo a nadie.
+
+**Con `prefers-reduced-motion` queda el momento y se va la línea**, que es lo
+único que se mueve: la sala se calla igual y el nivel baja igual (REGLAS · A3).
+Con los efectos apagados no pasa nada — `>chaos off` tiene que poder callar al
+sistema del todo.
+
+**Los tres tiempos —espera, hueco y acuse— viven en `ceremonia.ts`**, que es el
+único sitio del sistema donde el sonido y la imagen comparten números: son el
+MISMO hueco visto por dos sentidos, y escritos dos veces se separarían el día
+que alguien ajuste uno.
+
+Se puede volver a ver en el banco, en pantallas: **LA DIECISÉIS**.
+
 ## ⚠ Ya no sale de las notas
 
 Se construía con las notas que `//keep` había marcado, **y eso ataba la colección

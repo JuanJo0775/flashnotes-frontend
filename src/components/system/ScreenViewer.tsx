@@ -9,6 +9,7 @@ import WipeScreen from '@/components/effects/WipeScreen';
 import SystemCollapse from '@/components/effects/SystemCollapse';
 import SystemLockout from '@/components/effects/SystemLockout';
 import DeadPage from '@/components/effects/DeadPage';
+import CollectionCeremony from '@/components/effects/CollectionCeremony';
 import PongOverlay from '@/components/effects/PongOverlay';
 import { ChromaSplitFilters } from '@/components/effects/ChromaticFailure';
 import { useTheme, toggleTheme } from '@/hooks/useTheme';
@@ -126,6 +127,12 @@ function Contenido({ pantalla, reiniciar }: { pantalla: SystemScreen; reiniciar:
                     </div>
                 </>
             );
+        case 'coleccion':
+            /*
+             * Se reproduce sola y NO toca el almacén: un catálogo que te
+             * regala las dieciséis piezas al consultarlo deja de serlo.
+             */
+            return <CollectionCeremony demo />;
         case 'v02':
             // La piel de la v0.2 es un atributo en el documento; lo pone el
             // efecto de abajo y lo quita al cerrar.

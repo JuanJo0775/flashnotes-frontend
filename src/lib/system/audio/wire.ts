@@ -34,6 +34,11 @@ import { isV02 } from '@/lib/system/v02';
 import { muteFor } from '@/lib/system/audio/mix';
 import { duck, invertAmbience, silence } from '@/lib/system/audio/ambience';
 import { ART_TOTAL, readFound as piezasGanadas } from '@/lib/system/asciiArt';
+import {
+    CEREMONIA_ACUSE_MS,
+    CEREMONIA_ESPERA_MS,
+    CEREMONIA_MS,
+} from '@/lib/system/ceremonia';
 import { subscribeHints } from '@/lib/system/artHints';
 import { WAKE_FADE_S, startAmbience, stopAmbience } from '@/lib/system/audio/ambience';
 import { startBarsTone, stopBarsTone } from '@/lib/system/audio/bars';
@@ -91,15 +96,6 @@ export const COLLAPSE_SILENCE_MS = 200;
  */
 export const DUCK_MS = 3_200;
 
-/**
- * Cuánto se cae el cuarto al completar la colección.
- *
- * ⚠ MÁS LARGO QUE EL SILENCIO DEL DERRUMBE, que dura 200 ms y es un susto. Éste
- * no asusta: hace sitio. Un segundo y medio es lo que tarda alguien en darse
- * cuenta de que algo dejó de sonar — menos se lee como un corte, y más se lee
- * como que se rompió.
- */
-const COLECCION_SILENCIO_MS = 1_500;
 
 /**
  * Los hallazgos que suenan MAL.
@@ -436,8 +432,8 @@ export function startSound(): () => void {
              * el cuarto, y el acuse llega DENTRO del hueco.
              */
             if (ahora >= ART_TOTAL && piezasAntes < ART_TOTAL) {
-                luego(360, () => silence(COLECCION_SILENCIO_MS));
-                luego(760, () => play('confirm', { wrong: false }));
+                luego(CEREMONIA_ESPERA_MS, () => silence(CEREMONIA_MS));
+                luego(CEREMONIA_ACUSE_MS, () => play('confirm', { wrong: false }));
             }
         }
 

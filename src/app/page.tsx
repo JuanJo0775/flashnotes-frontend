@@ -22,6 +22,7 @@ import ChromaticFailure from '@/components/effects/ChromaticFailure';
 import PhantomError from '@/components/effects/PhantomError';
 import { LooseWall } from '@/components/effects/LooseWall';
 import SoundWire from '@/components/effects/SoundWire';
+import CollectionCeremony from '@/components/effects/CollectionCeremony';
 import SystemLockout from '@/components/effects/SystemLockout';
 import PongOverlay from '@/components/effects/PongOverlay';
 import DeadPage from '@/components/effects/DeadPage';
@@ -535,6 +536,11 @@ export default function Home() {
             {/* El sonido, enchufado en un solo sitio. No pinta nada. */}
             <SoundWire />
             <GlitchLayer />
+            {/* La dieciséis. No pinta nada hasta que cae la última pieza, y
+                entonces baja el nivel de TODO lo de abajo — por eso va acá
+                arriba con los demás y no dentro de ninguna vista: el momento
+                es de la pantalla, no de la colección. */}
+            <CollectionCeremony />
             <ChromaticFailure />
             <PhantomError />
             {/* Lo que él aflojó. Ver `LooseWall`: es una ventana más, salvo
