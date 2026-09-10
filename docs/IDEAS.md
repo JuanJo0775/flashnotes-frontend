@@ -32,13 +32,17 @@ El reloj y los tres clics ya están (ver [SECRETOS §20](SECRETOS.md)). Queda:
 
 Teclearla no hace nada todavía. Es la puerta de la v0.2 — sección E.
 
-## A5 · Una pista de que hay algo que descifrar
+## ~~A5 · Una pista de que hay algo que descifrar~~ · HECHO
 
-⚠ **Riesgo conocido:** si nadie sospecha que eso es morse, la v0.2 no existe — el
-error del umbral de diez colapsos, inalcanzable y sin nada que lo delatara.
+Era el riesgo más grande del proyecto —«si nadie sospecha que eso es morse, la
+v0.2 no existe»— y estuvo abierto hasta la auditoría del 2026-09-09.
 
-Ideas: que el sistema lo mencione en alguna frase de arranque, o que una ventana
-de error del fallo cromático suelte un `-.-.` suelto.
+Resuelto por el canal que ya existía, el rótulo `[SYSTEM_OK]` que cada tanto dice
+otra cosa, y en dos escalones: **`[NADIE LEE LA HORA]`** para cualquiera, y
+**`[· — ·  SIN ACUSE]`** sólo para quien ya vio los puntos y las rayas. Ninguna
+nombra la solución, y hay un test que lo exige.
+
+→ [`plans/2026-09-09-auditoria.md`](plans/2026-09-09-auditoria.md) §1
 
 ---
 
@@ -54,11 +58,14 @@ La puerta y el esqueleto ya están (ver
 descifrando el morse, la bandera sobrevive a recargar, el rótulo dice la versión,
 guardar miente y `//recover` es la red. Queda el resto de las averías:
 
-## E1 · La papelera falla a ratos
+## ~~E1 · La papelera falla a ratos~~ · HECHO
 
-`trashFails()` ya existe y está probado; falta engancharlo a la papelera de
-verdad. Tirar una nota a veces no hace nada, o dice que la tiró y no la tiró.
-**Nunca al revés: nunca borra algo que no le pediste.**
+Tirar una nota falla el 18 % de las veces, y siempre hacia NO borrar. Se hizo
+dentro de `trashV02Note`, con `TRASH_FAIL_ODDS` a mano.
+
+⚠ **Y por eso `trashFails()` quedó muerto**: nadie lo llama. Dos fuentes para la
+misma regla es lo que la casa prohíbe (REGLAS · B5) — pendiente de limpiar, ver la
+auditoría §2.1.
 
 ## E2 · Interfaces a medio dibujar
 
@@ -66,22 +73,21 @@ verdad. Tirar una nota a veces no hace nada, o dice que la tiró y no la tiró.
 repartirlo por la interfaz — marcos sin cerrar, etiquetas con el nombre de la
 variable, dígitos donde iba una palabra.
 
-## E3 · Los comandos no están todos
+## ~~E3 · Los comandos no están todos~~ · HECHO
 
-En la v0.2 faltan comandos y alguno contesta mal. `//help` más corto y menos
-fiable, porque todavía no estaba terminado.
+`notInV02` los filtra, y ahí contestan «comando desconocido» — que en esa
+versión es la verdad literal: no se habían escrito todavía. `//reboot` es la
+excepción y existe en las dos.
 
-## E4 · El glitch de tema, con más averías
+## ~~E4 · El glitch de tema, con más averías~~ · HECHO
 
-Sigue rompiéndose a los diez toques, pero la avería **cambia sola**: a ratos sale
-estática, a ratos vuelve al fallo cromático. No es el mismo efecto con otro
-color: es una avería que no se decide.
+La avería no se decide (`v02-indeciso`), y además **pierde el sincronismo
+vertical** (`v02-vhold`): la imagen se escapa hacia arriba a saltos y vuelve a
+engancharse. Ver SECRETOS §24.6 bis.
 
-## E5 · La pista del morse
+## ~~E5 · La pista del morse~~ · HECHO
 
-⚠ **Sin ella la puerta es inalcanzable** — el error del umbral de diez colapsos.
-Candidatas: una frase de arranque que lo mencione, o que una ventana de error del
-fallo cromático suelte un `-.-.` suelto.
+Ver A5, arriba: es la misma y ya está.
 
 ---
 

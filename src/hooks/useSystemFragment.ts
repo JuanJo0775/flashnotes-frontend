@@ -6,7 +6,7 @@ import { BRAG, isBragging, subscribeHints } from '@/lib/system/artHints';
 import { getLang } from '@/i18n';
 import { useSyncExternalStore } from 'react';
 import { pickFragment } from '@/lib/system/lore';
-import { getSystemState } from '@/hooks/useSystemState';
+import { foundSecrets, getSystemState } from '@/hooks/useSystemState';
 
 /**
  * El fragmento que el sistema está diciendo ahora mismo, o null.
@@ -77,6 +77,13 @@ export function showFragment() {
             hour: ahora.getHours(),
             sessionMs: Date.now() - system.sessionStart,
             idleMs: idleMs(),
+            /*
+             * ⚠ VER EL MORSE, NO DESCIFRARLO. El secreto se gana clicando tres
+             * veces la hora, que es lo único que hace falta para que la queja
+             * del reloj signifique algo. Quien ya lo descifró no necesita la
+             * pista, y quien no lo ha visto todavía no la entendería.
+             */
+            sawMorse: foundSecrets().has('morse'),
         },
         previous
     );

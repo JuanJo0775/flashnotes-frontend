@@ -2707,6 +2707,19 @@ premio sin haber visto la lista sería premiar una puerta que no se abrió.
 
 # 20 · El reloj esconde algo
 
+⚠ **Y hay una pista, porque sin ella esto no existía.** La palabra abre la v0.2
+y detrás de la v0.2 está todo lo demás — pero nada en la app apuntaba al reloj.
+El rótulo `[SYSTEM_OK]` lo suelta en dos escalones:
+
+| | Frase | Cuándo |
+| --- | --- | --- |
+| **La duda** | `[NADIE LEE LA HORA]` · `[THE HOUR UNREAD]` | siempre |
+| **La confirmación** | `[· — ·  SIN ACUSE]` · `[· — ·  NO ACK]` | sólo si ya viste el morse |
+
+Un reloj no se «lee»: se mira. Decir que nadie lo lee es decir que hay algo
+escrito, sin decirlo. **Ninguna de las dos nombra la solución** — hay un test que
+lo exige, porque una pista que dice «morse» es un tutorial con acento.
+
 El pie de la barra lateral enseñaba `--:--:--` cuando no había nota abierta. **Y
 eso ya parecía morse.**
 

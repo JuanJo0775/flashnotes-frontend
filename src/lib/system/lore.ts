@@ -49,6 +49,14 @@ export interface SystemContext {
     idleMs: number;
     /** Cuánto hace que se mandó una nota a la papelera, si se mandó. */
     msSinceTrash?: number | null;
+    /**
+     * Si ya viste el morse del reloj.
+     *
+     * ⚠ NO ES «lo descifraste»: es haberlo VISTO. Lo marca el mismo secreto que
+     * se gana clicando tres veces la hora, y sirve para que la máquina pase de
+     * insinuar a insistir. Ver los dos fragmentos del reloj.
+     */
+    sawMorse?: boolean;
 }
 
 /** Una fuente de azar inyectable, para poder fijarla en los tests. */
@@ -136,6 +144,52 @@ const FRAGMENTS: readonly Fragment[] = [
     { text: { es: '[SIN RELEVO]', en: '[NO RELIEF]' } },
     // "TIBIA" es el calor que queda de algo que estuvo encendido mucho rato.
     { text: { es: '[MEMORIA TIBIA]', en: '[MEMORY STILL WARM]' } },
+
+    /*
+     * ────────────────────────────────────────────────────────────────────
+     * LA PISTA DEL RELOJ, que es la única de esta lista que sirve para algo.
+     *
+     * ⚠ SIN ELLA, LA MITAD DEL JUEGO NO EXISTE. La palabra en morse de la hora
+     * abre la v0.2, y detrás de la v0.2 está todo lo demás: el ente
+     * despertando, sus trampas, los dos finales. El documento de pendientes lo
+     * tenía escrito como riesgo desde el principio — «si nadie sospecha que eso
+     * es morse, la v0.2 no existe»— y era verdad: no había una sola cosa en
+     * toda la app que apuntara al reloj.
+     *
+     * ⚠ Y NO DICE «MORSE» NI DICE «MIRÁ EL RELOJ». Una pista que nombra la
+     * solución no es una pista, es un tutorial con acento. Estas dos dicen algo
+     * que la máquina diría de todos modos —se queja de que nadie la lee— y la
+     * sospecha la pone quien la escucha.
+     *
+     * Van en dos escalones, y el segundo depende del primero:
+     * ────────────────────────────────────────────────────────────────────
+     */
+
+    /*
+     * 1 · LA DUDA, para cualquiera. Un reloj no se «lee»: se mira. Decir que
+     * nadie lo lee es decir que hay algo escrito, sin decirlo.
+     */
+    /*
+     * ⚠ EN INGLÉS ES TELEGRÁFICA Y NO ES PEREZA: `MAX_FRAGMENT_LENGTH` es el
+     * ancho que la barra RESERVA para que la maqueta no salte, y «NOBODY READS
+     * THE CLOCK» lo pasaba de 21 a 24. Ensanchar el hueco por una frase mueve la
+     * barra entera; acortarla la deja en el registro del resto — `[NO RELIEF]`,
+     * `[SHIFT 1/1]`—, que es como habla un aparato y no una persona.
+     */
+    { text: { es: '[NADIE LEE LA HORA]', en: '[THE HOUR UNREAD]' } },
+
+    /*
+     * 2 · Y LA CONFIRMACIÓN, sólo para quien ya vio los puntos y las rayas.
+     *
+     * Antes de verlos esta frase no significa nada y gastaría una aparición;
+     * después, es la máquina admitiendo que lleva emitiendo desde siempre y que
+     * nunca le contestaron. `SIN ACUSE` es lo que dice un aparato que transmite
+     * a nadie — y quien acaba de ver el morse ata las dos cosas solo.
+     */
+    {
+        text: { es: '[· — ·  SIN ACUSE]', en: '[· — ·  NO ACK]' },
+        when: (c) => c.sawMorse === true,
+    },
 
     // De madrugada no dice que está bien: dice lo que le pesa.
     {
