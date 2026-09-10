@@ -13,6 +13,13 @@ import {
     shouldHaunt,
 } from '@/lib/system/ghostFile';
 import { SCRAP_ID, buildScrapNote, shouldScrap } from '@/lib/system/artScrap';
+import {
+    SHIFT_ID,
+    buildShiftNote,
+    markShiftSeen,
+    shouldShift,
+} from '@/lib/system/shiftNote';
+import { didV02RoundTrip } from '@/lib/system/v02';
 import { LEFT_ID, buildLeftNote, shownLeftNote } from '@/lib/system/entityNotes';
 import {
     markLeft,
@@ -123,6 +130,20 @@ export const useTrash = (): UseTrashReturn => {
             if (shownLeftNote() === 'broma') markSawBroma();
             if (yaLaVio) markLooked();
 
+            /*
+             * Y EL TURNO DE QUIEN SE FUE.
+             *
+             * Él dice que lo dejaron encendido y se fueron; la barra murmura
+             * `[SIN RELEVO]`. Esto es la PRUEBA, y no explica nada: es una hoja
+             * de turno con casi todo tachado y una cosa sin tachar.
+             */
+            const turno = shouldShift({
+                crossed: didV02RoundTrip(),
+                trashedCount: notes.length,
+            })
+                ? buildShiftNote()
+                : null;
+
             const inyectadas = [
                 ...(suya ? [suya] : []),
                 ...(haunted ? [buildGhostNote(formatLog())] : []),
@@ -130,7 +151,16 @@ export const useTrash = (): UseTrashReturn => {
             ];
 
             if (haunted) markSecretFound('ghost-file');
-            setTrashedNotes([...inyectadas, ...notes]);
+
+            /*
+             * ⚠ LA HOJA VA DESPUÉS DE TUS NOTAS, no antes.
+             *
+             * Las otras tres se inyectan arriba porque son cosas que la máquina
+             * acaba de hacer. Ésta es al revés: lleva ahí desde antes que vos, y
+             * ponerla arriba la convertiría en un aviso. Abajo del todo es donde
+             * queda lo que nadie movió en años.
+             */
+            setTrashedNotes([...inyectadas, ...notes, ...(turno ? [turno] : [])]);
         } catch (err) {
             const message = getErrorInfo(err);
             setError(message);
@@ -146,6 +176,17 @@ export const useTrash = (): UseTrashReturn => {
      */
     const restoreNote = useCallback(async (id: string): Promise<boolean> => {
         // Restaurarlo tampoco sale a la red: se descarta, igual que borrarlo.
+        /*
+         * ⚠ LA HOJA DEL TURNO SE VA Y NO VUELVE, y tampoco sale a la red: no
+         * existe en la base de datos. Recuperarla o borrarla son lo mismo acá —
+         * lo que cuenta es que la viste, y eso pasa una sola vez.
+         */
+        if (id === SHIFT_ID) {
+            markShiftSeen();
+            setTrashedNotes((prev) => prev.filter((note) => note._id !== SHIFT_ID));
+            return true;
+        }
+
         if (id === GHOST_ID) {
             ghostDismissedAt = Date.now();
             setTrashedNotes((prev) => prev.filter((note) => note._id !== GHOST_ID));
@@ -240,6 +281,17 @@ export const useTrash = (): UseTrashReturn => {
         // El fantasma no existe en el servidor: borrarlo se simula. Sin esto, la
         // llamada saldría con un id inválido y además gastaría una de las diez
         // bajas que el backend permite cada quince minutos.
+        /*
+         * ⚠ LA HOJA DEL TURNO SE VA Y NO VUELVE, y tampoco sale a la red: no
+         * existe en la base de datos. Recuperarla o borrarla son lo mismo acá —
+         * lo que cuenta es que la viste, y eso pasa una sola vez.
+         */
+        if (id === SHIFT_ID) {
+            markShiftSeen();
+            setTrashedNotes((prev) => prev.filter((note) => note._id !== SHIFT_ID));
+            return true;
+        }
+
         if (id === GHOST_ID) {
             ghostDismissedAt = Date.now();
             setTrashedNotes((prev) => prev.filter((note) => note._id !== GHOST_ID));

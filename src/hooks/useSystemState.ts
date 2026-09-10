@@ -17,6 +17,7 @@ import { forgetHint } from '@/lib/system/helpHint';
 import { clearEntity } from '@/lib/system/entity';
 import { resetScores } from '@/lib/system/pongScores';
 import { clearUsed } from '@/lib/system/commandUnlock';
+import { clearShift } from '@/lib/system/shiftNote';
 import { leaveV02, isV02, toggleV02, forgetV02Trip } from '@/lib/system/v02';
 import { clearDropped } from '@/lib/system/dropped';
 import { clearV02Notes } from '@/lib/system/v02Notes';
@@ -844,6 +845,9 @@ export function resetEverything() {
     clearArt();
     resetScores();
     clearUsed();
+    // Y el turno de quien se fue vuelve a estar ahí: borrar todo es empezar
+    // de cero, y esa hoja es parte de lo que hay que encontrar.
+    clearShift();
     leaveV02();
     // Se lleva por delante la palabra del viaje, que es la única que el ente
     // puede preguntarte. Ver `markV02RoundTrip()`.

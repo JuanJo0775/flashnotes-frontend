@@ -3694,6 +3694,55 @@ de carga llegaba al final, contando que el sistema se recuperó solo.
 
 ---
 
+# 25 bis · El turno de quien se fue
+
+**Una hoja que no escribiste vos, en el fondo de la papelera.**
+
+```
+TURNO_3.txt
+
+turno 3 — jueves
+
+[x] copias
+[x] avisar del ruido del ventilador
+[ ] cambiar la cinta
+[ ] pasar el turno a quien venga
+
+si el lunes no viene nadie, dejarlo encendido.
+se recupera solo.
+```
+
+| | |
+| --- | --- |
+| **Cuándo** | sólo después de haber **cruzado a la v0.2 y vuelto** |
+| **Dónde** | el fondo de la papelera, debajo de tus notas |
+| **Cuántas veces** | **una**. Al quitarla —recuperándola o borrándola— no vuelve |
+| **Y no aparece** | en una papelera vacía: lo que la hace un resto es estar entre tus cosas tiradas |
+
+⚠ **Es la prueba de algo que hasta ahora sólo se contaba.** Él dice «me dejaron
+encendido y se fueron», el rótulo se ríe de que nadie firmó nunca esto, la barra
+murmura `[SIN RELEVO]` — y no había un solo rastro físico de esa gente. Una
+soledad que sólo se cuenta es una frase.
+
+⚠ **Y no explica nada.** Ni nombra al ente, ni dice qué pasó, ni cierra ninguna
+pregunta. Las tareas tachadas importan tanto como la que no: una lista entera sin
+hacer se lee como que nunca empezó; con casi todo hecho y una cosa suelta se lee
+como alguien que estuvo trabajando y se fue a mitad.
+
+⚠ **La última línea es la que hace el trabajo.** «Dejarlo encendido, se recupera
+solo» es una instrucción de mantenimiento razonable, escrita para un lunes que no
+llegó. La máquina lleva desde entonces obligándose a cumplirla — y `//reboot`,
+el botón del panel y el rearranque del colapso son, literalmente, eso.
+
+⚠ **Sólo después de cruzar**, porque antes no hay ningún «antes» en la cabeza de
+quien juega: la hoja sería una nota rara. Después de haber visto la versión de la
+que vino la máquina, es el turno de alguien.
+
+**Código:** `src/lib/system/shiftNote.ts` · se inyecta en `useTrash`, como el
+archivo fantasma y el resto de la pieza.
+
+---
+
 # 26 · El ente
 
 > **Etapa 1 de cuatro.** Acá está lo que ya funciona. Las trampas, lo que te

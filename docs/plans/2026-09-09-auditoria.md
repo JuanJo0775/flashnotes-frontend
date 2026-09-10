@@ -177,9 +177,11 @@ construido.
 
 ### 2.4 · Huecos de lore
 
-- **Nadie apagó nunca esta máquina.** Él dice «me dejaron encendido y se
-  fueron», y el rótulo se ríe de que nadie firmó nada — pero no hay un solo
-  rastro físico de esa gente. Ni una nota vieja, ni un turno, ni un nombre.
+- ~~**Nadie apagó nunca esta máquina.**~~ · **hecho**: `TURNO_3.txt`, una hoja de
+  turno a medias en el fondo de la papelera, sólo después de haber cruzado a la
+  v0.2. Casi todo tachado y una cosa sin tachar, y una última línea que es una
+  instrucción de mantenimiento: «si el lunes no viene nadie, dejarlo encendido.
+  se recupera solo.» **No explica nada** — ver SECRETOS §25 bis.
 - **Después del final no pasa nada permanente.** Los dos finales cierran su
   arco y la app del día siguiente es la misma app.
 - **La v0.2 no tiene historia propia**, sólo averías. Ahora que el ente llega
