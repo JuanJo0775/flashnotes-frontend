@@ -45,7 +45,11 @@ export interface VoiceArgs {
     key: undefined;
     tick: undefined;
     relay: undefined;
-    drawer: undefined;
+    /*
+     * ⚠ ABRIR O CERRAR ES QUÉ PASÓ, no un ajuste: se abre para sacar un premio y
+     * se cierra cuando algo se fue para no volver. Ver `drawer` en `voices.ts`.
+     */
+    drawer: { closing: boolean };
     button: undefined;
     capacitor: undefined;
     powerUp: undefined;

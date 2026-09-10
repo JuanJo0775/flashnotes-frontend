@@ -182,12 +182,19 @@ const FRAGMENTS: readonly Fragment[] = [
      * 2 · Y LA CONFIRMACIÓN, sólo para quien ya vio los puntos y las rayas.
      *
      * Antes de verlos esta frase no significa nada y gastaría una aparición;
-     * después, es la máquina admitiendo que lleva emitiendo desde siempre y que
-     * nunca le contestaron. `SIN ACUSE` es lo que dice un aparato que transmite
-     * a nadie — y quien acaba de ver el morse ata las dos cosas solo.
+     * después, ata las dos cosas: el reloj no marca la hora, la EMITE.
+     *
+     * ⚠ ANTES DECÍA `SIN ACUSE` Y SE CAMBIÓ AL PREGUNTARLO: «¿sin acuse? ¿qué es
+     * esa frase?». Es jerga de telecomunicaciones —el acuse de recibo, el ACK—
+     * y decía algo precioso que nadie iba a entender: llevo transmitiendo y
+     * nadie confirma. Una pista que hay que explicar no es una pista, y ésta es
+     * la única del juego que sostiene contenido detrás.
+     *
+     * `EMITIENDO` dice lo mismo sin pedir permiso: un reloj no emite, y quien
+     * acaba de ver los puntos y las rayas ata el resto solo.
      */
     {
-        text: { es: '[· — ·  SIN ACUSE]', en: '[· — ·  NO ACK]' },
+        text: { es: '[EMITIENDO · — ·]', en: '[TRANSMITTING · — ·]' },
         when: (c) => c.sawMorse === true,
     },
 

@@ -67,13 +67,13 @@ describe('la confirmación, sólo para quien ya vio los puntos y las rayas', () 
     it('antes de verlos no existe', () => {
         // Sin haberlos visto la frase no significa nada, y gastaría una
         // aparición de las pocas que hay.
-        expect(availableFragments(ctx(), 'es')).not.toContain('[· — ·  SIN ACUSE]');
+        expect(availableFragments(ctx(), 'es')).not.toContain('[EMITIENDO · — ·]');
     });
 
     it('⚠ y después sí: la máquina admite que emite y nadie contesta', () => {
         const visto = availableFragments(ctx({ sawMorse: true }), 'es');
 
-        expect(visto).toContain('[· — ·  SIN ACUSE]');
+        expect(visto).toContain('[EMITIENDO · — ·]');
     });
 
     it('la duda sigue estando después: las dos conviven', () => {

@@ -299,6 +299,18 @@ export function startSound(): () => void {
     let secretosAntes = new Set(foundSecrets());
     let fallandoAntes = getSystemState().chromaticFailure;
 
+    /*
+     * LO QUE PASA CON LAS NOTAS, que hasta acá era lo único mudo del uso normal.
+     *
+     * ⚠ NO HIZO FALTA TOCAR LA APP: las dos cuentas ya estaban publicadas en el
+     * almacén del sistema —una para la barra de estado, la otra para el secreto
+     * del recuento— y este suscriptor ya estaba escuchando ese almacén por los
+     * hallazgos. Se miran igual que se miran los secretos: comparando con lo que
+     * había.
+     */
+    let tiradaAntes = getSystemState().noteTrashedAt;
+    let definitivosAntes = getSystemState().permanentDeletes;
+
     const quitarSistema = subscribeSystem(() => {
         const ahora = getSystemState();
         const secretos = foundSecrets();
@@ -327,6 +339,36 @@ export function startSound(): () => void {
             play('beep', isV02() ? { hz: 240, ms: 560 } : { hz: 180, ms: 420 });
         }
         fallandoAntes = ahora.chromaticFailure;
+
+        /*
+         * A LA PAPELERA: algo cae dentro del cesto.
+         *
+         * El impacto solo, sin el barrido que lo trae en el §26. Ahí es lo que
+         * llega al suelo detrás de algo que cae; acá es lo único que pasa, y por
+         * eso alcanza — una nota tirada no se cae de la pantalla, se deja caer.
+         *
+         * ⚠ Y SE PUEDE DESHACER, así que no suena a final. Lo que suena a final
+         * es lo de abajo.
+         */
+        if (ahora.noteTrashedAt !== tiradaAntes && ahora.noteTrashedAt !== null) {
+            huboActividad();
+            play('thud');
+        }
+        tiradaAntes = ahora.noteTrashedAt;
+
+        /*
+         * Y EL BORRADO DEFINITIVO: el cajón que se cierra.
+         *
+         * ⚠ ES EL MISMO CAJÓN DEL PREMIO, AL REVÉS, y ahí está todo lo que hay
+         * que decir. Se abre para sacar una pieza que te ganaste y se cierra
+         * cuando algo se fue para no volver: la misma madera contando las dos
+         * únicas cosas de esta app que son para siempre.
+         */
+        if (ahora.permanentDeletes > definitivosAntes) {
+            huboActividad();
+            play('drawer', { closing: true });
+        }
+        definitivosAntes = ahora.permanentDeletes;
     });
 
     /*
@@ -351,7 +393,7 @@ export function startSound(): () => void {
 
         if (ahora > piezasAntes) {
             huboActividad();
-            luego(220, () => play('drawer'));
+            luego(220, () => play('drawer', { closing: false }));
         }
 
         piezasAntes = ahora;

@@ -272,7 +272,40 @@ hipótesis: `awardFrom` ya se llama desde nueve sitios distintos.
 | El tubo encendiéndose, apagándose y la carga | la tabla `screens.ts`, por marcas que la app ya pinta | no |
 | Barrido y colapso | los atributos que la app ya pone en el documento | no |
 | El tema cambiando | el mismo atributo `data-theme` | no |
+| Tirar y borrar una nota | dos cuentas que el almacén ya publicaba | no |
 | Guardar, no guardar y la línea | marcas de la barra de estado, por la misma tabla | no |
+
+## Lo que pasa con las notas
+
+⚠ **ERA LO ÚNICO MUDO DEL USO NORMAL, y salió de una auditoría.** Todo lo
+espectacular sonaba —el colapso, el bloqueo, el §26, el pong— y tirar una nota,
+que es el único acto destructivo de un día cualquiera, sonaba igual que abrir una
+pestaña.
+
+| Qué | Qué suena |
+| --- | --- |
+| **A la papelera** | el impacto solo: algo que cae dentro del cesto |
+| **Borrar del todo** | el **mismo cajón** del premio, cerrándose |
+
+**El cajón se cierra con el mismo cajón**, que es el truco del cabezal otra vez:
+una pieza mecánica haciendo dos cosas, no dos voces parecidas. Se abre para sacar
+una pieza que te ganaste y se cierra cuando algo se fue para no volver — la misma
+madera contando las dos únicas cosas de esta app que son para siempre.
+
+Lo que los separa no es el volumen, es la **forma del recorrido**: abriendo, el
+ruido arranca fuerte y se apaga, y el tope llega al 72 % del camino porque el
+cajón se frena solo; cerrando, el ruido CRECE y el tope llega al 98 % y más
+grave, porque ahí hay un marco y el cajón no se frena — choca.
+
+⚠ **Y el cesto no es el cajón.** Tirar se puede deshacer, así que no suena a
+final. Medido: el cesto son **37 Hz con 441 ms** de cola —un suelo que retumba— y
+el tope del cajón **93 Hz en 160** —madera que choca—. Los dos llevan grano; lo
+que los distingue es la altura y la cola, no de qué están hechos.
+
+⚠ **NO HIZO FALTA TOCAR LA APP.** Las dos cuentas ya estaban publicadas en el
+almacén del sistema —`noteTrashedAt` para la barra de estado, `permanentDeletes`
+para el secreto del recuento— y el suscriptor ya escuchaba ese almacén por los
+hallazgos. Ni un `play()` suelto en un componente.
 
 ⚠ **Borrar suena mientras borra, y calla al terminar.** Mantener el retroceso
 apretado hace que el navegador dispare una y otra vez, y cada repetición borra un

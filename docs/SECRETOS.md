@@ -2714,7 +2714,7 @@ El rótulo `[SYSTEM_OK]` lo suelta en dos escalones:
 | | Frase | Cuándo |
 | --- | --- | --- |
 | **La duda** | `[NADIE LEE LA HORA]` · `[THE HOUR UNREAD]` | siempre |
-| **La confirmación** | `[· — ·  SIN ACUSE]` · `[· — ·  NO ACK]` | sólo si ya viste el morse |
+| **La confirmación** | `[EMITIENDO · — ·]` · `[TRANSMITTING · — ·]` | sólo si ya viste el morse |
 
 Un reloj no se «lee»: se mira. Decir que nadie lo lee es decir que hay algo
 escrito, sin decirlo. **Ninguna de las dos nombra la solución** — hay un test que

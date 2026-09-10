@@ -77,9 +77,11 @@ export const EVENT_SOUNDS: readonly EventSound[] = [
         where: 'los atributos `data-wiping` y `data-collapsing`',
     },
     {
-        what: 'Lo que llega al suelo detrás de esa caída',
+        // El mismo impacto en dos sitios: detrás de algo que cae, y solo cuando
+        // lo que cae es una nota que dejaste caer.
+        what: 'Lo que llega al suelo detrás de esa caída, y una nota cayendo al cesto',
         voice: 'thud',
-        where: 'los mismos atributos, 620 ms después',
+        where: 'los mismos atributos 620 ms después, y el almacén del sistema',
     },
     {
         what: 'La avería de señal, el segundo clic en el rótulo, y los tres tonos del pong',
@@ -97,9 +99,15 @@ export const EVENT_SOUNDS: readonly EventSound[] = [
         where: 'el texto de la respuesta, contando renglones',
     },
     {
-        what: 'Ganarse una pieza de arte: un cajón que se abre',
+        /*
+         * ⚠ UNA FILA, DOS GESTOS, Y ES EL MISMO CAJÓN. Se abre para sacar una
+         * pieza que te ganaste y se cierra cuando algo se fue para no volver: la
+         * misma madera contando las dos únicas cosas de esta app que son para
+         * siempre. Dos filas dirían que son dos sonidos, y no lo son.
+         */
+        what: 'Ganarse una pieza —el cajón se abre— y borrar del todo, que es el mismo cajón cerrándose',
         voice: 'drawer',
-        where: 'el almacén de la colección, comparando la cuenta',
+        where: 'los almacenes de la colección y del sistema, comparando cuentas',
     },
 ];
 
@@ -134,6 +142,9 @@ export const SAMPLE_ARGS: { readonly [N in ConArgumentos]: VoiceArgs[N] } = {
     glitchBurst: { amplitudePx: 7, durationMs: 180 },
     tear: { amplitudePx: 9 },
     confirm: { wrong: false },
+    // El cajón abriéndose, que es el que se gana. El que se cierra tiene su
+    // propia fila, con lo que se lleva.
+    drawer: { closing: false },
 };
 
 /**

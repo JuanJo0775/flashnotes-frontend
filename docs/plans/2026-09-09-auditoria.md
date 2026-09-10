@@ -49,7 +49,7 @@ una puerta que nadie sabe que es una puerta.**
 | | Frase | Cuándo |
 | --- | --- | --- |
 | **La duda** | `[NADIE LEE LA HORA]` · `[THE HOUR UNREAD]` | siempre, desde el primer minuto |
-| **La confirmación** | `[· — ·  SIN ACUSE]` · `[· — ·  NO ACK]` | sólo si ya viste el morse |
+| **La confirmación** | `[EMITIENDO · — ·]` · `[TRANSMITTING · — ·]` | sólo si ya viste el morse |
 
 Un reloj no se «lee»: se mira. Decir que nadie lo lee es decir que hay algo
 escrito, sin decirlo. Y ninguna de las dos nombra la solución — hay un test que
@@ -73,8 +73,8 @@ Lo que suena está cubierto de sobra. **Lo que falta es todo lo cotidiano:**
 
 | Momento | Hoy | Qué falta |
 | --- | --- | --- |
-| **Borrar una nota** | el clic genérico | es el único acto destructivo del uso normal, y suena igual que abrir una pestaña |
-| **Vaciar la papelera** | nada propio | el momento en que algo se va de verdad |
+| ~~**Borrar una nota**~~ | **hecho** | el impacto solo: algo cae dentro del cesto |
+| ~~**Vaciar la papelera**~~ | **hecho** | el MISMO cajón del premio, cerrándose |
 | **Recuperar una nota** | nada propio | y en la v0.2, donde vuelve corrompida, menos aún |
 | **Completar la colección 16/16** | silencio absoluto | ver 2.5 |
 | **El cuarto de la v0.2** | idéntico al de la 1.0 | es lo ÚNICO del sonido que no cambia entre versiones, cuando es lo que más diría «esto es otro aparato» |
@@ -131,7 +131,11 @@ momento, no un cartel.**
 1. ~~La pista del morse~~ · **hecho**
 2. La ceremonia de la colección — la que más se nota por lo que cuesta
 3. Que la lista respire — entrar, salir, borrarse
-4. El sonido de lo cotidiano — borrar, vaciar, recuperar
+4. ~~El sonido de lo cotidiano~~ · **medio hecho**: tirar y borrar del todo ya
+   suenan. Queda **recuperar** — y ahí hay un problema de diseño, no de sonido:
+   no existe ninguna cuenta ni marca de la que colgarlo, así que o la app pinta
+   algo al recuperar (un aviso, como en la v0.2) o habría que inventar una
+   marca sólo para el sonido, que es justo lo que la casa prohíbe.
 5. La sala de la v0.2 — menos aire, más zumbido
 6. Los tres defectos de 2.1, que son de una tarde entre los tres
 

@@ -628,34 +628,75 @@ export function chatter(g: AudioGraph, random: Random = Math.random) {
  * dibujo valdría lo mismo que tropezarse con un comando.
  *
  * Va por el aire y no por la bocinita: un cajón es un objeto de la habitación.
+ *
+ * ⚠ Y SE CIERRA CON EL MISMO CAJÓN, que es el mismo truco del cabezal: una sola
+ * pieza mecánica haciendo dos cosas, no dos voces parecidas. Abrirlo es sacar
+ * algo —un premio— y cerrarlo es que algo se fue para no volver, que es lo que
+ * hace el borrado definitivo. Que suenen a lo mismo con el gesto invertido es
+ * exactamente lo que se quiere decir.
+ *
+ * La diferencia no es un ajuste de volumen: es la FORMA del recorrido.
+ *
+ *  · ABRIENDO — tirás, y el cajón sale y se frena solo. El ruido arranca fuerte
+ *    y se apaga, y el tope llega al 72 % del camino, antes del final.
+ *  · CERRANDO — empujás, y el cajón acelera hasta el marco. El ruido CRECE por
+ *    el camino y el tope llega al final, más seco y más fuerte.
  */
-export function drawer(g: AudioGraph, random: Random = Math.random) {
+export function drawer(
+    g: AudioGraph,
+    { closing = false }: { closing?: boolean } = {},
+    random: Random = Math.random
+) {
     const t0 = g.ctx.currentTime;
 
-    // 1 · La madera corriendo: ruido largo por un filtro medio que se abre.
+    // 1 · La madera corriendo: ruido largo por un filtro medio.
     const corredera = fuenteDeRuido(g, random);
     const f = filtro(g, 'bandpass', vary(520, 0.06, random), 2.4);
     const gCorredera = g.ctx.createGain();
     const largo = vary(0.34, 0.1, random);
-    gCorredera.gain.setValueAtTime(0.0001, t0);
-    gCorredera.gain.linearRampToValueAtTime(vary(0.3, 0.1, random) * f.makeup, t0 + 0.09);
-    gCorredera.gain.exponentialRampToValueAtTime(0.0001, t0 + largo);
+    const pico = vary(0.3, 0.1, random) * f.makeup;
+
+    if (closing) {
+        /*
+         * Cerrando, el ruido CRECE: un cajón que se empuja va tomando velocidad
+         * hasta el marco. Con la curva de abrir —fuerte y apagándose— sonaba a
+         * que salía otra vez, y entonces las dos cosas contaban lo mismo.
+         */
+        gCorredera.gain.setValueAtTime(0.0001, t0);
+        gCorredera.gain.exponentialRampToValueAtTime(pico, t0 + largo * 0.92);
+        gCorredera.gain.linearRampToValueAtTime(0.0001, t0 + largo + 0.03);
+    } else {
+        gCorredera.gain.setValueAtTime(0.0001, t0);
+        gCorredera.gain.linearRampToValueAtTime(pico, t0 + 0.09);
+        gCorredera.gain.exponentialRampToValueAtTime(0.0001, t0 + largo);
+    }
+
     corredera.connect(f.nodo).connect(gCorredera);
     gCorredera.connect(g.air);
     gCorredera.connect(g.room);
     arrancar(corredera, t0, random);
-    corredera.stop(t0 + largo + 0.02);
+    corredera.stop(t0 + largo + 0.05);
 
-    // 2 · El tope al final del recorrido: el cajón llega y se detiene.
+    /*
+     * 2 · El tope. Abriendo llega ANTES del final —el cajón se frena solo—; y
+     * cerrando llega AL final y más fuerte, porque ahí hay un marco de madera
+     * esperando y el cajón no se frena: choca.
+     */
     const tope = g.ctx.createOscillator();
     tope.type = 'sine';
-    tope.frequency.value = vary(120, 0.06, random);
+    tope.frequency.value = vary(closing ? 96 : 120, 0.06, random);
     const gTope = g.ctx.createGain();
-    const cuando = t0 + largo * 0.72;
-    percutir(gTope, cuando, vary(0.35, 0.12, random), 0.002, 0.09);
+    const cuando = t0 + largo * (closing ? 0.98 : 0.72);
+    percutir(
+        gTope,
+        cuando,
+        vary(closing ? 0.5 : 0.35, 0.12, random),
+        0.002,
+        closing ? 0.13 : 0.09
+    );
     tope.connect(gTope);
     gTope.connect(g.air);
     gTope.connect(g.room);
     tope.start(cuando);
-    tope.stop(cuando + 0.11);
+    tope.stop(cuando + 0.16);
 }

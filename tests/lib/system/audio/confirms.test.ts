@@ -147,7 +147,7 @@ describe('la entrega de una pieza', () => {
             );
         };
 
-        expect(dura(() => drawer(g, azar(4)))).toBeGreaterThan(
+        expect(dura(() => drawer(g, { closing: false }, azar(4)))).toBeGreaterThan(
             dura(() => confirm(g, { wrong: false }, azar(4)))
         );
     });
@@ -156,7 +156,7 @@ describe('la entrega de una pieza', () => {
         const g = ensureAudio()!;
         const antes = lastContext()!.created.length;
 
-        drawer(g, azar(5));
+        drawer(g, { closing: false }, azar(5));
 
         const fuentes = nuevos(antes).filter(
             (n) => n.kind === 'bufferSource' || n.kind === 'oscillator'
@@ -170,5 +170,54 @@ describe('las dos declaran familia', () => {
     it('para que el presupuesto del §8 las alcance', () => {
         expect(CATEGORY_OF.confirm).toBe('confirm');
         expect(CATEGORY_OF.drawer).toBe('confirm');
+    });
+});
+
+describe('⚠ y el cajón se cierra con el mismo cajón', () => {
+    /*
+     * Es el truco del cabezal otra vez: una sola pieza mecánica haciendo dos
+     * cosas, no dos voces parecidas. Se abre para sacar un premio y se cierra
+     * cuando algo se fue para no volver — la misma madera contando las dos
+     * únicas cosas de esta app que son para siempre.
+     *
+     * Lo que los distingue no es el volumen: es la FORMA del recorrido.
+     */
+    it('el tope de cerrar es MÁS GRAVE que el de abrir', () => {
+        // Un cajón que se empuja choca contra el marco; uno que se saca se
+        // frena solo. Medido: 122 Hz abriendo contra 93 cerrando.
+        const g = ensureAudio()!;
+
+        const tope = (closing: boolean) => {
+            const antes = lastContext()!.created.length;
+            drawer(g, { closing }, azar(9));
+            return nuevos(antes)
+                .filter((n) => n.kind === 'oscillator')
+                .map((n) => n.frequency!.value)[0];
+        };
+
+        expect(tope(true)).toBeLessThan(tope(false));
+    });
+
+    it('y llega AL FINAL del recorrido, no antes', () => {
+        /*
+         * Abriendo, el tope suena al 72 % del camino: el cajón sale y se detiene
+         * solo. Cerrando suena al 98 %, porque ahí hay un marco esperando y el
+         * cajón no se frena — choca. Es lo que hace que uno suene a apertura y
+         * el otro a cierre con la misma madera.
+         */
+        const g = ensureAudio()!;
+
+        const cuando = (closing: boolean) => {
+            const antes = lastContext()!.created.length;
+            drawer(g, { closing }, azar(9));
+            const fuentes = nuevos(antes);
+            const madera = fuentes.find((n) => n.kind === 'bufferSource')!;
+            const golpe = fuentes.find((n) => n.kind === 'oscillator')!;
+
+            // Cuánto del recorrido de la madera llevaba cuando llegó el tope.
+            return (golpe.started! - madera.started!) / (madera.stopped! - madera.started!);
+        };
+
+        expect(cuando(true)).toBeGreaterThan(cuando(false));
     });
 });
