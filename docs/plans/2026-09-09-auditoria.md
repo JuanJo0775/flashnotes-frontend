@@ -73,13 +73,20 @@ Lo que suena está cubierto de sobra. **Lo que falta es todo lo cotidiano:**
 
 | Momento | Hoy | Qué falta |
 | --- | --- | --- |
-| ~~**Borrar una nota**~~ | **hecho** | el impacto solo: algo cae dentro del cesto |
-| ~~**Vaciar la papelera**~~ | **hecho** | el MISMO cajón del premio, cerrándose |
-| **Recuperar una nota** | nada propio | y en la v0.2, donde vuelve corrompida, menos aún |
-| **Completar la colección 16/16** | silencio absoluto | ver 2.5 |
-| **El cuarto de la v0.2** | idéntico al de la 1.0 | es lo ÚNICO del sonido que no cambia entre versiones, cuando es lo que más diría «esto es otro aparato» |
+| ~~**Borrar una nota**~~ | el impacto solo: algo cae dentro del cesto |
+| ~~**Recuperar una nota**~~ | el cajón abriéndose: algo vuelve a tus manos |
+| ~~**Vaciar la papelera**~~ | el MISMO cajón, cerrándose |
+| ~~**Completar la colección 16/16**~~ | el cuarto se cae y el acuse queda solo en el hueco |
+| ~~**El cuarto de la v0.2**~~ | menos caja y más motor: el aire al 40 %, los armónicos altos hasta ×1,9 |
 
-Ninguno pide una voz nueva: con las que hay basta.
+✅ **§2.2 CERRADO.** Y se cumplió lo que decía esta línea: **ninguno pidió una voz
+nueva**. El cajón ya existía y ya decía lo que hacía falta —sólo hubo que
+enseñarle a cerrarse—, el impacto ya estaba, y el silencio también. Un catálogo
+de sonidos crece cuando hay que decir algo que no se puede decir con lo que hay, y
+no era el caso.
+
+⚠ Lo único que hizo falta en la app fue **una anotación**: `noteRestoredAt`, para
+que quede rastro de que algo volvió. Tirar ya se anotaba; recuperar no.
 
 ### 2.3 · Huecos de efecto y animación
 
@@ -129,14 +136,14 @@ momento, no un cartel.**
 ## 3 · El orden propuesto
 
 1. ~~La pista del morse~~ · **hecho**
-2. La ceremonia de la colección — la que más se nota por lo que cuesta
+2. ~~La ceremonia de la colección~~ · **hecha por el lado del sonido**: el cuarto
+   se cae y el acuse queda solo. Lo que falta ahí es lo VISUAL — hoy la pieza
+   dieciséis se ve igual que la primera.
 3. Que la lista respire — entrar, salir, borrarse
-4. ~~El sonido de lo cotidiano~~ · **medio hecho**: tirar y borrar del todo ya
-   suenan. Queda **recuperar** — y ahí hay un problema de diseño, no de sonido:
-   no existe ninguna cuenta ni marca de la que colgarlo, así que o la app pinta
-   algo al recuperar (un aviso, como en la v0.2) o habría que inventar una
-   marca sólo para el sonido, que es justo lo que la casa prohíbe.
-5. La sala de la v0.2 — menos aire, más zumbido
+4. ~~El sonido de lo cotidiano~~ · **hecho**, con recuperar incluido: la app lo
+   ANOTA —igual que ya anotaba tirar— y el suscriptor lee el almacén. No hizo
+   falta inventar ninguna marca.
+5. ~~La sala de la v0.2~~ · **hecha**
 6. Los tres defectos de 2.1, que son de una tarde entre los tres
 
 ### Y una idea más grande, si se quiere subir la apuesta

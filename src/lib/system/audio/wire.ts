@@ -33,7 +33,7 @@ import { play } from '@/lib/system/audio/play';
 import { isV02 } from '@/lib/system/v02';
 import { muteFor } from '@/lib/system/audio/mix';
 import { duck, invertAmbience, silence } from '@/lib/system/audio/ambience';
-import { readFound as piezasGanadas } from '@/lib/system/asciiArt';
+import { ART_TOTAL, readFound as piezasGanadas } from '@/lib/system/asciiArt';
 import { subscribeHints } from '@/lib/system/artHints';
 import { WAKE_FADE_S, startAmbience, stopAmbience } from '@/lib/system/audio/ambience';
 import { startBarsTone, stopBarsTone } from '@/lib/system/audio/bars';
@@ -90,6 +90,16 @@ export const COLLAPSE_SILENCE_MS = 200;
  * sí misma, y acá la atención va en otra parte.
  */
 export const DUCK_MS = 3_200;
+
+/**
+ * Cuánto se cae el cuarto al completar la colección.
+ *
+ * ⚠ MÁS LARGO QUE EL SILENCIO DEL DERRUMBE, que dura 200 ms y es un susto. Éste
+ * no asusta: hace sitio. Un segundo y medio es lo que tarda alguien en darse
+ * cuenta de que algo dejó de sonar — menos se lee como un corte, y más se lee
+ * como que se rompió.
+ */
+const COLECCION_SILENCIO_MS = 1_500;
 
 /**
  * Los hallazgos que suenan MAL.
@@ -309,6 +319,7 @@ export function startSound(): () => void {
      * había.
      */
     let tiradaAntes = getSystemState().noteTrashedAt;
+    let vueltaAntes = getSystemState().noteRestoredAt;
     let definitivosAntes = getSystemState().permanentDeletes;
 
     const quitarSistema = subscribeSystem(() => {
@@ -369,6 +380,20 @@ export function startSound(): () => void {
             play('drawer', { closing: true });
         }
         definitivosAntes = ahora.permanentDeletes;
+
+        /*
+         * Y LO QUE VUELVE: el cajón se abre.
+         *
+         * ⚠ EL MISMO CAJÓN DE LA PIEZA GANADA, y por eso no hace falta una voz
+         * nueva. La regla que lo gobierna es de una línea: se abre cuando algo
+         * vuelve a tus manos —una pieza que te ganaste, una nota que rescataste—
+         * y se cierra cuando algo se va para siempre.
+         */
+        if (ahora.noteRestoredAt !== vueltaAntes && ahora.noteRestoredAt !== null) {
+            huboActividad();
+            play('drawer', { closing: false });
+        }
+        vueltaAntes = ahora.noteRestoredAt;
     });
 
     /*
@@ -394,6 +419,26 @@ export function startSound(): () => void {
         if (ahora > piezasAntes) {
             huboActividad();
             luego(220, () => play('drawer', { closing: false }));
+
+            /*
+             * ⚠ Y LA ÚLTIMA SE CELEBRA, que era el único logro largo del juego
+             * sin un solo sonido. Dieciséis piezas por dieciséis caminos
+             * distintos, y al poner la última no pasaba nada: el contador decía
+             * 16/16 y ya.
+             *
+             * No hay voz nueva ni fanfarria. Lo que hay es lo más caro que tiene
+             * esta app y lo que menos se usa: la sala CALLÁNDOSE. El cuarto
+             * desaparece, el cajón queda solo en el silencio, y encima cae el
+             * acuse. Es el mismo recurso del §26 —ahí el silencio es una
+             * amenaza— y acá es lo contrario: la máquina haciendo sitio.
+             *
+             * El orden importa. Primero suena el cajón (220 ms), después se cae
+             * el cuarto, y el acuse llega DENTRO del hueco.
+             */
+            if (ahora >= ART_TOTAL && piezasAntes < ART_TOTAL) {
+                luego(360, () => silence(COLECCION_SILENCIO_MS));
+                luego(760, () => play('confirm', { wrong: false }));
+            }
         }
 
         piezasAntes = ahora;

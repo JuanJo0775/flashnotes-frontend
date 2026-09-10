@@ -261,6 +261,16 @@ export interface SystemState {
     /** Cuándo se mandó la última nota a la papelera, o null. */
     noteTrashedAt: number | null;
     /**
+     * Cuándo volvió la última desde la papelera, o null.
+     *
+     * ⚠ EXISTE POR EL SONIDO, y no es una excepción a la regla: la regla dice
+     * que el sonido no puede tener llamadas repartidas por los componentes, no
+     * que la app no pueda ANOTAR lo que hace. Tirar una nota ya se anotaba
+     * —arriba— y recuperarla no, así que era el único de los tres gestos de la
+     * papelera del que no quedaba rastro en ninguna parte.
+     */
+    noteRestoredAt: number | null;
+    /**
      * La señal se rompió: la interfaz se ve con fallo cromático.
      *
      * Es puramente visual — todo sigue funcionando y todo sigue guardándose— y
@@ -376,6 +386,7 @@ let integrity = 100;
 let effectsEnabled = readEffects();
 let secrets = readSecrets();
 let permanentDeletes = 0;
+let noteRestoredAt: number | null = null;
 let noteTrashedAt: number | null = null;
 let chromaticFailure = false;
 
@@ -420,6 +431,7 @@ let state: SystemState = {
     sessionStart: SESSION_START,
     permanentDeletes,
     noteTrashedAt,
+    noteRestoredAt,
     chromaticFailure,
     lockedOut: lockoutUntil !== null,
     labelClicks: clickCount,
@@ -438,6 +450,7 @@ function publish() {
         sessionStart: SESSION_START,
         permanentDeletes,
         noteTrashedAt,
+        noteRestoredAt,
         chromaticFailure,
         lockedOut: lockoutUntil !== null,
         labelClicks: clickCount,
@@ -450,6 +463,7 @@ function publish() {
         next.secretsFound === state.secretsFound &&
         next.permanentDeletes === state.permanentDeletes &&
         next.noteTrashedAt === state.noteTrashedAt &&
+        next.noteRestoredAt === state.noteRestoredAt &&
         next.chromaticFailure === state.chromaticFailure &&
         next.v02 === state.v02 &&
         next.lockedOut === state.lockedOut &&
@@ -805,6 +819,7 @@ export function resetEverything() {
     integrity = 100;
     permanentDeletes = 0;
     noteTrashedAt = null;
+    noteRestoredAt = null;
     chromaticFailure = false;
     themeClicks = 0;
     greetings = 0;
@@ -986,6 +1001,12 @@ export function markNoteTrashed() {
     publish();
 }
 
+/** Y que acabás de sacar una de ahí. */
+export function markNoteRestored() {
+    noteRestoredAt = Date.now();
+    publish();
+}
+
 // En el servidor no hay ni almacenamiento ni sesión: se devuelve un sistema
 // sano para que el marcado del servidor y el del cliente coincidan.
 const SERVER_SNAPSHOT: SystemState = {
@@ -996,6 +1017,7 @@ const SERVER_SNAPSHOT: SystemState = {
     sessionStart: 0,
     permanentDeletes: 0,
     noteTrashedAt: null,
+    noteRestoredAt: null,
     chromaticFailure: false,
     lockedOut: false,
     labelClicks: 0,

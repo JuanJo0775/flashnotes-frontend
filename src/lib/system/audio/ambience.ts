@@ -20,6 +20,7 @@
 
 import type { Random } from '@/lib/system/lore';
 import { ensureAudio } from '@/lib/system/audio/context';
+import { isV02 } from '@/lib/system/v02';
 import { PEAK_DBFS, dbToGain } from '@/lib/system/audio/mix';
 import { vary } from '@/lib/system/audio/jitter';
 import { filtro, fuenteDeRuido } from '@/lib/system/audio/voices';
@@ -105,6 +106,31 @@ export function ambienceGain(): number {
  * llamar a esto, y dos ambientes a la vez suenan al doble Y desafinan entre
  * ellos — que es peor que el doble, porque suena a avería sin serlo.
  */
+/**
+ * EL CUARTO DE LA v0.2, que no es el mismo cuarto.
+ *
+ * ⚠ ERA LO ÚNICO DEL SONIDO QUE NO CAMBIABA ENTRE VERSIONES, y salió en la
+ * auditoría: la máquina vieja arranca distinto, falla distinto y habla distinto,
+ * y sonaba en la misma habitación. El fondo es lo que más dice «esto es otro
+ * aparato», porque es lo único que está SIEMPRE.
+ *
+ * Dos cosas, y las dos son lo mismo dicho de dos maneras: menos caja y más
+ * motor.
+ *
+ *  · MENOS AIRE. El siseo del chasis es lo que hace que el zumbido suene DENTRO
+ *    de algo. Bajándolo, la máquina se queda sin caja: se oye el motor y no el
+ *    mueble.
+ *  · Y EL ZUMBIDO MÁS SUCIO. Los armónicos de arriba suben, que es lo que
+ *    distingue un transformador viejo de uno bueno — el bueno da una nota, el
+ *    viejo da una nota con cosas encima.
+ *
+ * ⚠ NO ES «MÁS FUERTE». Subir la salida subiría también el aire y no habría
+ * diferencia: habría más de lo mismo. Lo que cambia es el REPARTO, igual que en
+ * la inversión del §26.
+ */
+const V02_AIRE = 0.4;
+const V02_ARMONICOS = [1, 1.5, 1.9] as const;
+
 export function startAmbience(random: Random = Math.random, fadeS: number = FADE_IN_S) {
     if (vivo) return;
 
@@ -112,6 +138,15 @@ export function startAmbience(random: Random = Math.random, fadeS: number = FADE
     if (!g) return;
 
     const t0 = g.ctx.currentTime;
+
+    /*
+     * ⚠ SE PREGUNTA UNA VEZ, AL ENCENDER. El cuarto no cambia mientras suena:
+     * cambia la próxima vez que arranque, y arranca solo cada vez que la sala se
+     * apaga por inactividad. Cambiarlo en marcha obligaría a reconstruir los
+     * nodos con el zumbido puesto, que es exactamente lo que se oye como un
+     * corte — y este fondo existe para no oírse nunca entrar ni salir.
+     */
+    const vieja = isV02();
 
     const salida = g.ctx.createGain();
     salida.gain.setValueAtTime(0.0001, t0);
@@ -135,14 +170,18 @@ export function startAmbience(random: Random = Math.random, fadeS: number = FADE
      * hace que un zumbido se lea como una máquina ENCENDIDA son los LFOs lentos
      * moviéndolo por debajo, cada uno a su ritmo y sin múltiplos entre ellos.
      */
-    for (const [mult, nivel, lfoHz] of [
-        [1, PESOS.armonicos[0] / SUMA, 0.07],
-        [2, PESOS.armonicos[1] / SUMA, 0.11],
-        [3, PESOS.armonicos[2] / SUMA, 0.043],
+    for (const [mult, nivelBase, lfoHz, refuerzo] of [
+        [1, PESOS.armonicos[0] / SUMA, 0.07, V02_ARMONICOS[0]],
+        [2, PESOS.armonicos[1] / SUMA, 0.11, V02_ARMONICOS[1]],
+        [3, PESOS.armonicos[2] / SUMA, 0.043, V02_ARMONICOS[2]],
     ] as const) {
         const osc = g.ctx.createOscillator();
         osc.type = 'sine';
         osc.frequency.value = vary(HUM_HZ * mult, 0.02, random);
+
+        // En la vieja, los de arriba pesan más: un transformador cansado da una
+        // nota con cosas encima, y uno bueno da una nota.
+        const nivel = vieja ? nivelBase * refuerzo : nivelBase;
 
         const nivelGain = g.ctx.createGain();
         nivelGain.gain.value = nivel;
@@ -189,7 +228,8 @@ export function startAmbience(random: Random = Math.random, fadeS: number = FADE
     aire.loop = true;
     const cuerpo = filtro(g, 'lowpass', vary(150, 0.08, random), 0.9);
     const gAire = g.ctx.createGain();
-    const nivelAire = vary(PESOS.aire / SUMA, 0.15, random);
+    const nivelAire =
+        vary(PESOS.aire / SUMA, 0.15, random) * (vieja ? V02_AIRE : 1);
     gAire.gain.value = nivelAire;
     aire.connect(cuerpo.nodo).connect(gAire);
     gAire.connect(salida);

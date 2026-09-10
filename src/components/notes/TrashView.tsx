@@ -8,7 +8,11 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { formatFileSize, formatRelativeTime } from '@/lib/utils/formatters';
 import { permanentDeleteMessage } from '@/lib/system/lore';
 import { GHOST_ID } from '@/lib/system/ghostFile';
-import { useSystemState, registerPermanentDelete } from '@/hooks/useSystemState';
+import {
+    useSystemState,
+    markNoteRestored,
+    registerPermanentDelete,
+} from '@/hooks/useSystemState';
 import { useT } from '@/i18n';
 
 interface TrashViewProps {
@@ -35,7 +39,17 @@ export default function TrashView({ onCountChange }: TrashViewProps) {
         setBusyId(id);
         const ok = await restoreNote(id);
         setBusyId(null);
-        if (ok) onCountChange?.(trashedNotes.length - 1);
+
+        if (ok) {
+            /*
+             * ⚠ SE ANOTA, NO SE HACE SONAR. Lo que necesita el sonido es saber
+             * que algo volvió, y esta pantalla no sabe ni tiene por qué saber
+             * que existe el sonido — igual que tirar una nota se anota y ya. El
+             * suscriptor mira el almacén; acá sólo se cuenta lo que pasó.
+             */
+            markNoteRestored();
+            onCountChange?.(trashedNotes.length - 1);
+        }
     };
 
     const handleDeleteConfirm = async () => {

@@ -285,12 +285,13 @@ pestaña.
 | Qué | Qué suena |
 | --- | --- |
 | **A la papelera** | el impacto solo: algo que cae dentro del cesto |
-| **Borrar del todo** | el **mismo cajón** del premio, cerrándose |
+| **Recuperarla** | el **cajón abriéndose**: algo vuelve a tus manos |
+| **Borrar del todo** | el **mismo cajón**, cerrándose |
 
-**El cajón se cierra con el mismo cajón**, que es el truco del cabezal otra vez:
-una pieza mecánica haciendo dos cosas, no dos voces parecidas. Se abre para sacar
-una pieza que te ganaste y se cierra cuando algo se fue para no volver — la misma
-madera contando las dos únicas cosas de esta app que son para siempre.
+**Un solo cajón, y una regla de una línea:** se abre cuando algo **vuelve a tus
+manos** —una pieza que te ganaste, una nota que rescataste— y se cierra cuando
+algo **se va para siempre**. Es el truco del cabezal otra vez: una pieza mecánica
+haciendo dos cosas, no dos voces parecidas.
 
 Lo que los separa no es el volumen, es la **forma del recorrido**: abriendo, el
 ruido arranca fuerte y se apaga, y el tope llega al 72 % del camino porque el
@@ -301,6 +302,45 @@ grave, porque ahí hay un marco y el cajón no se frena — choca.
 final. Medido: el cesto son **37 Hz con 441 ms** de cola —un suelo que retumba— y
 el tope del cajón **93 Hz en 160** —madera que choca—. Los dos llevan grano; lo
 que los distingue es la altura y la cola, no de qué están hechos.
+
+## La colección entera
+
+⚠ **Era el único logro largo del juego sin un solo sonido.** Dieciséis piezas por
+dieciséis caminos distintos, y al poner la última el contador decía `16/16` y ya.
+
+No hay voz nueva ni fanfarria. Lo que hay es **lo más caro que tiene esta app y lo
+que menos se usa: la sala callándose.** El cajón suena como siempre, el cuarto se
+cae a los 360 ms, y el acuse llega DENTRO del hueco — solo, con el fondo en cero.
+
+Es el mismo recurso del §26, donde el silencio es una amenaza. Acá es lo
+contrario: la máquina haciendo sitio. **Segundo y medio**, más largo que los 200 ms
+del derrumbe, porque aquél asusta y éste tiene que dar tiempo a notarlo.
+
+## El cuarto de la v0.2
+
+⚠ **Era lo ÚNICO del sonido que no cambiaba entre versiones.** Esa máquina
+arranca distinto, falla distinto y habla distinto — y sonaba en la misma
+habitación, cuando el fondo es lo que más dice «esto es otro aparato» porque es lo
+único que está siempre.
+
+| | La 1.0 | La v0.2 |
+| --- | --- | --- |
+| **El aire de la caja** | entero | al **40 %**: se queda sin mueble |
+| **Los armónicos de arriba** | su peso | **hasta ×1,9**: un transformador cansado |
+
+**Menos caja y más motor.** El siseo del chasis es lo que hace que el zumbido
+suene DENTRO de algo; bajándolo, se oye el motor y no el mueble. Y los armónicos
+altos son lo que separa un transformador bueno de uno viejo: el bueno da una
+nota, el viejo da una nota con cosas encima.
+
+⚠ **No es «más fuerte».** Subir la salida subiría también el aire y no habría
+diferencia: habría más de lo mismo. Lo que cambia es el REPARTO, igual que en la
+inversión del §26.
+
+⚠ **Y se pregunta al ENCENDER, no en marcha.** El cuarto no cambia mientras
+suena: cambia la próxima vez que arranque, y arranca solo cada vez que la sala se
+apaga por inactividad. Reconstruir los nodos con el zumbido puesto se oye como un
+corte, y este fondo existe para no oírse nunca entrar ni salir.
 
 ⚠ **NO HIZO FALTA TOCAR LA APP.** Las dos cuentas ya estaban publicadas en el
 almacén del sistema —`noteTrashedAt` para la barra de estado, `permanentDeletes`

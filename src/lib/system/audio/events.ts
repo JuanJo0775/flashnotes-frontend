@@ -67,9 +67,15 @@ export const EVENT_SOUNDS: readonly EventSound[] = [
         where: 'la clase `is-blow` y la variable `--blow-amp` del `body`',
     },
     {
-        what: 'Encontrar un secreto — y los del ente suenan torcidos',
+        /*
+         * ⚠ Y LA ÚLTIMA PIEZA ES SU MOMENTO MÁS GRANDE, con el mismo sonido.
+         * Lo que lo hace grande no es la voz: es que el cuarto se cae antes y el
+         * acuse queda SOLO en el hueco. El silencio es lo más caro que tiene
+         * esta app y lo que menos se usa.
+         */
+        what: 'Encontrar un secreto —los del ente suenan torcidos— y completar la colección, con el cuarto caído',
         voice: 'confirm',
-        where: 'el almacén del sistema, comparando conjuntos',
+        where: 'el almacén del sistema comparando conjuntos, y el de la colección al llegar a la última',
     },
     {
         what: 'La señal cayéndose, y el barrido de `//reset`',
@@ -105,10 +111,11 @@ export const EVENT_SOUNDS: readonly EventSound[] = [
          * misma madera contando las dos únicas cosas de esta app que son para
          * siempre. Dos filas dirían que son dos sonidos, y no lo son.
          */
-        what: 'Ganarse una pieza —el cajón se abre— y borrar del todo, que es el mismo cajón cerrándose',
+        what: 'Lo que vuelve a tus manos —una pieza ganada, una nota rescatada— y, cerrándose, lo que se va para siempre',
         voice: 'drawer',
         where: 'los almacenes de la colección y del sistema, comparando cuentas',
     },
+
 ];
 
 /**
