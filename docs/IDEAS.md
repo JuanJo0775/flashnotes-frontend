@@ -96,8 +96,14 @@ lo único de esta sección que sigue sin construirse.
 ## ~~E3 · Los comandos no están todos~~ · HECHO
 
 `notInV02` los filtra, y ahí contestan «comando desconocido» — que en esa
-versión es la verdad literal: no se habían escrito todavía. `//reboot` es la
-excepción y existe en las dos.
+versión es la verdad literal: no se habían escrito todavía.
+
+**Las excepciones son cuatro, y todas por el mismo motivo:** `//reboot`, porque
+el botón de reinicio SÍ estaba en el panel; y `//art`, `//art_<n>` y `//keep`,
+porque la pestaña de la colección SE VE en esa versión. Un sitio que se puede
+abrir con unos comandos que contestan «comando desconocido» son dos versiones de
+la misma máquina discutiendo. Los tres de la colección funcionan **mal a
+propósito**: leen lo que pueden y guardan lo que leyeron (SECRETOS §24.4 bis).
 
 ## ~~E4 · El glitch de tema, con más averías~~ · HECHO
 
