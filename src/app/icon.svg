@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+    <style>
+        .g { fill: #e6e4de }
+        .i { fill: #12110d }
+        @media (prefers-color-scheme: dark) {
+            .g { fill: #121110 }
+            .i { fill: #e8e5dc }
+        }
+    </style>
+    <rect class="g" width="32" height="32"/>
+    <rect class="i" x="4" y="4" width="2" height="24"/>
+    <rect class="i" x="4" y="4" width="6" height="2"/>
+    <rect class="i" x="4" y="26" width="6" height="2"/>
+    <rect class="i" x="26" y="4" width="2" height="24"/>
+    <rect class="i" x="22" y="4" width="6" height="2"/>
+    <rect class="i" x="22" y="26" width="6" height="2"/>
+    <rect class="i" x="12" y="10" width="8" height="12"/>
+</svg>

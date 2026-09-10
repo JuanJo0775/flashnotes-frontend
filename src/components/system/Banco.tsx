@@ -21,6 +21,7 @@ import {
     type SystemScreen,
 } from '@/lib/system/screensCatalog';
 import { COLOR_TOKENS, FONT_TOKENS, SYSTEM_ICONS, TEXT_TOKENS } from '@/lib/system/identity';
+import { MARK_GRID, MARK_RECTS } from '@/lib/system/mark';
 import MetaTag from '@/components/ui/MetaTag';
 import ProgressBar from '@/components/ui/ProgressBar';
 import {
@@ -218,6 +219,45 @@ function Guia() {
 }
 
 /** Un bloque del catálogo, con su regla y su respiro. */
+/**
+ * LA MARCA, dibujada de la misma tabla que el icono de la pestaña.
+ *
+ * ⚠ NO ES UNA IMAGEN DEL ARCHIVO. Si esto fuera un `<img src="/icon.svg">`, el
+ * banco enseñaría lo que hay en el disco y no lo que dice el código — y el día
+ * que los dos se separen, la única página que existe para detectar eso sería la
+ * que lo tapa. Se pinta de `MARK_RECTS`; del archivo se ocupa un test.
+ *
+ * ⚠ Y EL COLOR VA EN `style`, NO EN `fill`. Un atributo de presentación no
+ * entiende `var()`: el navegador lo descarta sin avisar y la marca sale negra.
+ */
+function Marca({ lado }: { lado: number }) {
+    return (
+        <svg
+            width={lado}
+            height={lado}
+            viewBox={`0 0 ${MARK_GRID} ${MARK_GRID}`}
+            aria-hidden="true"
+            style={{ display: 'block' }}
+        >
+            <rect
+                width={MARK_GRID}
+                height={MARK_GRID}
+                style={{ fill: 'var(--color-primary)' }}
+            />
+            {MARK_RECTS.map((r) => (
+                <rect
+                    key={`${r.x}-${r.y}-${r.w}-${r.h}`}
+                    x={r.x}
+                    y={r.y}
+                    width={r.w}
+                    height={r.h}
+                    style={{ fill: 'var(--color-ink)' }}
+                />
+            ))}
+        </svg>
+    );
+}
+
 function Seccion({
     titulo,
     nota,
@@ -472,6 +512,45 @@ export default function Banco() {
                     </div>
 
                     <input className="input-terminal" defaultValue="Sin_titulo.txt" readOnly />
+                </Seccion>
+
+                <hr className="rule-dashed" />
+
+                <Seccion
+                    titulo="LA MARCA"
+                    nota="lo único del producto que se ve sin abrirlo · siete rectángulos"
+                >
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'flex-end',
+                            gap: '1.5rem',
+                            flexWrap: 'wrap',
+                        }}
+                    >
+                        {[16, 32, 64].map((lado) => (
+                            <div
+                                key={lado}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: '0.4rem',
+                                }}
+                            >
+                                <Marca lado={lado} />
+                                <span className="comment tabular-nums">{lado} px</span>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="comment">
+                        los corchetes de los iconos y el cursor de bloque, que es lo único que
+                        se mueve todo el rato: una terminal esperando a que escribas
+                    </p>
+                    <p className="comment">
+                        todas las medidas son pares sobre 32, así que a 16 px cada borde cae en
+                        un píxel entero y no hay nada que suavizar
+                    </p>
                 </Seccion>
 
                 <hr className="rule-dashed" />
